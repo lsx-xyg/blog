@@ -31,3 +31,6 @@
 *.log
 npm-debug.log*
 next-env.d.ts
+
+# tsc incremental
+*.tsbuildinfo
