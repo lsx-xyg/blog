@@ -1,0 +1,33 @@
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# env files (keep example)
+.env
+.env.*
+!.env.example
+
+# impeccable design workspace (session artifacts)
+/.impeccable/
+
+# temp tool results
+/.tmp-tool-results/
+
+# temp direction comps
+*.jpg
+*.webp
+
+# misc
+.DS_Store
+*.pem
+*.log
+npm-debug.log*
+next-env.d.ts

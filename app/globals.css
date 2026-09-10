@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+/* 三主题 tokens（DESIGN.md 锁定） */
+:root {
+  --bg: rgb(228, 228, 231);
+  --fg: rgb(39, 39, 42);
+  --surface: rgba(255, 255, 255, 0.55);
+  --surface-strong: #fbfbfc;
+  --border: rgba(0, 0, 0, 0.09);
+  --fg-muted: rgba(39, 39, 42, 0.58);
+  --fg-faint: rgba(39, 39, 42, 0.38);
+  --selection: rgba(39, 39, 42, 0.12);
+  --accent: #2f81f7;
+  --font-sans: system-ui, -apple-system, "PingFang SC", "HarmonyOS Sans SC",
+    "MiSans", "Microsoft YaHei", sans-serif;
+  --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas,
+    monospace;
+}
+
+html.dark {
+  --bg: rgb(39, 39, 42);
+  --fg: rgb(228, 228, 231);
+  --surface: #323237;
+  --surface-strong: #3a3a40;
+  --border: rgba(255, 255, 255, 0.12);
+  --fg-muted: rgba(228, 228, 231, 0.58);
+  --fg-faint: rgba(228, 228, 231, 0.38);
+  --selection: rgba(228, 228, 231, 0.16);
+  --accent: #5b9bf5;
+}
+
+html.sepia {
+  --bg: rgb(214, 209, 194);
+  --fg: rgb(39, 39, 42);
+  --surface: rgba(255, 255, 255, 0.35);
+  --surface-strong: #e6e1d2;
+  --border: rgba(0, 0, 0, 0.1);
+  --fg-muted: rgba(39, 39, 42, 0.58);
+  --fg-faint: rgba(39, 39, 42, 0.38);
+  --selection: rgba(39, 39, 42, 0.12);
+  --accent: #2f81f7;
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-fg: var(--fg);
+  --color-surface: var(--surface);
+  --color-surface-strong: var(--surface-strong);
+  --color-border: var(--border);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-faint: var(--fg-faint);
+  --color-selection: var(--selection);
+  --color-accent: var(--accent);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+}
+
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
+}
+html.sepia {
+  color-scheme: light;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--fg);
+  font-family: var(--font-sans);
+  transition: background-color 250ms ease, color 250ms ease;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background-color: var(--selection);
+}

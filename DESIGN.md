@@ -64,10 +64,10 @@
 ## 组件规范
 
 - **Nav**：sticky、毛玻璃、内容左侧、主题切换右侧；移动端菜单折叠。
-- **TagPill**：多选组合；未选 = 边框，选中 = accent 填充；hover 过渡 150ms。
+- **TagPill**：多选组合；未选 = 边框，选中 = 主题色填充；hover 过渡 150ms。
 - **Toggle（最新/精选）**：分段控件，选中态明确。
 - **PostCard**：`--surface` 底 + 1px `--border` + 圆角 12px + hover `translateY(-2px)` + 边框加深 + 阴影加深（150ms）。
-- **Button**：主按钮 = accent 填充圆角 10px；次按钮 = 边框。
+- **Button**：主按钮 = 主题色填充圆角 10px；次按钮 = 边框。
 - **代码块**：Shiki 渲染、圆角 10px、`--code-bg`、复制按钮、横向滚动。
 - **图片**：`loading="lazy"` + 宽高占位（防 CLS）+ 加载时 shimmer。
 - **空态/加载态**：空筛选结果显示"没有匹配的文章"；无限滚动底部 spinner。
