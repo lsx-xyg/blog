@@ -49,6 +49,8 @@
 Better Auth 自动创建 `user` / `session` / `account` / `verification` 表。
 `user` 表扩展字段：`is_admin boolean DEFAULT false`（管理员标记）。
 
+> **实施记录（T1，2026-09-11）**：`is_admin` 列实现为 **`isAdmin`**（camelCase），与 Better Auth drizzle 适配器列名约定对齐——M4 接入认证时无需字段映射。若未来改用其他 ORM/适配器需注意此命名。
+
 ### 4.2 `posts` 文章表
 | 字段 | 类型 | 说明 |
 |---|---|---|
