@@ -76,3 +76,93 @@ body {
 ::selection {
   background-color: var(--selection);
 }
+
+/* ===== MDX 文章排版（T4，DESIGN.md：正文 16/1.8，代码块圆角 10px） ===== */
+.mdx-content {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--fg);
+  word-break: break-word;
+}
+
+.mdx-content :is(h1, h2, h3, h4) {
+  margin: 2rem 0 0.9rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.mdx-content h1 { font-size: 1.5rem; }
+.mdx-content h2 { font-size: 1.32rem; }
+.mdx-content h3 { font-size: 1.15rem; }
+.mdx-content h4 { font-size: 1rem; }
+
+.mdx-content p { margin: 1rem 0; }
+.mdx-content a {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.mdx-content ul,
+.mdx-content ol {
+  margin: 1rem 0;
+  padding-left: 1.6rem;
+}
+.mdx-content li { margin: 0.35rem 0; }
+.mdx-content li::marker { color: var(--fg-muted); }
+
+.mdx-content blockquote {
+  margin: 1.25rem 0;
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--fg-muted);
+}
+.mdx-content hr {
+  margin: 2rem 0;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+
+.mdx-content table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 14px;
+}
+.mdx-content th,
+.mdx-content td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.mdx-content th { background: var(--selection); }
+
+.mdx-content img {
+  max-width: 100%;
+  border-radius: 10px;
+  margin: 1.25rem 0;
+  height: auto;
+}
+
+.mdx-content code:not(pre code) {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--selection);
+  padding: 0.15em 0.4em;
+  border-radius: 6px;
+}
+
+.mdx-content pre {
+  background: #0d1117;
+  color: #e6edf3;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 1.25rem 0;
+}
+.mdx-content pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
