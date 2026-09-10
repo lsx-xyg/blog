@@ -53,15 +53,15 @@
 
 ## 下一步行动（按顺序）
 
-| 里程碑 | 做什么 | 调用什么 skill |
-|---|---|---|
-| **M1 脚手架** | Next.js 15 + TS + Tailwind + Drizzle 初始化；git 关联 blog 仓库 | setup-pre-commit（一次性）、git-commit |
-| **M2 数据层** | Drizzle schema 9 张表 + 迁移 + seed | domain-modeling（如需建模）、implement |
-| **M3 前台** | 首页（瀑布流+筛选）、相册、文章页（MDX+Shiki）、关于/友链、三主题 | **taste-skill（design-taste-frontend）**、impeccable `craft`/`audit` |
-| **M4 后台** | Better Auth（密码+GitHub+关联）、引导流程、Milkdown 编辑器、管理 CRUD | implement、impeccable `operate` 相关 |
-| **M5 存储/搜索/评论** | StorageDriver（VERCEL_BLOB/S3/GITHUB+jsDelivr）、minisearch、giscus | implement、tdd |
-| **M6 定时/备份/SEO** | 定时发布两套实现、JSON 备份+导入、SEO/OG | implement、code-review |
-| **质量收口** | 全量评审、bug 修复、上线前打磨 | tdd、code-review、diagnosing-bugs、verifier-hub、artifact-preview、impeccable `polish` |
+| 里程碑 | 做什么 | 调用什么 skill | 状态 |
+|---|---|---|---|
+| **M1 脚手架** | Next.js 15 + TS + Tailwind + Drizzle 初始化；git 关联 blog 仓库 | setup-pre-commit（一次性）、git-commit | ✅ 已完成（2026-09-10，构建通过，已推送） |
+| **M2 数据层** | Drizzle schema 9 张表 + 迁移 + seed | domain-modeling（如需建模）、implement | ⏳ 待开始 |
+| **M3 前台** | 首页（瀑布流+筛选）、相册、文章页（MDX+Shiki）、关于/友链、三主题 | **taste-skill（design-taste-frontend）**、impeccable `craft`/`audit` | ⏳ 待开始 |
+| **M4 后台** | Better Auth（密码+GitHub+关联）、引导流程、Milkdown 编辑器、管理 CRUD | implement、impeccable `operate` 相关 | ⏳ 待开始 |
+| **M5 存储/搜索/评论** | StorageDriver（VERCEL_BLOB/S3/GITHUB+jsDelivr）、minisearch、giscus | implement、tdd | ⏳ 待开始 |
+| **M6 定时/备份/SEO** | 定时发布两套实现、JSON 备份+导入、SEO/OG | implement、code-review | ⏳ 待开始 |
+| **质量收口** | 全量评审、bug 修复、上线前打磨 | tdd、code-review、diagnosing-bugs、verifier-hub、artifact-preview、impeccable `polish` | ⏳ 待开始 |
 
 ## 使用原则
 - **手动技能不自动跑**：grilling / to-spec / to-tickets / impeccable / code-review / implement 等，必须在对应阶段由用户或 Agent 显式调用，不得跳过阶段
