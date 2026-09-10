@@ -1,0 +1,57 @@
+# 技能调用流程（Skill Workflow）
+
+> 按项目阶段映射技能调用方式：**手动** = 人/Agent 主动触发；**自动** = 流程中随动作触发（hooks / 交付验证 / 提交钩子）。
+> 技能来源：mattpocock/skills（工程流程）、impeccable（设计系统）、taste-skill（前端实现品味）。
+
+## 技能来源速查
+
+| 来源 | 安装 | 状态 |
+|---|---|---|
+| mattpocock/skills（to-spec/to-tickets/triage/tdd/code-review/git-commit 等） | 已装（`S2/`） | ✅ 已配置（AGENTS.md + docs/agents/） |
+| impeccable（init/document/shape/critique/audit/polish） | 已装（`S2/impeccable`） | 首次使用需跑 `impeccable context` |
+| taste-skill（design-taste-frontend 等） | `npx skills add https://github.com/Leonxlnx/taste-skill` | ⏳ 本地/待装 |
+
+## 阶段 → 技能映射
+
+| 阶段 | 技能 | 调用方式 | 触发时机 |
+|---|---|---|---|
+| **规划 / 需求澄清** | grill-me / grilling | 手动 | 需求模糊时逐轮追问；本项目的 SPEC 已冻结 |
+| | to-questionnaire | 手动 | 决策无法自行回答时 |
+| **规格** | to-spec | 手动 | 需求明确 → 生成 spec 发布到 issue tracker |
+| | to-tickets | 手动 | spec 确认 → 拆为 tracer-bullet tickets |
+| | ADR（docs/adr/） | 手动 | 关键技术决策落档（已完成 0001-0006） |
+| **设计（UI）** | impeccable `context` | 手动 | 每会话首次（M3 前台启动时） |
+| | impeccable `init` / `document` | 手动 | **锁定 PRODUCT.md / DESIGN.md** |
+| | impeccable `shape` | 手动 | 新界面规划 UX/UI 后再写代码 |
+| | impeccable `critique` / `audit` | 手动 | 界面完成后的设计/技术评审 |
+| **开发** | implement | 手动 | 按 ticket 实现 |
+| | tdd | 手动 | 测试优先的功能 |
+| | codebase-design / domain-modeling | 按需 | 模块设计 / 术语建模时 |
+| | taste-skill（design-taste-frontend） | 手动 | **写前端组件时套用**（防 slop） |
+| | setup-pre-commit | 一次性 | M1 配置 Husky + lint-staged + 类型检查 |
+| **质量** | code-review | 手动 | 变更后按 diff 评审 |
+| | diagnosing-bugs | 按需 | 疑难 bug / 性能回退 |
+| | verifier-hub | 自动（交付前） | 确定性产物校验（文件/xlsx/docx/pdf 等） |
+| | artifact-preview | 自动（交付前） | 产物渲染预览（pdf/pptx/html 等） |
+| | impeccable `polish` | 手动 | 上线前最后打磨 |
+| **提交** | git-commit | 自动 | 每次 commit（conventional message + 智能暂存） |
+| | git-flow-branch-creator | 手动 | 创建分支时 |
+| **部署 / 运维** | 定时发布/备份（cron） | 自动 | Vercel 模式 cron-job.org / SERVER 模式 node-cron |
+| | triage / wayfinder | 按需 | issue 流转 / 路径规划 |
+| **交接** | handoff | 手动 | 会话压缩交接给其他 Agent |
+
+## 本项目阶段当前进度
+
+| 阶段 | 状态 |
+|---|---|
+| 规划 / 需求澄清 | ✅ 完成（SPEC v1.0 冻结，docs/SPEC.md） |
+| 规格 | ✅ 完成（SPEC + ADR 0001-0006） |
+| 工程配置 | ✅ 完成（AGENTS.md + docs/agents/） |
+| 设计（UI） | ⏳ M3 时启动 impeccable（先 init → document 锁定 DESIGN.md） |
+| 开发 | ⏳ 等待 M1 脚手架 |
+| 部署 / 运维 | ⏳ M6 |
+
+## 使用原则
+- **手动技能不自动跑**：grilling / to-spec / to-tickets / impeccable / code-review / implement 等，必须在对应阶段由用户或 Agent 显式调用，不得跳过阶段
+- **自动技能不手动补**：git-commit、verifier-hub、artifact-preview 在流程内自动触发，不需要也不应该人工重复执行
+- **顺序纪律**：设计文档（impeccable）在实现（taste-skill）之前；spec/tickets 在实现之前
