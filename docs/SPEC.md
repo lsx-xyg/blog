@@ -1,0 +1,326 @@
+# 个人博客项目规格说明书（SPEC v1.0）
+
+> 状态：**已冻结**（2026-09-10，经多轮设计评审确认）
+> 目标读者：开发者本人 + 实施 Agent
+> 本文档为唯一权威规格，实施以本文档为准。
+
+---
+
+## 1. 项目概述
+
+- **定位**：个人博客 + 生活相册 + 关于页 + 友链页，全中文内容
+- **参考站**：https://czhlove.cn/（刘承 blog）——借鉴其导航结构、文章卡片样式、标签筛选交互、"最新/精选"切换、加载更多
+- **架构**：Next.js 全栈（前后端一体，App Router）
+- **部署**：Vercel（免费起步，后期流量大再迁自有服务器）
+- **域名**：用户自有免费域名，DNS 托管 Cloudflare → 解析到 Vercel
+
+---
+
+## 2. 技术栈
+
+| 层 | 选型 | 说明 |
+|---|---|---|
+| 框架 | Next.js 15（App Router）+ TypeScript | 用户对 Next.js 零基础，从零搭建 |
+| 样式 | Tailwind CSS + CSS 变量三主题 | |
+| ORM | Drizzle ORM | schema 即代码，轻量 |
+| 数据库 | Neon (PostgreSQL) | 前期免费起步，后期可迁自有服务器 |
+| 认证 | Better Auth | 密码 + GitHub OAuth + 账号关联（Auth.js 已并入，官方推荐新项目用 Better Auth） |
+| MDX 渲染 | next-mdx-remote-client | 正文存 Markdown 原文，渲染走 MDX 管道 |
+| 代码高亮 | Shiki | |
+| 后台编辑器 | Milkdown | WYSIWYG Markdown，ProseMirror 内核，活跃维护 |
+| 搜索 | minisearch | 纯客户端搜索 |
+| 评论 | giscus | GitHub Discussions 驱动，零后端 |
+| 定时任务 | cron-job.org + node-cron | 按 DEPLOY_PLATFORM 双实现 |
+
+---
+
+## 3. 仓库结构（双公开仓库）
+
+| 仓库 | 用途 |
+|---|---|
+| Repo A（公开） | 博客代码 + giscus 评论（Discussions） |
+| Repo B（公开） | 纯图床：图片资产，jsDelivr CDN 加速；GitHub token 仅授 Repo B 的 Contents 写权限 |
+
+---
+
+## 4. 数据库设计（Neon PostgreSQL，枚举全大写）
+
+### 4.1 `users`（Better Auth 核心表扩展）
+Better Auth 自动创建 `user` / `session` / `account` / `verification` 表。
+`user` 表扩展字段：`is_admin boolean DEFAULT false`（管理员标记）。
+
+### 4.2 `posts` 文章表
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `id` | uuid PK | |
+| `slug` | text UNIQUE | URL 别名，手动填，留空用 ID 兜底 |
+| `title` | text | |
+| `summary` | text | 摘要，列表页展示 |
+| `content` | text | Markdown 原文 |
+| `cover_url` | text NULL | 封面图，可选 |
+| `status` | text CHECK ∈ {DRAFT, SCHEDULED, PUBLISHED} | 三态 |
+| `scheduled_at` | timestamptz NULL | 定时发布时间 |
+| `featured` | boolean DEFAULT false | 精选 |
+| `view_count` | integer DEFAULT 0 | 浏览量 |
+| `created_at` / `updated_at` / `published_at` | timestamptz | |
+
+### 4.3 `tags` 全局标签表（文章 + 相册共用一套）
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `id` | uuid PK | |
+| `name` | text UNIQUE | **原样存储**（大小写敏感，`Nextjs` ≠ `nextjs`） |
+| `slug` | text UNIQUE | 由 name 自动生成，冲突加后缀 |
+| `created_at` | timestamptz | |
+
+### 4.4 `post_tags` 关联表
+`post_id` FK → posts.id（ON DELETE CASCADE）、`tag_id` FK → tags.id（ON DELETE CASCADE），复合主键 (post_id, tag_id)
+
+### 4.5 `gallery_items` 相册表
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `id` | uuid PK | |
+| `title` / `description` | text | 可空 |
+| `featured` | boolean DEFAULT false | 精选 |
+| `image_url` | text | 存储抽象返回的公开 URL（GitHub 驱动为 jsDelivr 形态） |
+| `created_at` | timestamptz | 排序用，倒序展示 |
+
+### 4.6 `gallery_item_tags` 关联表
+`gallery_item_id` FK、`tag_id` FK（均 ON DELETE CASCADE），复合主键
+
+### 4.7 `settings` 键值配置表
+`key` text PK、`value` jsonb
+内置键：`site_title` / `site_description` / `footer_text` / `about_content`（Markdown）/ `admin_path`（后台路径覆盖）/ 社交链接等
+
+### 4.8 `friend_links` 友链表
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `id` | uuid PK | |
+| `name` | text | |
+| `url` | text | 对方博客/链接 |
+| `avatar_url` | text NULL | 缺省用 favicon 服务 |
+| `description` | text DEFAULT '' | |
+| `tags` | text[] DEFAULT '{}' | 友链标签，直接存数组，不建关联表 |
+| `sort_order` | integer DEFAULT 0 | |
+| `created_at` | timestamptz | |
+
+### 4.9 `backup_records` 备份记录表
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `id` | uuid PK | |
+| `file_key` | text | 存储中的备份文件 key |
+| `size` | bigint | |
+| `triggered_by` | text ∈ {MANUAL, AUTO} | |
+| `created_at` | timestamptz | |
+
+---
+
+## 5. 存储抽象（interface，多驱动）
+
+```
+interface StorageDriver {
+  getUploadUrl(...)  // 上传凭证（预签名 / 客户端直传）
+  delete(key)        // 删除
+  getPublicUrl(key)  // 公开访问 URL
+}
+```
+
+- `STORAGE_DRIVER = VERCEL_BLOB | S3 | GITHUB`
+  - **VERCEL_BLOB**：默认，客户端直传
+  - **S3**：@aws-sdk/client-s3，预签名 URL（R2 / OSS / MinIO 等任意 S3 兼容平台）
+  - **GITHUB**：Contents API 上传 → 返回 **jsDelivr 形态 URL** 存库；视频不走 GitHub
+- 图片组件统一懒加载（loading="lazy" + decoding="async"）
+- 备份上传复用同一 interface（见 §11）
+
+---
+
+## 6. 认证与后台入口
+
+- **Better Auth**：email/password + GitHub OAuth + 账号关联（登录后可在设置中关联 GitHub）
+- **引导流程（首次安装）**：
+  1. 用户表为空时，`/admin` 开放引导
+  2. 引导面板用 GitHub 登录，**第一个登录者直接置为 is_admin**
+  3. 可选 `SETUP_SECRET`：设置后引导需输入该密钥（防抢注窗口）
+- **引导完成后**：`/admin` 永久返回 404
+- **真实后台入口**：`ADMIN_PATH`（env 优先 → 无则查 DB settings 的 `admin_path` 覆盖），动态路由 `/[adminSlug]`，路由不匹配一律 404 伪装（不返回 403/302）
+- **前台入口**：登录且 is_admin 时导航栏显示"管理"按钮，跳转后台
+- 评论区的 giscus GitHub 登录与后台登录**完全隔离**（iframe 内独立 OAuth App，互不影响）
+
+---
+
+## 7. 前台页面
+
+导航菜单：**首页 | 相册 | 关于 | 友链**
+
+| 路由 | 内容 |
+|---|---|
+| `/` | 首页：文章瀑布流 + 无限滚动 + 顶部标签多选筛选（横排，照参考站样式）+ "最新/精选"切换 + 搜索框 |
+| `/posts/[slug]` | 文章页：TOC、Shiki 高亮 + 复制按钮、懒加载图、浏览量、giscus 评论；文章卡片样式照参考站（日期/标题/摘要/标签/封面/"更多阅读"） |
+| `/gallery` | 相册：瀑布流 + 无限滚动 + **隐藏式**标签筛选面板（多选）+ 最新/精选切换 |
+| `/about` | 关于页：渲染 settings.about_content（Markdown） |
+| `/friends` | 友链页：friend_links 卡片展示 |
+| `/sitemap.xml` `/robots.txt` `/rss.xml` | SEO 三件套 |
+
+**筛选架构（方案 A，纯客户端）**：
+- 首页/相册启动时拉取**全量轻量元数据**（`/api/search-index`：文章标题/摘要/封面/标签/日期/精选 + 相册元数据）
+- 前端负责：瀑布流分批渲染、无限滚动、标签多选筛选、最新/精选排序、搜索
+- **URL 不变**（与参考站一致，筛选状态为前端 state）
+- `SEARCH_MODE=DATABASE` 时切换服务端过滤（开关预留，默认 CLIENT）
+
+---
+
+## 8. 后台功能（/[adminSlug]）
+
+| 页面 | 功能 |
+|---|---|
+| 文章管理 | 三态筛选（草稿/定时/发布）、新建/编辑/删除、精选标记 |
+| 编辑器 | Milkdown WYSIWYG；标签输入 = **可搜索下拉 combobox**（列出已有标签可搜可选，输入不存在时回车自动创建）；图片拖拽/粘贴上传 |
+| 相册管理 | 图片上传/编辑/删除、精选标记、标签 |
+| 友链管理 | CRUD |
+| 标签管理 | 编辑/删除（删除时自动清除文章/相册上的关联） |
+| 备份 | 见 §11 |
+| 设置 | site_title / description / footer / about_content / admin_path / 社交链接 |
+
+**标签录入逻辑**：combobox 打开显示已有标签 → 选择或输入新建 → 服务端按 name 精确匹配（大小写敏感）复用已有 tag_id，不存在则新建（name 原样存储 + 生成 slug）。
+
+---
+
+## 9. 主题系统
+
+三色主题（CSS 变量，一套组件）：
+
+| 主题 | 背景 | 前景 |
+|---|---|---|
+| light（白） | `rgb(228,228,231)` | `rgb(39,39,42)` |
+| dark（黑） | `rgb(39,39,42)` | `rgb(228,228,231)` |
+| sepia（护眼） | `rgb(214,209,194)` | `rgb(39,39,42)` |
+
+- **默认跟随系统**：首次访问无手动选择时按 `prefers-color-scheme`（浅色→白、深色→黑）
+- 导航栏三色切换按钮，手动选择写 `data-theme` + localStorage 记忆
+- 移动端/PC 端响应式
+
+---
+
+## 10. 定时发布
+
+- **固定扫描任务方案**（非每篇动态建任务）：
+  - 接口：`GET /api/cron/publish-scheduled`（`CRON_SECRET` 鉴权，幂等）
+  - 逻辑：扫描 `scheduled_at <= now AND status='SCHEDULED'` → 置为 PUBLISHED → revalidate
+- **双实现（`DEPLOY_PLATFORM=VERCEL | SERVER`）**：
+  - `VERCEL`：cron-job.org 一个固定任务（每 5 分钟）触发上述接口
+  - `SERVER`：node-cron 直调同一核心逻辑（默认 `ENABLED=false`，服务器上开启）
+- `CRON_SECRET`：固定 token（`node:crypto` 生成，`npm run gen:secret` 脚本），存 Vercel env + cron-job.org 请求 header `Authorization: Bearer <token>`
+- 注意：cron-job.org 最小间隔 1 分钟、无重试机制 → 接口幂等兜底
+
+---
+
+## 11. 备份与恢复（v1 简化版）
+
+**范围**：全量备份所有业务表（posts / tags / post_tags / gallery_items / gallery_item_tags / settings / friend_links / users / account），**不含 session / verification**。图片本体在存储层，不在备份范围。
+
+- **格式**：JSON 文件（schema 版本号 + 导出时间 + 各表数据数组）
+- **导出**：手动 → 生成 JSON 直接**下载到本地**；定时 → 上传到备份存储
+- **导入**：上传 JSON → 校验版本 → 事务内按外键顺序恢复（tags → posts → gallery_items → 关联表 → settings → friend_links → users/account）→ **覆盖式**，失败整体回滚；确认弹窗含覆盖警告
+- **定时备份**：复用 `StorageDriver`，`BACKUP_DRIVER = VERCEL_BLOB | S3 | GITHUB | LOCAL`，走 `backups/` 前缀；`VERCEL` 模式 cron-job.org 每日触发 `GET /api/cron/backup`，`SERVER` 模式 node-cron 每日；自动备份保留 7 份（`BACKUP_RETENTION`），旧备份自动删除
+- **历史**：后台备份页显示 backup_records（时间/大小/来源），可下载、可删除
+- ⚠️ **安全提醒**：备份含账号表数据（邮箱等）；`BACKUP_DRIVER=GITHUB` 上传时若 repo 公开，账号信息会公开——部署时自行权衡（私有 repo 或接受）
+
+---
+
+## 12. 环境变量（全大写 + 小写自动转大写兜底）
+
+```ini
+# 数据库
+DATABASE_URL
+# 认证
+BETTER_AUTH_SECRET
+BETTER_AUTH_URL
+GITHUB_CLIENT_ID
+GITHUB_CLIENT_SECRET
+# 存储
+STORAGE_DRIVER=VERCEL_BLOB|S3|GITHUB
+BLOB_READ_WRITE_TOKEN
+S3_ENDPOINT
+S3_REGION
+S3_BUCKET
+S3_ACCESS_KEY_ID
+S3_SECRET_ACCESS_KEY
+S3_PUBLIC_BASE_URL
+GITHUB_STORAGE_TOKEN
+GITHUB_STORAGE_OWNER
+GITHUB_STORAGE_REPO
+GITHUB_STORAGE_BRANCH
+GITHUB_STORAGE_CDN_BASE   # jsDelivr
+# 定时
+CRON_SECRET
+DEPLOY_PLATFORM=VERCEL|SERVER
+# 后台入口
+ADMIN_PATH          # 可选，DB settings 可覆盖
+SETUP_SECRET        # 可选，引导保护
+# 搜索
+SEARCH_MODE=CLIENT|DATABASE
+# 备份
+BACKUP_DRIVER=VERCEL_BLOB|S3|GITHUB|LOCAL
+BACKUP_RETENTION=7
+# 站点
+NEXT_PUBLIC_SITE_URL
+```
+
+---
+
+## 13. API 清单
+
+| 路由 | 鉴权 | 用途 |
+|---|---|---|
+| `/api/auth/*` | Better Auth | 登录（密码/GitHub/账号关联） |
+| `/api/search-index` | 公开 | 全量轻量元数据（文章+相册），驱动筛选/搜索/瀑布流 |
+| `/api/posts/[slug]/views` | 公开 | 浏览量 +1（客户端上报） |
+| `/api/storage/upload-url` | admin | 上传凭证（图片） |
+| `/api/admin/posts*` | admin | 文章 CRUD / 发布（含定时） |
+| `/api/admin/gallery*` | admin | 相册 CRUD |
+| `/api/admin/tags*` | admin | 标签 CRUD |
+| `/api/admin/friend-links*` | admin | 友链 CRUD |
+| `/api/admin/settings` | admin | 设置读写 |
+| `/api/admin/backups/export` | admin | 全量备份下载 |
+| `/api/admin/backups/import` | admin | 上传恢复 |
+| `/api/admin/backups` | admin | 历史列表 / 删除 |
+| `/api/cron/publish-scheduled` | CRON_SECRET | 定时发布扫描 |
+| `/api/cron/backup` | CRON_SECRET | 定时全量备份 |
+| `/api/rss` | 公开 | RSS/Atom |
+| `/sitemap.ts` `/robots.ts` | — | SEO 静态输出 |
+
+---
+
+## 14. 开发里程碑
+
+| 里程碑 | 内容 |
+|---|---|
+| M1 | 脚手架：Next 15 + TS + Tailwind + Drizzle + Neon 连通 |
+| M2 | 数据层：全部 schema + 存储三驱动（Blob/S3/GitHub） |
+| M3 | 前台：首页瀑布流、文章页、MDX 渲染、三色主题 |
+| M4 | 功能：筛选/搜索/精选/浏览量/评论/SEO/关于/友链 |
+| M5 | 后台：引导流程、认证、文章/相册/友链/标签/设置管理、Milkdown 编辑器 |
+| M6 | 定时发布 + 备份 + 部署 Vercel + Cloudflare 域名 |
+
+---
+
+## 15. 部署清单（用户需准备）
+
+1. GitHub 双仓库（Repo A 代码 / Repo B 图床）
+2. GitHub OAuth App（后台登录用）
+3. Neon 项目（创建数据库，取 DATABASE_URL）
+4. cron-job.org 账号（两个固定任务：每 5 分钟发布扫描 / 每日备份）
+5. Vercel 项目（连接 Repo A，配置全部 env）
+6. Cloudflare DNS（免费域名解析到 Vercel）
+7. giscus 配置（Repo A 开启 Discussions，后台填入仓库名）
+
+---
+
+## 16. 风险与注意记录
+
+| 项 | 说明 |
+|---|---|
+| 备份含账号数据 | GitHub 驱动上传公开 repo 会公开账号信息，部署时权衡 |
+| cron-job.org 无重试 | 定时接口幂等设计兜底，失败下次扫描自愈 |
+| Vercel Hobby 限制 | 自带 Cron 仅每日一次 → 必须用外部 cron-job.org（已定） |
+| 引导抢注窗口 | 部署后尽快完成引导，或设置 SETUP_SECRET |
+| GitHub 图床 | 单文件 ≤50MB，视频不走 GitHub；jsDelivr 有流量治理政策 |
