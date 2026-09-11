@@ -136,12 +136,15 @@ export async function listPublishedPostsFiltered(opts?: {
     );
   }
   if (tagNames?.length) {
-    // AND 语义：帖子必须同时拥有每个标签（按 tag 名匹配）
-    for (const name of tagNames) {
-      where.push(
-        sql`exists (select 1 from ${postTags} pt join ${tags} t on t.id = pt.tag_id where pt.post_id = ${posts.id} and t.name = ${name})`,
-      );
-    }
+    // OR 语义：命中任一标签即匹配（与前端方案 A 一致）
+    where.push(
+      sql`(${sql.join(
+        tagNames.map(
+          (name) => sql`exists (select 1 from ${postTags} pt join ${tags} t on t.id = pt.tag_id where pt.post_id = ${posts.id} and t.name = ${name})`,
+        ),
+        sql.raw(" or "),
+      )})`,
+    );
   }
   const queryBuilder = db
     .select()

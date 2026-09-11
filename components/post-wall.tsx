@@ -119,11 +119,11 @@ export function PostWall({
 
   const toggleFeatured = useCallback(() => setOnlyFeatured((v) => !v), []);
 
-  // 前端过滤：标签（AND 全命中）→ 精选 → minisearch 搜索
+  // 前端过滤：标签（OR 语义，命中任一）→ 精选 → minisearch 搜索
   const filtered = useMemo(() => {
     let list = metas;
     if (selectedTags.length) {
-      list = list.filter((p) => selectedTags.every((t) => p.tags.includes(t)));
+      list = list.filter((p) => selectedTags.some((t) => p.tags.includes(t)));
     }
     if (onlyFeatured) list = list.filter((p) => p.featured);
     const q = query.trim();
