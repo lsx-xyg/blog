@@ -6,13 +6,13 @@ export const metadata = {
   description: "林圣轩的个人博客：技术写作与生活记录",
 };
 
-// 实时渲染：博客低流量，发布/删除立即可见（T7 前台改客户端拉取后演进）
+// 实时渲染：博客低流量，发布/删除立即可见（T7 前台客户端拉取元数据）
 export const dynamic = "force-dynamic";
 
 const PAGE_SIZE = 9;
 
 export default async function Home() {
-  // 首屏 SSR 第一页，后续由 PostWall 滚动加载（瀑布流 + 增量）
+  // 首屏 SSR 第一页（SEO），PostWall 挂载后拉全量元数据做筛选/搜索/分批渲染
   const initialPosts = await listPublishedPosts({ limit: PAGE_SIZE });
 
   return (
@@ -28,13 +28,7 @@ export default async function Home() {
         </p>
       </header>
 
-      {initialPosts.length === 0 ? (
-        <section className="rounded-xl border border-border bg-surface p-12 text-center text-fg-muted">
-          还没有已发布的文章，去后台写第一篇吧。
-        </section>
-      ) : (
-        <PostWall initialPosts={initialPosts} pageSize={PAGE_SIZE} />
-      )}
+      <PostWall initialPosts={initialPosts} pageSize={PAGE_SIZE} />
     </main>
   );
 }

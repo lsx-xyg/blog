@@ -1,8 +1,18 @@
 import Link from "next/link";
 import { formatDate } from "@/lib/utils";
-import type { Post } from "@/db/schema";
 
-export function PostCard({ post }: { post: Post }) {
+/** 卡片所需字段（兼容 db Post 与 search-index JSON 两种来源） */
+export type CardPost = {
+  id: string;
+  slug: string | null;
+  title: string;
+  summary: string | null;
+  coverUrl: string | null;
+  publishedAt: Date | string | null;
+  createdAt: Date | string | null;
+};
+
+export function PostCard({ post }: { post: CardPost }) {
   const href = `/posts/${post.slug ?? post.id}`;
   return (
     <Link

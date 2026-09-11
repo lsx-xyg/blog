@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { authClient } from "@/lib/auth-client";
 import { isAdminUser } from "@/lib/utils";
+import { ThemeToggle } from "@/components/theme-toggle";
 
-/** 前台顶栏：登录且 is_admin 时显示管理按钮（SPEC §6） */
+/** 前台顶栏：登录且 is_admin 时显示管理按钮（SPEC §6）+ 三主题切换（T7） */
 export function SiteHeader({ adminPath }: { adminPath: string }) {
   const { data: session } = authClient.useSession();
 
@@ -15,6 +16,7 @@ export function SiteHeader({ adminPath }: { adminPath: string }) {
           blog
         </Link>
         <div className="flex items-center gap-4 text-sm">
+          <ThemeToggle />
           {isAdminUser(session?.user as { isAdmin?: boolean } | undefined) && (
             <Link href={`/${adminPath}`} className="text-accent hover:underline">
               后台

@@ -57,7 +57,7 @@
 |---|---|---|---|
 | **M1 脚手架** | Next.js 15 + TS + Tailwind + Drizzle 初始化；git 关联 blog 仓库 | setup-pre-commit（一次性）、git-commit | ✅ 已完成（2026-09-10，构建通过，已推送） |
 | **M2 数据层** | Drizzle schema 9 张表 + 迁移 + seed | domain-modeling（如需建模）、implement | 🚧 进行中：**T1 schema+迁移 ✅**（2026-09-11，12 表落库验证通过），seed 待做 |
-| **M3 前台** | 首页（瀑布流+筛选）、相册、文章页（MDX+Shiki）、关于/友链、三主题 | **taste-skill（design-taste-frontend）**、impeccable `craft`/`audit` | 🚧 进行中：**T4 文章闭环 ✅**（2026-09-11，列表+详情+MDX+Shiki+浏览量 e2e 通过），瀑布流/筛选待 T7 |
+| **M3 前台** | 首页（瀑布流+筛选）、相册、文章页（MDX+Shiki）、关于/友链、三主题 | **taste-skill（design-taste-frontend）**、impeccable `craft`/`audit` | 🚧 进行中：**T4 文章闭环 ✅**（2026-09-11）、**T7 前台筛选搜索精选 ✅**（2026-09-11，瀑布流+标签AND筛选+精选+minisearch中文搜索+三主题切换/记忆/防FOUC，e2e 通过），相册 T5 待做 |
 | **M4 后台** | Better Auth（密码+GitHub+关联）、引导流程、Milkdown 编辑器、管理 CRUD | implement、impeccable `operate` 相关 | 🚧 进行中：**T8 认证与后台入口 ✅**（2026-09-11，引导+自动管理员+动态路径+API 鉴权 e2e 通过，GitHub OAuth 本地已验证），Milkdown 编辑器待 T9 |
 | **M5 存储/搜索/评论** | StorageDriver（VERCEL_BLOB/S3/GITHUB+jsDelivr）、minisearch、giscus | implement、tdd | ⏳ 待开始 |
 | **M6 定时/备份/SEO** | 定时发布两套实现、JSON 备份+导入、SEO/OG | implement、code-review | ⏳ 待开始 |

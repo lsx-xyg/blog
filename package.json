@@ -17,6 +17,7 @@
     "better-auth": "^1.7.4",
     "dotenv": "^17.4.2",
     "drizzle-orm": "^0.45.2",
+    "minisearch": "^7.2.0",
     "next": "^15.1.0",
     "next-mdx-remote-client": "^2.1.12",
     "postgres": "^3.4.9",

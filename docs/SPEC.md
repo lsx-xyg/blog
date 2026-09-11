@@ -176,6 +176,14 @@ interface StorageDriver {
 - **URL 不变**（与参考站一致，筛选状态为前端 state）
 - `SEARCH_MODE=DATABASE` 时切换服务端过滤（开关预留，默认 CLIENT）
 
+> **实施记录（T7，2026-09-11）**：
+> - `/api/search-index`：文章已实现（含标签数组，join post_tags+tags）；相册返回结构就位（gallery 表数据为空，T5 闭环后自动有数据）。
+> - 首页：SSR 首屏 9 条（SEO 保底）→ `PostWall` 挂载后拉 `/api/search-index` 全量替换数据源；CSS columns 瀑布流（卡片高度自适应错落）+ IntersectionObserver 每次 +9 条；筛选/搜索全前端 state（URL 不变）。
+> - 标签多选 = **AND 语义**（需同时拥有全部选中标签）；"最新/精选"切换；空结果有引导文案。
+> - 搜索用 **minisearch**（fields: title/summary/tags，prefix+fuzzy）：默认 tokenizer 不支持中文（整段中文成一个 token 搜不到），已自定义 **CJK 分词**（拉丁按词、中文单字+bigram 索引）——中文关键词可命中。
+> - `SEARCH_MODE=DATABASE` 预留：`/api/posts` 已支持 `tags`（逗号分隔 AND）/`featured=1`/`q`（ilike 标题+摘要+标签）服务端过滤，前端接入开关留待启用时。
+> - 主题三态（§9 实施）见下。e2e 已验证：标签 AND 筛选、精选、中文搜索、主题切换/记忆/防 FOUC，typecheck+build 通过。
+
 ---
 
 ## 8. 后台功能（/[adminSlug]）
@@ -205,8 +213,14 @@ interface StorageDriver {
 | sepia（护眼） | `rgb(214,209,194)` | `rgb(39,39,42)` |
 
 - **默认跟随系统**：首次访问无手动选择时按 `prefers-color-scheme`（浅色→白、深色→黑）
-- 导航栏三色切换按钮，手动选择写 `data-theme` + localStorage 记忆
+- 导航栏三色切换按钮，手动选择写 `localStorage["theme"]` + 记忆
 - 移动端/PC 端响应式
+
+> **实施记录（T7，2026-09-11）**：
+> - 实现为 `html.dark` / `html.sepia` class（globals.css tokens 已按此定义），**未用 data-theme**（SPEC 原描述调整——class 与 CSS 变量方案一致、实现更简）。
+> - `lib/theme.ts`：`applyTheme(mode)`（system 时按 matchMedia 判断）+ `getStoredTheme()`；layout.tsx `<head>` 内联 `THEME_INIT_SCRIPT` 首屏防 FOUC（渲染前同步应用）。
+> - 切换组件 `components/theme-toggle.tsx`：跟随系统/深色/护眼三态胶囊按钮，激活态反色。
+> - 已 e2e 验证：三态切换即时生效、刷新后主题保留（localStorage + 防 FOUC 无闪烁）。
 
 ---
 
