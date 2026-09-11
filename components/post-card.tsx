@@ -7,7 +7,7 @@ export function PostCard({ post }: { post: Post }) {
   return (
     <Link
       href={href}
-      className="group flex flex-col rounded-xl border border-border bg-surface p-5 transition duration-150 hover:-translate-y-0.5 hover:border-fg-faint hover:shadow-sm"
+      className="group mb-5 flex break-inside-avoid flex-col rounded-xl border border-border bg-surface p-5 transition duration-150 hover:-translate-y-0.5 hover:border-fg-faint hover:shadow-sm"
     >
       {post.coverUrl ? (
         <div className="mb-4 aspect-video overflow-hidden rounded-lg bg-selection">

@@ -5,13 +5,20 @@ import { and, desc, eq, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { posts } from "@/db/schema";
 
-/** 已发布文章列表（按发布时间倒序，publishedAt 为空用 createdAt 兜底） */
-export async function listPublishedPosts() {
-  return db
+/** 已发布文章列表（按发布时间倒序，publishedAt 为空用 createdAt 兜底；支持分页） */
+export async function listPublishedPosts(opts?: {
+  limit?: number;
+  offset?: number;
+}) {
+  const { limit, offset } = opts ?? {};
+  const query = db
     .select()
     .from(posts)
     .where(eq(posts.status, "PUBLISHED"))
     .orderBy(sql`coalesce(${posts.publishedAt}, ${posts.createdAt}) desc`);
+  if (limit != null) query.limit(limit);
+  if (offset != null) query.offset(offset);
+  return query;
 }
 
 /** 按 slug 或 id（slug 留空时用 ID 兜底）查已发布文章 */
