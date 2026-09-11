@@ -26,7 +26,7 @@ export function PostToolbar({
           value={query}
           onChange={(e) => onQueryChange(e.target.value)}
           placeholder="搜索文章…"
-          className="h-9 flex-1 rounded-lg border border-border bg-surface px-3 text-sm outline-none transition placeholder:text-fg-faint focus:border-accent"
+          className="h-9 flex-1 rounded-lg border border-border bg-surface px-3 text-sm outline-none transition placeholder:text-fg-faint focus:border-ring"
         />
         <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border bg-surface p-0.5 text-xs">
           {(
@@ -62,7 +62,7 @@ export function PostToolbar({
                 onClick={() => onToggleTag(tag)}
                 className={`rounded-full border px-2.5 py-1 text-xs transition ${
                   active
-                    ? "border-accent bg-accent/10 text-accent"
+                    ? "border-primary bg-primary/10 text-primary"
                     : "border-border text-fg-muted hover:text-fg"
                 }`}
               >

@@ -70,7 +70,7 @@ export function SetupWizard({ needsSecret, adminPath }: { needsSecret: boolean; 
   };
 
   const input =
-    "rounded-lg border border-border bg-surface-strong px-3 py-2 text-sm outline-none focus:border-accent";
+    "rounded-lg border border-border bg-surface-strong px-3 py-2 text-sm outline-none focus:border-ring";
   const label = "text-xs font-medium text-fg-muted";
 
   if (!secretOk) {
@@ -94,7 +94,7 @@ export function SetupWizard({ needsSecret, adminPath }: { needsSecret: boolean; 
         <button
           type="submit"
           disabled={busy}
-          className="mt-4 w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="mt-4 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
         >
           {busy ? "验证中…" : "验证密钥"}
         </button>
@@ -145,7 +145,7 @@ export function SetupWizard({ needsSecret, adminPath }: { needsSecret: boolean; 
         <button
           type="submit"
           disabled={busy}
-          className="mt-4 w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="mt-4 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
         >
           {busy ? "创建中…" : "创建账号"}
         </button>

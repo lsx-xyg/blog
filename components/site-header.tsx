@@ -18,7 +18,7 @@ export function SiteHeader({ adminPath }: { adminPath: string }) {
         <div className="flex items-center gap-4 text-sm">
           <ThemeToggle />
           {isAdminUser(session?.user as { isAdmin?: boolean } | undefined) && (
-            <Link href={`/${adminPath}`} className="text-accent hover:underline">
+            <Link href={`/${adminPath}`} className="text-primary hover:underline">
               后台
             </Link>
           )}

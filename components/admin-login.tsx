@@ -42,7 +42,7 @@ export function AdminLogin({ adminPath }: { adminPath: string }) {
   };
 
   const input =
-    "rounded-lg border border-border bg-surface-strong px-3 py-2 text-sm outline-none focus:border-accent";
+    "rounded-lg border border-border bg-surface-strong px-3 py-2 text-sm outline-none focus:border-ring";
   const label = "text-xs font-medium text-fg-muted";
 
   return (
@@ -82,7 +82,7 @@ export function AdminLogin({ adminPath }: { adminPath: string }) {
         <button
           type="submit"
           disabled={busy}
-          className="mt-4 w-full rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+          className="mt-4 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
         >
           {busy ? "登录中…" : "密码登录"}
         </button>

@@ -119,7 +119,7 @@ export function ManagePosts() {
   };
 
   const input =
-    "rounded-lg border border-border bg-surface-strong px-3 py-2 text-sm outline-none focus:border-accent";
+    "rounded-lg border border-border bg-surface-strong px-3 py-2 text-sm outline-none focus:border-ring";
   const label = "text-xs font-medium text-fg-muted";
 
   return (
@@ -216,7 +216,7 @@ export function ManagePosts() {
               type="checkbox"
               checked={form.featured}
               onChange={(e) => set("featured", e.target.checked)}
-              className="accent-[--accent]"
+              className="accent-primary"
             />
             精选
           </label>
@@ -233,7 +233,7 @@ export function ManagePosts() {
             <button
               type="submit"
               disabled={loading}
-              className="rounded-lg bg-accent px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
             >
               {loading ? "保存中…" : editingId ? "保存修改" : "创建文章"}
             </button>
@@ -280,7 +280,7 @@ export function ManagePosts() {
                 </span>
                 <button
                   onClick={() => startEdit(p)}
-                  className="shrink-0 text-accent hover:underline"
+                  className="shrink-0 text-primary hover:underline"
                 >
                   编辑
                 </button>

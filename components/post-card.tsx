@@ -34,7 +34,7 @@ export function PostCard({ post }: { post: CardPost }) {
       <p className="font-mono text-xs text-fg-muted">
         {formatDate(post.publishedAt ?? post.createdAt)}
       </p>
-      <h2 className="mt-2 text-lg font-semibold leading-snug text-fg group-hover:text-accent">
+      <h2 className="mt-2 text-lg font-semibold leading-snug text-fg group-hover:text-primary">
         {post.title}
       </h2>
       {post.summary ? (
@@ -42,7 +42,7 @@ export function PostCard({ post }: { post: CardPost }) {
           {post.summary}
         </p>
       ) : null}
-      <span className="mt-4 font-mono text-xs text-fg-muted transition group-hover:text-accent">
+      <span className="mt-4 font-mono text-xs text-fg-muted transition group-hover:text-primary">
         更多阅读 →
       </span>
     </Link>
