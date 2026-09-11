@@ -147,6 +147,14 @@ interface StorageDriver {
 - **前台入口**：登录且 is_admin 时导航栏显示"管理"按钮，跳转后台
 - 评论区的 giscus GitHub 登录与后台登录**完全隔离**（iframe 内独立 OAuth App，互不影响）
 
+> **实施记录（T8，2026-09-11）**：
+> - 首个管理员产生机制按用户确认方案：**非白名单**。`databaseHooks.user.create.after` 中当用户表 `count <= 1` 时将该用户置 `isAdmin = true`——即第一个创建/登录的用户自动成为管理员（密码注册与 GitHub 登录均触发），引导完成后再创建的用户为普通用户。
+> - 后台路径解析 `getAdminPath()`：`ADMIN_PATH` env 优先，去首尾斜杠，无则兜底 `"admin"`；**DB settings 覆盖（T2 时实现，SPEC 已规划）**。当前本地 env 配置 `ADMIN_PATH=dashboard`。
+> - 守卫逻辑：`app/[adminSlug]/*` 路由不匹配 → `notFound()`（404 伪装）；匹配但未登录 → 渲染登录页（仅根路径，posts 等子页 404）；登录但非管理员 → `notFound()`。后台 API（`/api/admin/*`）统一 `requireAdmin(req)`，未登录/非管理员返回 404。
+> - 前台入口按钮文案"后台"，`components/site-header.tsx` 用 `authClient.useSession()` + `isAdminUser()`（纯函数在 `lib/utils.ts`，client/server 通用——client 组件不可引含服务端 DB 依赖的模块）。
+> - GitHub 登录按钮在未配置 `GITHUB_CLIENT_ID/SECRET` 时按预期报错（Better Auth 行为），部署前需配置 OAuth App。
+> - e2e 已验证（2026-09-11）：引导页渲染、密码注册 → 首个用户自动管理员、引导完成 `/admin` 404、`/dashboard` 登录页/登录后后台面板/文章管理、未登录 API 404、未匹配路径 404、前台"后台"按钮。
+
 ---
 
 ## 7. 前台页面

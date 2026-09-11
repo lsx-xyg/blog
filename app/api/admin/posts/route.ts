@@ -4,18 +4,20 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { posts } from "@/db/schema";
 import { listAllPosts } from "@/lib/posts";
+import { requireAdmin, adminDenied } from "@/lib/auth-guard";
 
-// TODO(T8): 接入 Better Auth 后需 admin 鉴权（未授权一律 404 伪装）
 export const dynamic = "force-dynamic";
 
 /** 后台：全部文章（含草稿/定时），最新在前 */
-export async function GET() {
+export async function GET(req: Request) {
+  if (!(await requireAdmin(req))) return adminDenied();
   const rows = await listAllPosts();
   return NextResponse.json({ posts: rows });
 }
 
 /** 后台：创建文章（slug 留空 → 用 ID 兜底，SPEC §4.2） */
 export async function POST(req: Request) {
+  if (!(await requireAdmin(req))) return adminDenied();
   const body = await req.json().catch(() => null);
   if (!body || typeof body.title !== "string" || typeof body.content !== "string") {
     return NextResponse.json({ error: "title 和 content 必填" }, { status: 400 });

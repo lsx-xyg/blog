@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { getAdminPath } from "@/lib/admin-path";
+import { SiteHeader } from "@/components/site-header";
 
 export const metadata: Metadata = {
   title: "blog",
@@ -14,7 +16,10 @@ export default function RootLayout({
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       {/* suppressHydrationWarning：忽略浏览器扩展注入属性（如 data-atm-ext-installed）导致的水合差异 */}
-      <body suppressHydrationWarning>{children}</body>
+      <body suppressHydrationWarning>
+        <SiteHeader adminPath={getAdminPath()} />
+        {children}
+      </body>
     </html>
   );
 }

@@ -3,8 +3,8 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { posts } from "@/db/schema";
+import { requireAdmin, adminDenied } from "@/lib/auth-guard";
 
-// TODO(T8): 接入 Better Auth 后需 admin 鉴权（未授权一律 404 伪装）
 export const dynamic = "force-dynamic";
 
 /** 后台：更新文章（slug 留空 → 用 ID 兜底；置为 PUBLISHED 时补 publishedAt） */
@@ -12,6 +12,7 @@ export async function PUT(
   req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  if (!(await requireAdmin(req))) return adminDenied();
   const { id } = await params;
   const body = await req.json().catch(() => null);
   if (!body) {
@@ -66,9 +67,10 @@ export async function PUT(
 
 /** 后台：删除文章（关联 post_tags 由外键 CASCADE 清理） */
 export async function DELETE(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  if (!(await requireAdmin(req))) return adminDenied();
   const { id } = await params;
   const existing = await db.select().from(posts).where(eq(posts.id, id)).limit(1);
   const [deleted] = await db

@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 /**
- * T4 最小管理页（无鉴权，T8 接入认证后此页将迁移到后台动态路由并受保护）
+ * T8 后台文章管理（受动态路径保护，服务端已做 admin 鉴权）
  * T9 将用 Milkdown 编辑器替换 textarea
  */
 type PostRow = {
@@ -32,7 +32,7 @@ const emptyForm = {
   scheduledAt: "",
 };
 
-export default function ManagePosts() {
+export function ManagePosts() {
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
