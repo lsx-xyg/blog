@@ -225,6 +225,14 @@ interface StorageDriver {
 > - 已 e2e 验证：三态切换即时生效、刷新后主题保留（localStorage + 防 FOUC 无闪烁）。
 > - **滚动条**：全局隐藏（`*{scrollbar-width:none}` + `::-webkit-scrollbar{display:none}`），避免滚动条出现/消失引起布局跳动。
 
+> **T7.1 视觉精修（2026-09-11，commit a9e0b19）**：
+> - **shadcn 裸 HSL 变量体系**：globals.css 重构为标准 shadcn 变量（`:root`/`html.dark`/`html.sepia` 三套**裸 HSL 三元组**如 `--background: 46 48% 96%`，body 用 `hsl(var(--background))` 包裹），`@theme inline` 映射 `--color-*: hsl(var(--*))`，保留旧变量名（`--bg`/`--fg`/`--surface` 等）作为兼容别名。**关键坑**：裸 HSL 三元组必须用 `hsl(var())` 包裹，直接 `background: var(--background)` 会被浏览器当成现代 RGB 语法解析成深蓝紫。
+> - **字体**：引入 **LXGW WenKai Screen（霞鹜文楷屏显）**，参考站 czhlove.cn 同款。layout.tsx `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css">`，包已做 unicode-range 子集化按需加载。`--font-sans` 优先该字体，fallback 系统字体。**注意**：字体 `@import` 不能放在 `@import "tailwindcss"` 之前，会破坏 Tailwind 编译——必须用 `<link>` 标签。
+> - **组件类名迁移**：`bg-accent`→`bg-primary`、`text-accent`→`text-primary`、`focus:border-accent`→`focus:border-ring`、`accent-[--accent]`→`accent-primary`，对齐 shadcn 语义。
+> - **瀑布流**：`columns-1 sm:columns-2`（最大 2 列），对齐参考站布局（原 `lg:columns-3` 改为 2 列）。
+> - **标签筛选**：AND→OR 语义（`some()` + SQL `exists OR` 组合），参考站行为。
+> - 已 e2e 验证：三主题渲染正常、字体加载、2列瀑布流、OR 筛选。
+
 ---
 
 ## 10. 定时发布
