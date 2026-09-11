@@ -1,4 +1,5 @@
-import "dotenv/config";
+// 与 Next.js 加载规则对齐：.env → .env.local → .env.<NODE_ENV> → .env.<NODE_ENV>.local
+import "./db/load-env";
 import { defineConfig } from "drizzle-kit";
 import { env } from "./db/env";
 
