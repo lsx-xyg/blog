@@ -2,7 +2,7 @@
  * 数据库连通性测试：npm run db:test
  * 验证 DATABASE_URL 可用并返回数据库信息
  */
-import "dotenv/config";
+import "../db/load-env";
 import postgres from "postgres";
 import { env } from "../db/env";
 

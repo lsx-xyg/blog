@@ -1,4 +1,4 @@
-import "dotenv/config";
+import "../db/load-env";
 import postgres from "postgres";
 import { env } from "../db/env";
 
