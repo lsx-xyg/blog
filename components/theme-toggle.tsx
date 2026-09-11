@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import { applyTheme, getStoredTheme, type ThemeMode } from "@/lib/theme";
 
 const OPTIONS: { value: ThemeMode; label: string }[] = [
-  { value: "system", label: "跟随系统" },
+  { value: "light", label: "浅色" },
   { value: "dark", label: "深色" },
   { value: "sepia", label: "护眼" },
+  { value: "system", label: "跟随系统" },
 ];
 
-/** 三主题切换（DESIGN.md：黑/白/护眼，跟随系统默认 + localStorage 记忆） */
+/** 四主题切换（浅色/深色/护眼/跟随系统，localStorage 记忆 + 防 FOUC） */
 export function ThemeToggle() {
   const [mode, setMode] = useState<ThemeMode>("system");
 
