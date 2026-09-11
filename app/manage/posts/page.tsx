@@ -11,6 +11,7 @@ type PostRow = {
   title: string;
   slug: string | null;
   summary: string | null;
+  content: string;
   status: "DRAFT" | "SCHEDULED" | "PUBLISHED";
   featured: boolean;
   coverUrl: string | null;
@@ -59,7 +60,7 @@ export default function ManagePosts() {
       title: p.title,
       slug: p.slug ?? "",
       summary: p.summary ?? "",
-      content: "",
+      content: p.content ?? "",
       coverUrl: p.coverUrl ?? "",
       status: p.status,
       featured: p.featured,
