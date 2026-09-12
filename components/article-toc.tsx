@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { List, Copy, Check } from "lucide-react";
 import type { TocItem } from "@/lib/toc";
+import { scrollToElement } from "@/lib/smooth-scroll";
 import {
   Sheet,
   SheetContent,
@@ -49,7 +50,10 @@ export function ArticleToc({ items }: { items: TocItem[] }) {
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
+      // 手动同步高亮，确保点击后目录当前位置立即更新
+      setActiveId(id);
+      // 自定义平滑滚动，600ms，offset 100px（减去导航栏高度）
+      scrollToElement(el, 100, 600);
     }
   };
 

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { ArrowUp, X } from "lucide-react";
+import { scrollToTop } from "@/lib/smooth-scroll";
 
 /** 文章详情页悬浮按钮（对齐参考站 czhlove.cn）：
  * - 回到顶部按钮：hover 展示'回到顶部'中文文字提示
@@ -14,8 +15,8 @@ import { ArrowUp, X } from "lucide-react";
 export function ArticleFloatButtons() {
   const router = useRouter();
 
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const handleScrollToTop = () => {
+    scrollToTop(600); // 自定义平滑滚动，600ms
   };
 
   const closeArticle = () => {
@@ -27,7 +28,7 @@ export function ArticleFloatButtons() {
       {/* 回到顶部 */}
       <button
         type="button"
-        onClick={scrollToTop}
+        onClick={handleScrollToTop}
         className="group relative flex items-center justify-center"
         aria-label="回到顶部"
       >

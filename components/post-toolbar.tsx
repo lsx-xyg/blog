@@ -21,7 +21,7 @@ export function PostToolbar({
   onlyFeatured: boolean;
   onToggleFeatured: () => void;
 }) {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   return (
     <div className="mb-10 space-y-5">
