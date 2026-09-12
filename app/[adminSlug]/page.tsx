@@ -43,10 +43,17 @@ export default async function AdminRootPage({
           <p className="text-base font-semibold">文章管理</p>
           <p className="mt-1 text-sm text-fg-muted">创建 / 编辑 / 发布 / 删除</p>
         </Link>
+        <Link
+          href={`/${adminPath}/gallery`}
+          className="rounded-xl border border-border bg-surface p-6 transition hover:border-fg-faint"
+        >
+          <p className="text-base font-semibold">相册管理</p>
+          <p className="mt-1 text-sm text-fg-muted">上传 / 编辑 / 精选 / 删除</p>
+        </Link>
         <div className="rounded-xl border border-dashed border-border p-6 opacity-60">
           <p className="text-base font-semibold">更多管理（T10）</p>
           <p className="mt-1 text-sm text-fg-muted">
-            相册 / 标签 / 友链 / 设置 / 备份
+            标签 / 友链 / 设置 / 备份
           </p>
         </div>
       </nav>
