@@ -301,6 +301,14 @@ BACKUP_DRIVER=LOCAL|GITHUB|S3
 BACKUP_RETENTION=7
 # 站点
 NEXT_PUBLIC_SITE_URL
+NEXT_PUBLIC_SITE_NAME=林圣轩blog
+NEXT_PUBLIC_SITE_DESCRIPTION=技术写作与生活记录
+# giscus 评论（GitHub Discussions 驱动，仓库必须公开且已开启 Discussions）
+# 从 https://giscus.app 获取 repoId 和 categoryId
+NEXT_PUBLIC_GISCUS_REPO=lsx-xyg/blog
+NEXT_PUBLIC_GISCUS_REPO_ID=R_kgDOUVJQpg
+NEXT_PUBLIC_GISCUS_CATEGORY=Announcements
+NEXT_PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOUVJQps4DFcnk
 ```
 
 ---
