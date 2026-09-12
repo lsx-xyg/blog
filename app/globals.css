@@ -320,6 +320,21 @@ body {
   animation: fade-in-up 0.3s ease-out;
 }
 
+/* 页面进入动画（从首页点击进入文章详情页时） */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-page-enter {
+  animation: page-enter 0.5s ease-out;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;

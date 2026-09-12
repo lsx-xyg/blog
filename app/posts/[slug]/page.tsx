@@ -51,7 +51,7 @@ export default async function PostPage({
       <div className="w-full">
         <div className="mx-auto grid w-full grid-cols-1 max-w-4xl">
           <div className="min-w-0">
-            <article className="mx-auto w-full max-w-4xl">
+            <article className="mx-auto w-full max-w-4xl animate-page-enter">
               {/* 封面图 */}
               {post.coverUrl ? (
                 <div className="mb-4 md:mb-8">
