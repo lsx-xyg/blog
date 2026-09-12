@@ -1,33 +1,25 @@
 "use client";
 
-/** 前台筛选工具栏（T7 方案 A 纯客户端）：搜索框 + 最新/精选切换 + 标签横排多选（URL 不变） */
-
+/** 前台筛选工具栏（对齐参考站 czhlove.cn）：最新/精选切换 + 标签横排多选（URL 不变）
+ * 搜索已移到 header（SearchDialog 弹出式）
+ */
 export function PostToolbar({
   allTags,
   selectedTags,
   onToggleTag,
   onlyFeatured,
   onToggleFeatured,
-  query,
-  onQueryChange,
 }: {
   allTags: string[];
   selectedTags: string[];
   onToggleTag: (tag: string) => void;
   onlyFeatured: boolean;
   onToggleFeatured: () => void;
-  query: string;
-  onQueryChange: (q: string) => void;
 }) {
   return (
     <div className="mb-8 space-y-3">
-      <div className="flex items-center gap-3">
-        <input
-          value={query}
-          onChange={(e) => onQueryChange(e.target.value)}
-          placeholder="搜索文章…"
-          className="h-9 flex-1 rounded-lg border border-border bg-surface px-3 text-sm outline-none transition placeholder:text-fg-faint focus:border-ring"
-        />
+      {/* 最新/精选切换 */}
+      <div className="flex items-center justify-between">
         <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border bg-surface p-0.5 text-xs">
           {(
             [
@@ -51,6 +43,7 @@ export function PostToolbar({
         </div>
       </div>
 
+      {/* 标签筛选 */}
       {allTags.length > 0 && (
         <div className="flex flex-wrap gap-1.5">
           {allTags.map((tag) => {

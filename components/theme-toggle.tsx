@@ -1,16 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Monitor, Sun, Moon, Eye, Check } from "lucide-react";
 import { applyTheme, getStoredTheme, type ThemeMode } from "@/lib/theme";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
-const OPTIONS: { value: ThemeMode; label: string }[] = [
-  { value: "light", label: "浅色" },
-  { value: "dark", label: "深色" },
-  { value: "sepia", label: "护眼" },
-  { value: "system", label: "跟随系统" },
+const OPTIONS: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
+  { value: "light", label: "浅色", icon: Sun },
+  { value: "dark", label: "深色", icon: Moon },
+  { value: "warm", label: "护眼", icon: Eye },
+  { value: "system", label: "跟随系统", icon: Monitor },
 ];
 
-/** 四主题切换（浅色/深色/护眼/跟随系统，localStorage 记忆 + 防 FOUC） */
+/** 主题切换下拉菜单（对齐参考站 czhlove.cn）：
+ * - 触发器只展示显示器图标
+ * - 下拉菜单四个选项（浅色/深色/护眼/跟随系统），当前选中有对勾
+ */
 export function ThemeToggle() {
   const [mode, setMode] = useState<ThemeMode>("system");
 
@@ -24,21 +35,33 @@ export function ThemeToggle() {
   };
 
   return (
-    <div className="flex items-center gap-1 rounded-full border border-border bg-surface p-0.5 text-xs">
-      {OPTIONS.map((o) => (
-        <button
-          key={o.value}
-          type="button"
-          onClick={() => select(o.value)}
-          className={`rounded-full px-2.5 py-1 transition ${
-            mode === o.value
-              ? "bg-fg text-bg"
-              : "text-fg-muted hover:text-fg"
-          }`}
+    <DropdownMenu>
+      <DropdownMenuTrigger>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-9 w-9 rounded-full hover:bg-accent"
+          aria-label="切换主题"
         >
-          {o.label}
-        </button>
-      ))}
-    </div>
+          <Monitor className="h-[1.2rem] w-[1.2rem]" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-36">
+        {OPTIONS.map((o) => {
+          const Icon = o.icon;
+          return (
+            <DropdownMenuItem
+              key={o.value}
+              onClick={() => select(o.value)}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <Icon className="h-4 w-4" />
+              <span className="flex-1">{o.label}</span>
+              {mode === o.value && <Check className="h-4 w-4" />}
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

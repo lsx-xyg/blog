@@ -100,7 +100,7 @@ html.dark {
   --selection: hsl(var(--foreground) / 0.12);
 }
 
-html.sepia {
+html.theme-warm {
   --background: 46 48% 96%;
   --foreground: 30 10% 20%;
   --card: 46 48% 94%;
@@ -190,7 +190,7 @@ html {
 html.dark {
   color-scheme: dark;
 }
-html.sepia {
+html.theme-warm {
   color-scheme: light;
 }
 

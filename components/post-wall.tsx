@@ -77,6 +77,10 @@ export function PostWall({
 
   // 拉取全量元数据（一次），替换 SSR 数据源
   useEffect(() => {
+    // 从 URL ?q= 读取搜索词（header 搜索对话框跳转）
+    const urlQuery = new URLSearchParams(window.location.search).get("q");
+    if (urlQuery) setQuery(urlQuery);
+
     let cancelled = false;
     (async () => {
       try {
@@ -186,8 +190,6 @@ export function PostWall({
         onToggleTag={toggleTag}
         onlyFeatured={onlyFeatured}
         onToggleFeatured={toggleFeatured}
-        query={query}
-        onQueryChange={setQuery}
       />
 
       {visibleItems.length === 0 ? (

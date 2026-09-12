@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { isAdminUser } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SearchDialog } from "@/components/search-dialog";
 import {
   Sheet,
   SheetContent,
@@ -92,7 +93,8 @@ export function SiteHeader({ adminPath }: { adminPath: string }) {
         </nav>
 
         {/* 右侧操作区 */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
+          <SearchDialog />
           <ThemeToggle />
           {isAdminUser(session?.user as { isAdmin?: boolean } | undefined) && (
             <Link
