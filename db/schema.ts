@@ -158,7 +158,7 @@ export const media = pgTable(
     size: integer("size"), // 文件大小（字节）
     width: integer("width"), // 图片宽度（可空）
     height: integer("height"), // 图片高度（可空）
-    uploadedBy: uuid("uploaded_by"), // 上传者 user_id（可空）
+    uploadedBy: text("uploaded_by"), // 上传者 user_id（Better Auth 用 text 类型 id，可空）
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -174,16 +174,16 @@ export const galleryItems = pgTable(
   "gallery_items",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    mediaId: uuid("media_id").references(() => media.id, { onDelete: "set null" }), // 关联媒体库
-    title: text("title"),
-    description: text("description"),
-    featured: boolean("featured").notNull().default(false),
-    imageUrl: text("image_url").notNull(), // 存储抽象返回的公开 URL（兼容旧数据，新数据从 media 取）
-    storageDriver: text("storage_driver").notNull().default("LOCAL"), // 上传平台：LOCAL|GITHUB|S3
-    storageKey: text("storage_key"), // 存储键（用于删除，如 2026/09/uuid.jpg）
+    mediaId: uuid("media_id").notNull().references(() => media.id, { onDelete: "cascade" }), // 关联媒体库（必须，删除媒体时级联删除相册项）
+    title: text("title"), // 相册项标题（业务上下文，与 media.title 语义不同）
+    description: text("description"), // 相册项描述（业务上下文）
+    featured: boolean("featured").notNull().default(false), // 是否精选
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (t) => [index("gallery_items_featured_idx").on(t.featured)],
+  (t) => [
+    index("gallery_items_featured_idx").on(t.featured),
+    index("gallery_items_media_id_idx").on(t.mediaId),
+  ],
 );
 
 /* ---------- gallery_item_tags 关联表（SPEC §4.6） ---------- */

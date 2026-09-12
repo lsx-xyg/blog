@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { galleryItems, galleryItemTags, tags } from "@/db/schema";
+import { galleryItems, galleryItemTags, tags, media } from "@/db/schema";
 import { listPublishedPostMeta } from "@/lib/posts";
 
 export const dynamic = "force-dynamic";
@@ -20,11 +20,12 @@ export async function GET() {
       title: galleryItems.title,
       description: galleryItems.description,
       featured: galleryItems.featured,
-      imageUrl: galleryItems.imageUrl,
+      imageUrl: media.url,
       createdAt: galleryItems.createdAt,
       tagName: tags.name,
     })
     .from(galleryItems)
+    .innerJoin(media, eq(galleryItems.mediaId, media.id))
     .leftJoin(galleryItemTags, eq(galleryItemTags.galleryItemId, galleryItems.id))
     .leftJoin(tags, eq(tags.id, galleryItemTags.tagId))
     .orderBy(desc(galleryItems.createdAt));

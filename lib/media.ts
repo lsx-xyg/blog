@@ -158,10 +158,11 @@ export async function findUnusedMedia() {
     .from(posts)
     .where(eq(posts.status, "PUBLISHED"));
 
-  // 获取所有相册项的 imageUrl
+  // 获取所有相册项关联的 media.url
   const allGallery = await db
-    .select({ imageUrl: galleryItems.imageUrl })
-    .from(galleryItems);
+    .select({ imageUrl: media.url })
+    .from(galleryItems)
+    .innerJoin(media, eq(galleryItems.mediaId, media.id));
 
   // 合并所有被引用的 URL
   const usedUrls = new Set<string>();

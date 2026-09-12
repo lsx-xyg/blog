@@ -44,13 +44,6 @@ export default async function AdminRootPage({
           <p className="mt-1 text-sm text-fg-muted">创建 / 编辑 / 发布 / 删除</p>
         </Link>
         <Link
-          href={`/${adminPath}/gallery`}
-          className="rounded-xl border border-border bg-surface p-6 transition hover:border-fg-faint"
-        >
-          <p className="text-base font-semibold">相册管理</p>
-          <p className="mt-1 text-sm text-fg-muted">上传 / 编辑 / 精选 / 删除</p>
-        </Link>
-        <Link
           href={`/${adminPath}/media`}
           className="rounded-xl border border-border bg-surface p-6 transition hover:border-fg-faint"
         >

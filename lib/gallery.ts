@@ -1,21 +1,50 @@
 /**
  * 相册数据访问层（T5：列表/详情/CRUD；T7：全量轻量元数据 + 服务端过滤预留）
+ *
+ * 注意：gallery_items 表已重构，图片元数据（url/storage_driver/storage_key）
+ * 统一在 media 表管理，gallery_items 只保留业务字段（title/description/featured）
+ * + media_id 外键。查询时需要 join media 表获取图片 URL。
  */
-import { and, desc, eq, or, sql } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { galleryItems, tags, galleryItemTags } from "@/db/schema";
+import { galleryItems, tags, galleryItemTags, media } from "@/db/schema";
+
+/** 相册项（含 media 图片信息） */
+export type GalleryItemWithMedia = {
+  id: string;
+  mediaId: string;
+  title: string | null;
+  description: string | null;
+  featured: boolean;
+  createdAt: Date;
+  // media 表字段
+  imageUrl: string;
+  storageDriver: string;
+  storageKey: string | null;
+};
 
 /** 相册列表（按创建时间倒序，支持分页） */
 export async function listGalleryItems(opts?: {
   limit?: number;
   offset?: number;
   featured?: boolean;
-}) {
+}): Promise<GalleryItemWithMedia[]> {
   const { limit, offset, featured } = opts ?? {};
   const where = featured ? eq(galleryItems.featured, true) : undefined;
   const query = db
-    .select()
+    .select({
+      id: galleryItems.id,
+      mediaId: galleryItems.mediaId,
+      title: galleryItems.title,
+      description: galleryItems.description,
+      featured: galleryItems.featured,
+      createdAt: galleryItems.createdAt,
+      imageUrl: media.url,
+      storageDriver: media.storageDriver,
+      storageKey: media.storageKey,
+    })
     .from(galleryItems)
+    .innerJoin(media, eq(galleryItems.mediaId, media.id))
     .orderBy(desc(galleryItems.createdAt));
   if (where) query.where(where);
   if (limit != null) query.limit(limit);
@@ -24,33 +53,40 @@ export async function listGalleryItems(opts?: {
 }
 
 /** 按 id 查相册项 */
-export async function getGalleryItemById(id: string) {
+export async function getGalleryItemById(id: string): Promise<GalleryItemWithMedia | null> {
   const rows = await db
-    .select()
+    .select({
+      id: galleryItems.id,
+      mediaId: galleryItems.mediaId,
+      title: galleryItems.title,
+      description: galleryItems.description,
+      featured: galleryItems.featured,
+      createdAt: galleryItems.createdAt,
+      imageUrl: media.url,
+      storageDriver: media.storageDriver,
+      storageKey: media.storageKey,
+    })
     .from(galleryItems)
+    .innerJoin(media, eq(galleryItems.mediaId, media.id))
     .where(eq(galleryItems.id, id))
     .limit(1);
   return rows[0] ?? null;
 }
 
-/** 创建相册项 */
+/** 创建相册项（需要先在 media 表创建图片记录，然后传入 mediaId） */
 export async function createGalleryItem(data: {
+  mediaId: string;
   title?: string | null;
   description?: string | null;
   featured?: boolean;
-  imageUrl: string;
-  storageDriver?: string;
-  storageKey?: string | null;
 }) {
   const rows = await db
     .insert(galleryItems)
     .values({
+      mediaId: data.mediaId,
       title: data.title ?? null,
       description: data.description ?? null,
       featured: data.featured ?? false,
-      imageUrl: data.imageUrl,
-      storageDriver: data.storageDriver ?? "LOCAL",
-      storageKey: data.storageKey ?? null,
     })
     .returning();
   return rows[0];
@@ -63,7 +99,6 @@ export async function updateGalleryItem(
     title?: string | null;
     description?: string | null;
     featured?: boolean;
-    imageUrl?: string;
   },
 ) {
   const rows = await db
@@ -74,7 +109,7 @@ export async function updateGalleryItem(
   return rows[0] ?? null;
 }
 
-/** 删除相册项（关联标签自动级联删除） */
+/** 删除相册项（关联标签自动级联删除，media 记录不删除，由媒体库统一管理） */
 export async function deleteGalleryItem(id: string) {
   await db.delete(galleryItems).where(eq(galleryItems.id, id));
 }
@@ -100,12 +135,13 @@ export async function listGalleryMeta(): Promise<GalleryMeta[]> {
       id: galleryItems.id,
       title: galleryItems.title,
       description: galleryItems.description,
-      imageUrl: galleryItems.imageUrl,
+      imageUrl: media.url,
       featured: galleryItems.featured,
       createdAt: galleryItems.createdAt,
       tagName: tags.name,
     })
     .from(galleryItems)
+    .innerJoin(media, eq(galleryItems.mediaId, media.id))
     .leftJoin(galleryItemTags, eq(galleryItemTags.galleryItemId, galleryItems.id))
     .leftJoin(tags, eq(tags.id, galleryItemTags.tagId))
     .orderBy(desc(galleryItems.createdAt));

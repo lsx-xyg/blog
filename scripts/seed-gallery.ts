@@ -1,10 +1,14 @@
 /**
  * 相册测试数据脚本
  * 插入测试相册数据，验证前台相册页面展示
+ *
+ * 注意：gallery_items 表已重构，需要先在 media 表创建图片记录，
+ * 然后再创建 gallery_items 并关联 media_id。
  */
 import "../db/load-env";
 import { db } from "../db";
-import { galleryItems } from "../db/schema";
+import { galleryItems, media } from "../db/schema";
+import { MediaType } from "../lib/types/media";
 
 async function main() {
   console.log("开始插入相册测试数据...");
@@ -49,8 +53,33 @@ async function main() {
   ];
 
   for (const img of testImages) {
-    await db.insert(galleryItems).values(img);
-    console.log(`  插入: ${img.title}`);
+    // 先创建 media 记录
+    const newMedia = await db
+      .insert(media)
+      .values({
+        type: MediaType.GALLERY,
+        url: img.imageUrl,
+        storageDriver: "LOCAL",
+        storageKey: null,
+        title: img.title,
+        description: img.description,
+        mimeType: null,
+        size: null,
+        width: null,
+        height: null,
+        uploadedBy: null,
+      })
+      .returning();
+
+    // 再创建 gallery_items 并关联 media_id
+    await db.insert(galleryItems).values({
+      mediaId: newMedia[0].id,
+      title: img.title,
+      description: img.description,
+      featured: img.featured,
+    });
+
+    console.log(`  插入: ${img.title} (media_id: ${newMedia[0].id})`);
   }
 
   console.log(`\n完成！共插入 ${testImages.length} 张测试图片。`);
