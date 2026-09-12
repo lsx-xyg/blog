@@ -3,7 +3,8 @@ import "./globals.css";
 import { getAdminPath } from "@/lib/admin-path";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { SiteHeader } from "@/components/site-header";
-import { ThemeToggle } from "@/components/theme-toggle";
+import { MobileNav } from "@/components/mobile-nav";
+import { Footer } from "@/components/footer";
 
 export const metadata: Metadata = {
   title: "blog",
@@ -27,9 +28,11 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       {/* suppressHydrationWarning：忽略浏览器扩展注入属性（如 data-atm-ext-installed）导致的水合差异 */}
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning className="min-h-screen flex flex-col">
         <SiteHeader adminPath={getAdminPath()} />
-        {children}
+        <main className="flex-1 pb-16 md:pb-0">{children}</main>
+        <Footer />
+        <MobileNav />
       </body>
     </html>
   );

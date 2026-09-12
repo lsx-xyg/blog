@@ -5,6 +5,7 @@ import { renderMdx } from "@/lib/mdx";
 import { formatDate } from "@/lib/utils";
 import { CodeCopy } from "@/components/code-copy";
 import { ViewCounter } from "@/components/view-counter";
+import { CalendarDays, Clock } from "lucide-react";
 
 export const dynamicParams = true;
 
@@ -40,24 +41,54 @@ export default async function PostPage({
   const readingMinutes = Math.max(1, Math.round(post.content.length / 500));
 
   return (
-    <article className="mx-auto max-w-3xl px-6 py-12">
-      <header className="mb-8 border-b border-border pb-6">
-        <h1 className="text-2xl font-semibold leading-snug md:text-[28px]">
-          {post.title}
-        </h1>
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-xs text-fg-muted">
-          <time dateTime={post.publishedAt?.toISOString()}>
-            {formatDate(post.publishedAt ?? post.createdAt)}
-          </time>
-          <span>·</span>
-          <span>{readingMinutes} 分钟阅读</span>
-          <span>·</span>
-          <ViewCounter initial={post.viewCount} slugOrId={post.slug ?? post.id} />
-        </div>
-      </header>
+    <main className="container mx-auto px-2 py-4 md:px-4 md:py-8">
+      <div className="w-full">
+        <div className="mx-auto grid w-full grid-cols-1 max-w-4xl">
+          <div className="min-w-0">
+            <article className="mx-auto w-full max-w-4xl">
+              {/* 封面图 */}
+              {post.coverUrl ? (
+                <div className="mb-4 md:mb-8">
+                  <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={post.coverUrl}
+                      alt={post.title}
+                      className="absolute h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+                  </div>
+                </div>
+              ) : null}
 
-      <div className="mdx-content">{renderMdx(post.content)}</div>
-      <CodeCopy />
-    </article>
+              {/* 标题 + 元信息 */}
+              <div className="mb-4 md:mb-8">
+                <h1 className="text-2xl md:text-3xl font-bold mb-4 leading-tight text-foreground">
+                  {post.title}
+                </h1>
+                <div className="flex flex-wrap items-center gap-4 text-sm text-muted-foreground mb-6">
+                  <time
+                    dateTime={post.publishedAt?.toISOString()}
+                    className="flex items-center space-x-1.5"
+                  >
+                    <CalendarDays className="h-4 w-4" />
+                    <span>{formatDate(post.publishedAt ?? post.createdAt)}</span>
+                  </time>
+                  <span className="flex items-center space-x-1.5">
+                    <Clock className="h-4 w-4" />
+                    <span>{readingMinutes} 分钟阅读</span>
+                  </span>
+                  <ViewCounter initial={post.viewCount} slugOrId={post.slug ?? post.id} />
+                </div>
+              </div>
+
+              {/* 正文内容 */}
+              <div className="mdx-content">{renderMdx(post.content)}</div>
+              <CodeCopy />
+            </article>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }

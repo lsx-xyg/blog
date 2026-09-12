@@ -16,19 +16,19 @@ export default async function Home() {
   const initialPosts = await listPublishedPosts({ limit: PAGE_SIZE });
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-12">
-      <header className="mb-10">
-        <p className="font-mono text-sm text-fg-muted">
+    <div className="container mx-auto px-4 py-8">
+      <header className="mb-8">
+        <p className="font-mono text-sm text-muted-foreground">
           blog · blog.dbthree.dpdns.org
         </p>
-        <h1 className="mt-3 text-2xl font-semibold">林圣轩的个人博客</h1>
-        <p className="mt-2 text-fg-muted">
+        <h1 className="mt-3 text-2xl font-bold">林圣轩的个人博客</h1>
+        <p className="mt-2 text-muted-foreground">
           技术写作与生活记录
           {/* T2：简介将接入 settings.site_description */}
         </p>
       </header>
 
       <PostWall initialPosts={initialPosts} pageSize={PAGE_SIZE} />
-    </main>
+    </div>
   );
 }
