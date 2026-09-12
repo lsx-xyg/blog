@@ -6,7 +6,7 @@ import { Home, Image, User, Link2 } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "首页", icon: Home },
-  { href: "/album", label: "相册", icon: Image },
+  { href: "/gallery", label: "相册", icon: Image },
   { href: "/about", label: "关于", icon: User },
   { href: "/links", label: "友链", icon: Link2 },
 ];

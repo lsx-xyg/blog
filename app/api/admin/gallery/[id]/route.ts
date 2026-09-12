@@ -9,6 +9,7 @@ import {
   setGalleryItemTags,
 } from "@/lib/gallery";
 import { getOrCreateTags } from "@/lib/tags";
+import { getStorageDriver } from "@/lib/storage";
 
 /**
  * 后台相册项 API
@@ -69,6 +70,18 @@ export async function DELETE(
   const existing = await getGalleryItemById(id);
   if (!existing) {
     return NextResponse.json({ error: "相册项不存在" }, { status: 404 });
+  }
+
+  // 根据 storageDriver 调用对应的存储驱动删除文件
+  // 注意：这里使用当前配置的驱动，如果迁移了存储平台，可能需要手动处理旧文件
+  if (existing.storageKey) {
+    try {
+      const driver = getStorageDriver();
+      await driver.delete(existing.storageKey);
+    } catch (error) {
+      console.error("删除存储文件失败（数据库记录仍会删除）：", error);
+      // 存储文件删除失败不阻塞数据库记录删除
+    }
   }
 
   await deleteGalleryItem(id);

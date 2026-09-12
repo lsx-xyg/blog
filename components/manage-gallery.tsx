@@ -97,13 +97,15 @@ export function ManageGallery() {
 
         if (res.ok) {
           const data = await res.json();
-          // 创建相册项
+          // 创建相册项（保存 storageDriver 和 storageKey，用于后续删除）
           await fetch("/api/admin/gallery", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               imageUrl: data.url,
               title: file.name.replace(/\.[^.]+$/, ""),
+              storageDriver: data.storageDriver || "LOCAL",
+              storageKey: data.key || null,
             }),
           });
         }

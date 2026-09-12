@@ -11,7 +11,7 @@ import { SearchDialog } from "@/components/search-dialog";
 
 const NAV_ITEMS = [
   { href: "/", label: "首页" },
-  { href: "/album", label: "相册" },
+  { href: "/gallery", label: "相册" },
   { href: "/about", label: "关于" },
   { href: "/links", label: "友链" },
 ];

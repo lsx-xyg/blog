@@ -19,13 +19,7 @@ export const metadata: Metadata = {
  */
 export default function GalleryPage() {
   return (
-    <main className="container mx-auto px-4 py-8 md:py-12">
-      {/* 页面标题 */}
-      <header className="mb-8 text-center">
-        <h1 className="text-3xl md:text-4xl font-bold">相册</h1>
-        <p className="mt-2 text-muted-foreground">记录生活中的美好瞬间</p>
-      </header>
-
+    <main className="container mx-auto px-4 py-8 md:py-12 animate-page-enter">
       {/* 相册瀑布流 */}
       <GalleryWall />
     </main>

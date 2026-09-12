@@ -39,6 +39,8 @@ export async function createGalleryItem(data: {
   description?: string | null;
   featured?: boolean;
   imageUrl: string;
+  storageDriver?: string;
+  storageKey?: string | null;
 }) {
   const rows = await db
     .insert(galleryItems)
@@ -47,6 +49,8 @@ export async function createGalleryItem(data: {
       description: data.description ?? null,
       featured: data.featured ?? false,
       imageUrl: data.imageUrl,
+      storageDriver: data.storageDriver ?? "LOCAL",
+      storageKey: data.storageKey ?? null,
     })
     .returning();
   return rows[0];

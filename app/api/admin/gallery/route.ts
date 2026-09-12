@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { title, description, featured, imageUrl, tags } = body;
+    const { title, description, featured, imageUrl, tags, storageDriver, storageKey } = body;
 
     if (!imageUrl) {
       return NextResponse.json({ error: "图片 URL 不能为空" }, { status: 400 });
@@ -40,6 +40,8 @@ export async function POST(request: Request) {
       description: description ?? null,
       featured: featured ?? false,
       imageUrl,
+      storageDriver: storageDriver ?? "LOCAL",
+      storageKey: storageKey ?? null,
     });
 
     // 处理标签

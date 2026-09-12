@@ -46,7 +46,11 @@ export async function POST(request: NextRequest) {
     const driver = getStorageDriver();
     const result = await driver.upload(buffer, file.name, file.type);
 
-    return NextResponse.json(result);
+    // 返回结果中包含 storageDriver，用于后续删除时选择对应平台
+    return NextResponse.json({
+      ...result,
+      storageDriver: driver.name.toUpperCase(),
+    });
   } catch (error) {
     console.error("[upload] 上传失败：", error);
     const message = error instanceof Error ? error.message : "上传失败";

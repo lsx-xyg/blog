@@ -150,6 +150,8 @@ export const galleryItems = pgTable(
     description: text("description"),
     featured: boolean("featured").notNull().default(false),
     imageUrl: text("image_url").notNull(), // 存储抽象返回的公开 URL
+    storageDriver: text("storage_driver").notNull().default("LOCAL"), // 上传平台：LOCAL|GITHUB|S3
+    storageKey: text("storage_key"), // 存储键（用于删除，如 2026/09/uuid.jpg）
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [index("gallery_items_featured_idx").on(t.featured)],
