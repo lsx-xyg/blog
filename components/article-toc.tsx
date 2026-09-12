@@ -106,13 +106,13 @@ export function ArticleToc({ items }: { items: TocItem[] }) {
         <TocList />
       </aside>
 
-      {/* 移动端：底部左下角按钮 + 弹出目录（bottom-28 确保不被底部菜单栏遮挡，left-4 避免和右下角悬浮按钮重叠） */}
-      <div className="lg:hidden fixed bottom-28 left-4 z-40">
+      {/* 移动端/中等屏幕：底部左下角按钮 + 弹出目录（xl 以下显示，与PC端目录互补） */}
+      <div className="xl:hidden fixed bottom-28 left-4 z-40">
         <Sheet>
           <SheetTrigger className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background shadow-lg">
             <List className="h-5 w-5" />
           </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-2xl max-h-[70vh]">
+          <SheetContent side="bottom" className="rounded-t-2xl max-h-[70vh] px-6">
             <SheetHeader>
               <SheetTitle className="flex items-center justify-between">
                 <span>目录</span>
@@ -130,7 +130,7 @@ export function ArticleToc({ items }: { items: TocItem[] }) {
                 </button>
               </SheetTitle>
             </SheetHeader>
-            <div className="mt-4 overflow-y-auto max-h-[50vh] pr-4">
+            <div className="mt-4 overflow-y-auto max-h-[50vh] px-2 pb-6">
               <TocList />
             </div>
           </SheetContent>

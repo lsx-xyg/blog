@@ -30,7 +30,7 @@ export default function RootLayout({
       {/* suppressHydrationWarning：忽略浏览器扩展注入属性（如 data-atm-ext-installed）导致的水合差异 */}
       <body suppressHydrationWarning className="min-h-screen flex flex-col">
         <SiteHeader adminPath={getAdminPath()} />
-        <main className="flex-1 pb-36 md:pb-0">{children}</main>
+        <main className="flex-1">{children}</main>
         <Footer />
         <MobileNav />
       </body>
