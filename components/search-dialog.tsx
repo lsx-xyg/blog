@@ -56,14 +56,14 @@ export function SearchDialog() {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[20vh]">
-      {/* 遮罩 */}
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-[15vh]">
+      {/* 透明遮罩：点击外部关闭，不显示半透明效果 */}
       <div
-        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-transparent"
         onClick={() => setOpen(false)}
       />
       {/* 搜索框 */}
-      <div className="relative w-full max-w-xl mx-4 rounded-lg border bg-popover p-2 shadow-lg">
+      <div className="relative w-full max-w-2xl mx-4 rounded-xl border bg-popover p-3 shadow-xl">
         <div className="flex items-center gap-2">
           <Search className="h-4 w-4 text-muted-foreground shrink-0" />
           <Input

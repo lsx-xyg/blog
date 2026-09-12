@@ -1,6 +1,6 @@
 "use client";
 
-/** 前台筛选工具栏（对齐参考站 czhlove.cn）：最新/精选切换 + 标签横排多选（URL 不变）
+/** 前台筛选工具栏（对齐参考站 czhlove.cn，大气样式）：最新/精选切换 + 标签横排多选（URL 不变）
  * 搜索已移到 header（SearchDialog 弹出式）
  */
 export function PostToolbar({
@@ -17,10 +17,10 @@ export function PostToolbar({
   onToggleFeatured: () => void;
 }) {
   return (
-    <div className="mb-8 space-y-3">
+    <div className="mb-10 space-y-4">
       {/* 最新/精选切换 */}
       <div className="flex items-center justify-between">
-        <div className="flex shrink-0 items-center gap-1 rounded-lg border border-border bg-surface p-0.5 text-xs">
+        <div className="flex shrink-0 items-center gap-1 rounded-full border border-border bg-surface p-1 text-sm">
           {(
             [
               { key: false, label: "最新" },
@@ -31,9 +31,9 @@ export function PostToolbar({
               key={String(o.key)}
               type="button"
               onClick={onToggleFeatured}
-              className={`rounded-md px-2.5 py-1.5 transition ${
+              className={`rounded-full px-5 py-2 transition ${
                 onlyFeatured === o.key
-                  ? "bg-fg text-bg"
+                  ? "bg-fg text-bg font-medium"
                   : "text-fg-muted hover:text-fg"
               }`}
             >
@@ -45,7 +45,7 @@ export function PostToolbar({
 
       {/* 标签筛选 */}
       {allTags.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-2">
           {allTags.map((tag) => {
             const active = selectedTags.includes(tag);
             return (
@@ -53,10 +53,10 @@ export function PostToolbar({
                 key={tag}
                 type="button"
                 onClick={() => onToggleTag(tag)}
-                className={`rounded-full border px-2.5 py-1 text-xs transition ${
+                className={`rounded-full border px-4 py-1.5 text-sm transition ${
                   active
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-border text-fg-muted hover:text-fg"
+                    ? "border-primary bg-primary/10 text-primary font-medium"
+                    : "border-border text-fg-muted hover:text-fg hover:border-primary/30"
                 }`}
               >
                 {tag}

@@ -26,7 +26,7 @@ export function PostCard({ post }: { post: CardPost }) {
   return (
     <Link
       href={href}
-      className="group mb-5 flex break-inside-avoid flex-col rounded-xl border border-border bg-card p-6 transition duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/20"
+      className="group mb-6 flex break-inside-avoid flex-col rounded-xl border border-border bg-card p-6 transition duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/20"
     >
       {post.coverUrl ? (
         <div className="mb-4 -mt-2 aspect-video overflow-hidden rounded-lg bg-muted">
@@ -42,7 +42,7 @@ export function PostCard({ post }: { post: CardPost }) {
       ) : null}
 
       {/* 日期 */}
-      <div className="flex items-center text-sm text-muted-foreground mb-2">
+      <div className="flex items-center text-base text-muted-foreground mb-3">
         <time
           dateTime={formatDate(post.publishedAt ?? post.createdAt)}
           className="flex items-center space-x-1.5"
@@ -53,13 +53,13 @@ export function PostCard({ post }: { post: CardPost }) {
       </div>
 
       {/* 标题 */}
-      <h3 className="font-bold leading-tight text-lg text-foreground group-hover:text-primary transition-colors">
+      <h3 className="font-bold leading-tight text-xl text-foreground group-hover:text-primary transition-colors">
         {post.title}
       </h3>
 
       {/* 摘要 */}
       {post.summary ? (
-        <p className="mt-2 text-muted-foreground text-sm leading-relaxed line-clamp-3">
+        <p className="mt-3 text-muted-foreground text-base leading-relaxed line-clamp-3">
           {post.summary}
         </p>
       ) : null}

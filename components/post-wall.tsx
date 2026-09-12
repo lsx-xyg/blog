@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import MiniSearch from "minisearch";
 import { PostCard } from "@/components/post-card";
 import { PostToolbar } from "@/components/post-toolbar";
@@ -65,6 +66,7 @@ export function PostWall({
   initialPosts: Post[];
   pageSize: number;
 }) {
+  const searchParams = useSearchParams();
   // SSR 首屏数据（无标签）→ 拉全量后替换
   const [metas, setMetas] = useState<SearchPost[]>(() => initialPosts.map(toSearchPost));
   const [loading, setLoading] = useState(false);
@@ -75,12 +77,14 @@ export function PostWall({
   const stateRef = useRef({ metasReady: false, loading: false });
   const sentinelRef = useRef<HTMLDivElement>(null);
 
+  // 监听 URL ?q= 变化（header 搜索对话框跳转，同路由也能触发）
+  useEffect(() => {
+    const q = searchParams.get("q");
+    if (q) setQuery(q);
+  }, [searchParams]);
+
   // 拉取全量元数据（一次），替换 SSR 数据源
   useEffect(() => {
-    // 从 URL ?q= 读取搜索词（header 搜索对话框跳转）
-    const urlQuery = new URLSearchParams(window.location.search).get("q");
-    if (urlQuery) setQuery(urlQuery);
-
     let cancelled = false;
     (async () => {
       try {
@@ -199,7 +203,7 @@ export function PostWall({
             : "还没有已发布的文章，去后台写第一篇吧。"}
         </div>
       ) : (
-        <div className="columns-1 gap-5 sm:columns-2">
+        <div className="columns-1 gap-6 sm:columns-2">
           {visibleItems.map((post) => (
             <PostCard key={post.id} post={post} />
           ))}
