@@ -10,7 +10,6 @@ import { createJavaScriptRegexEngine } from "@shikijs/engine-javascript";
 import type { Root, Element } from "hast";
 import { visit } from "unist-util-visit";
 import "bytemd/dist/index.css";
-import { Maximize2, Minimize2 } from "lucide-react";
 
 /**
  * 异步初始化 Shiki highlighter
@@ -102,7 +101,7 @@ function createShikiRehypePlugin(highlighter: HighlighterCore): BytemdPlugin {
  * - GFM 支持（表格、任务列表、删除线）
  * - 代码高亮（Shiki github-dark 主题，与详情页一致）
  * - 图片粘贴/拖拽上传（集成 T3 存储驱动）
- * - 网页全屏模式
+ * - ByteMD 内置全屏模式
  * - 受控组件（value + onChange）
  *
  * 用法：
@@ -115,7 +114,6 @@ export function MarkdownEditor({
   value: string;
   onChange: (value: string) => void;
 }) {
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [highlighter, setHighlighter] = useState<HighlighterCore | null>(null);
 
   // 异步初始化 Shiki highlighter
@@ -166,17 +164,6 @@ export function MarkdownEditor({
     return results;
   };
 
-  // ESC 退出全屏
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isFullscreen) {
-        setIsFullscreen(false);
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isFullscreen]);
-
   // 构建插件列表（highlighter 就绪后才添加 Shiki 插件）
   const plugins: BytemdPlugin[] = [gfm()];
   if (highlighter) {
@@ -193,43 +180,15 @@ export function MarkdownEditor({
   }
 
   return (
-    <div
-      className={`bytemd-editor-wrapper relative ${
-        isFullscreen
-          ? "fixed inset-0 z-50 bg-background p-4"
-          : "rounded-lg border border-border bg-background overflow-hidden"
-      }`}
-    >
-      {/* 工具栏 */}
-      <div className="flex items-center justify-between border-b border-border px-3 py-2 bg-muted/30">
-        <div className="text-xs text-muted-foreground">
-          Markdown 编辑器（源码 + 实时预览）
-        </div>
-        <button
-          type="button"
-          onClick={() => setIsFullscreen(!isFullscreen)}
-          className="flex h-8 w-8 items-center justify-center rounded-md hover:bg-accent transition-colors"
-          title={isFullscreen ? "退出全屏 (ESC)" : "全屏编辑"}
-        >
-          {isFullscreen ? (
-            <Minimize2 className="h-4 w-4" />
-          ) : (
-            <Maximize2 className="h-4 w-4" />
-          )}
-        </button>
-      </div>
-
-      {/* ByteMD 编辑器 */}
-      <div className={isFullscreen ? "h-[calc(100vh-120px)] overflow-auto" : ""}>
-        <Editor
-          value={value}
-          plugins={plugins}
-          onChange={onChange}
-          uploadImages={uploadImages}
-          mode="split"
-          placeholder="在此输入 Markdown 内容..."
-        />
-      </div>
+    <div className="bytemd-editor-wrapper overflow-hidden rounded-lg border border-border bg-background">
+      <Editor
+        value={value}
+        plugins={plugins}
+        onChange={onChange}
+        uploadImages={uploadImages}
+        mode="split"
+        placeholder="在此输入 Markdown 内容..."
+      />
     </div>
   );
 }

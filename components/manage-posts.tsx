@@ -132,8 +132,8 @@ export function ManagePosts() {
   };
 
   const input =
-    "rounded-lg border border-border bg-surface-strong px-3 py-2 text-sm outline-none focus:border-ring";
-  const label = "text-xs font-medium text-fg-muted";
+    "rounded-lg border border-border bg-surface-strong px-3 py-2 text-base outline-none focus:border-ring";
+  const label = "text-sm font-medium text-fg-muted";
 
   const goToStep = (step: number) => {
     if (step >= 1 && step <= STEPS.length) {
@@ -144,10 +144,10 @@ export function ManagePosts() {
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
       <header className="mb-8">
-        <p className="font-mono text-xs text-fg-muted">
+        <p className="font-mono text-sm text-fg-muted">
           manage · 开发期入口（T8 认证后收紧）
         </p>
-        <h1 className="mt-2 text-xl font-semibold">文章管理</h1>
+        <h1 className="mt-2 text-2xl font-semibold">文章管理</h1>
       </header>
 
       {error && (
@@ -171,7 +171,7 @@ export function ManagePosts() {
                 <button
                   type="button"
                   onClick={() => goToStep(step.id)}
-                  className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors ${
+                  className={`flex items-center gap-2 rounded-full px-4 py-2 text-base transition-colors ${
                     isActive
                       ? "bg-primary text-primary-foreground"
                       : isCompleted
@@ -284,57 +284,61 @@ export function ManagePosts() {
           </div>
         )}
 
-        {/* 底部按钮 */}
+        {/* 底部按钮：上一步左下角，下一步/保存右下角 */}
         <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
-          <div className="flex gap-3">
+          {/* 左下角：上一步（第一步不显示） */}
+          <div>
             {currentStep > 1 && (
               <button
                 type="button"
                 onClick={() => goToStep(currentStep - 1)}
-                className="flex items-center gap-1 rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent transition-colors"
+                className="flex items-center gap-1 rounded-lg border border-border px-4 py-2 text-base hover:bg-accent transition-colors"
               >
                 <ChevronLeft className="h-4 w-4" />
                 上一步
               </button>
             )}
-            {currentStep < STEPS.length && (
-              <button
-                type="button"
-                onClick={() => goToStep(currentStep + 1)}
-                className="flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-              >
-                下一步
-                <ChevronRight className="h-4 w-4" />
-              </button>
-            )}
           </div>
+
+          {/* 右下角：下一步（非最后一步）或 保存（最后一步） */}
           <div className="flex gap-3">
             {editingId && (
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent transition-colors"
+                className="rounded-lg border border-border px-4 py-2 text-base hover:bg-accent transition-colors"
               >
                 取消
               </button>
             )}
-            <button
-              type="submit"
-              disabled={loading}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50 hover:bg-primary/90 transition-colors"
-            >
-              {loading ? "保存中…" : editingId ? "保存修改" : "创建文章"}
-            </button>
+            {currentStep < STEPS.length ? (
+              <button
+                type="button"
+                onClick={() => goToStep(currentStep + 1)}
+                className="flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-base font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                下一步
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={loading}
+                className="rounded-lg bg-primary px-4 py-2 text-base font-medium text-primary-foreground disabled:opacity-50 hover:bg-primary/90 transition-colors"
+              >
+                {loading ? "保存中…" : editingId ? "保存修改" : "创建文章"}
+              </button>
+            )}
           </div>
         </div>
       </form>
 
       <section>
-        <h2 className="mb-3 text-sm font-semibold text-fg-muted">
+        <h2 className="mb-3 text-base font-semibold text-fg-muted">
           全部文章（{posts.length}）
         </h2>
         {posts.length === 0 ? (
-          <p className="rounded-lg border border-border bg-surface p-6 text-center text-sm text-fg-muted">
+          <p className="rounded-lg border border-border bg-surface p-6 text-center text-base text-fg-muted">
             还没有文章
           </p>
         ) : (
@@ -342,7 +346,7 @@ export function ManagePosts() {
             {posts.map((p) => (
               <li
                 key={p.id}
-                className="flex items-center gap-3 px-4 py-3 text-sm"
+                className="flex items-center gap-3 px-4 py-3 text-base"
               >
                 <span
                   className={`w-16 shrink-0 text-center font-mono text-xs ${

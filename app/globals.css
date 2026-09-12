@@ -346,3 +346,92 @@ body {
     @apply font-sans;
   }
 }
+
+/* === ByteMD 编辑器预览区样式（与详情页 .mdx-content 保持一致） === */
+.bytemd-preview .markdown-body {
+  font-size: 16px;
+  line-height: 1.8;
+  color: var(--fg);
+  word-break: break-word;
+  padding: 1rem 1.25rem;
+}
+.bytemd-preview .markdown-body :is(h1, h2, h3, h4) {
+  margin: 2rem 0 0.9rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+.bytemd-preview .markdown-body h1 { font-size: 1.5rem; }
+.bytemd-preview .markdown-body h2 { font-size: 1.32rem; }
+.bytemd-preview .markdown-body h3 { font-size: 1.15rem; }
+.bytemd-preview .markdown-body h4 { font-size: 1rem; }
+.bytemd-preview .markdown-body p { margin: 1rem 0; }
+.bytemd-preview .markdown-body a {
+  color: hsl(var(--primary));
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.bytemd-preview .markdown-body ul,
+.bytemd-preview .markdown-body ol {
+  margin: 1rem 0;
+  padding-left: 1.6rem;
+}
+.bytemd-preview .markdown-body li { margin: 0.35rem 0; }
+.bytemd-preview .markdown-body li::marker { color: var(--fg-muted); }
+.bytemd-preview .markdown-body blockquote {
+  margin: 1.25rem 0;
+  border-left: 3px solid var(--border);
+  padding-left: 1rem;
+  color: var(--fg-muted);
+}
+.bytemd-preview .markdown-body hr {
+  margin: 2rem 0;
+  border: none;
+  border-top: 1px solid var(--border);
+}
+.bytemd-preview .markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.25rem 0;
+  font-size: 14px;
+}
+.bytemd-preview .markdown-body th,
+.bytemd-preview .markdown-body td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+}
+.bytemd-preview .markdown-body th { background: var(--selection); }
+.bytemd-preview .markdown-body img {
+  max-width: 100%;
+  border-radius: 10px;
+  margin: 1.25rem 0;
+  height: auto;
+}
+.bytemd-preview .markdown-body code:not(pre code) {
+  font-family: var(--font-mono);
+  font-size: 0.875em;
+  background: var(--selection);
+  padding: 0.15em 0.4em;
+  border-radius: 6px;
+}
+.bytemd-preview .markdown-body pre {
+  background: #0d1117;
+  color: #e6edf3;
+  border-radius: 10px;
+  padding: 1rem 1.25rem;
+  overflow-x: auto;
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  margin: 1.25rem 0;
+}
+.bytemd-preview .markdown-body pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+}
+
+/* ByteMD 全屏时提高 z-index，避免被导航栏遮挡 */
+.bytemd-fullscreen {
+  z-index: 9999 !important;
+}
