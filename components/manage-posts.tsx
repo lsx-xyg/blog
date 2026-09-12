@@ -194,95 +194,98 @@ export function ManagePosts() {
           })}
         </div>
 
-        {/* 步骤 1：正文编辑 */}
-        {currentStep === 1 && (
-          <div className="space-y-4">
-            <div>
-              <label className={label}>
-                正文（Markdown）* — 支持粘贴/拖拽图片自动上传，左右分屏实时预览
-              </label>
-              <div className="mt-1">
-                <MarkdownEditor
-                  value={form.content}
-                  onChange={(v) => set("content", v)}
-                />
+        {/* 步骤内容区域：统一最小高度，避免切换步骤时容器跳动 */}
+        <div className="min-h-[520px] md:min-h-[560px]">
+          {/* 步骤 1：正文编辑 */}
+          {currentStep === 1 && (
+            <div className="space-y-4">
+              <div>
+                <label className={label}>
+                  正文（Markdown）* — 支持粘贴/拖拽图片自动上传，左右分屏实时预览
+                </label>
+                <div className="mt-1">
+                  <MarkdownEditor
+                    value={form.content}
+                    onChange={(v) => set("content", v)}
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* 步骤 2：基本信息 */}
-        {currentStep === 2 && (
-          <div className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div>
-                <label className={label}>标题 *</label>
+          {/* 步骤 2：基本信息 */}
+          {currentStep === 2 && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div>
+                  <label className={label}>标题 *</label>
+                  <input
+                    className={`${input} mt-1 w-full`}
+                    value={form.title}
+                    onChange={(e) => set("title", e.target.value)}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className={label}>Slug（留空自动用 ID）</label>
+                  <input
+                    className={`${input} mt-1 w-full font-mono`}
+                    value={form.slug}
+                    onChange={(e) => set("slug", e.target.value)}
+                    placeholder="留空 = 自动生成"
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className={label}>摘要</label>
+                  <input
+                    className={`${input} mt-1 w-full`}
+                    value={form.summary}
+                    onChange={(e) => set("summary", e.target.value)}
+                  />
+                </div>
+                <div className="md:col-span-2">
+                  <label className={label}>封面图 URL（可选）</label>
+                  <input
+                    className={`${input} mt-1 w-full font-mono`}
+                    value={form.coverUrl}
+                    onChange={(e) => set("coverUrl", e.target.value)}
+                    placeholder="https://…（T3 上传后可用图床 URL）"
+                  />
+                </div>
+                <div>
+                  <label className={label}>状态</label>
+                  <select
+                    className={`${input} mt-1 w-full`}
+                    value={form.status}
+                    onChange={(e) => set("status", e.target.value)}
+                  >
+                    <option value="DRAFT">草稿</option>
+                    <option value="SCHEDULED">定时</option>
+                    <option value="PUBLISHED">发布</option>
+                  </select>
+                </div>
+                <div>
+                  <label className={label}>定时发布（可选，需 T12 扫描任务生效）</label>
+                  <input
+                    type="datetime-local"
+                    className={`${input} mt-1 w-full font-mono`}
+                    value={form.scheduledAt}
+                    onChange={(e) => set("scheduledAt", e.target.value)}
+                  />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-base">
                 <input
-                  className={`${input} mt-1 w-full`}
-                  value={form.title}
-                  onChange={(e) => set("title", e.target.value)}
-                  required
+                  type="checkbox"
+                  checked={form.featured}
+                  onChange={(e) => set("featured", e.target.checked)}
+                  className="accent-primary"
                 />
-              </div>
-              <div>
-                <label className={label}>Slug（留空自动用 ID）</label>
-                <input
-                  className={`${input} mt-1 w-full font-mono`}
-                  value={form.slug}
-                  onChange={(e) => set("slug", e.target.value)}
-                  placeholder="留空 = 自动生成"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className={label}>摘要</label>
-                <input
-                  className={`${input} mt-1 w-full`}
-                  value={form.summary}
-                  onChange={(e) => set("summary", e.target.value)}
-                />
-              </div>
-              <div className="md:col-span-2">
-                <label className={label}>封面图 URL（可选）</label>
-                <input
-                  className={`${input} mt-1 w-full font-mono`}
-                  value={form.coverUrl}
-                  onChange={(e) => set("coverUrl", e.target.value)}
-                  placeholder="https://…（T3 上传后可用图床 URL）"
-                />
-              </div>
-              <div>
-                <label className={label}>状态</label>
-                <select
-                  className={`${input} mt-1 w-full`}
-                  value={form.status}
-                  onChange={(e) => set("status", e.target.value)}
-                >
-                  <option value="DRAFT">草稿</option>
-                  <option value="SCHEDULED">定时</option>
-                  <option value="PUBLISHED">发布</option>
-                </select>
-              </div>
-              <div>
-                <label className={label}>定时发布（可选，需 T12 扫描任务生效）</label>
-                <input
-                  type="datetime-local"
-                  className={`${input} mt-1 w-full font-mono`}
-                  value={form.scheduledAt}
-                  onChange={(e) => set("scheduledAt", e.target.value)}
-                />
-              </div>
+                精选
+              </label>
             </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={form.featured}
-                onChange={(e) => set("featured", e.target.checked)}
-                className="accent-primary"
-              />
-              精选
-            </label>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* 底部按钮：上一步左下角，下一步/保存右下角 */}
         <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
