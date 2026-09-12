@@ -42,28 +42,34 @@ export function PostToolbar({
             )}
           </button>
 
-          {/* 标签列表（展开时显示） */}
-          {expanded && (
-            <div className="px-4 pb-4 pt-1 flex flex-wrap gap-2">
-              {allTags.map((tag) => {
-                const active = selectedTags.includes(tag);
-                return (
-                  <button
-                    key={tag}
-                    type="button"
-                    onClick={() => onToggleTag(tag)}
-                    className={`rounded-full border px-3.5 py-1 text-sm transition ${
-                      active
-                        ? "border-primary bg-primary/10 text-primary font-medium"
-                        : "border-border text-fg-muted hover:text-fg hover:border-primary/30"
-                    }`}
-                  >
-                    {tag}
-                  </button>
-                );
-              })}
+          {/* 标签列表（max-height 过渡动画） */}
+          <div
+            className={`grid transition-all duration-300 ease-in-out ${
+              expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+            }`}
+          >
+            <div className="overflow-hidden">
+              <div className="px-4 pb-4 pt-1 flex flex-wrap gap-2">
+                {allTags.map((tag) => {
+                  const active = selectedTags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => onToggleTag(tag)}
+                      className={`rounded-full border px-3.5 py-1 text-sm transition ${
+                        active
+                          ? "border-primary bg-primary/10 text-primary font-medium"
+                          : "border-border text-fg-muted hover:text-fg hover:border-primary/30"
+                      }`}
+                    >
+                      {tag}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          )}
+          </div>
         </div>
       )}
 

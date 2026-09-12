@@ -25,7 +25,7 @@ export default async function Home() {
     <div className="container mx-auto px-4 py-16">
       {/* 居中 header：站名 + 简介 + 统计 */}
       <header className="mb-14 text-center">
-        <h1 className="text-5xl md:text-6xl font-bold tracking-tight">林圣轩blog</h1>
+        <h1 className="text-4xl md:text-5xl font-bold tracking-tight">林圣轩blog</h1>
         <p className="mt-5 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
           技术写作与生活记录
           {/* T2：简介将接入 settings.site_description */}
@@ -33,17 +33,17 @@ export default async function Home() {
         <div className="mt-8 flex items-center justify-center gap-6 text-sm text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <FileText className="h-4 w-4" />
-            {postCount} 篇文章
+            <span className="font-bold text-foreground">{postCount}</span> 篇文章
           </span>
           <span className="text-border">·</span>
           <span className="flex items-center gap-1.5">
             <Tags className="h-4 w-4" />
-            {tagCount} 个标签
+            <span className="font-bold text-foreground">{tagCount}</span> 个标签
           </span>
           <span className="text-border">·</span>
           <span className="flex items-center gap-1.5">
             <Star className="h-4 w-4" />
-            {featuredCount} 篇精选
+            <span className="font-bold text-foreground">{featuredCount}</span> 篇精选
           </span>
         </div>
       </header>
