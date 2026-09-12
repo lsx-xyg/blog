@@ -48,7 +48,7 @@ export function PostToolbar({
             }`}
           >
             <div className="overflow-hidden">
-              <div className="px-4 pb-4 pt-1 flex flex-wrap gap-2">
+              <div className="px-4 pb-4 pt-1 flex flex-wrap gap-2 min-h-[36px]">
                 {allTags.map((tag) => {
                   const active = selectedTags.includes(tag);
                   return (

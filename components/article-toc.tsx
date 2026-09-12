@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { List, X, Copy, Check } from "lucide-react";
+import { List, Copy, Check } from "lucide-react";
 import type { TocItem } from "@/lib/toc";
 import {
   Sheet,
@@ -12,7 +12,8 @@ import {
 } from "@/components/ui/sheet";
 
 /** 文章目录（TOC）组件（对齐参考站 czhlove.cn）：
- * - PC端：右侧固定目录，标题"目录"+复制图标，编号列表，当前项加粗
+ * - PC端：右侧固定目录（top-24 固定位置，不垂直居中），标题'目录'+复制图标
+ * - 不显示编号，直接展示原样内容，不同等级标题用缩进区分
  * - 移动端：底部按钮点击弹出目录对话框
  * - 点击目录项平滑滚动到对应标题
  * - IntersectionObserver 跟踪当前阅读位置
@@ -62,34 +63,33 @@ export function ArticleToc({ items }: { items: TocItem[] }) {
   if (items.length === 0) return null;
 
   const TocList = () => (
-    <ol className="space-y-2 text-sm">
-      {items.map((item, index) => (
+    <ul className="space-y-2 text-base">
+      {items.map((item) => (
         <li key={item.id}>
           <button
             type="button"
             onClick={() => scrollTo(item.id)}
-            className={`text-left transition-colors ${
-              item.level === 2 ? "pl-0" : item.level === 3 ? "pl-4" : "pl-0"
+            className={`text-left transition-colors leading-relaxed ${
+              item.level === 1 ? "pl-0" : item.level === 2 ? "pl-4" : "pl-8"
             } ${
               activeId === item.id
                 ? "font-bold text-foreground"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <span className="mr-1.5">{index + 1}.</span>
             {item.text}
           </button>
         </li>
       ))}
-    </ol>
+    </ul>
   );
 
   return (
     <>
-      {/* PC端：右侧固定目录 */}
-      <aside className="hidden lg:block fixed right-8 top-1/2 -translate-y-1/2 w-56 max-h-[60vh] overflow-y-auto">
+      {/* PC端：右侧固定目录（top-24 固定位置，不垂直居中） */}
+      <aside className="hidden lg:block fixed right-12 top-24 w-56 max-h-[70vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold text-foreground">目录</h3>
+          <h3 className="font-semibold text-foreground text-lg">目录</h3>
           <button
             type="button"
             onClick={copyUrl}
@@ -107,7 +107,7 @@ export function ArticleToc({ items }: { items: TocItem[] }) {
       </aside>
 
       {/* 移动端：底部按钮 + 弹出目录 */}
-      <div className="lg:hidden fixed bottom-20 right-4 z-40">
+      <div className="lg:hidden fixed bottom-24 right-4 z-40">
         <Sheet>
           <SheetTrigger className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background shadow-lg">
             <List className="h-5 w-5" />

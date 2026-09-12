@@ -9,7 +9,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Button } from "@/components/ui/button";
 
 const OPTIONS: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
   { value: "light", label: "浅色", icon: Sun },
@@ -53,15 +52,11 @@ export function ThemeToggle() {
   return (
     <div onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       <DropdownMenu open={open} onOpenChange={setOpen}>
-        <DropdownMenuTrigger>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-[50px] w-[50px] rounded-full hover:bg-accent"
-            aria-label="切换主题"
-          >
-            <Monitor className="h-5 w-5" />
-          </Button>
+        <DropdownMenuTrigger
+          className="h-[50px] w-[50px] rounded-full hover:bg-accent flex items-center justify-center transition-colors"
+          aria-label="切换主题"
+        >
+          <Monitor className="h-5 w-5" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-36">
           {OPTIONS.map((o) => {

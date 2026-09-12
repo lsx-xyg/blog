@@ -203,7 +203,10 @@ export function PostWall({
             : "还没有已发布的文章，去后台写第一篇吧。"}
         </div>
       ) : (
-        <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4">
+        <div
+          key={onlyFeatured ? "featured" : "latest"}
+          className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4 animate-fade-in-up"
+        >
           {visibleItems.map((post) => (
             <PostCard key={post.id} post={post} />
           ))}

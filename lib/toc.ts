@@ -28,12 +28,12 @@ export function extractToc(markdown: string): TocItem[] {
     const text = match[2].trim();
     let id = slugify(text);
 
-    // 处理重复 id
+    // 处理重复 id（用原始 id 计数）
     const count = idCount.get(id) ?? 0;
+    idCount.set(id, count + 1);
     if (count > 0) {
       id = `${id}-${count}`;
     }
-    idCount.set(id, count + 1);
 
     items.push({ id, text, level });
   }
