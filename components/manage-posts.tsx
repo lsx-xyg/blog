@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { MarkdownEditor } from "@/components/markdown-editor";
 
 /**
  * T8 后台文章管理（受动态路径保护，服务端已做 admin 鉴权）
@@ -178,14 +179,13 @@ export function ManagePosts() {
             />
           </div>
           <div className="md:col-span-2">
-            <label className={label}>正文（Markdown）*</label>
-            <textarea
-              className={`${input} mt-1 h-48 w-full font-mono text-xs leading-relaxed`}
-              value={form.content}
-              onChange={(e) => set("content", e.target.value)}
-              required
-              placeholder={"支持 Markdown：\n\n## 标题\n\n- 列表\n\n```ts\nconst a = 1;\n```"}
-            />
+            <label className={label}>正文（Markdown）* — 支持粘贴/拖拽图片自动上传</label>
+            <div className="mt-1">
+              <MarkdownEditor
+                value={form.content}
+                onChange={(v) => set("content", v)}
+              />
+            </div>
           </div>
           <div>
             <label className={label}>状态</label>
