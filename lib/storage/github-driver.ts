@@ -20,37 +20,38 @@ export class GithubStorageDriver implements StorageDriver {
   name = "github" as const;
 
   private get token(): string {
-    return process.env.GITHUB_TOKEN || "";
+    return process.env.GITHUB_STORAGE_TOKEN || "";
+  }
+
+  private get owner(): string {
+    return process.env.GITHUB_STORAGE_OWNER || "lsx-xyg";
   }
 
   private get repo(): string {
-    return process.env.GITHUB_IMAGE_REPO || "lsx-xyg/images";
+    return process.env.GITHUB_STORAGE_REPO || "images";
   }
 
   private get branch(): string {
-    return process.env.GITHUB_IMAGE_BRANCH || "main";
+    return process.env.GITHUB_STORAGE_BRANCH || "main";
   }
 
-  /** 从 repo 字符串提取 owner 和 repo */
-  private get ownerAndRepo(): { owner: string; repo: string } {
-    const parts = this.repo.split("/");
-    return { owner: parts[0] || "", repo: parts[1] || "" };
+  private get cdnBase(): string {
+    // jsDelivr CDN 基础 URL，可自定义
+    return process.env.GITHUB_STORAGE_CDN_BASE || "https://cdn.jsdelivr.net/gh";
   }
 
   /** 构建 jsDelivr CDN URL */
   getUrl(key: string): string {
-    const { owner, repo } = this.ownerAndRepo;
-    return `https://cdn.jsdelivr.net/gh/${owner}/${repo}@${this.branch}/${key}`;
+    return `${this.cdnBase}/${this.owner}/${this.repo}@${this.branch}/${key}`;
   }
 
   async upload(file: Buffer, filename: string, mimeType: string): Promise<UploadResult> {
     if (!this.token) {
-      throw new Error("GITHUB_TOKEN 环境变量未设置");
+      throw new Error("GITHUB_STORAGE_TOKEN 环境变量未设置");
     }
 
     const key = generateKey(filename);
-    const { owner, repo } = this.ownerAndRepo;
-    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${key}`;
+    const apiUrl = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${key}`;
 
     // base64 编码文件内容
     const content = file.toString("base64");
@@ -84,11 +85,10 @@ export class GithubStorageDriver implements StorageDriver {
 
   async delete(key: string): Promise<void> {
     if (!this.token) {
-      throw new Error("GITHUB_TOKEN 环境变量未设置");
+      throw new Error("GITHUB_STORAGE_TOKEN 环境变量未设置");
     }
 
-    const { owner, repo } = this.ownerAndRepo;
-    const apiUrl = `https://api.github.com/repos/${owner}/${repo}/contents/${key}`;
+    const apiUrl = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${key}`;
 
     // 先获取文件 sha
     const getResponse = await fetch(apiUrl, {

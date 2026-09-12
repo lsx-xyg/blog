@@ -120,18 +120,22 @@ Better Auth 自动创建 `user` / `session` / `account` / `verification` 表。
 
 ```
 interface StorageDriver {
-  getUploadUrl(...)  // 上传凭证（预签名 / 客户端直传）
-  delete(key)        // 删除
-  getPublicUrl(key)  // 公开访问 URL
+  upload(file, filename, mimeType)  // 服务端直传（非客户端预签名 URL）
+  delete(key)                        // 删除
+  getUrl(key)                        // 公开访问 URL
 }
 ```
 
-- `STORAGE_DRIVER = VERCEL_BLOB | S3 | GITHUB`
-  - **VERCEL_BLOB**：默认，客户端直传
-  - **S3**：@aws-sdk/client-s3，预签名 URL（R2 / OSS / MinIO 等任意 S3 兼容平台）
+- `STORAGE_DRIVER = LOCAL | GITHUB | S3`
+  - **LOCAL**：默认，本地文件存储（`public/uploads/`），开发环境用，不消耗外部 API 额度
   - **GITHUB**：Contents API 上传 → 返回 **jsDelivr 形态 URL** 存库；视频不走 GitHub
-- 图片组件统一懒加载（loading="lazy" + decoding="async"）
+  - **S3**：@aws-sdk/client-s3（占位，后续实现，R2 / OSS / MinIO 等任意 S3 兼容平台）
+- **与原方案偏差记录**：原定义为 `VERCEL_BLOB | S3 | GITHUB`，interface 方法为 `getUploadUrl/delete/getPublicUrl`；用户否决 VERCEL_BLOB（不想依赖 Vercel 专有服务，且 Vercel Blob 免费额度有限），改用 LOCAL 本地驱动；上传方式从客户端预签名 URL 改为服务端直传（简化实现，博客场景上传量小）
+- 图片组件统一懒加载（`loading="lazy"` + `decoding="async"`）
 - 备份上传复用同一 interface（见 §11）
+- 文件命名：`YYYY/MM/uuid.ext`（按日期分目录 + UUID 避免冲突 + 保留扩展名）
+- 上传限制：单张 10MB，格式 jpg/jpeg/png/webp/gif
+- 鉴权：仅管理员可上传/删除（Better Auth session）
 
 ---
 
@@ -255,7 +259,7 @@ interface StorageDriver {
 - **格式**：JSON 文件（schema 版本号 + 导出时间 + 各表数据数组）
 - **导出**：手动 → 生成 JSON 直接**下载到本地**；定时 → 上传到备份存储
 - **导入**：上传 JSON → 校验版本 → 事务内按外键顺序恢复（tags → posts → gallery_items → 关联表 → settings → friend_links → users/account）→ **覆盖式**，失败整体回滚；确认弹窗含覆盖警告
-- **定时备份**：复用 `StorageDriver`，`BACKUP_DRIVER = VERCEL_BLOB | S3 | GITHUB | LOCAL`，走 `backups/` 前缀；`VERCEL` 模式 cron-job.org 每日触发 `GET /api/cron/backup`，`SERVER` 模式 node-cron 每日；自动备份保留 7 份（`BACKUP_RETENTION`），旧备份自动删除
+- **定时备份**：复用 `StorageDriver`，`BACKUP_DRIVER = LOCAL | GITHUB | S3`，走 `backups/` 前缀；`VERCEL` 模式 cron-job.org 每日触发 `GET /api/cron/backup`，`SERVER` 模式 node-cron 每日；自动备份保留 7 份（`BACKUP_RETENTION`），旧备份自动删除
 - **历史**：后台备份页显示 backup_records（时间/大小/来源），可下载、可删除
 - ⚠️ **安全提醒**：备份含账号表数据（邮箱等）；`BACKUP_DRIVER=GITHUB` 上传时若 repo 公开，账号信息会公开——部署时自行权衡（私有 repo 或接受）
 
@@ -272,8 +276,7 @@ BETTER_AUTH_URL
 GITHUB_CLIENT_ID
 GITHUB_CLIENT_SECRET
 # 存储
-STORAGE_DRIVER=VERCEL_BLOB|S3|GITHUB
-BLOB_READ_WRITE_TOKEN
+STORAGE_DRIVER=LOCAL|GITHUB|S3
 S3_ENDPOINT
 S3_REGION
 S3_BUCKET
@@ -294,7 +297,7 @@ SETUP_SECRET        # 可选，引导保护
 # 搜索
 SEARCH_MODE=CLIENT|DATABASE
 # 备份
-BACKUP_DRIVER=VERCEL_BLOB|S3|GITHUB|LOCAL
+BACKUP_DRIVER=LOCAL|GITHUB|S3
 BACKUP_RETENTION=7
 # 站点
 NEXT_PUBLIC_SITE_URL
