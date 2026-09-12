@@ -234,60 +234,66 @@ export function ManageMedia() {
         </div>
       </div>
 
-      {/* 未使用图片清理面板 */}
-      {showUnusedCleanup && (
-        <div className="mb-6 rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="flex items-center gap-2 text-sm font-semibold text-destructive">
-              <AlertTriangle className="h-4 w-4" />
-              未使用图片清理
-            </h3>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={loadUnusedMedia}
-                disabled={unusedLoading}
-                className="flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs hover:bg-accent"
-              >
-                <RefreshCw className={`h-3 w-3 ${unusedLoading ? "animate-spin" : ""}`} />
-                刷新
-              </button>
-              <button
-                type="button"
-                onClick={cleanupUnusedMedia}
-                disabled={unusedItems.length === 0}
-                className="rounded-md bg-destructive px-2 py-1 text-xs text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50"
-              >
-                全部删除 ({unusedItems.length})
-              </button>
+      {/* 未使用图片清理面板（动画展开/收起） */}
+      <div
+        className={`grid transition-all duration-300 ease-in-out ${
+          showUnusedCleanup ? "grid-rows-[1fr] opacity-100 mb-6" : "grid-rows-[0fr] opacity-0 mb-0"
+        }`}
+      >
+        <div className="overflow-hidden">
+          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+            <div className="mb-3 flex items-center justify-between">
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-destructive">
+                <AlertTriangle className="h-4 w-4" />
+                未使用图片清理
+              </h3>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={loadUnusedMedia}
+                  disabled={unusedLoading}
+                  className="flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs hover:bg-accent transition-colors"
+                >
+                  <RefreshCw className={`h-3 w-3 ${unusedLoading ? "animate-spin" : ""}`} />
+                  刷新
+                </button>
+                <button
+                  type="button"
+                  onClick={cleanupUnusedMedia}
+                  disabled={unusedItems.length === 0}
+                  className="rounded-md bg-destructive px-2 py-1 text-xs text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors"
+                >
+                  全部删除 ({unusedItems.length})
+                </button>
+              </div>
             </div>
+            {unusedLoading ? (
+              <p className="text-sm text-muted-foreground">扫描中…</p>
+            ) : unusedItems.length === 0 ? (
+              <p className="text-sm text-muted-foreground">没有发现未使用的图片 🎉</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-6">
+                {unusedItems.slice(0, 12).map((item) => (
+                  <div key={item.id} className="relative aspect-square overflow-hidden rounded border animate-fade-in-up">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.url}
+                      alt={item.title || "未使用图片"}
+                      className="h-full w-full object-cover"
+                      loading="lazy"
+                    />
+                  </div>
+                ))}
+                {unusedItems.length > 12 && (
+                  <div className="flex aspect-square items-center justify-center rounded border bg-muted text-sm text-muted-foreground">
+                    +{unusedItems.length - 12}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-          {unusedLoading ? (
-            <p className="text-sm text-muted-foreground">扫描中…</p>
-          ) : unusedItems.length === 0 ? (
-            <p className="text-sm text-muted-foreground">没有发现未使用的图片 🎉</p>
-          ) : (
-            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-6">
-              {unusedItems.slice(0, 12).map((item) => (
-                <div key={item.id} className="relative aspect-square overflow-hidden rounded border">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={item.url}
-                    alt={item.title || "未使用图片"}
-                    className="h-full w-full object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              ))}
-              {unusedItems.length > 12 && (
-                <div className="flex aspect-square items-center justify-center rounded border bg-muted text-sm text-muted-foreground">
-                  +{unusedItems.length - 12}
-                </div>
-              )}
-            </div>
-          )}
         </div>
-      )}
+      </div>
 
       {/* 筛选和搜索 */}
       <div className="mb-6 flex flex-wrap items-center gap-4">
@@ -298,10 +304,10 @@ export function ManageMedia() {
             <button
               type="button"
               onClick={() => { setTypeFilter("ALL"); setPage(1); }}
-              className={`px-3 py-1.5 text-sm transition-colors ${
+              className={`px-3 py-1.5 text-sm transition-all duration-200 transform ${
                 typeFilter === "ALL"
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-accent"
+                  ? "bg-primary text-primary-foreground scale-105"
+                  : "hover:bg-accent hover:scale-102"
               }`}
             >
               全部
@@ -309,10 +315,10 @@ export function ManageMedia() {
             <button
               type="button"
               onClick={() => { setTypeFilter(MediaType.ARTICLE); setPage(1); }}
-              className={`px-3 py-1.5 text-sm transition-colors ${
+              className={`px-3 py-1.5 text-sm transition-all duration-200 transform ${
                 typeFilter === MediaType.ARTICLE
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-accent"
+                  ? "bg-primary text-primary-foreground scale-105"
+                  : "hover:bg-accent hover:scale-102"
               }`}
             >
               {MEDIA_TYPE_LABELS[MediaType.ARTICLE]}
@@ -320,10 +326,10 @@ export function ManageMedia() {
             <button
               type="button"
               onClick={() => { setTypeFilter(MediaType.GALLERY); setPage(1); }}
-              className={`px-3 py-1.5 text-sm transition-colors ${
+              className={`px-3 py-1.5 text-sm transition-all duration-200 transform ${
                 typeFilter === MediaType.GALLERY
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-accent"
+                  ? "bg-primary text-primary-foreground scale-105"
+                  : "hover:bg-accent hover:scale-102"
               }`}
             >
               {MEDIA_TYPE_LABELS[MediaType.GALLERY]}
@@ -333,32 +339,39 @@ export function ManageMedia() {
 
         {/* 搜索 */}
         <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-transform duration-200 focus-within:scale-110" />
           <input
             type="text"
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="搜索图片标题或 URL…"
-            className="w-full rounded-lg border border-input bg-background py-2 pl-9 pr-3 text-sm"
+            className="w-full rounded-lg border border-input bg-background py-2 pl-9 pr-3 text-sm transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
       </div>
 
-      {/* 媒体网格 */}
+      {/* 媒体网格（key 变化时触发切换动画） */}
       {loading ? (
-        <div className="py-12 text-center text-sm text-muted-foreground">加载中…</div>
+        <div className="py-12 text-center text-sm text-muted-foreground animate-pulse">加载中…</div>
       ) : items.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-12 text-center">
+        <div
+          key={`empty-${typeFilter}-${search}`}
+          className="rounded-xl border border-dashed border-border p-12 text-center animate-fade-in-up"
+        >
           <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground/50" />
           <p className="mt-4 text-sm text-muted-foreground">还没有图片，点击上方按钮上传第一张吧</p>
         </div>
       ) : (
         <>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {items.map((item) => (
+          <div
+            key={`grid-${typeFilter}-${search}-${page}`}
+            className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 animate-fade-in-up"
+          >
+            {items.map((item, index) => (
               <div
                 key={item.id}
-                className="group overflow-hidden rounded-lg border border-border bg-card"
+                className="group overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+                style={{ animationDelay: `${index * 30}ms` }}
               >
                 {/* 图片 */}
                 <div className="relative aspect-square overflow-hidden bg-muted">
@@ -434,7 +447,7 @@ export function ManageMedia() {
                 type="button"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="rounded-md border border-input px-3 py-1.5 text-sm disabled:opacity-50 hover:bg-accent"
+                className="rounded-md border border-input px-3 py-1.5 text-sm disabled:opacity-50 hover:bg-accent transition-all duration-200 hover:scale-105 active:scale-95"
               >
                 上一页
               </button>
@@ -445,7 +458,7 @@ export function ManageMedia() {
                 type="button"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="rounded-md border border-input px-3 py-1.5 text-sm disabled:opacity-50 hover:bg-accent"
+                className="rounded-md border border-input px-3 py-1.5 text-sm disabled:opacity-50 hover:bg-accent transition-all duration-200 hover:scale-105 active:scale-95"
               >
                 下一页
               </button>
