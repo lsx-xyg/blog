@@ -199,7 +199,7 @@ export function ManagePosts() {
           <div className="space-y-4">
             <div>
               <label className={label}>
-                正文（Markdown）* — 支持粘贴/拖拽图片自动上传，Ctrl+/ 切换源码模式
+                正文（Markdown）* — 支持粘贴/拖拽图片自动上传，左右分屏实时预览
               </label>
               <div className="mt-1">
                 <MarkdownEditor

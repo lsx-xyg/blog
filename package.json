@@ -14,9 +14,9 @@
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
-    "@milkdown/kit": "^7.22.1",
-    "@milkdown/react": "^7.22.1",
-    "@milkdown/theme-nord": "^7.22.1",
+    "@bytemd/plugin-gfm": "^1.22.0",
+    "@bytemd/plugin-highlight": "^1.22.0",
+    "@bytemd/react": "^1.22.0",
     "@shikijs/rehype": "^4.4.3",
     "better-auth": "^1.7.4",
     "class-variance-authority": "^0.7.1",
