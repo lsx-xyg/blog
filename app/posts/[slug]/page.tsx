@@ -8,6 +8,7 @@ import { CodeCopy } from "@/components/code-copy";
 import { ViewCounter } from "@/components/view-counter";
 import { ArticleToc } from "@/components/article-toc";
 import { ArticleFloatButtons } from "@/components/article-float-buttons";
+import { Comments } from "@/components/comments";
 import { CalendarDays, Clock } from "lucide-react";
 
 export const dynamicParams = true;
@@ -25,9 +26,42 @@ export async function generateMetadata({
   const { slug } = await params;
   const post = await getPublishedPostBySlugOrId(slug);
   if (!post) return { title: "文章不存在" };
+
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const url = `${siteUrl}/posts/${post.slug || post.id}`;
+
   return {
     title: post.title,
     description: post.summary ?? undefined,
+    alternates: {
+      canonical: url,
+    },
+    openGraph: {
+      type: "article",
+      locale: "zh_CN",
+      url,
+      title: post.title,
+      description: post.summary ?? undefined,
+      publishedTime: post.publishedAt?.toISOString(),
+      modifiedTime: post.updatedAt?.toISOString(),
+      authors: ["林圣轩"],
+      images: post.coverUrl
+        ? [
+            {
+              url: post.coverUrl,
+              width: 1200,
+              height: 630,
+              alt: post.title,
+            },
+          ]
+        : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: post.title,
+      description: post.summary ?? undefined,
+      images: post.coverUrl ? [post.coverUrl] : undefined,
+    },
   };
 }
 
@@ -91,6 +125,9 @@ export default async function PostPage({
               {/* 正文内容 */}
               <div className="mdx-content">{renderMdx(post.content)}</div>
               <CodeCopy />
+
+              {/* giscus 评论 */}
+              <Comments />
             </article>
           </div>
         </div>

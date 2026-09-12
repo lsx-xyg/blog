@@ -155,3 +155,18 @@ export async function listPublishedPostsFiltered(opts?: {
   if (offset != null) queryBuilder.offset(offset);
   return queryBuilder;
 }
+
+/** sitemap 用：所有已发布文章的轻量元数据（id/slug/时间戳） */
+export async function getAllPostsForSitemap() {
+  return db
+    .select({
+      id: posts.id,
+      slug: posts.slug,
+      createdAt: posts.createdAt,
+      updatedAt: posts.updatedAt,
+      publishedAt: posts.publishedAt,
+    })
+    .from(posts)
+    .where(eq(posts.status, "PUBLISHED"))
+    .orderBy(sql`coalesce(${posts.publishedAt}, ${posts.createdAt}) desc`);
+}
