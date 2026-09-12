@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Search, X, CalendarDays } from "lucide-react";
 import { useRouter } from "next/navigation";
 import MiniSearch from "minisearch";
@@ -136,9 +137,10 @@ export function SearchDialog() {
         <Search className="h-5 w-5" />
       </Button>
 
-      {/* 全屏搜索层 */}
-      {open && (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh]">
+      {/* 全屏搜索层（Portal 渲染到 body，避免 header transform 影响 fixed 定位） */}
+      {open &&
+        createPortal(
+          <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh]">
           {/* 半透明虚化遮罩 */}
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -228,7 +230,7 @@ export function SearchDialog() {
             </div>
           </div>
         </div>
-      )}
+      , document.body)}
     </>
   );
 }

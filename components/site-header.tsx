@@ -79,7 +79,7 @@ export function SiteHeader({ adminPath }: { adminPath: string }) {
             </span>
           </span>
           <div className="hidden sm:block">
-            <span className="block text-xl font-bold">blog</span>
+            <span className="block text-xl font-bold">林圣轩blog</span>
             <p className="text-sm text-muted-foreground">技术写作与生活记录</p>
           </div>
         </Link>

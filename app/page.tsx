@@ -1,9 +1,10 @@
-import { listPublishedPosts } from "@/lib/posts";
+import { listPublishedPosts, listPublishedPostMeta } from "@/lib/posts";
 import { PostWall } from "@/components/post-wall";
+import { FileText, Tags, Star } from "lucide-react";
 
 export const metadata = {
-  title: "blog · 首页",
-  description: "林圣轩的个人博客：技术写作与生活记录",
+  title: "林圣轩blog",
+  description: "技术写作与生活记录",
 };
 
 // 实时渲染：博客低流量，发布/删除立即可见（T7 前台客户端拉取元数据）
@@ -14,18 +15,37 @@ const PAGE_SIZE = 9;
 export default async function Home() {
   // 首屏 SSR 第一页（SEO），PostWall 挂载后拉全量元数据做筛选/搜索/分批渲染
   const initialPosts = await listPublishedPosts({ limit: PAGE_SIZE });
+  // 统计数据：文章数/标签数/精选数
+  const allMetas = await listPublishedPostMeta();
+  const postCount = allMetas.length;
+  const featuredCount = allMetas.filter((m) => m.featured).length;
+  const tagCount = new Set(allMetas.flatMap((m) => m.tags)).size;
 
   return (
-    <div className="container mx-auto px-4 py-12">
-      <header className="mb-10">
-        <p className="font-mono text-base text-muted-foreground">
-          blog · blog.dbthree.dpdns.org
-        </p>
-        <h1 className="mt-4 text-4xl font-bold">林圣轩的个人博客</h1>
-        <p className="mt-3 text-lg text-muted-foreground">
+    <div className="container mx-auto px-4 py-16">
+      {/* 居中 header：站名 + 简介 + 统计 */}
+      <header className="mb-14 text-center">
+        <h1 className="text-5xl md:text-6xl font-bold tracking-tight">林圣轩blog</h1>
+        <p className="mt-5 text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
           技术写作与生活记录
           {/* T2：简介将接入 settings.site_description */}
         </p>
+        <div className="mt-8 flex items-center justify-center gap-6 text-sm text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <FileText className="h-4 w-4" />
+            {postCount} 篇文章
+          </span>
+          <span className="text-border">·</span>
+          <span className="flex items-center gap-1.5">
+            <Tags className="h-4 w-4" />
+            {tagCount} 个标签
+          </span>
+          <span className="text-border">·</span>
+          <span className="flex items-center gap-1.5">
+            <Star className="h-4 w-4" />
+            {featuredCount} 篇精选
+          </span>
+        </div>
       </header>
 
       <PostWall initialPosts={initialPosts} pageSize={PAGE_SIZE} />

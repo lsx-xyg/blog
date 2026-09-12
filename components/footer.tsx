@@ -11,7 +11,7 @@ export function Footer() {
     <footer className="bg-muted/30 mt-8 md:mt-14 py-12">
       <div className="container mx-auto px-4 text-center">
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">blog</h3>
+          <h3 className="text-lg font-semibold mb-2">林圣轩blog</h3>
           <p className="text-muted-foreground">技术写作与生活记录</p>
         </div>
         <div className="text-sm text-muted-foreground">

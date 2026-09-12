@@ -3,9 +3,9 @@
 import { useState } from "react";
 import { ChevronDown, ChevronUp } from "lucide-react";
 
-/** 前台筛选工具栏（对齐参考站 czhlove.cn，大气样式）：
- * - 标签区域：可展开/收缩（默认显示一行，超出隐藏），用容器包裹
- * - 最新/精选切换胶囊：放在标签下面，居中
+/** 前台筛选工具栏（对齐参考站 czhlove.cn）：
+ * - 标签容器："文章标签"标题 + 展开/收缩箭头，收缩时只显示标题
+ * - 最新/精选切换胶囊：靠左对齐
  * 搜索已移到 header（SearchDialog 全屏弹出）
  */
 export function PostToolbar({
@@ -21,58 +21,54 @@ export function PostToolbar({
   onlyFeatured: boolean;
   onToggleFeatured: () => void;
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(true);
 
   return (
     <div className="mb-10 space-y-5">
-      {/* 标签筛选（可展开/收缩，容器包裹） */}
+      {/* 标签容器（可展开/收缩） */}
       {allTags.length > 0 && (
-        <div className="rounded-xl border border-border bg-card/50 p-4">
-          <div
-            className={`flex flex-wrap gap-2 transition-all duration-300 ${
-              expanded ? "" : "max-h-[44px] overflow-hidden"
-            }`}
+        <div className="rounded-xl border border-border bg-card/50 overflow-hidden">
+          {/* 标题栏：点击展开/收缩 */}
+          <button
+            type="button"
+            onClick={() => setExpanded(!expanded)}
+            className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-accent/30 transition-colors"
           >
-            {allTags.map((tag) => {
-              const active = selectedTags.includes(tag);
-              return (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => onToggleTag(tag)}
-                  className={`rounded-full border px-4 py-1.5 text-sm transition ${
-                    active
-                      ? "border-primary bg-primary/10 text-primary font-medium"
-                      : "border-border text-fg-muted hover:text-fg hover:border-primary/30"
-                  }`}
-                >
-                  {tag}
-                </button>
-              );
-            })}
-          </div>
-          {allTags.length > 6 && (
-            <button
-              type="button"
-              onClick={() => setExpanded(!expanded)}
-              className="mt-3 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
-            >
-              {expanded ? (
-                <>
-                  收起 <ChevronUp className="h-4 w-4" />
-                </>
-              ) : (
-                <>
-                  展开全部标签 <ChevronDown className="h-4 w-4" />
-                </>
-              )}
-            </button>
+            <span className="font-medium text-foreground">文章标签</span>
+            {expanded ? (
+              <ChevronUp className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            )}
+          </button>
+
+          {/* 标签列表（展开时显示） */}
+          {expanded && (
+            <div className="px-4 pb-4 pt-1 flex flex-wrap gap-2">
+              {allTags.map((tag) => {
+                const active = selectedTags.includes(tag);
+                return (
+                  <button
+                    key={tag}
+                    type="button"
+                    onClick={() => onToggleTag(tag)}
+                    className={`rounded-full border px-3.5 py-1 text-sm transition ${
+                      active
+                        ? "border-primary bg-primary/10 text-primary font-medium"
+                        : "border-border text-fg-muted hover:text-fg hover:border-primary/30"
+                    }`}
+                  >
+                    {tag}
+                  </button>
+                );
+              })}
+            </div>
           )}
         </div>
       )}
 
-      {/* 最新/精选切换（放在标签下面，居中） */}
-      <div className="flex items-center justify-center">
+      {/* 最新/精选切换（靠左对齐） */}
+      <div className="flex items-center justify-start">
         <div className="flex shrink-0 items-center gap-1 rounded-full border border-border bg-surface p-1 text-sm">
           {(
             [
@@ -84,7 +80,7 @@ export function PostToolbar({
               key={String(o.key)}
               type="button"
               onClick={onToggleFeatured}
-              className={`rounded-full px-6 py-2 transition ${
+              className={`rounded-full px-5 py-1.5 transition ${
                 onlyFeatured === o.key
                   ? "bg-fg text-bg font-medium"
                   : "text-fg-muted hover:text-fg"
