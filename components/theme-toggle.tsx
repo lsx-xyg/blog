@@ -40,10 +40,10 @@ export function ThemeToggle() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 rounded-full hover:bg-accent"
+          className="h-[50px] w-[50px] rounded-full hover:bg-accent"
           aria-label="切换主题"
         >
-          <Monitor className="h-[1.2rem] w-[1.2rem]" />
+          <Monitor className="h-5 w-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-36">
