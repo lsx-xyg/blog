@@ -2,10 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { MarkdownEditor } from "@/components/markdown-editor";
+import { ChevronLeft, ChevronRight, FileText, Settings } from "lucide-react";
 
 /**
  * T8 后台文章管理（受动态路径保护，服务端已做 admin 鉴权）
- * T9 将用 Milkdown 编辑器替换 textarea
+ * T10 Milkdown 编辑器 + 多步骤表单
+ *
+ * 步骤 1：正文编辑（Milkdown WYSIWYG / 源码模式 / 全屏）
+ * 步骤 2：基本信息（标题、slug、摘要、封面图、状态、精选、定时发布）
  */
 type PostRow = {
   id: string;
@@ -33,12 +37,18 @@ const emptyForm = {
   scheduledAt: "",
 };
 
+const STEPS = [
+  { id: 1, label: "正文编辑", icon: FileText },
+  { id: 2, label: "基本信息", icon: Settings },
+];
+
 export function ManagePosts() {
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [currentStep, setCurrentStep] = useState(1);
 
   const load = useCallback(async () => {
     const r = await fetch("/api/admin/posts");
@@ -67,11 +77,13 @@ export function ManagePosts() {
       featured: p.featured,
       scheduledAt: p.scheduledAt ? p.scheduledAt.slice(0, 16) : "",
     });
+    setCurrentStep(1);
   };
 
   const resetForm = () => {
     setEditingId(null);
     setForm(emptyForm);
+    setCurrentStep(1);
   };
 
   const save = async (e: React.FormEvent) => {
@@ -123,6 +135,12 @@ export function ManagePosts() {
     "rounded-lg border border-border bg-surface-strong px-3 py-2 text-sm outline-none focus:border-ring";
   const label = "text-xs font-medium text-fg-muted";
 
+  const goToStep = (step: number) => {
+    if (step >= 1 && step <= STEPS.length) {
+      setCurrentStep(step);
+    }
+  };
+
   return (
     <main className="mx-auto max-w-4xl px-6 py-10">
       <header className="mb-8">
@@ -142,90 +160,160 @@ export function ManagePosts() {
         onSubmit={save}
         className="mb-10 rounded-xl border border-border bg-surface p-6"
       >
-        <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
-          <div>
-            <label className={label}>标题 *</label>
-            <input
-              className={`${input} mt-1 w-full`}
-              value={form.title}
-              onChange={(e) => set("title", e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className={label}>Slug（留空自动用 ID）</label>
-            <input
-              className={`${input} mt-1 w-full font-mono`}
-              value={form.slug}
-              onChange={(e) => set("slug", e.target.value)}
-              placeholder="留空 = 自动生成"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className={label}>摘要</label>
-            <input
-              className={`${input} mt-1 w-full`}
-              value={form.summary}
-              onChange={(e) => set("summary", e.target.value)}
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className={label}>封面图 URL（可选）</label>
-            <input
-              className={`${input} mt-1 w-full font-mono`}
-              value={form.coverUrl}
-              onChange={(e) => set("coverUrl", e.target.value)}
-              placeholder="https://…（T3 上传后可用图床 URL）"
-            />
-          </div>
-          <div className="md:col-span-2">
-            <label className={label}>正文（Markdown）* — 支持粘贴/拖拽图片自动上传</label>
-            <div className="mt-1">
-              <MarkdownEditor
-                value={form.content}
-                onChange={(v) => set("content", v)}
-              />
-            </div>
-          </div>
-          <div>
-            <label className={label}>状态</label>
-            <select
-              className={`${input} mt-1 w-full`}
-              value={form.status}
-              onChange={(e) => set("status", e.target.value)}
-            >
-              <option value="DRAFT">草稿</option>
-              <option value="SCHEDULED">定时</option>
-              <option value="PUBLISHED">发布</option>
-            </select>
-          </div>
-          <div>
-            <label className={label}>定时发布（可选，需 T12 扫描任务生效）</label>
-            <input
-              type="datetime-local"
-              className={`${input} mt-1 w-full font-mono`}
-              value={form.scheduledAt}
-              onChange={(e) => set("scheduledAt", e.target.value)}
-            />
-          </div>
+        {/* 步骤条 */}
+        <div className="mb-6 flex items-center">
+          {STEPS.map((step, index) => {
+            const Icon = step.icon;
+            const isActive = currentStep === step.id;
+            const isCompleted = currentStep > step.id;
+            return (
+              <div key={step.id} className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => goToStep(step.id)}
+                  className={`flex items-center gap-2 rounded-full px-4 py-2 text-sm transition-colors ${
+                    isActive
+                      ? "bg-primary text-primary-foreground"
+                      : isCompleted
+                        ? "bg-primary/10 text-primary"
+                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{step.label}</span>
+                </button>
+                {index < STEPS.length - 1 && (
+                  <div
+                    className={`mx-2 h-px w-8 ${
+                      isCompleted ? "bg-primary" : "bg-border"
+                    }`}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={form.featured}
-              onChange={(e) => set("featured", e.target.checked)}
-              className="accent-primary"
-            />
-            精选
-          </label>
+        {/* 步骤 1：正文编辑 */}
+        {currentStep === 1 && (
+          <div className="space-y-4">
+            <div>
+              <label className={label}>
+                正文（Markdown）* — 支持粘贴/拖拽图片自动上传，Ctrl+/ 切换源码模式
+              </label>
+              <div className="mt-1">
+                <MarkdownEditor
+                  value={form.content}
+                  onChange={(v) => set("content", v)}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* 步骤 2：基本信息 */}
+        {currentStep === 2 && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <div>
+                <label className={label}>标题 *</label>
+                <input
+                  className={`${input} mt-1 w-full`}
+                  value={form.title}
+                  onChange={(e) => set("title", e.target.value)}
+                  required
+                />
+              </div>
+              <div>
+                <label className={label}>Slug（留空自动用 ID）</label>
+                <input
+                  className={`${input} mt-1 w-full font-mono`}
+                  value={form.slug}
+                  onChange={(e) => set("slug", e.target.value)}
+                  placeholder="留空 = 自动生成"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className={label}>摘要</label>
+                <input
+                  className={`${input} mt-1 w-full`}
+                  value={form.summary}
+                  onChange={(e) => set("summary", e.target.value)}
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className={label}>封面图 URL（可选）</label>
+                <input
+                  className={`${input} mt-1 w-full font-mono`}
+                  value={form.coverUrl}
+                  onChange={(e) => set("coverUrl", e.target.value)}
+                  placeholder="https://…（T3 上传后可用图床 URL）"
+                />
+              </div>
+              <div>
+                <label className={label}>状态</label>
+                <select
+                  className={`${input} mt-1 w-full`}
+                  value={form.status}
+                  onChange={(e) => set("status", e.target.value)}
+                >
+                  <option value="DRAFT">草稿</option>
+                  <option value="SCHEDULED">定时</option>
+                  <option value="PUBLISHED">发布</option>
+                </select>
+              </div>
+              <div>
+                <label className={label}>定时发布（可选，需 T12 扫描任务生效）</label>
+                <input
+                  type="datetime-local"
+                  className={`${input} mt-1 w-full font-mono`}
+                  value={form.scheduledAt}
+                  onChange={(e) => set("scheduledAt", e.target.value)}
+                />
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.featured}
+                onChange={(e) => set("featured", e.target.checked)}
+                className="accent-primary"
+              />
+              精选
+            </label>
+          </div>
+        )}
+
+        {/* 底部按钮 */}
+        <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+          <div className="flex gap-3">
+            {currentStep > 1 && (
+              <button
+                type="button"
+                onClick={() => goToStep(currentStep - 1)}
+                className="flex items-center gap-1 rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent transition-colors"
+              >
+                <ChevronLeft className="h-4 w-4" />
+                上一步
+              </button>
+            )}
+            {currentStep < STEPS.length && (
+              <button
+                type="button"
+                onClick={() => goToStep(currentStep + 1)}
+                className="flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                下一步
+                <ChevronRight className="h-4 w-4" />
+              </button>
+            )}
+          </div>
           <div className="flex gap-3">
             {editingId && (
               <button
                 type="button"
                 onClick={resetForm}
-                className="rounded-lg border border-border px-4 py-2 text-sm"
+                className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent transition-colors"
               >
                 取消
               </button>
@@ -233,7 +321,7 @@ export function ManagePosts() {
             <button
               type="submit"
               disabled={loading}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
+              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50 hover:bg-primary/90 transition-colors"
             >
               {loading ? "保存中…" : editingId ? "保存修改" : "创建文章"}
             </button>

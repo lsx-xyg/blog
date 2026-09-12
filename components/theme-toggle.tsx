@@ -30,7 +30,9 @@ const WARM_OPTION: { value: ThemeMode; label: string; icon: typeof Sun } = {
  * - 激活项：文字加深 + 右侧蓝色点（不用对勾）
  */
 export function ThemeToggle() {
-  const [mode, setMode] = useState<ThemeMode>("system");
+  // 初始为 null，避免服务端渲染与客户端不一致导致水合错误
+  // 服务端渲染时 mode=null，客户端首次渲染也是 null，useEffect 后才设置实际主题
+  const [mode, setMode] = useState<ThemeMode | null>(null);
   const [open, setOpen] = useState(false);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
