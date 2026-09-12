@@ -3,8 +3,11 @@ import { notFound } from "next/navigation";
 import { getPublishedPostBySlugOrId, listPublishedPosts } from "@/lib/posts";
 import { renderMdx } from "@/lib/mdx";
 import { formatDate } from "@/lib/utils";
+import { extractToc } from "@/lib/toc";
 import { CodeCopy } from "@/components/code-copy";
 import { ViewCounter } from "@/components/view-counter";
+import { ArticleToc } from "@/components/article-toc";
+import { ArticleFloatButtons } from "@/components/article-float-buttons";
 import { CalendarDays, Clock } from "lucide-react";
 
 export const dynamicParams = true;
@@ -39,6 +42,9 @@ export default async function PostPage({
 
   // 阅读时长估算：中文约 500 字/分钟（markdown 原文含语法，取整保护最小 1 分钟）
   const readingMinutes = Math.max(1, Math.round(post.content.length / 500));
+
+  // 从 markdown 提取目录
+  const tocItems = extractToc(post.content);
 
   return (
     <main className="container mx-auto px-2 py-4 md:px-4 md:py-8">
@@ -89,6 +95,12 @@ export default async function PostPage({
           </div>
         </div>
       </div>
+
+      {/* 目录（PC端右侧固定，移动端弹出） */}
+      <ArticleToc items={tocItems} />
+
+      {/* 悬浮按钮（回顶部 + 关闭） */}
+      <ArticleFloatButtons />
     </main>
   );
 }

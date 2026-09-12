@@ -25,9 +25,8 @@ export function PostToolbar({
 
   return (
     <div className="mb-10 space-y-5">
-      {/* 标签容器（可展开/收缩） */}
-      {allTags.length > 0 && (
-        <div className="rounded-xl border border-border bg-card/50 overflow-hidden">
+      {/* 标签容器（可展开/收缩，总是渲染预留空间避免抖动） */}
+      <div className="rounded-xl border border-border bg-card/50 overflow-hidden">
           {/* 标题栏：点击展开/收缩 */}
           <button
             type="button"
@@ -71,11 +70,16 @@ export function PostToolbar({
             </div>
           </div>
         </div>
-      )}
 
-      {/* 最新/精选切换（靠左对齐） */}
+      {/* 最新/精选切换（靠左对齐，滑块动画） */}
       <div className="flex items-center justify-start">
-        <div className="flex shrink-0 items-center gap-1 rounded-full border border-border bg-surface p-1 text-sm">
+        <div className="relative flex shrink-0 items-center rounded-full border border-border bg-surface p-1 text-sm">
+          {/* 滑块 */}
+          <div
+            className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full bg-fg transition-transform duration-300 ease-in-out ${
+              onlyFeatured ? "translate-x-[calc(100%+4px)]" : "translate-x-0"
+            }`}
+          />
           {(
             [
               { key: false, label: "最新" },
@@ -86,10 +90,8 @@ export function PostToolbar({
               key={String(o.key)}
               type="button"
               onClick={onToggleFeatured}
-              className={`rounded-full px-5 py-1.5 transition ${
-                onlyFeatured === o.key
-                  ? "bg-fg text-bg font-medium"
-                  : "text-fg-muted hover:text-fg"
+              className={`relative z-10 w-[72px] rounded-full px-5 py-1.5 text-center transition-colors duration-300 ${
+                onlyFeatured === o.key ? "text-bg font-medium" : "text-fg-muted hover:text-fg"
               }`}
             >
               {o.label}

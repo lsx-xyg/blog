@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Settings } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { isAdminUser } from "@/lib/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -91,16 +92,17 @@ export function SiteHeader({ adminPath }: { adminPath: string }) {
           ))}
         </nav>
 
-        {/* 右侧操作区 */}
-        <div className="flex items-center gap-2">
+        {/* 右侧操作区（min-w 预留空间避免 session 加载后抖动） */}
+        <div className="flex items-center gap-1 min-w-[160px] justify-end">
           <SearchDialog />
           <ThemeToggle />
           {isAdminUser(session?.user as { isAdmin?: boolean } | undefined) && (
             <Link
               href={`/${adminPath}`}
-              className="hidden md:inline-flex text-sm text-muted-foreground hover:text-foreground transition-colors"
+              className="h-[50px] w-[50px] rounded-full hover:bg-accent flex items-center justify-center transition-colors"
+              aria-label="后台管理"
             >
-              后台
+              <Settings className="h-5 w-5" />
             </Link>
           )}
         </div>
