@@ -9,6 +9,8 @@ import { createHighlighterCore } from "@shikijs/core";
 import { createJavaScriptRegexEngine } from "@shikijs/engine-javascript";
 import type { Root, Element } from "hast";
 import { visit } from "unist-util-visit";
+import { Image as ImageIcon } from "lucide-react";
+import { MediaPicker } from "@/components/media-picker";
 import "bytemd/dist/index.css";
 
 /**
@@ -100,7 +102,8 @@ function createShikiRehypePlugin(highlighter: HighlighterCore): BytemdPlugin {
  * - 源码手写 + 左右分屏实时预览
  * - GFM 支持（表格、任务列表、删除线）
  * - 代码高亮（Shiki github-dark 主题，与详情页一致）
- * - 图片粘贴/拖拽上传（集成 T3 存储驱动）
+ * - 图片粘贴/拖拽上传（集成 T3 存储驱动，自动保存到媒体库）
+ * - 从媒体库选择已有图片（支持按文章图片/相册图片筛选）
  * - ByteMD 内置全屏模式
  * - 受控组件（value + onChange）
  *
@@ -115,6 +118,7 @@ export function MarkdownEditor({
   onChange: (value: string) => void;
 }) {
   const [highlighter, setHighlighter] = useState<HighlighterCore | null>(null);
+  const [showMediaPicker, setShowMediaPicker] = useState(false);
 
   // 异步初始化 Shiki highlighter
   useEffect(() => {
@@ -131,7 +135,7 @@ export function MarkdownEditor({
     };
   }, []);
 
-  // 上传图片到存储驱动
+  // 上传图片到存储驱动 + 保存到媒体库
   const uploadImages = async (files: File[]) => {
     const results: { url: string; alt?: string; title?: string }[] = [];
 
@@ -139,8 +143,10 @@ export function MarkdownEditor({
       try {
         const formData = new FormData();
         formData.append("file", file);
+        formData.append("type", "ARTICLE"); // 从编辑器上传默认是文章图片
 
-        const response = await fetch("/api/upload", {
+        // 使用新的媒体库上传 API（自动保存到 media 表）
+        const response = await fetch("/api/admin/media", {
           method: "POST",
           body: formData,
         });
@@ -158,10 +164,36 @@ export function MarkdownEditor({
         });
       } catch (error) {
         console.error("图片上传失败：", error);
+        // 上传失败时尝试旧的上传 API（兼容）
+        try {
+          const formData = new FormData();
+          formData.append("file", file);
+          const response = await fetch("/api/upload", {
+            method: "POST",
+            body: formData,
+          });
+          if (response.ok) {
+            const result = await response.json();
+            results.push({
+              url: result.url,
+              alt: file.name,
+              title: file.name,
+            });
+          }
+        } catch (e) {
+          console.error("旧上传 API 也失败：", e);
+        }
       }
     }
 
     return results;
+  };
+
+  // 从媒体库选择图片后，在内容末尾追加 Markdown 图片语法
+  // TODO: 后续优化为在光标位置插入（需要 ByteMD 编辑器实例 API）
+  const handleMediaSelect = (url: string, alt?: string) => {
+    const markdown = `\n\n![${alt || "图片"}](${url})\n`;
+    onChange(value ? `${value}${markdown}` : markdown);
   };
 
   // 构建插件列表（highlighter 就绪后才添加 Shiki 插件）
@@ -181,6 +213,22 @@ export function MarkdownEditor({
 
   return (
     <div className="bytemd-editor-wrapper overflow-hidden rounded-lg border border-border bg-background">
+      {/* 自定义工具栏：图片库按钮 */}
+      <div className="flex items-center gap-1 border-b border-border bg-muted/30 px-2 py-1">
+        <button
+          type="button"
+          onClick={() => setShowMediaPicker(true)}
+          className="flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+          title="从媒体库选择图片"
+        >
+          <ImageIcon className="h-4 w-4" />
+          <span>图片库</span>
+        </button>
+        <div className="ml-auto text-xs text-muted-foreground">
+          支持粘贴/拖拽上传，或点击「图片库」选择已有图片
+        </div>
+      </div>
+
       <Editor
         value={value}
         plugins={plugins}
@@ -188,6 +236,13 @@ export function MarkdownEditor({
         uploadImages={uploadImages}
         mode="split"
         placeholder="在此输入 Markdown 内容..."
+      />
+
+      {/* 媒体库选择器 */}
+      <MediaPicker
+        open={showMediaPicker}
+        onClose={() => setShowMediaPicker(false)}
+        onSelect={handleMediaSelect}
       />
     </div>
   );

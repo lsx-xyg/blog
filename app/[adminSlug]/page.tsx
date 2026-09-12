@@ -35,7 +35,7 @@ export default async function AdminRootPage({
         </div>
         <SignOutButton />
       </header>
-      <nav className="grid gap-4 sm:grid-cols-2">
+      <nav className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <Link
           href={`/${adminPath}/posts`}
           className="rounded-xl border border-border bg-surface p-6 transition hover:border-fg-faint"
@@ -49,6 +49,13 @@ export default async function AdminRootPage({
         >
           <p className="text-base font-semibold">相册管理</p>
           <p className="mt-1 text-sm text-fg-muted">上传 / 编辑 / 精选 / 删除</p>
+        </Link>
+        <Link
+          href={`/${adminPath}/media`}
+          className="rounded-xl border border-border bg-surface p-6 transition hover:border-fg-faint"
+        >
+          <p className="text-base font-semibold">媒体库</p>
+          <p className="mt-1 text-sm text-fg-muted">统一管理文章/相册图片 / 清理未使用</p>
         </Link>
         <div className="rounded-xl border border-dashed border-border p-6 opacity-60">
           <p className="text-base font-semibold">更多管理（T10）</p>

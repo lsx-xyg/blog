@@ -29,6 +29,8 @@ export const postStatus = pgEnum("post_status", [
 
 export const backupTrigger = pgEnum("backup_trigger", ["MANUAL", "AUTO"]);
 
+export const mediaType = pgEnum("media_type", ["ARTICLE", "GALLERY"]);
+
 /* ---------- Better Auth 核心表（列名 camelCase，与适配器对齐；user 表扩展 isAdmin） ---------- */
 
 export const users = pgTable("user", {
@@ -140,16 +142,43 @@ export const postTags = pgTable(
   ],
 );
 
+/* ---------- media 媒体库表（统一管理文章图片 + 相册图片） ---------- */
+
+export const media = pgTable(
+  "media",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    type: mediaType("type").notNull(), // ARTICLE | GALLERY（枚举，禁止硬编码）
+    url: text("url").notNull(), // 访问 URL（存储驱动返回的公开 URL）
+    storageDriver: text("storage_driver").notNull().default("LOCAL"), // LOCAL | GITHUB | S3
+    storageKey: text("storage_key"), // 存储键（用于删除，如 2026/09/uuid.jpg）
+    title: text("title"), // 可空
+    description: text("description"), // 可空
+    mimeType: text("mime_type"), // MIME 类型，如 image/jpeg
+    size: integer("size"), // 文件大小（字节）
+    width: integer("width"), // 图片宽度（可空）
+    height: integer("height"), // 图片高度（可空）
+    uploadedBy: uuid("uploaded_by"), // 上传者 user_id（可空）
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("media_type_idx").on(t.type),
+    index("media_storage_driver_idx").on(t.storageDriver),
+    index("media_created_at_idx").on(t.createdAt),
+  ],
+);
+
 /* ---------- gallery_items 相册表（SPEC §4.5） ---------- */
 
 export const galleryItems = pgTable(
   "gallery_items",
   {
     id: uuid("id").primaryKey().defaultRandom(),
+    mediaId: uuid("media_id").references(() => media.id, { onDelete: "set null" }), // 关联媒体库
     title: text("title"),
     description: text("description"),
     featured: boolean("featured").notNull().default(false),
-    imageUrl: text("image_url").notNull(), // 存储抽象返回的公开 URL
+    imageUrl: text("image_url").notNull(), // 存储抽象返回的公开 URL（兼容旧数据，新数据从 media 取）
     storageDriver: text("storage_driver").notNull().default("LOCAL"), // 上传平台：LOCAL|GITHUB|S3
     storageKey: text("storage_key"), // 存储键（用于删除，如 2026/09/uuid.jpg）
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
