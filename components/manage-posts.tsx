@@ -293,8 +293,12 @@ export function ManagePosts() {
           <div>
             {currentStep > 1 && (
               <button
+                key="prev-btn"
                 type="button"
-                onClick={() => goToStep(currentStep - 1)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  goToStep(currentStep - 1);
+                }}
                 className="flex items-center gap-1 rounded-lg border border-border px-4 py-2 text-base hover:bg-accent transition-colors"
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -307,6 +311,7 @@ export function ManagePosts() {
           <div className="flex gap-3">
             {editingId && (
               <button
+                key="cancel-btn"
                 type="button"
                 onClick={resetForm}
                 className="rounded-lg border border-border px-4 py-2 text-base hover:bg-accent transition-colors"
@@ -316,8 +321,12 @@ export function ManagePosts() {
             )}
             {currentStep < STEPS.length ? (
               <button
+                key="next-btn"
                 type="button"
-                onClick={() => goToStep(currentStep + 1)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  goToStep(currentStep + 1);
+                }}
                 className="flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-base font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 下一步
@@ -325,6 +334,7 @@ export function ManagePosts() {
               </button>
             ) : (
               <button
+                key="submit-btn"
                 type="submit"
                 disabled={loading}
                 className="rounded-lg bg-primary px-4 py-2 text-base font-medium text-primary-foreground disabled:opacity-50 hover:bg-primary/90 transition-colors"
