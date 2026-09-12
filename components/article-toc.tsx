@@ -86,8 +86,8 @@ export function ArticleToc({ items }: { items: TocItem[] }) {
 
   return (
     <>
-      {/* PC端：右侧固定目录（top-24 固定位置，不垂直居中） */}
-      <aside className="hidden lg:block fixed right-12 top-24 w-56 max-h-[70vh] overflow-y-auto">
+      {/* PC端：右侧固定目录（top-24 固定位置，right-20 不贴边） */}
+      <aside className="hidden lg:block fixed right-20 top-24 w-56 max-h-[70vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-foreground text-lg">目录</h3>
           <button
@@ -106,8 +106,8 @@ export function ArticleToc({ items }: { items: TocItem[] }) {
         <TocList />
       </aside>
 
-      {/* 移动端：底部按钮 + 弹出目录 */}
-      <div className="lg:hidden fixed bottom-24 right-4 z-40">
+      {/* 移动端：底部按钮 + 弹出目录（bottom-28 确保不被底部菜单栏遮挡） */}
+      <div className="lg:hidden fixed bottom-28 right-4 z-40">
         <Sheet>
           <SheetTrigger className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background shadow-lg">
             <List className="h-5 w-5" />

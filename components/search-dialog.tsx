@@ -127,15 +127,21 @@ export function SearchDialog() {
   return (
     <>
       {/* 搜索图标按钮：始终渲染，避免页面抖动 */}
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-[50px] w-[50px] rounded-full hover:bg-accent"
-        onClick={() => setOpen(true)}
-        aria-label="搜索"
-      >
-        <Search className="h-5 w-5" />
-      </Button>
+      {/* 搜索按钮（带 tooltip） */}
+      <div className="group relative">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-[50px] w-[50px] rounded-full hover:bg-accent"
+          onClick={() => setOpen(true)}
+          aria-label="搜索"
+        >
+          <Search className="h-5 w-5" strokeWidth={2.5} />
+        </Button>
+        <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-xs text-background opacity-0 pointer-events-none transition-opacity duration-200 group-hover:opacity-100 z-50">
+          搜索 Ctrl+K
+        </span>
+      </div>
 
       {/* 全屏搜索层（Portal 渲染到 body，避免 header transform 影响 fixed 定位） */}
       {open &&
@@ -151,7 +157,7 @@ export function SearchDialog() {
           <div className="relative w-full max-w-2xl mx-4 rounded-2xl border bg-popover shadow-2xl overflow-hidden">
             {/* 搜索输入框 */}
             <div className="flex items-center gap-3 p-4 border-b">
-              <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+              <Search className="h-5 w-5 text-muted-foreground shrink-0" strokeWidth={2.5} />
               <Input
                 ref={inputRef}
                 value={query}

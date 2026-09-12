@@ -23,7 +23,7 @@ export function ArticleFloatButtons() {
   };
 
   return (
-    <div className="fixed right-4 bottom-24 md:right-12 md:bottom-24 flex flex-col gap-3 z-40">
+    <div className="fixed right-4 bottom-8 md:right-8 md:bottom-8 flex flex-col gap-3 z-40">
       {/* 回到顶部 */}
       <button
         type="button"

@@ -97,13 +97,18 @@ export function SiteHeader({ adminPath }: { adminPath: string }) {
           <SearchDialog />
           <ThemeToggle />
           {isAdminUser(session?.user as { isAdmin?: boolean } | undefined) && (
-            <Link
-              href={`/${adminPath}`}
-              className="h-[50px] w-[50px] rounded-full hover:bg-accent flex items-center justify-center transition-colors"
-              aria-label="后台管理"
-            >
-              <Settings className="h-5 w-5" />
-            </Link>
+            <div className="group relative">
+              <Link
+                href={`/${adminPath}`}
+                className="h-[50px] w-[50px] rounded-full hover:bg-accent flex items-center justify-center transition-colors"
+                aria-label="后台管理"
+              >
+                <Settings className="h-5 w-5" />
+              </Link>
+              <span className="absolute top-full left-1/2 -translate-x-1/2 mt-2 whitespace-nowrap rounded-md bg-foreground px-2.5 py-1 text-xs text-background opacity-0 pointer-events-none transition-opacity duration-200 group-hover:opacity-100 z-50">
+                后台
+              </span>
+            </div>
           )}
         </div>
       </div>
