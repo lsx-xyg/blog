@@ -9,6 +9,10 @@ import {
   Filter,
   RefreshCw,
   AlertTriangle,
+  Edit3,
+  Star,
+  X,
+  ZoomIn,
 } from "lucide-react";
 import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
 
@@ -27,6 +31,13 @@ type MediaItem = {
   createdAt: string;
 };
 
+type GalleryItemInfo = {
+  id: string;
+  title: string | null;
+  description: string | null;
+  featured: boolean;
+};
+
 /**
  * 后台媒体库管理组件
  *
@@ -35,7 +46,8 @@ type MediaItem = {
  * - 按类型筛选（全部/文章图片/相册图片）
  * - 搜索
  * - 分页
- * - 修改类型（文章 ↔ 相册）
+ * - 相册图片：编辑信息（标题/描述）+ 设置精选
+ * - 图片放大查看（灯箱）
  * - 删除
  * - 未使用图片清理
  */
@@ -53,6 +65,18 @@ export function ManageMedia() {
   const [unusedItems, setUnusedItems] = useState<MediaItem[]>([]);
   const [unusedLoading, setUnusedLoading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 编辑弹窗状态
+  const [editingItem, setEditingItem] = useState<MediaItem | null>(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+  const [editFeatured, setEditFeatured] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editLoading, setEditLoading] = useState(false);
+
+  // 灯箱状态
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
+  const [lightboxTitle, setLightboxTitle] = useState<string>("");
 
   // 加载媒体列表
   const loadItems = async () => {
@@ -112,20 +136,6 @@ export function ManageMedia() {
     }
   };
 
-  // 修改类型
-  const changeType = async (id: string, newType: MediaType) => {
-    try {
-      await fetch(`/api/admin/media/${id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type: newType }),
-      });
-      await loadItems();
-    } catch (e) {
-      console.error("修改类型失败：", e);
-    }
-  };
-
   // 删除
   const deleteItem = async (id: string) => {
     if (!confirm("确定删除这张图片吗？存储中的文件也会被删除。")) return;
@@ -139,6 +149,77 @@ export function ManageMedia() {
       console.error("删除失败：", e);
       alert("删除失败，请重试");
     }
+  };
+
+  // 打开编辑弹窗（加载相册信息）
+  const openEditModal = async (item: MediaItem) => {
+    setEditingItem(item);
+    setEditLoading(true);
+    setEditSaving(false);
+
+    try {
+      const res = await fetch(`/api/admin/gallery/by-media/${item.id}`);
+      if (res.ok) {
+        const data = await res.json();
+        const galleryInfo = data.item as GalleryItemInfo | null;
+        setEditTitle(galleryInfo?.title || item.title || "");
+        setEditDescription(galleryInfo?.description || item.description || "");
+        setEditFeatured(galleryInfo?.featured || false);
+      } else {
+        setEditTitle(item.title || "");
+        setEditDescription(item.description || "");
+        setEditFeatured(false);
+      }
+    } catch (e) {
+      console.error("加载相册信息失败：", e);
+      setEditTitle(item.title || "");
+      setEditDescription(item.description || "");
+      setEditFeatured(false);
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
+  // 保存编辑
+  const saveEdit = async () => {
+    if (!editingItem) return;
+    setEditSaving(true);
+
+    try {
+      const res = await fetch(`/api/admin/gallery/by-media/${editingItem.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: editTitle || null,
+          description: editDescription || null,
+          featured: editFeatured,
+        }),
+      });
+
+      if (res.ok) {
+        setEditingItem(null);
+        await loadItems();
+      } else {
+        alert("保存失败，请重试");
+      }
+    } catch (e) {
+      console.error("保存失败：", e);
+      alert("保存失败，请重试");
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  // 打开灯箱
+  const openLightbox = (url: string, title: string) => {
+    setLightboxUrl(url);
+    setLightboxTitle(title);
+  };
+
+  // 关闭灯箱
+  const closeLightbox = () => {
+    setLightboxUrl(null);
+    setLightboxTitle("");
   };
 
   // 加载未使用图片
@@ -374,7 +455,10 @@ export function ManageMedia() {
                 style={{ animationDelay: `${index * 30}ms` }}
               >
                 {/* 图片 */}
-                <div className="relative aspect-square overflow-hidden bg-muted">
+                <div
+                  className="relative aspect-square overflow-hidden bg-muted cursor-zoom-in"
+                  onClick={() => openLightbox(item.url, item.title || "媒体图片")}
+                >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={item.url}
@@ -394,42 +478,46 @@ export function ManageMedia() {
                       {MEDIA_TYPE_LABELS[item.type as MediaType] || item.type}
                     </span>
                   </div>
+                  {/* 放大图标（hover 显示） */}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                    <ZoomIn className="h-8 w-8 text-white drop-shadow-lg" />
+                  </div>
                 </div>
 
                 {/* 信息 */}
                 <div className="p-3">
-                  <h3 className="truncate text-sm font-medium">
-                    {item.title || "未命名"}
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="truncate text-sm font-medium flex-1">
+                      {item.title || "未命名"}
+                    </h3>
+                    {/* 相册图片显示精选标记 */}
+                    {item.type === MediaType.GALLERY && (
+                      <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500 ml-1 flex-shrink-0" />
+                    )}
+                  </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     {formatSize(item.size)} · {item.storageDriver}
                   </p>
 
                   {/* 操作按钮 */}
                   <div className="mt-3 flex gap-1">
-                    {/* 切换类型 */}
-                    <button
-                      type="button"
-                      onClick={() =>
-                        changeType(
-                          item.id,
-                          item.type === MediaType.ARTICLE ? MediaType.GALLERY : MediaType.ARTICLE,
-                        )
-                      }
-                      className="flex flex-1 items-center justify-center rounded-md border border-input px-2 py-1 text-xs hover:bg-accent"
-                      title={`转为${
-                        item.type === MediaType.ARTICLE
-                          ? MEDIA_TYPE_LABELS[MediaType.GALLERY]
-                          : MEDIA_TYPE_LABELS[MediaType.ARTICLE]
-                      }`}
-                    >
-                      转类型
-                    </button>
+                    {/* 相册图片：编辑按钮 */}
+                    {item.type === MediaType.GALLERY && (
+                      <button
+                        type="button"
+                        onClick={() => openEditModal(item)}
+                        className="flex flex-1 items-center justify-center gap-1 rounded-md border border-input px-2 py-1 text-xs hover:bg-accent transition-colors"
+                        title="编辑信息/精选"
+                      >
+                        <Edit3 className="h-3 w-3" />
+                        编辑
+                      </button>
+                    )}
                     {/* 删除 */}
                     <button
                       type="button"
                       onClick={() => deleteItem(item.id)}
-                      className="flex items-center justify-center rounded-md border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10"
+                      className="flex items-center justify-center rounded-md border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10 transition-colors"
                       title="删除"
                     >
                       <Trash2 className="h-3 w-3" />
@@ -465,6 +553,139 @@ export function ManageMedia() {
             </div>
           )}
         </>
+      )}
+
+      {/* 编辑弹窗 */}
+      {editingItem && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => !editSaving && setEditingItem(null)}>
+          <div
+            className="w-full max-w-md rounded-xl bg-background p-6 shadow-2xl animate-fade-in-up"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-semibold">编辑相册图片</h3>
+              <button
+                type="button"
+                onClick={() => setEditingItem(null)}
+                className="rounded-md p-1 hover:bg-accent transition-colors"
+                disabled={editSaving}
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {editLoading ? (
+              <div className="py-8 text-center text-sm text-muted-foreground animate-pulse">加载中…</div>
+            ) : (
+              <div className="space-y-4">
+                {/* 预览图 */}
+                <div className="aspect-video overflow-hidden rounded-lg bg-muted">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={editingItem.url}
+                    alt={editingItem.title || "预览"}
+                    className="h-full w-full object-contain"
+                  />
+                </div>
+
+                {/* 标题 */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium">标题</label>
+                  <input
+                    type="text"
+                    value={editTitle}
+                    onChange={(e) => setEditTitle(e.target.value)}
+                    placeholder="输入图片标题"
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                  />
+                </div>
+
+                {/* 描述 */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium">描述</label>
+                  <textarea
+                    value={editDescription}
+                    onChange={(e) => setEditDescription(e.target.value)}
+                    placeholder="输入图片描述"
+                    rows={3}
+                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
+                  />
+                </div>
+
+                {/* 精选开关 */}
+                <div className="flex items-center justify-between rounded-lg border border-input p-3">
+                  <div className="flex items-center gap-2">
+                    <Star className={`h-4 w-4 ${editFeatured ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"}`} />
+                    <span className="text-sm font-medium">设为精选</span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setEditFeatured(!editFeatured)}
+                    className={`relative h-6 w-11 rounded-full transition-colors ${
+                      editFeatured ? "bg-primary" : "bg-muted"
+                    }`}
+                  >
+                    <span
+                      className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                        editFeatured ? "translate-x-5" : "translate-x-0.5"
+                      }`}
+                    />
+                  </button>
+                </div>
+
+                {/* 保存按钮 */}
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingItem(null)}
+                    disabled={editSaving}
+                    className="rounded-lg border border-input px-4 py-2 text-sm hover:bg-accent transition-colors disabled:opacity-50"
+                  >
+                    取消
+                  </button>
+                  <button
+                    type="button"
+                    onClick={saveEdit}
+                    disabled={editSaving}
+                    className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  >
+                    {editSaving ? "保存中…" : "保存"}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 灯箱（图片放大查看） */}
+      {lightboxUrl && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4 animate-fade-in"
+          onClick={closeLightbox}
+        >
+          {/* 关闭按钮 */}
+          <button
+            type="button"
+            onClick={closeLightbox}
+            className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"
+          >
+            <X className="h-6 w-6" />
+          </button>
+
+          {/* 标题 */}
+          <div className="absolute top-4 left-4 text-white text-sm opacity-80">
+            {lightboxTitle}
+          </div>
+
+          {/* 图片 */}
+          <img
+            src={lightboxUrl}
+            alt={lightboxTitle}
+            className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
       )}
     </div>
   );
