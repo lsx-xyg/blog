@@ -204,7 +204,7 @@ export function PostWall({
         </div>
       ) : (
         <div
-          key={onlyFeatured ? "featured" : "latest"}
+          key={`${onlyFeatured ? "featured" : "latest"}-${selectedTags.join(",")}`}
           className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4 animate-fade-in-up"
         >
           {visibleItems.map((post) => (

@@ -198,7 +198,7 @@ export function ManagePosts() {
         <div className="min-h-[520px] md:min-h-[560px]">
           {/* 步骤 1：正文编辑 */}
           {currentStep === 1 && (
-            <div className="space-y-4">
+            <div key="step-1" className="space-y-4 animate-fade-in-up">
               <div>
                 <label className={label}>
                   正文（Markdown）* — 支持粘贴/拖拽图片自动上传，左右分屏实时预览
@@ -215,7 +215,7 @@ export function ManagePosts() {
 
           {/* 步骤 2：基本信息 */}
           {currentStep === 2 && (
-            <div className="space-y-4">
+            <div key="step-2" className="space-y-4 animate-fade-in-up">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
                   <label className={label}>标题 *</label>
