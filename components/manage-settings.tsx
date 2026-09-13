@@ -88,15 +88,7 @@ export function ManageSettings() {
         setOriginalAdminPath(data.adminPath ?? ""); // 保存原始路径，用于检测是否变更
         if (data.storage) setStorage(data.storage);
         if (data.giscus) setGiscus(data.giscus);
-        if (data.cron) {
-          setCron({
-            deployPlatform: data.cron.deployPlatform || "VERCEL",
-            cronSecret: "", // 敏感信息不回显
-            cronSecretConfigured: data.cron.cronSecretConfigured ?? false,
-            cronJobApiKey: "", // 敏感信息不回显
-            cronJobApiKeyConfigured: data.cron.cronJobApiKeyConfigured ?? false,
-          });
-        }
+        if (data.cron) setCron(data.cron);
       }
     } catch (e) {
       console.error("加载设置失败：", e);

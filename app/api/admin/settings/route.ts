@@ -96,13 +96,39 @@ export async function PUT(request: Request) {
     const body = await request.json();
     const { site, social, footer, aboutContent } = body;
 
+    // 需要更新的设置
     const settingsToUpdate: { key: string; value: unknown }[] = [];
+  
+    // 需要删除的设置
+    const settingsToDelete: string[] = [];
 
-    // 辅助函数：只添加非 null 的值
+    // 非敏感字段：undefined/null 跳过，其余原样存
     const addSetting = (key: string, value: unknown) => {
       if (value !== undefined && value !== null) {
         settingsToUpdate.push({ key, value });
       }
+    };
+
+    // 敏感字段：undefined/null 跳过（保持原值），"" 删除（回退环境变量），其余加密存
+    const handleSecret = (rawValue: unknown, dbKey: string) => {
+      if (rawValue === undefined || rawValue === null) return;
+      if (rawValue === "") {
+        settingsToDelete.push(dbKey);
+        return;
+      }
+      if (typeof rawValue !== "string") return;
+      const encrypted = encryptIfAvailable(rawValue);
+      if (encrypted) settingsToUpdate.push({ key: dbKey, value: encrypted });
+    };
+
+    // 可选文本：undefined/null 跳过，"" 删除，其余原样存
+    const handleOptionalText = (rawValue: unknown, dbKey: string) => {
+      if (rawValue === undefined || rawValue === null) return;
+      if (rawValue === "") {
+        settingsToDelete.push(dbKey);
+        return;
+      }
+      settingsToUpdate.push({ key: dbKey, value: rawValue });
     };
 
     // 站点设置
@@ -131,18 +157,7 @@ export async function PUT(request: Request) {
 
     // 高级设置（admin_path）
     // 有值则更新，放空则删除记录（回退到环境变量/兜底 admin）
-    let shouldDeleteAdminPath = false;
-    if (body.adminPath !== undefined) {
-      if (body.adminPath === "") {
-        shouldDeleteAdminPath = true;
-      } else {
-        settingsToUpdate.push({ key: "admin.path", value: body.adminPath });
-      }
-    }
-
-    // 存储设置（非敏感配置直接存，敏感信息加密后存储）
-    // 需要删除的设置（敏感信息放空时删除，回退到环境变量）
-    const settingsToDelete: string[] = [];
+    handleOptionalText(body.adminPath, "admin.path");
 
     if (body.storage) {
       const { driver, github, s3, local } = body.storage;
@@ -155,37 +170,16 @@ export async function PUT(request: Request) {
         addSetting("storage.github.branch", github.branch);
         addSetting("storage.github.cdn_base", github.cdnBase);
         // 敏感信息：Token 加密后存储，放空时删除记录
-        if (github.token !== undefined) {
-          if (github.token === "") {
-            settingsToDelete.push("storage.github.token");
-          } else {
-            const encrypted = encryptIfAvailable(github.token);
-            if (encrypted) addSetting("storage.github.token", encrypted);
-          }
-        }
+        handleSecret(github.token, "storage.github.token");
       }
       if (s3) {
         addSetting("storage.s3.endpoint", s3.endpoint);
         addSetting("storage.s3.bucket", s3.bucket);
         addSetting("storage.s3.region", s3.region);
         // 敏感信息：Access Key 加密后存储，放空时删除记录
-        if (s3.accessKey !== undefined) {
-          if (s3.accessKey === "") {
-            settingsToDelete.push("storage.s3.access_key");
-          } else {
-            const encrypted = encryptIfAvailable(s3.accessKey);
-            if (encrypted) addSetting("storage.s3.access_key", encrypted);
-          }
-        }
+        handleSecret(s3.accessKey, "storage.s3.access_key");
         // 敏感信息：Secret Key 加密后存储，放空时删除记录
-        if (s3.secretKey !== undefined) {
-          if (s3.secretKey === "") {
-            settingsToDelete.push("storage.s3.secret_key");
-          } else {
-            const encrypted = encryptIfAvailable(s3.secretKey);
-            if (encrypted) addSetting("storage.s3.secret_key", encrypted);
-          }
-        }
+        handleSecret(s3.secretKey, "storage.s3.secret_key");
       }
       if (local) {
         addSetting("storage.local.upload_dir", local.uploadDir);
@@ -205,28 +199,14 @@ export async function PUT(request: Request) {
     if (body.cron) {
       const { deployPlatform, cronSecret, cronJobApiKey } = body.cron;
       // DEPLOY_PLATFORM：非敏感信息，直接存
-      if (deployPlatform !== undefined) {
+      if (deployPlatform !== undefined && deployPlatform !== null) {
         const normalized = deployPlatform.toUpperCase() === "SERVER" ? "SERVER" : "VERCEL";
         addSetting("cron.deploy_platform", normalized);
       }
-      // CRON_SECRET：敏感信息，加密存储；放空时删除（回退环境变量）
-      if (cronSecret !== undefined) {
-        if (cronSecret === "") {
-          settingsToDelete.push("cron.secret");
-        } else {
-          const encrypted = encryptIfAvailable(cronSecret);
-          if (encrypted) addSetting("cron.secret", encrypted);
-        }
-      }
+      // 敏感信息：Cron Secret 加密后存储，放空时删除记录
+      handleSecret(cronSecret, "cron.secret");
       // CRON_JOB_API_KEY：敏感信息，加密存储；放空时删除（回退环境变量）
-      if (cronJobApiKey !== undefined) {
-        if (cronJobApiKey === "") {
-          settingsToDelete.push("cron.job_api_key");
-        } else {
-          const encrypted = encryptIfAvailable(cronJobApiKey);
-          if (encrypted) addSetting("cron.job_api_key", encrypted);
-        }
-      }
+      handleSecret(cronJobApiKey, "cron.job_api_key");
     }
 
     // 批量更新设置
@@ -234,10 +214,6 @@ export async function PUT(request: Request) {
       await setSettingsBatch(settingsToUpdate);
     }
 
-    // 删除需要清空的设置
-    if (shouldDeleteAdminPath) {
-      await deleteSetting("admin.path");
-    }
     for (const key of settingsToDelete) {
       await deleteSetting(key);
     }
