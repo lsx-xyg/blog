@@ -265,13 +265,16 @@ export function ManagePosts() {
                   </select>
                 </div>
                 <div>
-                  <label className={label}>定时发布（可选，需 T12 扫描任务生效）</label>
+                  <label className={label}>定时发布时间（选择"定时"状态时生效）</label>
                   <input
                     type="datetime-local"
                     className={`${input} mt-1 w-full font-mono`}
                     value={form.scheduledAt}
                     onChange={(e) => set("scheduledAt", e.target.value)}
                   />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    定时任务每分钟扫描一次，到时间自动发布。需配置 CRON_SECRET 并启动定时任务。
+                  </p>
                 </div>
               </div>
               <label className="flex items-center gap-2 text-base">

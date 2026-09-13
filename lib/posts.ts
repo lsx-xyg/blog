@@ -170,3 +170,60 @@ export async function getAllPostsForSitemap() {
     .where(eq(posts.status, "PUBLISHED"))
     .orderBy(sql`coalesce(${posts.publishedAt}, ${posts.createdAt}) desc`);
 }
+
+/**
+ * T12 定时发布：扫描并发布到期的定时文章
+ *
+ * 幂等设计：
+ * - 只扫描 status = SCHEDULED 且 scheduledAt <= now 的文章
+ * - 发布后 status → PUBLISHED，publishedAt → now
+ * - 已发布的文章不会重复发布（因为 status 已经是 PUBLISHED）
+ * - 使用双重检查（WHERE status = SCHEDULED）防止并发重复发布
+ *
+ * 注意：此函数只负责数据库操作，缓存失效（revalidatePath）由调用方处理
+ *
+ * @returns 发布的文章列表（id + slug），用于调用方失效缓存
+ */
+export async function publishScheduledPosts(): Promise<Array<{ id: string; slug: string | null }>> {
+  const now = new Date();
+
+  // 查找所有到期的定时文章
+  const scheduledPosts = await db
+    .select({ id: posts.id, slug: posts.slug })
+    .from(posts)
+    .where(
+      and(
+        eq(posts.status, "SCHEDULED"),
+        sql`${posts.scheduledAt} <= ${now}`,
+      ),
+    );
+
+  if (scheduledPosts.length === 0) {
+    return [];
+  }
+
+  // 批量发布（使用双重检查防止并发重复发布）
+  const published: Array<{ id: string; slug: string | null }> = [];
+  for (const post of scheduledPosts) {
+    const [updated] = await db
+      .update(posts)
+      .set({
+        status: "PUBLISHED",
+        publishedAt: now,
+        updatedAt: now,
+      })
+      .where(
+        and(
+          eq(posts.id, post.id),
+          eq(posts.status, "SCHEDULED"), // 双重检查，防止并发重复发布
+        ),
+      )
+      .returning({ id: posts.id });
+
+    if (Array.isArray(updated) && updated.length > 0) {
+      published.push(post);
+    }
+  }
+
+  return published;
+}
