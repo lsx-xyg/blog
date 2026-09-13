@@ -42,6 +42,11 @@ export async function setSetting(key: string, value: unknown): Promise<void> {
     });
 }
 
+/** 删除单个配置（用于清空配置，回退到环境变量/默认值） */
+export async function deleteSetting(key: string): Promise<void> {
+  await db.delete(settings).where(eq(settings.key, key));
+}
+
 /** 批量设置配置 */
 export async function setSettingsBatch(
   items: { key: string; value: unknown }[],

@@ -10,6 +10,7 @@ import {
   setSettingsBatch,
   setAboutContent,
   getSetting,
+  deleteSetting,
 } from "@/lib/settings";
 import { getStorageConfig } from "@/lib/storage";
 
@@ -92,8 +93,14 @@ export async function PUT(request: Request) {
     }
 
     // 高级设置（admin_path）
-    if (body.adminPath !== undefined && body.adminPath !== "") {
-      settingsToUpdate.push({ key: "admin.path", value: body.adminPath });
+    // 有值则更新，放空则删除记录（回退到环境变量/兜底 admin）
+    let shouldDeleteAdminPath = false;
+    if (body.adminPath !== undefined) {
+      if (body.adminPath === "") {
+        shouldDeleteAdminPath = true;
+      } else {
+        settingsToUpdate.push({ key: "admin.path", value: body.adminPath });
+      }
     }
 
     // 存储设置（非敏感配置，敏感信息如 Token/Secret 只从环境变量读取）
@@ -121,6 +128,11 @@ export async function PUT(request: Request) {
     // 批量更新设置
     if (settingsToUpdate.length > 0) {
       await setSettingsBatch(settingsToUpdate);
+    }
+
+    // 删除需要清空的设置（adminPath 放空时删除，回退到环境变量/兜底）
+    if (shouldDeleteAdminPath) {
+      await deleteSetting("admin.path");
     }
 
     // 关于内容

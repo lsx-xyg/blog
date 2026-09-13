@@ -57,23 +57,27 @@ const DEFAULT_CONFIG: StorageConfig = {
 };
 
 /**
- * 从 DB 读取存储配置（环境变量兜底）
+ * 从 DB 读取存储配置（环境变量优先级最高，DB 次之，默认值兜底）
+ *
+ * 优先级：环境变量 > DB settings 表 > 默认值
+ * - 环境变量是部署时的强制配置，优先级最高
+ * - 如果想使用后台动态配置，不设置对应的环境变量即可
  *
  * 注意：这是异步函数，因为需要查询数据库。
  * 敏感信息（Token/Secret）不在这里，直接从环境变量读取。
  */
 export async function getStorageConfig(): Promise<StorageConfig> {
-  // 读取 driver（DB > 环境变量 > 默认）
-  const dbDriver = await getSetting<string>("storage.driver");
+  // 读取 driver（环境变量 > DB > 默认）
   const envDriver = (process.env.STORAGE_DRIVER || "").toUpperCase();
+  const dbDriver = await getSetting<string>("storage.driver");
   let driver: StorageDriverType = DEFAULT_CONFIG.driver;
-  if (dbDriver && ["LOCAL", "GITHUB", "S3"].includes(dbDriver.toUpperCase())) {
-    driver = dbDriver.toUpperCase() as StorageDriverType;
-  } else if (envDriver && ["LOCAL", "GITHUB", "S3"].includes(envDriver)) {
+  if (envDriver && ["LOCAL", "GITHUB", "S3"].includes(envDriver)) {
     driver = envDriver as StorageDriverType;
+  } else if (dbDriver && ["LOCAL", "GITHUB", "S3"].includes(dbDriver.toUpperCase())) {
+    driver = dbDriver.toUpperCase() as StorageDriverType;
   }
 
-  // 读取 GitHub 配置（DB > 环境变量 > 默认）
+  // 读取 GitHub 配置（环境变量 > DB > 默认）
   const [ghOwner, ghRepo, ghBranch, ghCdnBase] = await Promise.all([
     getSetting<string>("storage.github.owner"),
     getSetting<string>("storage.github.repo"),
@@ -81,31 +85,31 @@ export async function getStorageConfig(): Promise<StorageConfig> {
     getSetting<string>("storage.github.cdn_base"),
   ]);
 
-  // 读取 S3 配置（DB > 环境变量 > 默认）
+  // 读取 S3 配置（环境变量 > DB > 默认）
   const [s3Endpoint, s3Bucket, s3Region] = await Promise.all([
     getSetting<string>("storage.s3.endpoint"),
     getSetting<string>("storage.s3.bucket"),
     getSetting<string>("storage.s3.region"),
   ]);
 
-  // 读取 LOCAL 配置（DB > 环境变量 > 默认）
+  // 读取 LOCAL 配置（环境变量 > DB > 默认）
   const localUploadDir = await getSetting<string>("storage.local.upload_dir");
 
   return {
     driver,
     github: {
-      owner: ghOwner || process.env.GITHUB_STORAGE_OWNER || DEFAULT_CONFIG.github.owner,
-      repo: ghRepo || process.env.GITHUB_STORAGE_REPO || DEFAULT_CONFIG.github.repo,
-      branch: ghBranch || process.env.GITHUB_STORAGE_BRANCH || DEFAULT_CONFIG.github.branch,
-      cdnBase: ghCdnBase || process.env.GITHUB_STORAGE_CDN_BASE || DEFAULT_CONFIG.github.cdnBase,
+      owner: process.env.GITHUB_STORAGE_OWNER || ghOwner || DEFAULT_CONFIG.github.owner,
+      repo: process.env.GITHUB_STORAGE_REPO || ghRepo || DEFAULT_CONFIG.github.repo,
+      branch: process.env.GITHUB_STORAGE_BRANCH || ghBranch || DEFAULT_CONFIG.github.branch,
+      cdnBase: process.env.GITHUB_STORAGE_CDN_BASE || ghCdnBase || DEFAULT_CONFIG.github.cdnBase,
     },
     s3: {
-      endpoint: s3Endpoint || process.env.S3_ENDPOINT || DEFAULT_CONFIG.s3.endpoint,
-      bucket: s3Bucket || process.env.S3_BUCKET || DEFAULT_CONFIG.s3.bucket,
-      region: s3Region || process.env.S3_REGION || DEFAULT_CONFIG.s3.region,
+      endpoint: process.env.S3_ENDPOINT || s3Endpoint || DEFAULT_CONFIG.s3.endpoint,
+      bucket: process.env.S3_BUCKET || s3Bucket || DEFAULT_CONFIG.s3.bucket,
+      region: process.env.S3_REGION || s3Region || DEFAULT_CONFIG.s3.region,
     },
     local: {
-      uploadDir: localUploadDir || process.env.LOCAL_UPLOAD_DIR || DEFAULT_CONFIG.local.uploadDir,
+      uploadDir: process.env.LOCAL_UPLOAD_DIR || localUploadDir || DEFAULT_CONFIG.local.uploadDir,
     },
   };
 }
