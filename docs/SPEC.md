@@ -79,7 +79,7 @@ Better Auth 自动创建 `user` / `session` / `account` / `verification` 表。
 
 ### 4.5 `media` 媒体库表（统一管理文章图片 + 相册图片）
 
-> **设计决策（2026-09-13）**：所有图片（文章图片 + 相册图片）统一在 `media` 表管理，通过 `type` 字段（枚举 `ARTICLE` | `GALLERY`）区分。`gallery_items` 表只保留业务字段（精选/标题/描述）+ `media_id` 外键，图片元数据（URL/存储驱动/存储键）全在 `media` 表。
+> **设计决策（2026-09-13 最终版）**：所有图片（文章图片 + 相册图片）统一在 `media` 表管理，通过 `type` 字段（枚举 `ARTICLE` | `GALLERY`）区分。**已彻底删除 `gallery_items` 表**，精选字段（`featured`）直接放在 `media` 表中。相册图片 = `media` 表中 `type=GALLERY` 的记录。标签通过 `media_tags` 关联表管理。
 
 | 字段 | 类型 | 说明 |
 |---|---|---|
@@ -93,27 +93,16 @@ Better Auth 自动创建 `user` / `session` / `account` / `verification` 表。
 | `mime_type` | text NULL | MIME 类型，如 image/jpeg |
 | `size` | integer NULL | 文件大小（字节） |
 | `width` / `height` | integer NULL | 图片宽高（可空） |
+| `featured` | boolean DEFAULT false | 精选（仅 GALLERY 类型有意义，ARTICLE 类型忽略） |
 | `uploaded_by` | text NULL | 上传者 user_id（Better Auth 用 text 类型 id） |
 | `created_at` | timestamptz | |
 
-索引：`type`、`storage_driver`、`created_at`
+索引：`type`、`storage_driver`、`created_at`、`featured`
 
-### 4.5.1 `gallery_items` 相册表（重构后）
+### 4.6 `media_tags` 关联表
+`media_id` FK → media.id（ON DELETE CASCADE）、`tag_id` FK → tags.id（ON DELETE CASCADE），复合主键 (media_id, tag_id)
 
-> **重构记录（2026-09-13）**：移除 `image_url` / `storage_driver` / `storage_key` 三个冗余字段，图片元数据统一在 `media` 表管理。`media_id` 改为 NOT NULL，删除媒体时级联删除相册项。
-
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `id` | uuid PK | |
-| `media_id` | uuid FK → media.id（ON DELETE CASCADE） | 关联媒体库（必须） |
-| `title` / `description` | text | 可空（相册项的业务标题/描述，与 media.title 语义不同） |
-| `featured` | boolean DEFAULT false | 精选 |
-| `created_at` | timestamptz | 排序用，倒序展示 |
-
-索引：`featured`、`media_id`
-
-### 4.6 `gallery_item_tags` 关联表
-`gallery_item_id` FK、`tag_id` FK（均 ON DELETE CASCADE），复合主键
+> **重构记录（2026-09-13）**：原 `gallery_item_tags` 表已删除，替换为 `media_tags`，统一管理所有媒体（文章图片 + 相册图片）的标签关联。
 
 ### 4.7 `settings` 键值配置表
 `key` text PK、`value` jsonb
@@ -280,11 +269,11 @@ interface StorageDriver {
 
 ## 11. 备份与恢复（v1 简化版）
 
-**范围**：全量备份所有业务表（posts / tags / post_tags / media / gallery_items / gallery_item_tags / settings / friend_links / users / account），**不含 session / verification**。图片本体在存储层，不在备份范围。
+**范围**：全量备份所有业务表（posts / tags / post_tags / media / media_tags / settings / friend_links / users / account），**不含 session / verification**。图片本体在存储层，不在备份范围。
 
 - **格式**：JSON 文件（schema 版本号 + 导出时间 + 各表数据数组）
 - **导出**：手动 → 生成 JSON 直接**下载到本地**；定时 → 上传到备份存储
-- **导入**：上传 JSON → 校验版本 → 事务内按外键顺序恢复（tags → media → posts → gallery_items → 关联表 → settings → friend_links → users/account）→ **覆盖式**，失败整体回滚；确认弹窗含覆盖警告
+- **导入**：上传 JSON → 校验版本 → 事务内按外键顺序恢复（tags → media → posts → 关联表 → settings → friend_links → users/account）→ **覆盖式**，失败整体回滚；确认弹窗含覆盖警告
 - **定时备份**：复用 `StorageDriver`，`BACKUP_DRIVER = LOCAL | GITHUB | S3`，走 `backups/` 前缀；`VERCEL` 模式 cron-job.org 每日触发 `GET /api/cron/backup`，`SERVER` 模式 node-cron 每日；自动备份保留 7 份（`BACKUP_RETENTION`），旧备份自动删除
 - **历史**：后台备份页显示 backup_records（时间/大小/来源），可下载、可删除
 - ⚠️ **安全提醒**：备份含账号表数据（邮箱等）；`BACKUP_DRIVER=GITHUB` 上传时若 repo 公开，账号信息会公开——部署时自行权衡（私有 repo 或接受）
