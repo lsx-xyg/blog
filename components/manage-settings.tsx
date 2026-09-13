@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Save, RefreshCw, Globe, Link2, FileText, Settings as SettingsIcon } from "lucide-react";
 import { Editor } from "@bytemd/react";
 import gfm from "@bytemd/plugin-gfm";
@@ -64,9 +65,11 @@ const plugins = [gfm()];
  */
 export function ManageSettings() {
   const { showToast } = useToast();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState<"site" | "social" | "footer" | "about" | "storage" | "giscus" | "advanced">("site");
+  const [originalAdminPath, setOriginalAdminPath] = useState("");
 
   const [site, setSite] = useState<SiteSettings>({
     name: "",
@@ -116,6 +119,7 @@ export function ManageSettings() {
         setFooter(data.footer);
         setAboutContent(data.aboutContent);
         setAdminPath(data.adminPath ?? "");
+        setOriginalAdminPath(data.adminPath ?? ""); // 保存原始路径，用于检测是否变更
         if (data.storage) setStorage(data.storage);
         if (data.giscus) setGiscus(data.giscus);
       }
@@ -140,7 +144,20 @@ export function ManageSettings() {
         body: JSON.stringify({ site, social, footer, aboutContent, adminPath, storage, giscus }),
       });
       if (res.ok) {
-        showToast("保存成功！", "success");
+        // 检测 admin_path 是否发生了变化
+        const normalizedNew = adminPath.trim().replace(/^\/+|\/+$/g, "");
+        const normalizedOld = originalAdminPath.trim().replace(/^\/+|\/+$/g, "");
+        const adminPathChanged = normalizedNew !== normalizedOld && normalizedNew !== "";
+
+        if (adminPathChanged) {
+          showToast(`后台路径已更改为 /${normalizedNew}，正在跳转...`, "success");
+          // 延迟一下让用户看到提示，然后跳转到新的后台首页
+          setTimeout(() => {
+            router.push(`/${normalizedNew}`);
+          }, 1000);
+        } else {
+          showToast("保存成功！", "success");
+        }
       } else {
         showToast("保存失败，请重试", "error");
       }
