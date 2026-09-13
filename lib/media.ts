@@ -73,8 +73,24 @@ export async function listMedia(opts?: {
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
   const query = db
-    .select()
+    .select({
+      id: media.id,
+      type: media.type,
+      url: media.url,
+      storageDriver: media.storageDriver,
+      storageKey: media.storageKey,
+      title: media.title,
+      description: media.description,
+      mimeType: media.mimeType,
+      size: media.size,
+      width: media.width,
+      height: media.height,
+      uploadedBy: media.uploadedBy,
+      createdAt: media.createdAt,
+      featured: galleryItems.featured, // 相册精选状态（leftJoin，非相册为 null）
+    })
     .from(media)
+    .leftJoin(galleryItems, eq(galleryItems.mediaId, media.id))
     .orderBy(desc(media.createdAt));
 
   if (where) query.where(where);

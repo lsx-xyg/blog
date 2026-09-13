@@ -29,6 +29,7 @@ type MediaItem = {
   width: number | null;
   height: number | null;
   createdAt: string;
+  featured: boolean | null; // 相册精选状态（非相册为 null）
 };
 
 type GalleryItemInfo = {
@@ -164,17 +165,17 @@ export function ManageMedia() {
         const galleryInfo = data.item as GalleryItemInfo | null;
         setEditTitle(galleryInfo?.title || item.title || "");
         setEditDescription(galleryInfo?.description || item.description || "");
-        setEditFeatured(galleryInfo?.featured || false);
+        setEditFeatured(galleryInfo?.featured ?? item.featured ?? false);
       } else {
         setEditTitle(item.title || "");
         setEditDescription(item.description || "");
-        setEditFeatured(false);
+        setEditFeatured(item.featured ?? false);
       }
     } catch (e) {
       console.error("加载相册信息失败：", e);
       setEditTitle(item.title || "");
       setEditDescription(item.description || "");
-      setEditFeatured(false);
+      setEditFeatured(item.featured ?? false);
     } finally {
       setEditLoading(false);
     }
@@ -490,8 +491,8 @@ export function ManageMedia() {
                     <h3 className="truncate text-sm font-medium flex-1">
                       {item.title || "未命名"}
                     </h3>
-                    {/* 相册图片显示精选标记 */}
-                    {item.type === MediaType.GALLERY && (
+                    {/* 相册图片显示精选标记（只有真正精选的才显示） */}
+                    {item.type === MediaType.GALLERY && item.featured === true && (
                       <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500 ml-1 flex-shrink-0" />
                     )}
                   </div>
@@ -621,13 +622,13 @@ export function ManageMedia() {
                   <button
                     type="button"
                     onClick={() => setEditFeatured(!editFeatured)}
-                    className={`relative h-6 w-11 rounded-full transition-colors ${
+                    className={`relative h-6 w-12 flex-shrink-0 rounded-full transition-colors ${
                       editFeatured ? "bg-primary" : "bg-muted"
                     }`}
                   >
                     <span
-                      className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                        editFeatured ? "translate-x-5" : "translate-x-0.5"
+                      className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
+                        editFeatured ? "translate-x-6" : "translate-x-0.5"
                       }`}
                     />
                   </button>
