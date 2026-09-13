@@ -101,7 +101,6 @@ export function ManageCron() {
 
   const isRunning = status.job.enabled;
   const canStart = status.platform === "VERCEL" && status.cronSecretConfigured && status.cronJobApiKeyConfigured && status.siteUrl;
-  const canRun = status.cronSecretConfigured;
 
   return (
     <div className="container mx-auto px-4 py-8 animate-page-enter">
@@ -221,7 +220,7 @@ export function ManageCron() {
           <button
             type="button"
             onClick={() => executeAction("run")}
-            disabled={action !== null || !canRun}
+            disabled={action !== null}
             className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {action === "run" ? (

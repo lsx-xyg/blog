@@ -121,8 +121,9 @@ export function decryptIfAvailable(value: string | null | undefined): string | n
   }
   try {
     return decrypt(value);
-  } catch {
+  } catch (e) {
     // 解密失败，可能是旧的明文数据，直接返回
+    console.error("[crypto] 解密失败（将返回原值，这可能导致敏感字段被误用）：", e);
     return value;
   }
 }

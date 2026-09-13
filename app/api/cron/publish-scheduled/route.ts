@@ -32,12 +32,8 @@ async function verifyCronSecret(req: Request): Promise<boolean> {
   }
 
   // 从请求头或 query 参数中获取 secret
-  const headerSecret = req.headers.get("x-cron-secret");
-  const url = new URL(req.url);
-  const querySecret = url.searchParams.get("secret");
-
-  const providedSecret = headerSecret || querySecret;
-  return providedSecret === cronSecret;
+  const headerSecret = req.headers.get("X-Cron-Secret");
+  return headerSecret === cronSecret;
 }
 
 export async function GET(req: Request) {

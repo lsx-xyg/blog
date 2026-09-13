@@ -20,46 +20,108 @@
 
 const CRON_JOB_API_BASE = "https://api.cron-job.org";
 
-/** cron-job.org 定时任务配置 */
-export type CronJobConfig = {
-  /** 任务名称 */
-  title: string;
-  /** cron 表达式（5位：分 时 日 月 周） */
-  schedule: {
-    md?: number; // 分钟（0-59），不填表示每分钟
-    h?: number; // 小时（0-23），不填表示每小时
-    dom?: number; // 日（1-31），不填表示每天
-    mon?: number; // 月（1-12），不填表示每月
-    dow?: number; // 周几（0-6，0=周日），不填表示每周
-  };
-  /** 请求 URL */
-  url: string;
-  /** 请求方法（GET/POST/PUT/DELETE/PATCH） */
-  requestMethod?: "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
-  /** 请求头 */
-  headers?: Record<string, string>;
-  /** 请求体（POST/PUT/PATCH 时使用） */
-  body?: string;
-  /** 超时时间（秒，默认 30） */
-  timeout?: number;
-  /** 是否启用 */
-  enabled?: boolean;
-  /** 保存响应体（默认 false） */
-  saveResponses?: boolean;
+/** RequestMethod 枚举（官方文档） */
+export const RequestMethod = {
+  GET: 0,
+  POST: 1,
+  OPTIONS: 2,
+  HEAD: 3,
+  PUT: 4,
+  DELETE: 5,
+  TRACE: 6,
+  CONNECT: 7,
+  PATCH: 8,
+} as const;
+
+export type RequestMethod = (typeof RequestMethod)[keyof typeof RequestMethod];
+
+/** JobSchedule（官方文档） */
+export type CronJobSchedule = {
+  /** 时区，如 "Asia/Shanghai"，默认 UTC */
+  timezone?: string;
+  /** 过期时间（YYYYMMDDhhmmss，0 = 不过期） */
+  expiresAt?: number;
+  /** 小时（0-23，[-1] = 每小时） */
+  hours?: number[];
+  /** 日（1-31，[-1] = 每天） */
+  mdays?: number[];
+  /** 分钟（0-59，[-1] = 每分钟） */
+  minutes?: number[];
+  /** 月（1-12，[-1] = 每月） */
+  months?: number[];
+  /** 周几（0=周日 - 6=周六，[-1] = 每天） */
+  wdays?: number[];
 };
 
-/** cron-job.org 定时任务详情 */
+/** JobExtendedData（官方文档） */
+export type CronJobExtendedData = {
+  /** 请求头 */
+  headers?: Record<string, string>;
+  /** 请求体 */
+  body?: string;
+};
+
+/** Job（官方文档） */
 export type CronJob = {
   jobId: number;
-  title: string;
-  schedule: CronJobConfig["schedule"];
-  url: string;
-  requestMethod: string;
   enabled: boolean;
+  title: string;
+  saveResponses: boolean;
+  url: string;
   lastStatus: number;
   lastDuration: number;
-  nextRun: number;
-  createdAt: number;
+  lastExecution: number;
+  sslCertExpiry?: number;
+  /** 预测的下次执行时间（Unix 秒），无预测时为 null */
+  nextExecution: number | null;
+  type: number;
+  requestTimeout: number;
+  redirectSuccess: boolean;
+  folderId: number;
+  schedule: CronJobSchedule;
+  requestMethod: RequestMethod;
+};
+
+/** DetailedJob（官方文档） */
+export type CronJobDetailed = CronJob & {
+  auth?: {
+    enable: boolean;
+    user: string;
+    password: string;
+  };
+  notification?: {
+    onFailure: boolean;
+    onFailureCount: number;
+    onSuccess: boolean;
+    onDisable: boolean;
+    onSslCertExpiry: boolean;
+    onSslCertExpirySeconds: number;
+  };
+  extendedData?: CronJobExtendedData;
+};
+
+/** 创建任务时的输入（只有 url 是必填） */
+export type CronJobConfig = {
+  /** 任务名称 */
+  title?: string;
+  /** 请求 URL（必填） */
+  url: string;
+  /** 是否启用，默认 false */
+  enabled?: boolean;
+  /** 是否保存响应体，默认 false */
+  saveResponses?: boolean;
+  /** 调度配置，默认 UTC + 空数组 */
+  schedule?: CronJobSchedule;
+  /** 请求方法，默认 GET（0） */
+  requestMethod?: RequestMethod;
+  /** 请求头/请求体 */
+  extendedData?: CronJobExtendedData;
+  /** 超时时间（秒），默认 -1（用平台默认） */
+  requestTimeout?: number;
+  /** 是否将 3xx 视为成功，默认 false */
+  redirectSuccess?: boolean;
+  /** 所在文件夹 ID，默认 0（根目录） */
+  folderId?: number;
 };
 
 /** 获取 API Key（支持环境变量和 DB 动态配置） */
@@ -91,7 +153,7 @@ async function apiRequest<T>(
       "Content-Type": "application/json",
       Authorization: `Bearer ${apiKey}`,
     },
-    body: body ? JSON.stringify(body) : undefined,
+    body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
   if (!res.ok) {
@@ -99,26 +161,28 @@ async function apiRequest<T>(
     throw new Error(`cron-job.org API 请求失败: ${res.status} ${res.statusText} ${text}`);
   }
 
+  // DELETE / PATCH 返回 {}，GET /jobs 返回带字段的对象
   return res.json() as Promise<T>;
 }
 
 /**
  * 创建定时任务
- * @param config 定时任务配置
+ * @param config 任务配置（url 必填）
  * @returns 任务 ID
  */
 export async function createCronJob(config: CronJobConfig): Promise<number> {
-  const result = await apiRequest<{ jobId: number }>("POST", "/jobs", {
+  const result = await apiRequest<{ jobId: number }>("PUT", "/jobs", {
     job: {
-      title: config.title,
-      schedule: config.schedule,
+      title: config.title ?? "",
       url: config.url,
-      requestMethod: config.requestMethod || "GET",
-      headers: config.headers,
-      body: config.body,
-      timeout: config.timeout || 30,
-      enabled: config.enabled ?? true,
+      enabled: config.enabled ?? false,
       saveResponses: config.saveResponses ?? false,
+      schedule: config.schedule ?? {},
+      requestMethod: config.requestMethod ?? RequestMethod.GET,
+      extendedData: config.extendedData,
+      requestTimeout: config.requestTimeout ?? -1,
+      redirectSuccess: config.redirectSuccess ?? false,
+      folderId: config.folderId ?? 0,
     },
   });
   return result.jobId;
@@ -134,20 +198,37 @@ export async function deleteCronJob(jobId: number): Promise<void> {
 
 /**
  * 列出所有定时任务
- * @returns 定时任务列表
  */
 export async function listCronJobs(): Promise<CronJob[]> {
-  const result = await apiRequest<{ jobs: CronJob[] }>("GET", "/jobs");
+  const result = await apiRequest<{ jobs: CronJob[]; someFailed: boolean }>(
+    "GET",
+    "/jobs",
+  );
   return result.jobs;
 }
 
 /**
  * 获取单个定时任务详情
  * @param jobId 任务 ID
- * @returns 定时任务详情
  */
-export async function getCronJob(jobId: number): Promise<CronJob> {
-  return apiRequest<CronJob>("GET", `/jobs/${jobId}`);
+export async function getCronJob(jobId: number): Promise<CronJobDetailed> {
+  const result = await apiRequest<{ jobDetails: CronJobDetailed }>(
+    "GET",
+    `/jobs/${jobId}`,
+  );
+  return result.jobDetails;
+}
+
+/**
+ * 更新定时任务（只传要改的字段）
+ * @param jobId 任务 ID
+ * @param delta 要修改的字段
+ */
+export async function updateCronJob(
+  jobId: number,
+  delta: Partial<CronJobConfig>,
+): Promise<void> {
+  await apiRequest("PATCH", `/jobs/${jobId}`, { job: delta });
 }
 
 /**
@@ -163,12 +244,25 @@ export async function createGlobalPublishJob(
 ): Promise<number> {
   return createCronJob({
     title: "博客定时发布扫描（每分钟）",
-    schedule: {}, // 空对象表示每分钟执行一次
-    url: `${siteUrl}/api/cron/publish-scheduled?secret=${encodeURIComponent(cronSecret)}`,
-    requestMethod: "GET",
-    timeout: 30,
+    url: `${siteUrl}/api/cron/publish-scheduled`,
     enabled: true,
     saveResponses: false,
+    requestMethod: RequestMethod.GET,
+    requestTimeout: 30,
+    extendedData: {
+      headers: {
+        "X-Cron-Secret": cronSecret,   // ← secret 放 header
+      },
+    },
+    schedule: {
+      timezone: "Asia/Shanghai",
+      expiresAt: 0,
+      hours: [-1],
+      mdays: [-1],
+      minutes: [-1], // 每分钟
+      months: [-1],
+      wdays: [-1],
+    },
   });
 }
 

@@ -20,7 +20,7 @@ export async function GET(req: Request) {
 
   const siteUrl = siteSettings.siteUrl || "http://localhost:3000";
 
-  let jobStatus: { enabled: boolean; jobId?: number; nextRun?: number } = {
+  let jobStatus: { enabled: boolean; jobId?: number; nextExecution?: number } = {
     enabled: false,
   };
 
@@ -31,7 +31,7 @@ export async function GET(req: Request) {
         jobStatus = {
           enabled: job.enabled,
           jobId: job.jobId,
-          nextRun: job.nextRun,
+          nextExecution: job.nextExecution ?? undefined,
         };
       }
     } catch (error) {
