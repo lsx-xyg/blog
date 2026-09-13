@@ -519,18 +519,16 @@ export function ManageMedia() {
 
                   {/* 操作按钮 */}
                   <div className="mt-3 flex gap-1">
-                    {/* 相册图片：编辑按钮 */}
-                    {item.type === MediaType.GALLERY && (
-                      <button
-                        type="button"
-                        onClick={() => openEditModal(item)}
-                        className="flex flex-1 items-center justify-center gap-1 rounded-md border border-input px-2 py-1 text-xs hover:bg-accent transition-colors"
-                        title="编辑信息/精选"
-                      >
-                        <Edit3 className="h-3 w-3" />
-                        编辑
-                      </button>
-                    )}
+                    {/* 编辑按钮（所有图片都可以编辑：标题/描述/标签，相册图片还可以编辑精选） */}
+                    <button
+                      type="button"
+                      onClick={() => openEditModal(item)}
+                      className="flex flex-1 items-center justify-center gap-1 rounded-md border border-input px-2 py-1 text-xs hover:bg-accent transition-colors"
+                      title={item.type === MediaType.GALLERY ? "编辑信息/精选/标签" : "编辑信息/标签"}
+                    >
+                      <Edit3 className="h-3 w-3" />
+                      编辑
+                    </button>
                     {/* 删除 */}
                     <button
                       type="button"
