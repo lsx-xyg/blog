@@ -6,7 +6,7 @@ import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { getAdminPath } from "@/lib/admin-path";
+import { getAdminPathAsync } from "@/lib/admin-path";
 import { isAdminUser } from "@/lib/utils";
 import { env } from "@/db/env";
 import { AdminLogin } from "@/components/admin-login";
@@ -21,7 +21,7 @@ export default async function AdminRootPage({
   params: Promise<{ adminSlug: string }>;
 }) {
   const { adminSlug } = await params;
-  const adminPath = getAdminPath();
+  const adminPath = await getAdminPathAsync();
   // 路由不匹配 → 404 伪装（不返回 403/302，防探测）
   if (adminSlug !== adminPath) notFound();
 

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { getAdminPath } from "@/lib/admin-path";
+import { getAdminPathAsync } from "@/lib/admin-path";
 import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { SiteHeader } from "@/components/site-header";
 import { MobileNav } from "@/components/mobile-nav";
@@ -69,9 +69,10 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const [site, footer] = await Promise.all([
+  const [site, footer, adminPath] = await Promise.all([
     getSiteSettings(),
     getFooterSettings(),
+    getAdminPathAsync(),
   ]);
 
   return (
@@ -89,7 +90,7 @@ export default async function RootLayout({
       <body suppressHydrationWarning className="min-h-screen flex-col">
         <ToastProvider>
           <SiteHeader
-            adminPath={getAdminPath()}
+            adminPath={adminPath}
             siteName={site.name}
             siteDescription={site.description}
           />

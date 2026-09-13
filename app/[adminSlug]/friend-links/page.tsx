@@ -2,7 +2,7 @@
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
-import { getAdminPath } from "@/lib/admin-path";
+import { getAdminPathAsync } from "@/lib/admin-path";
 import { isAdminUser } from "@/lib/utils";
 import { ManageFriendLinks } from "@/components/manage-friend-links";
 
@@ -14,7 +14,8 @@ export default async function AdminFriendLinksPage({
   params: Promise<{ adminSlug: string }>;
 }) {
   const { adminSlug } = await params;
-  if (adminSlug !== getAdminPath()) notFound();
+  const adminPath = await getAdminPathAsync();
+  if (adminSlug !== adminPath) notFound();
 
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session || !isAdminUser(session.user)) notFound();
