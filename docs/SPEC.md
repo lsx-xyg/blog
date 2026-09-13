@@ -282,51 +282,100 @@ interface StorageDriver {
 
 ## 12. 环境变量（全大写 + 小写自动转大写兜底）
 
+### 配置优先级
+
+```
+环境变量（部署时强制配置，优先级最高）
+    ↓ 未设置时
+数据库 settings 表（后台动态配置，敏感信息加密存储）
+    ↓ 未设置时
+代码默认值
+```
+
+即：设置了环境变量，后台配置就不生效；想使用后台动态配置，就不设对应环境变量。
+
+### 必须配置
+
 ```ini
-# 数据库
-DATABASE_URL
-# 认证
-BETTER_AUTH_SECRET
-BETTER_AUTH_URL
-GITHUB_CLIENT_ID
-GITHUB_CLIENT_SECRET
-# 存储
-STORAGE_DRIVER=LOCAL|GITHUB|S3
-S3_ENDPOINT
-S3_REGION
-S3_BUCKET
-S3_ACCESS_KEY_ID
-S3_SECRET_ACCESS_KEY
-S3_PUBLIC_BASE_URL
-GITHUB_STORAGE_TOKEN
-GITHUB_STORAGE_OWNER
-GITHUB_STORAGE_REPO
-GITHUB_STORAGE_BRANCH
-GITHUB_STORAGE_CDN_BASE   # jsDelivr
-# 加密（敏感信息加密存储在数据库中，AES-256-GCM）
-# 生成方式：node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
-ENCRYPTION_KEY            # 32字节Base64，用于加密存储GitHub Token/S3 Key等敏感信息
-# 定时
-CRON_SECRET
-DEPLOY_PLATFORM=VERCEL|SERVER
-# 后台入口
-ADMIN_PATH          # 可选，DB settings 可覆盖
-SETUP_SECRET        # 可选，引导保护
-# 搜索
-SEARCH_MODE=CLIENT|DATABASE
-# 备份
-BACKUP_DRIVER=LOCAL|GITHUB|S3
-BACKUP_RETENTION=7
-# 站点
-NEXT_PUBLIC_SITE_URL
+# ===== 数据库（Neon PostgreSQL）=====
+# 应用用池化连接（hostname 带 -pooler），迁移用直连（不带 -pooler）
+DATABASE_URL=
+DATABASE_URL_UNPOOLED=
+
+# ===== 认证（Better Auth + GitHub OAuth）=====
+# BETTER_AUTH_SECRET：openssl rand -hex 32
+# GitHub OAuth：https://github.com/settings/developers
+#   callback URL：{BETTER_AUTH_URL}/api/auth/callback/github
+BETTER_AUTH_SECRET=
+BETTER_AUTH_URL=http://localhost:3000
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+
+# ===== 加密密钥（AES-256-GCM）=====
+# 用于加密存储 GitHub Token、S3 Key 等敏感信息
+# 生成：node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+# ⚠️ 生产环境必须配置！未配置时敏感信息会明文存储
+# ⚠️ 密钥一旦设定不要更改，否则已加密的数据无法解密
+ENCRYPTION_KEY=
+```
+
+### 按需配置
+
+```ini
+# ===== 存储驱动 =====
+# LOCAL（开发默认）/ GITHUB（生产推荐）/ S3（占位未实现）
+# 想在后台动态切换驱动，就不设置此环境变量
+STORAGE_DRIVER=LOCAL
+
+# --- GitHub 图床（STORAGE_DRIVER=GITHUB 时需要）---
+# 也可在后台「存储设置」动态配置（加密存储），环境变量优先级更高
+GITHUB_STORAGE_TOKEN=          # Personal Access Token（repo 权限）
+GITHUB_STORAGE_OWNER=lsx-xyg   # 仓库所有者
+GITHUB_STORAGE_REPO=images     # 仓库名（建议单独建仓）
+GITHUB_STORAGE_BRANCH=main     # 分支
+GITHUB_STORAGE_CDN_BASE=https://cdn.jsdelivr.net/gh  # CDN 基础 URL
+
+# --- S3 兼容存储（STORAGE_DRIVER=S3 时需要，占位未实现）---
+# 支持阿里云 OSS / Cloudflare R2 / AWS S3 / MinIO 等
+S3_ENDPOINT=
+S3_REGION=auto
+S3_BUCKET=
+S3_ACCESS_KEY=
+S3_SECRET_KEY=
+
+# ===== 后台入口 =====
+# 后台管理路径（默认 admin），建议设一个不容易猜到的路径
+# 也可在后台「高级设置」动态配置，环境变量优先级更高
+ADMIN_PATH=
+
+# ===== 站点信息（SEO / RSS / sitemap）=====
+# 也可在后台「站点设置」动态配置，环境变量优先级更高
+NEXT_PUBLIC_SITE_URL=http://localhost:3000   # 生产环境必须配置
 NEXT_PUBLIC_SITE_NAME=林圣轩blog
 NEXT_PUBLIC_SITE_DESCRIPTION=技术写作与生活记录
-# giscus 评论（GitHub Discussions 驱动，仓库必须公开且已开启 Discussions）
-# 从 https://giscus.app 获取 repoId 和 categoryId
+
+# ===== giscus 评论系统 =====
+# GitHub Discussions 驱动，仓库必须公开且已开启 Discussions
+# 配置获取：https://giscus.app
 NEXT_PUBLIC_GISCUS_REPO=lsx-xyg/blog
 NEXT_PUBLIC_GISCUS_REPO_ID=R_kgDOUVJQpg
 NEXT_PUBLIC_GISCUS_CATEGORY=Announcements
 NEXT_PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOUVJQps4DFcnk
+```
+
+### 预留配置（功能未实现）
+
+```ini
+# 定时任务（T12 未实现）
+# CRON_SECRET=
+# DEPLOY_PLATFORM=VERCEL|SERVER
+
+# 搜索（已实现纯客户端搜索，数据库全文搜索预留）
+# SEARCH_MODE=CLIENT|DATABASE
+
+# 备份（T13 未实现）
+# BACKUP_DRIVER=LOCAL|GITHUB|S3
+# BACKUP_RETENTION=7
 ```
 
 ---
