@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin, adminDenied } from "@/lib/auth-guard";
 import { createGlobalPublishJob, findGlobalPublishJob } from "@/lib/cron-job";
 import { getDeployPlatform } from "@/lib/cron-utils";
+import { getCronConfig } from "@/lib/settings";
 import { env } from "@/db/env";
 
 export const dynamic = "force-dynamic";
@@ -12,11 +13,14 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   if (!(await requireAdmin(req))) return adminDenied();
 
-  const platform = getDeployPlatform();
-  const cronSecret = env("CRON_SECRET");
+  const [platform, cronConfig] = await Promise.all([
+    getDeployPlatform(),
+    getCronConfig(),
+  ]);
+
   const siteUrl = env("NEXT_PUBLIC_SITE_URL");
 
-  if (!cronSecret) {
+  if (!cronConfig.cronSecret) {
     return NextResponse.json(
       { error: "CRON_SECRET 未配置，无法启动定时任务" },
       { status: 400 },
@@ -42,7 +46,7 @@ export async function POST(req: Request) {
         });
       }
 
-      const jobId = await createGlobalPublishJob(siteUrl, cronSecret);
+      const jobId = await createGlobalPublishJob(siteUrl, cronConfig.cronSecret);
       return NextResponse.json({
         success: true,
         message: "定时任务已创建（每分钟执行一次）",

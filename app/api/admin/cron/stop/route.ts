@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export async function POST(req: Request) {
   if (!(await requireAdmin(req))) return adminDenied();
 
-  const platform = getDeployPlatform();
+  const platform = await getDeployPlatform();
 
   if (platform === "VERCEL") {
     try {

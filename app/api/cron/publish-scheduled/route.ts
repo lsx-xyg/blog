@@ -19,13 +19,13 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { publishScheduledPosts } from "@/lib/posts";
-import { env } from "@/db/env";
+import { getCronConfig } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
-/** 校验 CRON_SECRET */
-function verifyCronSecret(req: Request): boolean {
-  const cronSecret = env("CRON_SECRET");
+/** 校验 CRON_SECRET（支持环境变量和 DB 动态配置） */
+async function verifyCronSecret(req: Request): Promise<boolean> {
+  const { cronSecret } = await getCronConfig();
   if (!cronSecret) {
     // 未配置 CRON_SECRET 时，拒绝所有请求（防止未授权访问）
     return false;
@@ -42,7 +42,7 @@ function verifyCronSecret(req: Request): boolean {
 
 export async function GET(req: Request) {
   // 鉴权
-  if (!verifyCronSecret(req)) {
+  if (!(await verifyCronSecret(req))) {
     return NextResponse.json(
       { error: "未授权：CRON_SECRET 校验失败" },
       { status: 403 },

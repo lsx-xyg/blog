@@ -5,6 +5,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin, adminDenied } from "@/lib/auth-guard";
 import { findGlobalPublishJob } from "@/lib/cron-job";
 import { getDeployPlatform } from "@/lib/cron-utils";
+import { getCronConfig } from "@/lib/settings";
 import { env } from "@/db/env";
 
 export const dynamic = "force-dynamic";
@@ -12,16 +13,18 @@ export const dynamic = "force-dynamic";
 export async function GET(req: Request) {
   if (!(await requireAdmin(req))) return adminDenied();
 
-  const platform = getDeployPlatform();
-  const cronSecret = env("CRON_SECRET");
-  const cronJobApiKey = env("CRON_JOB_API_KEY");
+  const [platform, cronConfig] = await Promise.all([
+    getDeployPlatform(),
+    getCronConfig(),
+  ]);
+
   const siteUrl = env("NEXT_PUBLIC_SITE_URL") || "http://localhost:3000";
 
   let jobStatus: { enabled: boolean; jobId?: number; nextRun?: number } = {
     enabled: false,
   };
 
-  if (platform === "VERCEL" && cronJobApiKey) {
+  if (platform === "VERCEL" && cronConfig.cronJobApiKey) {
     try {
       const job = await findGlobalPublishJob();
       if (job) {
@@ -38,8 +41,8 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     platform,
-    cronSecretConfigured: !!cronSecret,
-    cronJobApiKeyConfigured: !!cronJobApiKey,
+    cronSecretConfigured: !!cronConfig.cronSecret,
+    cronJobApiKeyConfigured: !!cronConfig.cronJobApiKey,
     siteUrl,
     job: jobStatus,
     endpoints: {

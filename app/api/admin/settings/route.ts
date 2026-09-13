@@ -12,6 +12,7 @@ import {
   getSetting,
   deleteSetting,
   getGiscusConfig,
+  getCronConfig,
 } from "@/lib/settings";
 import { getStorageConfig } from "@/lib/storage";
 import { encryptIfAvailable } from "@/lib/crypto";
@@ -29,7 +30,7 @@ export async function GET() {
   }
 
   try {
-    const [site, social, footer, aboutContent, adminPath, storage, giscus] = await Promise.all([
+    const [site, social, footer, aboutContent, adminPath, storage, giscus, cron] = await Promise.all([
       getSiteSettings(),
       getSocialLinks(),
       getFooterSettings(),
@@ -37,6 +38,7 @@ export async function GET() {
       getSetting<string>("admin.path"),
       getStorageConfig(),
       getGiscusConfig(),
+      getCronConfig(),
     ]);
 
     // 敏感信息不返回明文，只返回是否已配置（布尔值）
@@ -61,6 +63,13 @@ export async function GET() {
       },
     };
 
+    // 定时任务配置（敏感信息不返回明文，只返回是否已配置）
+    const cronForClient = {
+      deployPlatform: cron.deployPlatform,
+      cronSecretConfigured: !!cron.cronSecret,
+      cronJobApiKeyConfigured: !!cron.cronJobApiKey,
+    };
+
     return NextResponse.json({
       site,
       social,
@@ -69,6 +78,7 @@ export async function GET() {
       adminPath: adminPath ?? "",
       storage: storageForClient,
       giscus,
+      cron: cronForClient,
     });
   } catch (error) {
     console.error("获取设置失败：", error);
@@ -188,6 +198,34 @@ export async function PUT(request: Request) {
       if (repoId !== undefined) addSetting("giscus.repo_id", repoId);
       if (category !== undefined) addSetting("giscus.category", category);
       if (categoryId !== undefined) addSetting("giscus.category_id", categoryId);
+    }
+
+    // 定时任务配置
+    if (body.cron) {
+      const { deployPlatform, cronSecret, cronJobApiKey } = body.cron;
+      // DEPLOY_PLATFORM：非敏感信息，直接存
+      if (deployPlatform !== undefined) {
+        const normalized = deployPlatform.toUpperCase() === "SERVER" ? "SERVER" : "VERCEL";
+        addSetting("cron.deploy_platform", normalized);
+      }
+      // CRON_SECRET：敏感信息，加密存储；放空时删除（回退环境变量）
+      if (cronSecret !== undefined) {
+        if (cronSecret === "") {
+          settingsToDelete.push("cron.secret");
+        } else {
+          const encrypted = encryptIfAvailable(cronSecret);
+          if (encrypted) addSetting("cron.secret", encrypted);
+        }
+      }
+      // CRON_JOB_API_KEY：敏感信息，加密存储；放空时删除（回退环境变量）
+      if (cronJobApiKey !== undefined) {
+        if (cronJobApiKey === "") {
+          settingsToDelete.push("cron.job_api_key");
+        } else {
+          const encrypted = encryptIfAvailable(cronJobApiKey);
+          if (encrypted) addSetting("cron.job_api_key", encrypted);
+        }
+      }
     }
 
     // 批量更新设置

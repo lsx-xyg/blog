@@ -205,3 +205,53 @@ export async function getGiscusConfig(): Promise<GiscusConfig> {
     categoryId: process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID || categoryId || "",
   };
 }
+
+/** 定时任务配置类型 */
+export type CronConfig = {
+  /** 部署平台（VERCEL/SERVER，默认 VERCEL） */
+  deployPlatform: "VERCEL" | "SERVER";
+  /** 定时任务接口鉴权密钥（敏感信息） */
+  cronSecret: string;
+  /** cron-job.org API Key（敏感信息，VERCEL 模式下需要） */
+  cronJobApiKey: string;
+};
+
+/**
+ * 获取定时任务配置（环境变量优先级最高，DB 次之，默认值兜底）
+ *
+ * 环境变量：
+ * - DEPLOY_PLATFORM
+ * - CRON_SECRET
+ * - CRON_JOB_API_KEY
+ *
+ * DB settings：
+ * - cron.deploy_platform
+ * - cron.secret（AES-256-GCM 加密）
+ * - cron.job_api_key（AES-256-GCM 加密）
+ *
+ * 注意：DEPLOY_PLATFORM 在 instrumentation.ts（应用启动时）使用的是环境变量，
+ * 因为应用启动后无法动态切换 node-cron。API 接口中使用的是动态配置。
+ */
+export async function getCronConfig(): Promise<CronConfig> {
+  const [deployPlatformDb, cronSecretEncrypted, cronJobApiKeyEncrypted] = await Promise.all([
+    getSetting<string>("cron.deploy_platform"),
+    getSetting<string>("cron.secret"),
+    getSetting<string>("cron.job_api_key"),
+  ]);
+
+  // 动态导入加密工具（避免循环依赖）
+  const { decryptIfAvailable } = await import("@/lib/crypto");
+
+  const deployPlatformRaw =
+    process.env.DEPLOY_PLATFORM || deployPlatformDb || "VERCEL";
+  const deployPlatform =
+    deployPlatformRaw.toUpperCase() === "SERVER" ? "SERVER" : "VERCEL";
+
+  return {
+    deployPlatform,
+    cronSecret:
+      process.env.CRON_SECRET || decryptIfAvailable(cronSecretEncrypted) || "",
+    cronJobApiKey:
+      process.env.CRON_JOB_API_KEY || decryptIfAvailable(cronJobApiKeyEncrypted) || "",
+  };
+}

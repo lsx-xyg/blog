@@ -62,9 +62,16 @@ export type CronJob = {
   createdAt: number;
 };
 
-/** 获取 API Key */
-function getApiKey(): string | null {
-  return process.env.CRON_JOB_API_KEY || null;
+/** 获取 API Key（支持环境变量和 DB 动态配置） */
+async function getApiKey(): Promise<string | null> {
+  // 优先使用环境变量
+  if (process.env.CRON_JOB_API_KEY) {
+    return process.env.CRON_JOB_API_KEY;
+  }
+  // 动态导入避免循环依赖
+  const { getCronConfig } = await import("@/lib/settings");
+  const { cronJobApiKey } = await getCronConfig();
+  return cronJobApiKey || null;
 }
 
 /** 发起 API 请求 */
@@ -73,7 +80,7 @@ async function apiRequest<T>(
   path: string,
   body?: unknown,
 ): Promise<T> {
-  const apiKey = getApiKey();
+  const apiKey = await getApiKey();
   if (!apiKey) {
     throw new Error("CRON_JOB_API_KEY 未配置");
   }
