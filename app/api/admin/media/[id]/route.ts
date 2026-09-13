@@ -69,7 +69,7 @@ export async function DELETE(
     // 先删除存储中的文件
     if (existing.storageKey) {
       try {
-        const driver = getStorageDriver();
+        const driver = await getStorageDriver();
         await driver.delete(existing.storageKey);
       } catch (error) {
         console.error("删除存储文件失败（数据库记录仍会删除）：", error);

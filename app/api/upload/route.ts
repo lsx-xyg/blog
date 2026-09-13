@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(await file.arrayBuffer());
 
     // 调用存储驱动上传
-    const driver = getStorageDriver();
+    const driver = await getStorageDriver();
     const result = await driver.upload(buffer, file.name, file.type);
 
     // 返回结果中包含 storageDriver，用于后续删除时选择对应平台
@@ -75,7 +75,7 @@ export async function DELETE(request: NextRequest) {
     }
 
     // 调用存储驱动删除
-    const driver = getStorageDriver();
+    const driver = await getStorageDriver();
     await driver.delete(key);
 
     return NextResponse.json({ success: true, key });

@@ -11,6 +11,7 @@ import {
   setAboutContent,
   getSetting,
 } from "@/lib/settings";
+import { getStorageConfig } from "@/lib/storage";
 
 /**
  * 站点设置 API
@@ -25,12 +26,13 @@ export async function GET() {
   }
 
   try {
-    const [site, social, footer, aboutContent, adminPath] = await Promise.all([
+    const [site, social, footer, aboutContent, adminPath, storage] = await Promise.all([
       getSiteSettings(),
       getSocialLinks(),
       getFooterSettings(),
       getAboutContent(),
       getSetting<string>("admin.path"),
+      getStorageConfig(),
     ]);
 
     return NextResponse.json({
@@ -39,6 +41,7 @@ export async function GET() {
       footer,
       aboutContent,
       adminPath: adminPath ?? "",
+      storage,
     });
   } catch (error) {
     console.error("获取设置失败：", error);
@@ -91,6 +94,28 @@ export async function PUT(request: Request) {
     // 高级设置（admin_path）
     if (body.adminPath !== undefined && body.adminPath !== "") {
       settingsToUpdate.push({ key: "admin.path", value: body.adminPath });
+    }
+
+    // 存储设置（非敏感配置，敏感信息如 Token/Secret 只从环境变量读取）
+    if (body.storage) {
+      const { driver, github, s3, local } = body.storage;
+      if (driver && ["LOCAL", "GITHUB", "S3"].includes(driver.toUpperCase())) {
+        addSetting("storage.driver", driver.toUpperCase());
+      }
+      if (github) {
+        addSetting("storage.github.owner", github.owner);
+        addSetting("storage.github.repo", github.repo);
+        addSetting("storage.github.branch", github.branch);
+        addSetting("storage.github.cdn_base", github.cdnBase);
+      }
+      if (s3) {
+        addSetting("storage.s3.endpoint", s3.endpoint);
+        addSetting("storage.s3.bucket", s3.bucket);
+        addSetting("storage.s3.region", s3.region);
+      }
+      if (local) {
+        addSetting("storage.local.upload_dir", local.uploadDir);
+      }
     }
 
     // 批量更新设置

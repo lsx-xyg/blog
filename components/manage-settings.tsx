@@ -27,6 +27,24 @@ type FooterSettings = {
   icp: string;
 };
 
+type StorageSettings = {
+  driver: "LOCAL" | "GITHUB" | "S3";
+  github: {
+    owner: string;
+    repo: string;
+    branch: string;
+    cdnBase: string;
+  };
+  s3: {
+    endpoint: string;
+    bucket: string;
+    region: string;
+  };
+  local: {
+    uploadDir: string;
+  };
+};
+
 const plugins = [gfm()];
 
 /**
@@ -42,7 +60,7 @@ export function ManageSettings() {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState<"site" | "social" | "footer" | "about" | "advanced">("site");
+  const [activeSection, setActiveSection] = useState<"site" | "social" | "footer" | "about" | "storage" | "advanced">("site");
 
   const [site, setSite] = useState<SiteSettings>({
     name: "",
@@ -66,6 +84,12 @@ export function ManageSettings() {
 
   const [aboutContent, setAboutContent] = useState("");
   const [adminPath, setAdminPath] = useState("");
+  const [storage, setStorage] = useState<StorageSettings>({
+    driver: "LOCAL",
+    github: { owner: "", repo: "", branch: "", cdnBase: "" },
+    s3: { endpoint: "", bucket: "", region: "" },
+    local: { uploadDir: "" },
+  });
 
   // 加载设置
   const loadSettings = async () => {
@@ -79,6 +103,7 @@ export function ManageSettings() {
         setFooter(data.footer);
         setAboutContent(data.aboutContent);
         setAdminPath(data.adminPath ?? "");
+        if (data.storage) setStorage(data.storage);
       }
     } catch (e) {
       console.error("加载设置失败：", e);
@@ -98,7 +123,7 @@ export function ManageSettings() {
       const res = await fetch("/api/admin/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ site, social, footer, aboutContent, adminPath }),
+        body: JSON.stringify({ site, social, footer, aboutContent, adminPath, storage }),
       });
       if (res.ok) {
         showToast("保存成功！", "success");
@@ -118,6 +143,7 @@ export function ManageSettings() {
     { id: "social" as const, label: "社交链接", icon: Link2 },
     { id: "footer" as const, label: "页脚设置", icon: SettingsIcon },
     { id: "about" as const, label: "关于页面", icon: FileText },
+    { id: "storage" as const, label: "存储设置", icon: SettingsIcon },
     { id: "advanced" as const, label: "高级设置", icon: SettingsIcon },
   ];
 
@@ -339,6 +365,154 @@ export function ManageSettings() {
                   plugins={plugins}
                   mode="split"
                 />
+              </div>
+            </div>
+          )}
+
+          {/* 存储设置 */}
+          {activeSection === "storage" && (
+            <div className="rounded-xl border border-border bg-card p-6 animate-fade-in-up">
+              <h2 className="text-lg font-semibold mb-4">存储设置</h2>
+
+              <div className="mb-4 rounded-lg border border-blue-500/30 bg-blue-500/5 p-3">
+                <p className="text-xs text-blue-700 dark:text-blue-400">
+                  <strong>ℹ️ 说明：</strong>敏感信息（GitHub Token、S3 Access Key/Secret Key）只从环境变量读取，不在此配置。
+                  修改驱动后，新上传的文件将使用新驱动，已上传的文件不受影响。
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                {/* 当前驱动 */}
+                <div>
+                  <label className={labelClass}>当前存储驱动</label>
+                  <div className="flex gap-2">
+                    {(["LOCAL", "GITHUB", "S3"] as const).map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setStorage({ ...storage, driver: d })}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                          storage.driver === d
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                        }`}
+                      >
+                        {d === "LOCAL" ? "本地存储" : d === "GITHUB" ? "GitHub 图床" : "S3 兼容存储"}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* GitHub 配置 */}
+                {storage.driver === "GITHUB" && (
+                  <div className="space-y-4 p-4 rounded-lg bg-muted/50">
+                    <h3 className="font-medium text-sm">GitHub 图床配置</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className={labelClass}>Owner（用户名/组织）</label>
+                        <input
+                          type="text"
+                          value={storage.github.owner}
+                          onChange={(e) => setStorage({ ...storage, github: { ...storage.github, owner: e.target.value } })}
+                          className={inputClass}
+                          placeholder="lsx-xyg"
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass}>Repo（仓库名）</label>
+                        <input
+                          type="text"
+                          value={storage.github.repo}
+                          onChange={(e) => setStorage({ ...storage, github: { ...storage.github, repo: e.target.value } })}
+                          className={inputClass}
+                          placeholder="images"
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass}>Branch（分支）</label>
+                        <input
+                          type="text"
+                          value={storage.github.branch}
+                          onChange={(e) => setStorage({ ...storage, github: { ...storage.github, branch: e.target.value } })}
+                          className={inputClass}
+                          placeholder="main"
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass}>CDN 基础 URL</label>
+                        <input
+                          type="text"
+                          value={storage.github.cdnBase}
+                          onChange={(e) => setStorage({ ...storage, github: { ...storage.github, cdnBase: e.target.value } })}
+                          className={inputClass}
+                          placeholder="https://cdn.jsdelivr.net/gh"
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      访问 URL 格式：{storage.github.cdnBase || "https://cdn.jsdelivr.net/gh"}/{storage.github.owner || "owner"}/{storage.github.repo || "repo"}@{storage.github.branch || "main"}/{'{path}'}
+                    </p>
+                  </div>
+                )}
+
+                {/* S3 配置 */}
+                {storage.driver === "S3" && (
+                  <div className="space-y-4 p-4 rounded-lg bg-muted/50">
+                    <h3 className="font-medium text-sm">S3 兼容存储配置</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <label className={labelClass}>Endpoint（端点）</label>
+                        <input
+                          type="text"
+                          value={storage.s3.endpoint}
+                          onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, endpoint: e.target.value } })}
+                          className={inputClass}
+                          placeholder="https://oss-cn-hangzhou.aliyuncs.com"
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass}>Bucket（存储桶）</label>
+                        <input
+                          type="text"
+                          value={storage.s3.bucket}
+                          onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, bucket: e.target.value } })}
+                          className={inputClass}
+                          placeholder="my-bucket"
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass}>Region（区域）</label>
+                        <input
+                          type="text"
+                          value={storage.s3.region}
+                          onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, region: e.target.value } })}
+                          className={inputClass}
+                          placeholder="auto / us-east-1"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* LOCAL 配置 */}
+                {storage.driver === "LOCAL" && (
+                  <div className="space-y-4 p-4 rounded-lg bg-muted/50">
+                    <h3 className="font-medium text-sm">本地存储配置</h3>
+                    <div>
+                      <label className={labelClass}>上传目录（相对于项目根目录）</label>
+                      <input
+                        type="text"
+                        value={storage.local.uploadDir}
+                        onChange={(e) => setStorage({ ...storage, local: { ...storage.local, uploadDir: e.target.value } })}
+                        className={inputClass}
+                        placeholder="public/uploads"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      注意：本地存储仅适用于开发环境。Vercel 等 Serverless 平台无持久化文件系统，生产环境请使用 GitHub 或 S3。
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           )}

@@ -76,7 +76,7 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(await file.arrayBuffer());
 
     // 调用存储驱动上传
-    const driver = getStorageDriver();
+    const driver = await getStorageDriver();
     const uploadResult = await driver.upload(buffer, file.name, file.type);
 
     // 创建媒体记录

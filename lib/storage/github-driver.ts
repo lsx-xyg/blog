@@ -1,17 +1,17 @@
 import type { StorageDriver, UploadResult } from "./types";
 import { generateKey } from "./utils";
+import type { StorageConfig } from "./config";
+import { getStorageSecrets } from "./config";
 
 /** GitHub 图床存储驱动（生产环境用）
  *
  * 上传到 GitHub 公开仓库，通过 jsDelivr CDN 加速访问
- * - 仓库：GITHUB_IMAGE_REPO（默认 lsx-xyg/images）
- * - 分支：GITHUB_IMAGE_BRANCH（默认 main）
+ * - 仓库：storage.github.owner/repo（可在后台动态配置）
+ * - 分支：storage.github.branch
  * - 访问 URL：https://cdn.jsdelivr.net/gh/{owner}/{repo}@{branch}/{path}
  *
- * 环境变量：
- * - GITHUB_TOKEN：GitHub Personal Access Token（需要 repo 权限）
- * - GITHUB_IMAGE_REPO：图床仓库（owner/repo 格式）
- * - GITHUB_IMAGE_BRANCH：分支名
+ * 敏感信息（Token）只从环境变量读取：
+ * - GITHUB_STORAGE_TOKEN
  *
  * 优点：免费、jsDelivr CDN 全球加速、公开仓库可直接访问
  * 缺点：单文件最大 100MB（GitHub 限制）、API 调用有速率限制
@@ -19,25 +19,35 @@ import { generateKey } from "./utils";
 export class GithubStorageDriver implements StorageDriver {
   name = "github" as const;
 
+  private config: StorageConfig["github"];
+
+  constructor(config?: StorageConfig["github"]) {
+    this.config = config || {
+      owner: process.env.GITHUB_STORAGE_OWNER || "lsx-xyg",
+      repo: process.env.GITHUB_STORAGE_REPO || "images",
+      branch: process.env.GITHUB_STORAGE_BRANCH || "main",
+      cdnBase: process.env.GITHUB_STORAGE_CDN_BASE || "https://cdn.jsdelivr.net/gh",
+    };
+  }
+
   private get token(): string {
-    return process.env.GITHUB_STORAGE_TOKEN || "";
+    return getStorageSecrets().githubToken;
   }
 
   private get owner(): string {
-    return process.env.GITHUB_STORAGE_OWNER || "lsx-xyg";
+    return this.config.owner;
   }
 
   private get repo(): string {
-    return process.env.GITHUB_STORAGE_REPO || "images";
+    return this.config.repo;
   }
 
   private get branch(): string {
-    return process.env.GITHUB_STORAGE_BRANCH || "main";
+    return this.config.branch;
   }
 
   private get cdnBase(): string {
-    // jsDelivr CDN 基础 URL，可自定义
-    return process.env.GITHUB_STORAGE_CDN_BASE || "https://cdn.jsdelivr.net/gh";
+    return this.config.cdnBase;
   }
 
   /** 构建 jsDelivr CDN URL */

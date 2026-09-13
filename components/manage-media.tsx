@@ -75,6 +75,21 @@ export function ManageMedia() {
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
   const [lightboxTitle, setLightboxTitle] = useState<string>("");
 
+  // 当前存储驱动
+  const [currentDriver, setCurrentDriver] = useState<string>("LOCAL");
+
+  // 加载当前存储驱动
+  useEffect(() => {
+    fetch("/api/admin/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.storage?.driver) {
+          setCurrentDriver(data.storage.driver);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   // 加载媒体列表
   const loadItems = async () => {
     setLoading(true);
@@ -287,7 +302,12 @@ export function ManageMedia() {
     <div className="container mx-auto px-4 py-8 animate-page-enter">
       {/* 标题和操作 */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <h1 className="text-2xl font-bold">媒体库</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold">媒体库</h1>
+          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+            {currentDriver === "LOCAL" ? "本地存储" : currentDriver === "GITHUB" ? "GitHub 图床" : "S3 存储"}
+          </span>
+        </div>
         <div className="flex flex-wrap items-center gap-2">
           {/* 未使用图片清理 */}
           <button

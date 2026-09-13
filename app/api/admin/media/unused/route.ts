@@ -55,7 +55,7 @@ export async function DELETE(request: Request) {
     }
 
     // 删除存储中的文件
-    const driver = getStorageDriver();
+    const driver = await getStorageDriver();
     for (const item of mediaToDelete) {
       if (item.storageKey) {
         try {
