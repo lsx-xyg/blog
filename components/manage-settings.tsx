@@ -382,7 +382,10 @@ export function ManageSettings() {
 
               <div className="mb-4 rounded-lg border border-blue-500/30 bg-blue-500/5 p-3">
                 <p className="text-xs text-blue-700 dark:text-blue-400">
-                  <strong>ℹ️ 说明：</strong>敏感信息（GitHub Token、S3 Access Key/Secret Key）只从环境变量读取，不在此配置。
+                  <strong>ℹ️ 说明：</strong>
+                  敏感信息（GitHub Token、S3 Access Key/Secret Key）使用 AES-256-GCM 加密存储在数据库中，可在此动态配置。
+                  环境变量优先级更高（设置了对应环境变量则后台配置不生效）。
+                  敏感信息不回显，只显示「已配置」状态，留空则保持当前配置。
                   修改驱动后，新上传的文件将使用新驱动，已上传的文件不受影响。
                 </p>
               </div>
