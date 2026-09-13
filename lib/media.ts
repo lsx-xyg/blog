@@ -3,8 +3,9 @@
  */
 import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { media, posts } from "@/db/schema";
+import { media, posts, mediaTags, tags } from "@/db/schema";
 import { MediaType, StorageDriverType } from "@/lib/types/media";
+import { getOrCreateTags } from "@/lib/tags";
 
 /** 创建媒体记录 */
 export async function createMedia(data: {
@@ -202,4 +203,38 @@ export async function batchDeleteMedia(ids: string[]) {
   await db.delete(media).where(inArray(media.id, ids));
 
   return items;
+}
+
+/** 获取媒体的标签列表 */
+export async function getMediaTags(mediaId: string) {
+  const rows = await db
+    .select({
+      id: tags.id,
+      name: tags.name,
+      slug: tags.slug,
+    })
+    .from(mediaTags)
+    .innerJoin(tags, eq(tags.id, mediaTags.tagId))
+    .where(eq(mediaTags.mediaId, mediaId))
+    .orderBy(tags.name);
+  return rows;
+}
+
+/** 设置媒体的标签（全量替换，自动创建不存在的标签） */
+export async function setMediaTags(mediaId: string, tagNames: string[]) {
+  // 先删除旧的关联
+  await db.delete(mediaTags).where(eq(mediaTags.mediaId, mediaId));
+
+  // 获取或创建标签
+  const tagIds = await getOrCreateTags(tagNames);
+
+  // 插入新的关联
+  for (const tagId of tagIds) {
+    await db
+      .insert(mediaTags)
+      .values({ mediaId, tagId })
+      .onConflictDoNothing();
+  }
+
+  return getMediaTags(mediaId);
 }

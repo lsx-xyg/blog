@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
 import { Switch } from "@/components/ui/switch";
+import { TagInput } from "@/components/tag-input";
 
 type MediaItem = {
   id: string;
@@ -66,6 +67,8 @@ export function ManageMedia() {
   const [editTitle, setEditTitle] = useState("");
   const [editDescription, setEditDescription] = useState("");
   const [editFeatured, setEditFeatured] = useState(false);
+  const [editTags, setEditTags] = useState<string[]>([]);
+  const [allTags, setAllTags] = useState<{ id: string; name: string; slug: string }[]>([]);
   const [editSaving, setEditSaving] = useState(false);
 
   // 灯箱状态
@@ -145,37 +148,78 @@ export function ManageMedia() {
     }
   };
 
-  // 打开编辑弹窗（直接使用 media 数据）
-  const openEditModal = (item: MediaItem) => {
+  // 打开编辑弹窗（加载媒体标签和所有标签）
+  const openEditModal = async (item: MediaItem) => {
     setEditingItem(item);
     setEditSaving(false);
     setEditTitle(item.title || "");
     setEditDescription(item.description || "");
     setEditFeatured(item.featured ?? false);
+    setEditTags([]);
+
+    // 并行加载：媒体的标签 + 所有已有标签（用于下拉提示）
+    try {
+      const [mediaTagsRes, allTagsRes] = await Promise.all([
+        fetch(`/api/admin/media/${item.id}/tags`),
+        fetch("/api/admin/tags"),
+      ]);
+
+      if (mediaTagsRes.ok) {
+        const data = await mediaTagsRes.json();
+        setEditTags((data.tags || []).map((t: { name: string }) => t.name));
+      }
+
+      if (allTagsRes.ok) {
+        const data = await allTagsRes.json();
+        setAllTags(data.tags || []);
+      }
+    } catch (e) {
+      console.error("加载标签失败：", e);
+    }
   };
 
-  // 保存编辑（直接更新 media 表）
+  // 保存编辑（更新 media 表 + 标签）
   const saveEdit = async () => {
     if (!editingItem) return;
     setEditSaving(true);
 
     try {
+      // 构建更新数据：文章图片不传 featured（保持默认 false）
+      const updateData: Record<string, unknown> = {
+        title: editTitle || null,
+        description: editDescription || null,
+      };
+      // 只有相册图片才更新 featured
+      if (editingItem.type === MediaType.GALLERY) {
+        updateData.featured = editFeatured;
+      }
+
+      // 1. 保存基本信息
       const res = await fetch(`/api/admin/media/${editingItem.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title: editTitle || null,
-          description: editDescription || null,
-          featured: editFeatured,
-        }),
+        body: JSON.stringify(updateData),
       });
 
-      if (res.ok) {
-        setEditingItem(null);
-        await loadItems();
-      } else {
-        alert("保存失败，请重试");
+      if (!res.ok) {
+        alert("保存基本信息失败，请重试");
+        return;
       }
+
+      // 2. 保存标签
+      const tagsRes = await fetch(`/api/admin/media/${editingItem.id}/tags`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tags: editTags }),
+      });
+
+      if (!tagsRes.ok) {
+        alert("保存标签失败，请重试");
+        return;
+      }
+
+      setEditingItem(null);
+      await loadItems();
     } catch (e) {
       console.error("保存失败：", e);
       alert("保存失败，请重试");
@@ -583,17 +627,31 @@ export function ManageMedia() {
                   />
                 </div>
 
-                {/* 精选开关 */}
-                <div className="flex items-center justify-between rounded-lg border border-input p-3">
-                  <div className="flex items-center gap-2">
-                    <Star className={`h-4 w-4 ${editFeatured ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"}`} />
-                    <span className="text-sm font-medium">设为精选</span>
-                  </div>
-                  <Switch
-                    checked={editFeatured}
-                    onCheckedChange={(checked) => setEditFeatured(checked)}
+                {/* 标签（文章图片和相册图片都可以编辑） */}
+                <div>
+                  <label className="mb-1 block text-sm font-medium">标签</label>
+                  <TagInput
+                    value={editTags}
+                    onChange={setEditTags}
+                    allTags={allTags}
+                    placeholder="输入标签后回车添加，可选择已有标签"
                   />
+                  <p className="mt-1 text-xs text-muted-foreground">回车添加新标签，输入时可选择已有标签</p>
                 </div>
+
+                {/* 精选开关（仅相册图片显示，文章图片默认 false） */}
+                {editingItem.type === MediaType.GALLERY && (
+                  <div className="flex items-center justify-between rounded-lg border border-input p-3">
+                    <div className="flex items-center gap-2">
+                      <Star className={`h-4 w-4 ${editFeatured ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"}`} />
+                      <span className="text-sm font-medium">设为精选</span>
+                    </div>
+                    <Switch
+                      checked={editFeatured}
+                      onCheckedChange={(checked) => setEditFeatured(checked)}
+                    />
+                  </div>
+                )}
 
                 {/* 保存按钮 */}
                 <div className="flex justify-end gap-2 pt-2">
