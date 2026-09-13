@@ -173,7 +173,7 @@ export async function setAboutContent(content: string): Promise<void> {
 }
 
 /** giscus 评论配置类型 */
-export type GiscusConfig = {
+export type GiscusSettings = {
   repo: string;
   repoId: string;
   category: string;
@@ -195,7 +195,7 @@ export type GiscusConfig = {
  * - giscus.category
  * - giscus.category_id
  */
-export async function getGiscusConfig(): Promise<GiscusConfig> {
+export async function getGiscusSettings(): Promise<GiscusSettings> {
   const [repo, repoId, category, categoryId] = await Promise.all([
     getSetting<string>("giscus.repo"),
     getSetting<string>("giscus.repo_id"),
@@ -212,13 +212,17 @@ export async function getGiscusConfig(): Promise<GiscusConfig> {
 }
 
 /** 定时任务配置类型 */
-export type CronConfig = {
+export type CronSettings = {
   /** 部署平台（VERCEL/SERVER，默认 VERCEL） */
   deployPlatform: "VERCEL" | "SERVER";
   /** 定时任务接口鉴权密钥（敏感信息） */
   cronSecret: string;
+  /** 是否已配置（加载时显示用，不返回明文） */
+  cronSecretConfigured?: boolean;  
   /** cron-job.org API Key（敏感信息，VERCEL 模式下需要） */
   cronJobApiKey: string;
+  /** 是否已配置（加载时显示用，不返回明文） */
+  cronJobApiKeyConfigured?: boolean;  
 };
 
 /**
@@ -237,7 +241,7 @@ export type CronConfig = {
  * 注意：DEPLOY_PLATFORM 在 instrumentation.ts（应用启动时）使用的是环境变量，
  * 因为应用启动后无法动态切换 node-cron。API 接口中使用的是动态配置。
  */
-export async function getCronConfig(): Promise<CronConfig> {
+export async function getCronConfig(): Promise<CronSettings> {
   const [deployPlatformDb, cronSecretEncrypted, cronJobApiKeyEncrypted] = await Promise.all([
     getSetting<string>("cron.deploy_platform"),
     getSetting<string>("cron.secret"),
@@ -260,3 +264,28 @@ export async function getCronConfig(): Promise<CronConfig> {
       process.env.CRON_JOB_API_KEY || decryptIfAvailable(cronJobApiKeyEncrypted) || "",
   };
 }
+
+/** 存储配置类型 */
+export type StorageSettings = {
+  driver: "LOCAL" | "GITHUB" | "S3";
+  github: {
+    owner: string;
+    repo: string;
+    branch: string;
+    cdnBase: string;
+    token: string; // 用户输入的明文（保存时用）
+    tokenConfigured?: boolean; // 是否已配置（加载时显示用，不返回明文）
+  };
+  s3: {
+    endpoint: string;
+    bucket: string;
+    region: string;
+    accessKey: string; // 用户输入的明文（保存时用）
+    secretKey: string; // 用户输入的明文（保存时用）
+    accessKeyConfigured?: boolean; // 是否已配置
+    secretKeyConfigured?: boolean; // 是否已配置
+  };
+  local: {
+    uploadDir: string;
+  };
+};

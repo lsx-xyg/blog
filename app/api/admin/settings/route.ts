@@ -11,7 +11,7 @@ import {
   setAboutContent,
   getSetting,
   deleteSetting,
-  getGiscusConfig,
+  getGiscusSettings,
   getCronConfig,
 } from "@/lib/settings";
 import { getStorageConfig } from "@/lib/storage";
@@ -37,7 +37,7 @@ export async function GET() {
       getAboutContent(),
       getSetting<string>("admin.path"),
       getStorageConfig(),
-      getGiscusConfig(),
+      getGiscusSettings(),
       getCronConfig(),
     ]);
 

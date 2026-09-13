@@ -7,50 +7,7 @@ import { Editor } from "@bytemd/react";
 import gfm from "@bytemd/plugin-gfm";
 import "bytemd/dist/index.css";
 import { useToast } from "@/components/toast";
-
-type SiteSettings = {
-  name: string;
-  description: string;
-  seoDescription: string;
-  logoUrl: string;
-  faviconUrl: string;
-};
-
-type SocialLinks = {
-  github: string;
-  twitter: string;
-  email: string;
-  rss: string;
-};
-
-type FooterSettings = {
-  copyright: string;
-  icp: string;
-};
-
-type StorageSettings = {
-  driver: "LOCAL" | "GITHUB" | "S3";
-  github: {
-    owner: string;
-    repo: string;
-    branch: string;
-    cdnBase: string;
-    token: string; // 用户输入的明文（保存时用）
-    tokenConfigured?: boolean; // 是否已配置（加载时显示用，不返回明文）
-  };
-  s3: {
-    endpoint: string;
-    bucket: string;
-    region: string;
-    accessKey: string; // 用户输入的明文（保存时用）
-    secretKey: string; // 用户输入的明文（保存时用）
-    accessKeyConfigured?: boolean; // 是否已配置
-    secretKeyConfigured?: boolean; // 是否已配置
-  };
-  local: {
-    uploadDir: string;
-  };
-};
+import type { SiteSettings, SocialLinks, FooterSettings, StorageSettings, GiscusSettings, CronSettings } from "@/lib/settings";
 
 const plugins = [gfm()];
 
@@ -77,6 +34,7 @@ export function ManageSettings() {
     seoDescription: "",
     logoUrl: "",
     faviconUrl: "",
+    siteUrl: "",
   });
 
   const [social, setSocial] = useState<SocialLinks>({
@@ -100,14 +58,14 @@ export function ManageSettings() {
     local: { uploadDir: "" },
   });
 
-  const [giscus, setGiscus] = useState({
+  const [giscus, setGiscus] = useState<GiscusSettings>({
     repo: "",
     repoId: "",
     category: "Announcements",
     categoryId: "",
   });
 
-  const [cron, setCron] = useState({
+  const [cron, setCron] = useState<CronSettings>({
     deployPlatform: "VERCEL" as "VERCEL" | "SERVER",
     cronSecret: "",
     cronSecretConfigured: false,
@@ -134,9 +92,9 @@ export function ManageSettings() {
           setCron({
             deployPlatform: data.cron.deployPlatform || "VERCEL",
             cronSecret: "", // 敏感信息不回显
-            cronSecretConfigured: data.cron.cronSecretConfigured || false,
+            cronSecretConfigured: data.cron.cronSecretConfigured ?? false,
             cronJobApiKey: "", // 敏感信息不回显
-            cronJobApiKeyConfigured: data.cron.cronJobApiKeyConfigured || false,
+            cronJobApiKeyConfigured: data.cron.cronJobApiKeyConfigured ?? false,
           });
         }
       }

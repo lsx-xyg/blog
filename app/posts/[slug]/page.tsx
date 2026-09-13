@@ -9,7 +9,7 @@ import { ViewCounter } from "@/components/view-counter";
 import { ArticleToc } from "@/components/article-toc";
 import { ArticleFloatButtons } from "@/components/article-float-buttons";
 import { Comments } from "@/components/comments";
-import { getGiscusConfig } from "@/lib/settings";
+import { getGiscusSettings } from "@/lib/settings";
 import { CalendarDays, Clock } from "lucide-react";
 
 export const dynamicParams = true;
@@ -82,7 +82,7 @@ export default async function PostPage({
   const tocItems = extractToc(post.content);
 
   // 获取 giscus 评论配置（环境变量优先级最高，DB 次之）
-  const giscusConfig = await getGiscusConfig();
+  const giscusConfig = await getGiscusSettings();
 
   return (
     <main className="container mx-auto px-2 py-4 md:px-4 md:py-8">
