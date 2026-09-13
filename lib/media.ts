@@ -3,7 +3,7 @@
  */
 import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { media, galleryItems, posts } from "@/db/schema";
+import { media, posts } from "@/db/schema";
 import { MediaType, StorageDriverType } from "@/lib/types/media";
 
 /** 创建媒体记录 */
@@ -18,6 +18,7 @@ export async function createMedia(data: {
   size?: number | null;
   width?: number | null;
   height?: number | null;
+  featured?: boolean;
   uploadedBy?: string | null;
 }) {
   const rows = await db
@@ -33,6 +34,7 @@ export async function createMedia(data: {
       size: data.size ?? null,
       width: data.width ?? null,
       height: data.height ?? null,
+      featured: data.featured ?? false,
       uploadedBy: data.uploadedBy ?? null,
     })
     .returning();
@@ -73,24 +75,8 @@ export async function listMedia(opts?: {
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
   const query = db
-    .select({
-      id: media.id,
-      type: media.type,
-      url: media.url,
-      storageDriver: media.storageDriver,
-      storageKey: media.storageKey,
-      title: media.title,
-      description: media.description,
-      mimeType: media.mimeType,
-      size: media.size,
-      width: media.width,
-      height: media.height,
-      uploadedBy: media.uploadedBy,
-      createdAt: media.createdAt,
-      featured: galleryItems.featured, // 相册精选状态（leftJoin，非相册为 null）
-    })
+    .select()
     .from(media)
-    .leftJoin(galleryItems, eq(galleryItems.mediaId, media.id))
     .orderBy(desc(media.createdAt));
 
   if (where) query.where(where);
@@ -133,6 +119,7 @@ export async function updateMedia(
     type?: MediaType;
     title?: string | null;
     description?: string | null;
+    featured?: boolean;
   },
 ) {
   const rows = await db
@@ -156,13 +143,13 @@ export async function deleteMedia(id: string) {
 }
 
 /**
- * 查找未使用的图片（不在文章内容中，也不在相册中）
+ * 查找未使用的图片（不在文章内容中）
  *
  * 逻辑：
  * 1. 获取所有媒体的 URL
  * 2. 获取所有已发布文章的内容，检查哪些 URL 被引用
- * 3. 获取所有相册项的 imageUrl，检查哪些 URL 被引用
- * 4. 未被引用的就是未使用的图片
+ * 3. 相册图片（type=GALLERY）默认就是被使用的，不需要检查
+ * 4. 文章图片（type=ARTICLE）未被文章内容引用的就是未使用的图片
  */
 export async function findUnusedMedia() {
   // 获取所有媒体
@@ -173,12 +160,6 @@ export async function findUnusedMedia() {
     .select({ content: posts.content })
     .from(posts)
     .where(eq(posts.status, "PUBLISHED"));
-
-  // 获取所有相册项关联的 media.url
-  const allGallery = await db
-    .select({ imageUrl: media.url })
-    .from(galleryItems)
-    .innerJoin(media, eq(galleryItems.mediaId, media.id));
 
   // 合并所有被引用的 URL
   const usedUrls = new Set<string>();
@@ -200,13 +181,12 @@ export async function findUnusedMedia() {
     }
   }
 
-  // 从相册中提取 URL
-  for (const item of allGallery) {
-    if (item.imageUrl) usedUrls.add(item.imageUrl);
-  }
-
-  // 过滤未使用的媒体
-  const unusedMedia = allMedia.filter((m) => !usedUrls.has(m.url));
+  // 过滤未使用的媒体：
+  // - 相册图片（type=GALLERY）默认就是被使用的
+  // - 文章图片（type=ARTICLE）未被文章内容引用的就是未使用的
+  const unusedMedia = allMedia.filter(
+    (m) => m.type !== MediaType.GALLERY && !usedUrls.has(m.url),
+  );
 
   return unusedMedia;
 }

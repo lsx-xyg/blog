@@ -1,34 +1,35 @@
 import { NextResponse } from "next/server";
-import { desc, eq } from "drizzle-orm";
+import { desc, eq, and } from "drizzle-orm";
 import { db } from "@/db";
-import { galleryItems, galleryItemTags, tags, media } from "@/db/schema";
+import { mediaTags, tags, media } from "@/db/schema";
 import { listPublishedPostMeta } from "@/lib/posts";
+import { MediaType } from "@/lib/types/media";
 
 export const dynamic = "force-dynamic";
 
 /**
  * T7 方案 A：全量轻量元数据下发（首页/相册启动时拉取，前端负责筛选/搜索/分批渲染）
  * - posts：已发布文章（含标签数组）
- * - gallery：相册条目（T5 闭环后才有数据；接口结构先就位）
+ * - gallery：相册条目（media 表中 type=GALLERY 的记录）
  */
 export async function GET() {
   const posts = await listPublishedPostMeta();
 
   const galleryRows = await db
     .select({
-      id: galleryItems.id,
-      title: galleryItems.title,
-      description: galleryItems.description,
-      featured: galleryItems.featured,
+      id: media.id,
+      title: media.title,
+      description: media.description,
+      featured: media.featured,
       imageUrl: media.url,
-      createdAt: galleryItems.createdAt,
+      createdAt: media.createdAt,
       tagName: tags.name,
     })
-    .from(galleryItems)
-    .innerJoin(media, eq(galleryItems.mediaId, media.id))
-    .leftJoin(galleryItemTags, eq(galleryItemTags.galleryItemId, galleryItems.id))
-    .leftJoin(tags, eq(tags.id, galleryItemTags.tagId))
-    .orderBy(desc(galleryItems.createdAt));
+    .from(media)
+    .leftJoin(mediaTags, eq(mediaTags.mediaId, media.id))
+    .leftJoin(tags, eq(tags.id, mediaTags.tagId))
+    .where(eq(media.type, MediaType.GALLERY))
+    .orderBy(desc(media.createdAt));
 
   const galleryMap = new Map<string, {
     id: string;

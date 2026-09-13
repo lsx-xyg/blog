@@ -32,13 +32,6 @@ type MediaItem = {
   featured: boolean | null; // 相册精选状态（非相册为 null）
 };
 
-type GalleryItemInfo = {
-  id: string;
-  title: string | null;
-  description: string | null;
-  featured: boolean;
-};
-
 /**
  * 后台媒体库管理组件
  *
@@ -73,7 +66,6 @@ export function ManageMedia() {
   const [editDescription, setEditDescription] = useState("");
   const [editFeatured, setEditFeatured] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
-  const [editLoading, setEditLoading] = useState(false);
 
   // 灯箱状态
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
@@ -152,42 +144,22 @@ export function ManageMedia() {
     }
   };
 
-  // 打开编辑弹窗（加载相册信息）
-  const openEditModal = async (item: MediaItem) => {
+  // 打开编辑弹窗（直接使用 media 数据）
+  const openEditModal = (item: MediaItem) => {
     setEditingItem(item);
-    setEditLoading(true);
     setEditSaving(false);
-
-    try {
-      const res = await fetch(`/api/admin/gallery/by-media/${item.id}`);
-      if (res.ok) {
-        const data = await res.json();
-        const galleryInfo = data.item as GalleryItemInfo | null;
-        setEditTitle(galleryInfo?.title || item.title || "");
-        setEditDescription(galleryInfo?.description || item.description || "");
-        setEditFeatured(galleryInfo?.featured ?? item.featured ?? false);
-      } else {
-        setEditTitle(item.title || "");
-        setEditDescription(item.description || "");
-        setEditFeatured(item.featured ?? false);
-      }
-    } catch (e) {
-      console.error("加载相册信息失败：", e);
-      setEditTitle(item.title || "");
-      setEditDescription(item.description || "");
-      setEditFeatured(item.featured ?? false);
-    } finally {
-      setEditLoading(false);
-    }
+    setEditTitle(item.title || "");
+    setEditDescription(item.description || "");
+    setEditFeatured(item.featured ?? false);
   };
 
-  // 保存编辑
+  // 保存编辑（直接更新 media 表）
   const saveEdit = async () => {
     if (!editingItem) return;
     setEditSaving(true);
 
     try {
-      const res = await fetch(`/api/admin/gallery/by-media/${editingItem.id}`, {
+      const res = await fetch(`/api/admin/media/${editingItem.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -575,10 +547,7 @@ export function ManageMedia() {
               </button>
             </div>
 
-            {editLoading ? (
-              <div className="py-8 text-center text-sm text-muted-foreground animate-pulse">加载中…</div>
-            ) : (
-              <div className="space-y-4">
+            <div className="space-y-4">
                 {/* 预览图 */}
                 <div className="aspect-video overflow-hidden rounded-lg bg-muted">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -654,7 +623,6 @@ export function ManageMedia() {
                   </button>
                 </div>
               </div>
-            )}
           </div>
         </div>
       )}

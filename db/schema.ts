@@ -158,6 +158,7 @@ export const media = pgTable(
     size: integer("size"), // 文件大小（字节）
     width: integer("width"), // 图片宽度（可空）
     height: integer("height"), // 图片高度（可空）
+    featured: boolean("featured").notNull().default(false), // 相册图片是否精选（ARTICLE 类型无意义）
     uploadedBy: text("uploaded_by"), // 上传者 user_id（Better Auth 用 text 类型 id，可空）
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -165,42 +166,25 @@ export const media = pgTable(
     index("media_type_idx").on(t.type),
     index("media_storage_driver_idx").on(t.storageDriver),
     index("media_created_at_idx").on(t.createdAt),
+    index("media_featured_idx").on(t.featured),
   ],
 );
 
-/* ---------- gallery_items 相册表（SPEC §4.5） ---------- */
+/* ---------- media_tags 关联表（媒体-标签，替代原 gallery_item_tags） ---------- */
 
-export const galleryItems = pgTable(
-  "gallery_items",
+export const mediaTags = pgTable(
+  "media_tags",
   {
-    id: uuid("id").primaryKey().defaultRandom(),
-    mediaId: uuid("media_id").notNull().references(() => media.id, { onDelete: "cascade" }), // 关联媒体库（必须，删除媒体时级联删除相册项）
-    title: text("title"), // 相册项标题（业务上下文，与 media.title 语义不同）
-    description: text("description"), // 相册项描述（业务上下文）
-    featured: boolean("featured").notNull().default(false), // 是否精选
-    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-  },
-  (t) => [
-    index("gallery_items_featured_idx").on(t.featured),
-    index("gallery_items_media_id_idx").on(t.mediaId),
-  ],
-);
-
-/* ---------- gallery_item_tags 关联表（SPEC §4.6） ---------- */
-
-export const galleryItemTags = pgTable(
-  "gallery_item_tags",
-  {
-    galleryItemId: uuid("gallery_item_id")
+    mediaId: uuid("media_id")
       .notNull()
-      .references(() => galleryItems.id, { onDelete: "cascade" }),
+      .references(() => media.id, { onDelete: "cascade" }),
     tagId: uuid("tag_id")
       .notNull()
       .references(() => tags.id, { onDelete: "cascade" }),
   },
   (t) => [
-    primaryKey({ columns: [t.galleryItemId, t.tagId] }),
-    index("gallery_item_tags_tag_id_idx").on(t.tagId),
+    primaryKey({ columns: [t.mediaId, t.tagId] }),
+    index("media_tags_tag_id_idx").on(t.tagId),
   ],
 );
 
@@ -242,7 +226,8 @@ export const backupRecords = pgTable("backup_records", {
 export type Post = typeof posts.$inferSelect;
 export type NewPost = typeof posts.$inferInsert;
 export type Tag = typeof tags.$inferSelect;
-export type GalleryItem = typeof galleryItems.$inferSelect;
+export type Media = typeof media.$inferSelect;
+export type NewMedia = typeof media.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
 export type FriendLink = typeof friendLinks.$inferSelect;
 export type BackupRecord = typeof backupRecords.$inferSelect;
