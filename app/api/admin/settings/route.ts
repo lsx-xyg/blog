@@ -58,27 +58,34 @@ export async function PUT(request: Request) {
 
     const settingsToUpdate: { key: string; value: unknown }[] = [];
 
+    // 辅助函数：只添加非 null 的值
+    const addSetting = (key: string, value: unknown) => {
+      if (value !== undefined && value !== null) {
+        settingsToUpdate.push({ key, value });
+      }
+    };
+
     // 站点设置
     if (site) {
-      if (site.name !== undefined) settingsToUpdate.push({ key: "site.name", value: site.name });
-      if (site.description !== undefined) settingsToUpdate.push({ key: "site.description", value: site.description });
-      if (site.seoDescription !== undefined) settingsToUpdate.push({ key: "site.seo_description", value: site.seoDescription });
-      if (site.logoUrl !== undefined) settingsToUpdate.push({ key: "site.logo_url", value: site.logoUrl });
-      if (site.faviconUrl !== undefined) settingsToUpdate.push({ key: "site.favicon_url", value: site.faviconUrl });
+      addSetting("site.name", site.name);
+      addSetting("site.description", site.description);
+      addSetting("site.seo_description", site.seoDescription);
+      addSetting("site.logo_url", site.logoUrl);
+      addSetting("site.favicon_url", site.faviconUrl);
     }
 
     // 社交链接
     if (social) {
-      if (social.github !== undefined) settingsToUpdate.push({ key: "social.github", value: social.github });
-      if (social.twitter !== undefined) settingsToUpdate.push({ key: "social.twitter", value: social.twitter });
-      if (social.email !== undefined) settingsToUpdate.push({ key: "social.email", value: social.email });
-      if (social.rss !== undefined) settingsToUpdate.push({ key: "social.rss", value: social.rss });
+      addSetting("social.github", social.github);
+      addSetting("social.twitter", social.twitter);
+      addSetting("social.email", social.email);
+      addSetting("social.rss", social.rss);
     }
 
     // 页脚设置
     if (footer) {
-      if (footer.copyright !== undefined) settingsToUpdate.push({ key: "footer.copyright", value: footer.copyright });
-      if (footer.icp !== undefined) settingsToUpdate.push({ key: "footer.icp", value: footer.icp });
+      addSetting("footer.copyright", footer.copyright);
+      addSetting("footer.icp", footer.icp);
     }
 
     // 高级设置（admin_path）

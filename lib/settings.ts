@@ -66,8 +66,8 @@ export type SiteSettings = {
   name: string;
   description: string;
   seoDescription: string;
-  logoUrl: string | null;
-  faviconUrl: string | null;
+  logoUrl: string;
+  faviconUrl: string;
 };
 
 /** 默认站点设置 */
@@ -75,8 +75,8 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   name: "林圣轩blog",
   description: "技术写作与生活记录",
   seoDescription: "林圣轩的个人博客，分享技术写作与生活记录",
-  logoUrl: null,
-  faviconUrl: null,
+  logoUrl: "",
+  faviconUrl: "",
 };
 
 /** 获取站点设置（合并默认值） */
@@ -100,17 +100,17 @@ export async function getSiteSettings(): Promise<SiteSettings> {
 
 /** 社交链接类型 */
 export type SocialLinks = {
-  github: string | null;
-  twitter: string | null;
-  email: string | null;
+  github: string;
+  twitter: string;
+  email: string;
   rss: string;
 };
 
 /** 默认社交链接 */
 const DEFAULT_SOCIAL_LINKS: SocialLinks = {
-  github: null,
-  twitter: null,
-  email: null,
+  github: "",
+  twitter: "",
+  email: "",
   rss: "/rss.xml",
 };
 
@@ -134,7 +134,7 @@ export async function getSocialLinks(): Promise<SocialLinks> {
 /** 页脚设置类型 */
 export type FooterSettings = {
   copyright: string;
-  icp: string | null;
+  icp: string;
 };
 
 /** 获取页脚设置 */
@@ -147,7 +147,7 @@ export async function getFooterSettings(): Promise<FooterSettings> {
   const year = new Date().getFullYear();
   return {
     copyright: copyright ?? `© ${year} 林圣轩blog. All rights reserved.`,
-    icp: icp ?? null,
+    icp: icp ?? "",
   };
 }
 
