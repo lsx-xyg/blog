@@ -68,7 +68,7 @@ export function ManageSettings() {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState<"site" | "social" | "footer" | "about" | "storage" | "giscus" | "advanced">("site");
+  const [activeSection, setActiveSection] = useState<"site" | "social" | "footer" | "about" | "storage" | "giscus" | "cron" | "advanced">("site");
   const [originalAdminPath, setOriginalAdminPath] = useState("");
 
   const [site, setSite] = useState<SiteSettings>({
@@ -107,6 +107,14 @@ export function ManageSettings() {
     categoryId: "",
   });
 
+  const [cron, setCron] = useState({
+    deployPlatform: "VERCEL" as "VERCEL" | "SERVER",
+    cronSecret: "",
+    cronSecretConfigured: false,
+    cronJobApiKey: "",
+    cronJobApiKeyConfigured: false,
+  });
+
   // 加载设置
   const loadSettings = async () => {
     setLoading(true);
@@ -122,6 +130,15 @@ export function ManageSettings() {
         setOriginalAdminPath(data.adminPath ?? ""); // 保存原始路径，用于检测是否变更
         if (data.storage) setStorage(data.storage);
         if (data.giscus) setGiscus(data.giscus);
+        if (data.cron) {
+          setCron({
+            deployPlatform: data.cron.deployPlatform || "VERCEL",
+            cronSecret: "", // 敏感信息不回显
+            cronSecretConfigured: data.cron.cronSecretConfigured || false,
+            cronJobApiKey: "", // 敏感信息不回显
+            cronJobApiKeyConfigured: data.cron.cronJobApiKeyConfigured || false,
+          });
+        }
       }
     } catch (e) {
       console.error("加载设置失败：", e);
@@ -141,7 +158,7 @@ export function ManageSettings() {
       const res = await fetch("/api/admin/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ site, social, footer, aboutContent, adminPath, storage, giscus }),
+        body: JSON.stringify({ site, social, footer, aboutContent, adminPath, storage, giscus, cron }),
       });
       if (res.ok) {
         // 检测 admin_path 是否发生了变化
@@ -176,6 +193,7 @@ export function ManageSettings() {
     { id: "about" as const, label: "关于页面", icon: FileText },
     { id: "storage" as const, label: "存储设置", icon: SettingsIcon },
     { id: "giscus" as const, label: "评论设置", icon: SettingsIcon },
+    { id: "cron" as const, label: "定时任务", icon: SettingsIcon },
     { id: "advanced" as const, label: "高级设置", icon: SettingsIcon },
   ];
 
@@ -668,6 +686,74 @@ export function ManageSettings() {
                       placeholder="DIC_kwDOUVJQps4DFcnk"
                     />
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 定时任务设置 */}
+          {activeSection === "cron" && (
+            <div className="rounded-xl border border-border bg-card p-6 animate-fade-in-up">
+              <h2 className="text-lg font-semibold mb-2">定时任务设置（T12 文章定时发布）</h2>
+              <p className="text-sm text-muted-foreground mb-6">
+                两套实现，通过部署平台切换：
+                <br />
+                - <strong>VERCEL</strong>：使用 cron-job.org 外部定时任务（推荐，Vercel serverless 无持久化进程）
+                <br />
+                - <strong>SERVER</strong>：使用 node-cron 内置定时任务（自有服务器时使用）
+                <br />
+                环境变量优先级更高（设置了对应环境变量则后台配置不生效）。
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className={labelClass}>部署平台</label>
+                  <select
+                    className={`${inputClass} mt-1 w-full`}
+                    value={cron.deployPlatform}
+                    onChange={(e) => setCron({ ...cron, deployPlatform: e.target.value as "VERCEL" | "SERVER" })}
+                  >
+                    <option value="VERCEL">VERCEL（cron-job.org 外部定时任务）</option>
+                    <option value="SERVER">SERVER（node-cron 内置定时任务）</option>
+                  </select>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    注意：应用启动时使用环境变量 DEPLOY_PLATFORM 决定是否启动 node-cron，修改后需重启应用生效。
+                  </p>
+                </div>
+                <div>
+                  <label className={labelClass}>
+                    CRON_SECRET（定时任务接口鉴权密钥）
+                    {cron.cronSecretConfigured && (
+                      <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
+                    )}
+                  </label>
+                  <input
+                    type="password"
+                    value={cron.cronSecret}
+                    onChange={(e) => setCron({ ...cron, cronSecret: e.target.value })}
+                    className={inputClass}
+                    placeholder={cron.cronSecretConfigured ? "留空则保持当前配置，输入新值则覆盖" : "生成方式：openssl rand -hex 32"}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    用于定时任务接口鉴权，AES-256-GCM 加密存储。修改后需重新创建 cron-job.org 定时任务（URL 中编码了 secret）。
+                  </p>
+                </div>
+                <div>
+                  <label className={labelClass}>
+                    CRON_JOB_API_KEY（cron-job.org API Key）
+                    {cron.cronJobApiKeyConfigured && (
+                      <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
+                    )}
+                  </label>
+                  <input
+                    type="password"
+                    value={cron.cronJobApiKey}
+                    onChange={(e) => setCron({ ...cron, cronJobApiKey: e.target.value })}
+                    className={inputClass}
+                    placeholder={cron.cronJobApiKeyConfigured ? "留空则保持当前配置，输入新值则覆盖" : "获取地址：https://cron-job.org/en/members/settings/"}
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    VERCEL 模式下用于调用 cron-job.org API 创建/删除定时任务，AES-256-GCM 加密存储。
+                  </p>
                 </div>
               </div>
             </div>
