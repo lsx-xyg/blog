@@ -319,6 +319,19 @@ export function ManageSettings() {
                       placeholder="https://example.com/favicon.ico"
                     />
                   </div>
+                  <div>
+                    <label className={labelClass}>站点 URL（NEXT_PUBLIC_SITE_URL）</label>
+                    <input
+                      type="text"
+                      value={site.siteUrl ?? ""}
+                      onChange={(e) => setSite({ ...site, siteUrl: e.target.value })}
+                      className={inputClass}
+                      placeholder="https://blog.dbthree.dpdns.org"
+                    />
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      用于定时任务、SEO、RSS 等功能生成完整 URL。环境变量 NEXT_PUBLIC_SITE_URL 优先级更高。
+                    </p>
+                  </div>
                 </div>
               </div>
             </div>

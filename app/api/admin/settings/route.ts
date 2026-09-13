@@ -112,6 +112,7 @@ export async function PUT(request: Request) {
       addSetting("site.seo_description", site.seoDescription);
       addSetting("site.logo_url", site.logoUrl);
       addSetting("site.favicon_url", site.faviconUrl);
+      addSetting("site.site_url", site.siteUrl);
     }
 
     // 社交链接

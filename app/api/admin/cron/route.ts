@@ -5,20 +5,20 @@ import { NextResponse } from "next/server";
 import { requireAdmin, adminDenied } from "@/lib/auth-guard";
 import { findGlobalPublishJob } from "@/lib/cron-job";
 import { getDeployPlatform } from "@/lib/cron-utils";
-import { getCronConfig } from "@/lib/settings";
-import { env } from "@/db/env";
+import { getCronConfig, getSiteSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(req: Request) {
   if (!(await requireAdmin(req))) return adminDenied();
 
-  const [platform, cronConfig] = await Promise.all([
+  const [platform, cronConfig, siteSettings] = await Promise.all([
     getDeployPlatform(),
     getCronConfig(),
+    getSiteSettings(),
   ]);
 
-  const siteUrl = env("NEXT_PUBLIC_SITE_URL") || "http://localhost:3000";
+  const siteUrl = siteSettings.siteUrl || "http://localhost:3000";
 
   let jobStatus: { enabled: boolean; jobId?: number; nextRun?: number } = {
     enabled: false,

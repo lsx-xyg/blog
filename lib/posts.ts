@@ -186,15 +186,17 @@ export async function getAllPostsForSitemap() {
  */
 export async function publishScheduledPosts(): Promise<Array<{ id: string; slug: string | null }>> {
   const now = new Date();
+  const nowIso = now.toISOString();
 
   // 查找所有到期的定时文章
+  // 注意：postgres.js 在 sql 模板中处理 Date 对象可能出错，需要转成 ISO 字符串
   const scheduledPosts = await db
     .select({ id: posts.id, slug: posts.slug })
     .from(posts)
     .where(
       and(
         eq(posts.status, "SCHEDULED"),
-        sql`${posts.scheduledAt} <= ${now}`,
+        sql`${posts.scheduledAt} <= ${nowIso}`,
       ),
     );
 

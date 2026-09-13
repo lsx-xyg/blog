@@ -5,20 +5,20 @@ import { NextResponse } from "next/server";
 import { requireAdmin, adminDenied } from "@/lib/auth-guard";
 import { createGlobalPublishJob, findGlobalPublishJob } from "@/lib/cron-job";
 import { getDeployPlatform } from "@/lib/cron-utils";
-import { getCronConfig } from "@/lib/settings";
-import { env } from "@/db/env";
+import { getCronConfig, getSiteSettings } from "@/lib/settings";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   if (!(await requireAdmin(req))) return adminDenied();
 
-  const [platform, cronConfig] = await Promise.all([
+  const [platform, cronConfig, siteSettings] = await Promise.all([
     getDeployPlatform(),
     getCronConfig(),
+    getSiteSettings(),
   ]);
 
-  const siteUrl = env("NEXT_PUBLIC_SITE_URL");
+  const siteUrl = siteSettings.siteUrl;
 
   if (!cronConfig.cronSecret) {
     return NextResponse.json(
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
   if (platform === "VERCEL") {
     if (!siteUrl) {
       return NextResponse.json(
-        { error: "NEXT_PUBLIC_SITE_URL 未配置，无法创建 cron-job.org 任务" },
+        { error: "站点 URL 未配置，请在「设置 → 站点设置」中配置站点 URL" },
         { status: 400 },
       );
     }

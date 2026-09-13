@@ -73,6 +73,7 @@ export type SiteSettings = {
   seoDescription: string;
   logoUrl: string;
   faviconUrl: string;
+  siteUrl: string;
 };
 
 /** 默认站点设置 */
@@ -82,16 +83,18 @@ const DEFAULT_SITE_SETTINGS: SiteSettings = {
   seoDescription: "林圣轩的个人博客，分享技术写作与生活记录",
   logoUrl: "",
   faviconUrl: "",
+  siteUrl: "",
 };
 
 /** 获取站点设置（合并默认值） */
 export async function getSiteSettings(): Promise<SiteSettings> {
-  const [name, description, seoDescription, logoUrl, faviconUrl] = await Promise.all([
+  const [name, description, seoDescription, logoUrl, faviconUrl, siteUrl] = await Promise.all([
     getSetting<string>("site.name"),
     getSetting<string>("site.description"),
     getSetting<string>("site.seo_description"),
     getSetting<string>("site.logo_url"),
     getSetting<string>("site.favicon_url"),
+    getSetting<string>("site.site_url"),
   ]);
 
   return {
@@ -100,6 +103,8 @@ export async function getSiteSettings(): Promise<SiteSettings> {
     seoDescription: seoDescription ?? DEFAULT_SITE_SETTINGS.seoDescription,
     logoUrl: logoUrl ?? DEFAULT_SITE_SETTINGS.logoUrl,
     faviconUrl: faviconUrl ?? DEFAULT_SITE_SETTINGS.faviconUrl,
+    // 环境变量优先级最高，其次 DB，最后默认值
+    siteUrl: process.env.NEXT_PUBLIC_SITE_URL || siteUrl || DEFAULT_SITE_SETTINGS.siteUrl,
   };
 }
 
