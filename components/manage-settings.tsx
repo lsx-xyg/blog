@@ -66,7 +66,7 @@ export function ManageSettings() {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [activeSection, setActiveSection] = useState<"site" | "social" | "footer" | "about" | "storage" | "advanced">("site");
+  const [activeSection, setActiveSection] = useState<"site" | "social" | "footer" | "about" | "storage" | "giscus" | "advanced">("site");
 
   const [site, setSite] = useState<SiteSettings>({
     name: "",
@@ -97,6 +97,13 @@ export function ManageSettings() {
     local: { uploadDir: "" },
   });
 
+  const [giscus, setGiscus] = useState({
+    repo: "",
+    repoId: "",
+    category: "Announcements",
+    categoryId: "",
+  });
+
   // 加载设置
   const loadSettings = async () => {
     setLoading(true);
@@ -110,6 +117,7 @@ export function ManageSettings() {
         setAboutContent(data.aboutContent);
         setAdminPath(data.adminPath ?? "");
         if (data.storage) setStorage(data.storage);
+        if (data.giscus) setGiscus(data.giscus);
       }
     } catch (e) {
       console.error("加载设置失败：", e);
@@ -129,7 +137,7 @@ export function ManageSettings() {
       const res = await fetch("/api/admin/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ site, social, footer, aboutContent, adminPath, storage }),
+        body: JSON.stringify({ site, social, footer, aboutContent, adminPath, storage, giscus }),
       });
       if (res.ok) {
         showToast("保存成功！", "success");
@@ -150,6 +158,7 @@ export function ManageSettings() {
     { id: "footer" as const, label: "页脚设置", icon: SettingsIcon },
     { id: "about" as const, label: "关于页面", icon: FileText },
     { id: "storage" as const, label: "存储设置", icon: SettingsIcon },
+    { id: "giscus" as const, label: "评论设置", icon: SettingsIcon },
     { id: "advanced" as const, label: "高级设置", icon: SettingsIcon },
   ];
 
@@ -586,6 +595,63 @@ export function ManageSettings() {
                     </p>
                   </div>
                 )}
+              </div>
+            </div>
+          )}
+
+          {/* giscus 评论设置 */}
+          {activeSection === "giscus" && (
+            <div className="rounded-xl border border-border bg-card p-6 animate-fade-in-up">
+              <h2 className="text-lg font-semibold mb-2">评论设置（giscus）</h2>
+              <p className="text-sm text-muted-foreground mb-6">
+                基于 GitHub Discussions 的评论系统。仓库必须公开且已开启 Discussions。
+                配置获取：<a href="https://giscus.app" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">giscus.app</a>
+                <br />
+                环境变量优先级更高（设置了 NEXT_PUBLIC_GISCUS_* 则后台配置不生效）。
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className={labelClass}>仓库（owner/repo）</label>
+                  <input
+                    type="text"
+                    value={giscus.repo}
+                    onChange={(e) => setGiscus({ ...giscus, repo: e.target.value })}
+                    className={inputClass}
+                    placeholder="lsx-xyg/blog"
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>仓库 ID（repoId）</label>
+                  <input
+                    type="text"
+                    value={giscus.repoId}
+                    onChange={(e) => setGiscus({ ...giscus, repoId: e.target.value })}
+                    className={inputClass}
+                    placeholder="R_kgDOUVJQpg"
+                  />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>讨论分类（category）</label>
+                    <input
+                      type="text"
+                      value={giscus.category}
+                      onChange={(e) => setGiscus({ ...giscus, category: e.target.value })}
+                      className={inputClass}
+                      placeholder="Announcements"
+                    />
+                  </div>
+                  <div>
+                    <label className={labelClass}>分类 ID（categoryId）</label>
+                    <input
+                      type="text"
+                      value={giscus.categoryId}
+                      onChange={(e) => setGiscus({ ...giscus, categoryId: e.target.value })}
+                      className={inputClass}
+                      placeholder="DIC_kwDOUVJQps4DFcnk"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}

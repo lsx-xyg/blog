@@ -11,6 +11,7 @@ import {
   setAboutContent,
   getSetting,
   deleteSetting,
+  getGiscusConfig,
 } from "@/lib/settings";
 import { getStorageConfig } from "@/lib/storage";
 import { encryptIfAvailable } from "@/lib/crypto";
@@ -28,13 +29,14 @@ export async function GET() {
   }
 
   try {
-    const [site, social, footer, aboutContent, adminPath, storage] = await Promise.all([
+    const [site, social, footer, aboutContent, adminPath, storage, giscus] = await Promise.all([
       getSiteSettings(),
       getSocialLinks(),
       getFooterSettings(),
       getAboutContent(),
       getSetting<string>("admin.path"),
       getStorageConfig(),
+      getGiscusConfig(),
     ]);
 
     // 敏感信息不返回明文，只返回是否已配置（布尔值）
@@ -66,6 +68,7 @@ export async function GET() {
       aboutContent,
       adminPath: adminPath ?? "",
       storage: storageForClient,
+      giscus,
     });
   } catch (error) {
     console.error("获取设置失败：", error);
@@ -176,6 +179,15 @@ export async function PUT(request: Request) {
       if (local) {
         addSetting("storage.local.upload_dir", local.uploadDir);
       }
+    }
+
+    // giscus 评论配置（非敏感信息，直接存）
+    if (body.giscus) {
+      const { repo, repoId, category, categoryId } = body.giscus;
+      if (repo !== undefined) addSetting("giscus.repo", repo);
+      if (repoId !== undefined) addSetting("giscus.repo_id", repoId);
+      if (category !== undefined) addSetting("giscus.category", category);
+      if (categoryId !== undefined) addSetting("giscus.category_id", categoryId);
     }
 
     // 批量更新设置

@@ -9,7 +9,7 @@ import Giscus from "@giscus/react";
  * 基于 GitHub Discussions，零后端，与后台登录完全隔离
  * （iframe 内独立 OAuth App，互不影响）
  *
- * 配置通过环境变量注入：
+ * 配置优先级：环境变量 > props（从 DB settings 读取）> 默认值
  * - NEXT_PUBLIC_GISCUS_REPO: 仓库名（格式：owner/repo）
  * - NEXT_PUBLIC_GISCUS_REPO_ID: 仓库 ID（从 giscus.app 获取）
  * - NEXT_PUBLIC_GISCUS_CATEGORY: 讨论分类（默认 Announcements）
@@ -20,7 +20,17 @@ import Giscus from "@giscus/react";
  * 2. 仓库已开启 Discussions
  * 3. 已安装 giscus GitHub App
  */
-export function Comments() {
+type CommentsProps = {
+  /** giscus 配置（从 DB settings 读取，环境变量优先级更高） */
+  config?: {
+    repo?: string;
+    repoId?: string;
+    category?: string;
+    categoryId?: string;
+  };
+};
+
+export function Comments({ config }: CommentsProps) {
   const [theme, setTheme] = useState<string>("light");
 
   // 从 localStorage 读取当前主题（与 lib/theme.ts 的存储 key 一致）
@@ -49,16 +59,17 @@ export function Comments() {
     };
   }, []);
 
-  const repo = process.env.NEXT_PUBLIC_GISCUS_REPO;
-  const repoId = process.env.NEXT_PUBLIC_GISCUS_REPO_ID;
-  const category = process.env.NEXT_PUBLIC_GISCUS_CATEGORY || "Announcements";
-  const categoryId = process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID;
+  // 配置优先级：环境变量 > props > 默认值
+  const repo = process.env.NEXT_PUBLIC_GISCUS_REPO || config?.repo || "";
+  const repoId = process.env.NEXT_PUBLIC_GISCUS_REPO_ID || config?.repoId || "";
+  const category = process.env.NEXT_PUBLIC_GISCUS_CATEGORY || config?.category || "Announcements";
+  const categoryId = process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID || config?.categoryId || "";
 
   // 未配置 giscus 时不渲染
   if (!repo || !repoId || !categoryId) {
     return (
       <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
-        评论系统未配置，请在环境变量中设置 giscus 相关参数。
+        评论系统未配置，请在后台「评论设置」或环境变量中设置 giscus 相关参数。
       </div>
     );
   }

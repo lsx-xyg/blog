@@ -166,3 +166,42 @@ export async function getAboutContent(): Promise<string> {
 export async function setAboutContent(content: string): Promise<void> {
   await setSetting("about.content", content);
 }
+
+/** giscus 评论配置类型 */
+export type GiscusConfig = {
+  repo: string;
+  repoId: string;
+  category: string;
+  categoryId: string;
+};
+
+/**
+ * 获取 giscus 评论配置（环境变量优先级最高，DB 次之，默认值兜底）
+ *
+ * 环境变量：
+ * - NEXT_PUBLIC_GISCUS_REPO
+ * - NEXT_PUBLIC_GISCUS_REPO_ID
+ * - NEXT_PUBLIC_GISCUS_CATEGORY
+ * - NEXT_PUBLIC_GISCUS_CATEGORY_ID
+ *
+ * DB settings：
+ * - giscus.repo
+ * - giscus.repo_id
+ * - giscus.category
+ * - giscus.category_id
+ */
+export async function getGiscusConfig(): Promise<GiscusConfig> {
+  const [repo, repoId, category, categoryId] = await Promise.all([
+    getSetting<string>("giscus.repo"),
+    getSetting<string>("giscus.repo_id"),
+    getSetting<string>("giscus.category"),
+    getSetting<string>("giscus.category_id"),
+  ]);
+
+  return {
+    repo: process.env.NEXT_PUBLIC_GISCUS_REPO || repo || "",
+    repoId: process.env.NEXT_PUBLIC_GISCUS_REPO_ID || repoId || "",
+    category: process.env.NEXT_PUBLIC_GISCUS_CATEGORY || category || "Announcements",
+    categoryId: process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID || categoryId || "",
+  };
+}
