@@ -29,6 +29,13 @@
       "when": 1789256240052,
       "tag": "0003_black_rage",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1789280000000,
+      "tag": "0004_courageous_spectrum",
+      "breakpoints": true
     }
   ]
 }
