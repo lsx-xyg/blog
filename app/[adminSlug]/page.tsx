@@ -50,10 +50,17 @@ export default async function AdminRootPage({
           <p className="text-base font-semibold">媒体库</p>
           <p className="mt-1 text-sm text-fg-muted">统一管理文章/相册图片 / 清理未使用</p>
         </Link>
+        <Link
+          href={`/${adminPath}/tags`}
+          className="rounded-xl border border-border bg-surface p-6 transition hover:border-fg-faint"
+        >
+          <p className="text-base font-semibold">标签管理</p>
+          <p className="mt-1 text-sm text-fg-muted">查看 / 搜索 / 删除标签 / 查看引用统计</p>
+        </Link>
         <div className="rounded-xl border border-dashed border-border p-6 opacity-60">
           <p className="text-base font-semibold">更多管理（T10）</p>
           <p className="mt-1 text-sm text-fg-muted">
-            标签 / 友链 / 设置 / 备份
+            友链 / 设置 / 备份
           </p>
         </div>
       </nav>

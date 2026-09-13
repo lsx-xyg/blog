@@ -1,9 +1,9 @@
 /**
  * 标签数据访问层（全局标签表，文章 + 相册共用）
  */
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql, desc } from "drizzle-orm";
 import { db } from "@/db";
-import { tags } from "@/db/schema";
+import { tags, postTags, mediaTags } from "@/db/schema";
 
 /** 按名称查找标签 */
 export async function getTagByName(name: string) {
@@ -77,7 +77,43 @@ export async function getTagsByIds(ids: string[]) {
   return db.select().from(tags).where(inArray(tags.id, ids));
 }
 
+/** 按 ID 查找单个标签 */
+export async function getTagById(id: string) {
+  const rows = await db
+    .select()
+    .from(tags)
+    .where(eq(tags.id, id))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 /** 删除标签（关联的文章/相册标签由外键 CASCADE 清理） */
 export async function deleteTag(id: string) {
   await db.delete(tags).where(eq(tags.id, id));
+}
+
+/** 标签列表（含关联的文章数和图片数，按总使用数倒序） */
+export async function listTagsWithCount() {
+  const rows = await db
+    .select({
+      id: tags.id,
+      name: tags.name,
+      slug: tags.slug,
+      createdAt: tags.createdAt,
+      postCount: sql<number>`coalesce((
+        SELECT COUNT(*) FROM ${postTags} WHERE ${postTags.tagId} = ${tags.id}
+      ), 0)`,
+      mediaCount: sql<number>`coalesce((
+        SELECT COUNT(*) FROM ${mediaTags} WHERE ${mediaTags.tagId} = ${tags.id}
+      ), 0)`,
+    })
+    .from(tags)
+    .orderBy(desc(sql`postCount + mediaCount`), tags.name);
+
+  return rows.map((row) => ({
+    ...row,
+    postCount: Number(row.postCount),
+    mediaCount: Number(row.mediaCount),
+    totalCount: Number(row.postCount) + Number(row.mediaCount),
+  }));
 }
