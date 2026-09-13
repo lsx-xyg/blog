@@ -94,21 +94,24 @@ export async function deleteTag(id: string) {
 
 /** 标签列表（含关联的文章数和图片数，按总使用数倒序） */
 export async function listTagsWithCount() {
+  const postCountExpr = sql<number>`coalesce((
+    SELECT COUNT(*) FROM ${postTags} WHERE ${postTags.tagId} = ${tags.id}
+  ), 0)`;
+  const mediaCountExpr = sql<number>`coalesce((
+    SELECT COUNT(*) FROM ${mediaTags} WHERE ${mediaTags.tagId} = ${tags.id}
+  ), 0)`;
+
   const rows = await db
     .select({
       id: tags.id,
       name: tags.name,
       slug: tags.slug,
       createdAt: tags.createdAt,
-      postCount: sql<number>`coalesce((
-        SELECT COUNT(*) FROM ${postTags} WHERE ${postTags.tagId} = ${tags.id}
-      ), 0)`,
-      mediaCount: sql<number>`coalesce((
-        SELECT COUNT(*) FROM ${mediaTags} WHERE ${mediaTags.tagId} = ${tags.id}
-      ), 0)`,
+      postCount: postCountExpr,
+      mediaCount: mediaCountExpr,
     })
     .from(tags)
-    .orderBy(desc(sql`postCount + mediaCount`), tags.name);
+    .orderBy(desc(sql`${postCountExpr} + ${mediaCountExpr}`), tags.name);
 
   return rows.map((row) => ({
     ...row,
