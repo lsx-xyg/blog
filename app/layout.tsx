@@ -5,66 +5,74 @@ import { THEME_INIT_SCRIPT } from "@/lib/theme";
 import { SiteHeader } from "@/components/site-header";
 import { MobileNav } from "@/components/mobile-nav";
 import { Footer } from "@/components/footer";
+import { getSiteSettings, getFooterSettings } from "@/lib/settings";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-const siteName = process.env.NEXT_PUBLIC_SITE_NAME || "林圣轩blog";
-const siteDescription =
-  process.env.NEXT_PUBLIC_SITE_DESCRIPTION || "技术写作与生活记录";
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: {
-    default: siteName,
-    template: `%s | ${siteName}`,
-  },
-  description: siteDescription,
-  keywords: [
-    "博客",
-    "技术博客",
-    "Next.js",
-    "React",
-    "TypeScript",
-    "全栈开发",
-    "林圣轩",
-  ],
-  authors: [{ name: "林圣轩" }],
-  creator: "林圣轩",
-  openGraph: {
-    type: "website",
-    locale: "zh_CN",
-    url: siteUrl,
-    siteName,
-    title: siteName,
-    description: siteDescription,
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: siteName,
-    description: siteDescription,
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+/** 动态生成 metadata（从 settings 表读取站名和描述） */
+export async function generateMetadata(): Promise<Metadata> {
+  const site = await getSiteSettings();
+
+  return {
+    metadataBase: new URL(siteUrl),
+    title: {
+      default: site.name,
+      template: `%s | ${site.name}`,
+    },
+    description: site.seoDescription || site.description,
+    keywords: [
+      "博客",
+      "技术博客",
+      "Next.js",
+      "React",
+      "TypeScript",
+      "全栈开发",
+      "林圣轩",
+    ],
+    authors: [{ name: "林圣轩" }],
+    creator: "林圣轩",
+    openGraph: {
+      type: "website",
+      locale: "zh_CN",
+      url: siteUrl,
+      siteName: site.name,
+      title: site.name,
+      description: site.seoDescription || site.description,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: site.name,
+      description: site.seoDescription || site.description,
+    },
+    robots: {
       index: true,
       follow: true,
-      "max-image-preview": "large",
-      "max-snippet": -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
     },
-  },
-  alternates: {
-    canonical: siteUrl,
-    types: {
-      "application/rss+xml": `${siteUrl}/rss.xml`,
+    alternates: {
+      canonical: siteUrl,
+      types: {
+        "application/rss+xml": `${siteUrl}/rss.xml`,
+      },
     },
-  },
-};
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const [site, footer] = await Promise.all([
+    getSiteSettings(),
+    getFooterSettings(),
+  ]);
+
   return (
     <html lang="zh-CN" suppressHydrationWarning>
       {/* 首屏防 FOUC：渲染前同步应用主题（localStorage + prefers-color-scheme） */}
@@ -78,9 +86,17 @@ export default function RootLayout({
       </head>
       {/* suppressHydrationWarning：忽略浏览器扩展注入属性（如 data-atm-ext-installed）导致的水合差异 */}
       <body suppressHydrationWarning className="min-h-screen flex flex-col">
-        <SiteHeader adminPath={getAdminPath()} />
+        <SiteHeader
+          adminPath={getAdminPath()}
+          siteName={site.name}
+          siteDescription={site.description}
+        />
         <main className="flex-1">{children}</main>
-        <Footer />
+        <Footer
+          siteName={site.name}
+          copyright={footer.copyright}
+          icp={footer.icp}
+        />
         <MobileNav />
       </body>
     </html>

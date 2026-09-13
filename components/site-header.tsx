@@ -45,7 +45,15 @@ function NavLink({ href, label }: { href: string; label: string }) {
  * - 桌面端：sticky header + logo（圆形头像+站名+副标题）+ nav 下划线动画 + 搜索/主题图标
  * - 移动端：仅 logo + 搜索/主题图标，底部固定导航由 MobileNav 组件负责
  */
-export function SiteHeader({ adminPath }: { adminPath: string }) {
+export function SiteHeader({
+  adminPath,
+  siteName,
+  siteDescription,
+}: {
+  adminPath: string;
+  siteName: string;
+  siteDescription: string;
+}) {
   const { data: session } = authClient.useSession();
   const [hidden, setHidden] = useState(false);
   const lastScrollY = useRef(0);
@@ -80,8 +88,8 @@ export function SiteHeader({ adminPath }: { adminPath: string }) {
             </span>
           </span>
           <div className="hidden sm:block">
-            <span className="block text-xl font-bold">林圣轩blog</span>
-            <p className="text-sm text-muted-foreground">技术写作与生活记录</p>
+            <span className="block text-xl font-bold">{siteName}</span>
+            <p className="text-sm text-muted-foreground">{siteDescription}</p>
           </div>
         </Link>
 

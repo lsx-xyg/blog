@@ -5,20 +5,35 @@ import Link from "next/link";
  * - 站名 + 副标题
  * - 版权信息 + 技术栈
  */
-export function Footer() {
-  const year = new Date().getFullYear();
+export function Footer({
+  siteName,
+  copyright,
+  icp,
+}: {
+  siteName: string;
+  copyright: string;
+  icp: string | null;
+}) {
   return (
     <footer className="bg-muted/30 mt-8 md:mt-14 py-12 pb-28 md:pb-12">
       <div className="container mx-auto px-4 text-center">
         <div className="mb-6">
-          <h3 className="text-lg font-semibold mb-2">林圣轩blog</h3>
-          <p className="text-muted-foreground">技术写作与生活记录</p>
+          <h3 className="text-lg font-semibold mb-2">{siteName}</h3>
         </div>
         <div className="text-sm text-muted-foreground">
-          <p>
-            © {year} Built by 林圣轩 using Next.js &amp; shadcn/ui &amp;
-            tailwind
-          </p>
+          <p>{copyright}</p>
+          {icp && (
+            <p className="mt-1">
+              <a
+                href="https://beian.miit.gov.cn/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-foreground transition-colors"
+              >
+                {icp}
+              </a>
+            </p>
+          )}
           <div className="flex gap-2 justify-center mt-3">
             <Link
               href="/rss.xml"
