@@ -96,12 +96,19 @@ export default async function AdminRootPage({
           className="rounded-xl border border-border bg-surface p-6 transition hover:border-fg-faint"
         >
           <p className="text-base font-semibold">站点设置</p>
-          <p className="mt-1 text-sm text-fg-muted">站名 / 简介 / 社交链接 / 页脚 / 关于页面 / 存储驱动</p>
+          <p className="mt-1 text-sm text-fg-muted">站名 / 简介 / SEO / 社交链接 / 页脚 / 关于页面 / 存储驱动 / 评论设置 / 定时任务配置 / 后台路径</p>
+        </Link>
+        <Link
+          href={`/${adminPath}/cron`}
+          className="rounded-xl border border-border bg-surface p-6 transition hover:border-fg-faint"
+        >
+          <p className="text-base font-semibold">定时任务</p>
+          <p className="mt-1 text-sm text-fg-muted">启动 / 停止 / 手动触发 / 查看状态（文章定时发布）</p>
         </Link>
         <div className="rounded-xl border border-dashed border-border p-6 opacity-60">
           <p className="text-base font-semibold">更多管理</p>
           <p className="mt-1 text-sm text-fg-muted">
-            定时任务 / 数据备份
+            数据备份（T13 待实现）
           </p>
         </div>
       </nav>
