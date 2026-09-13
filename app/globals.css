@@ -4,6 +4,30 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* ===== 主题切换平滑过渡动画 ===== */
+html {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+body {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* 主要元素颜色过渡 */
+header, footer, main, article, section, div, p, span, h1, h2, h3, h4, h5, h6,
+a, button, input, textarea, select, label, li, ul, ol, table, tr, td, th,
+nav, aside, figure, figcaption, blockquote, pre, code, hr, img, video {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: 0.3s;
+  transition-timing-function: ease;
+}
+
+/* 排除不需要过渡的元素（避免动画冲突） */
+.toast-enter, .toast-exit, [data-no-transition], .animate-spin, .animate-pulse,
+.animate-bounce, .animate-ping, .bytemd * {
+  transition: none !important;
+}
+
 /* ===== shadcn 设计 token（参考站 czhlove.cn 原味，裸 HSL 三元组 + hsl() 运行时计算） ===== */
 :root {
   --background: 0 0% 100%;

@@ -142,7 +142,7 @@ export function ManagePosts() {
   };
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10">
+    <main className="mx-auto max-w-4xl px-6 py-10 animate-page-enter">
       <header className="mb-8">
         <p className="font-mono text-sm text-fg-muted">
           manage · 开发期入口（T8 认证后收紧）

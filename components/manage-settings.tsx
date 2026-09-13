@@ -5,25 +5,26 @@ import { Save, RefreshCw, Globe, Link2, FileText, Settings as SettingsIcon } fro
 import { Editor } from "@bytemd/react";
 import gfm from "@bytemd/plugin-gfm";
 import "bytemd/dist/index.css";
+import { useToast } from "@/components/toast";
 
 type SiteSettings = {
   name: string;
   description: string;
   seoDescription: string;
-  logoUrl: string | null;
-  faviconUrl: string | null;
+  logoUrl: string;
+  faviconUrl: string;
 };
 
 type SocialLinks = {
-  github: string | null;
-  twitter: string | null;
-  email: string | null;
+  github: string;
+  twitter: string;
+  email: string;
   rss: string;
 };
 
 type FooterSettings = {
   copyright: string;
-  icp: string | null;
+  icp: string;
 };
 
 const plugins = [gfm()];
@@ -38,6 +39,7 @@ const plugins = [gfm()];
  * 4. 关于页面内容（Markdown 编辑器）
  */
 export function ManageSettings() {
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState<"site" | "social" | "footer" | "about" | "advanced">("site");
@@ -99,13 +101,13 @@ export function ManageSettings() {
         body: JSON.stringify({ site, social, footer, aboutContent, adminPath }),
       });
       if (res.ok) {
-        alert("保存成功！");
+        showToast("保存成功！", "success");
       } else {
-        alert("保存失败，请重试");
+        showToast("保存失败，请重试", "error");
       }
     } catch (e) {
       console.error("保存设置失败：", e);
-      alert("保存失败，请重试");
+      showToast("保存失败，请重试", "error");
     } finally {
       setSaving(false);
     }
@@ -132,7 +134,7 @@ export function ManageSettings() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 animate-page-enter">
       {/* 标题和操作 */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>

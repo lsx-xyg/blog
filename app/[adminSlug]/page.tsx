@@ -25,7 +25,7 @@ export default async function AdminRootPage({
   if (!isAdminUser(session.user)) notFound();
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
+    <main className="mx-auto max-w-3xl px-6 py-12 animate-page-enter">
       <header className="mb-8 flex items-center justify-between">
         <div>
           <p className="font-mono text-sm text-fg-muted">后台</p>

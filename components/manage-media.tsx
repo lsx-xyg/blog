@@ -284,7 +284,7 @@ export function ManageMedia() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 animate-page-enter">
       {/* 标题和操作 */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">媒体库</h1>
