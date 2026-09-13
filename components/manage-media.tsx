@@ -15,6 +15,7 @@ import {
   ZoomIn,
 } from "lucide-react";
 import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
+import { Switch } from "@/components/ui/switch";
 
 type MediaItem = {
   id: string;
@@ -588,19 +589,10 @@ export function ManageMedia() {
                     <Star className={`h-4 w-4 ${editFeatured ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"}`} />
                     <span className="text-sm font-medium">设为精选</span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setEditFeatured(!editFeatured)}
-                    className={`relative h-6 w-12 flex-shrink-0 rounded-full transition-colors ${
-                      editFeatured ? "bg-primary" : "bg-muted"
-                    }`}
-                  >
-                    <span
-                      className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ${
-                        editFeatured ? "translate-x-6" : "translate-x-0.5"
-                      }`}
-                    />
-                  </button>
+                  <Switch
+                    checked={editFeatured}
+                    onCheckedChange={(checked) => setEditFeatured(checked)}
+                  />
                 </div>
 
                 {/* 保存按钮 */}

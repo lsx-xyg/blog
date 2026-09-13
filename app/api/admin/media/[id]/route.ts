@@ -29,7 +29,7 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    const { type, title, description } = body;
+    const { type, title, description, featured } = body;
 
     const updateData: Record<string, unknown> = {};
     if (type) {
@@ -40,6 +40,7 @@ export async function PUT(
     }
     if (title !== undefined) updateData.title = title;
     if (description !== undefined) updateData.description = description;
+    if (featured !== undefined) updateData.featured = Boolean(featured);
 
     const item = await updateMedia(id, updateData);
     return NextResponse.json({ item });
