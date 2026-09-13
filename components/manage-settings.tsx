@@ -34,11 +34,17 @@ type StorageSettings = {
     repo: string;
     branch: string;
     cdnBase: string;
+    token: string; // 用户输入的明文（保存时用）
+    tokenConfigured?: boolean; // 是否已配置（加载时显示用，不返回明文）
   };
   s3: {
     endpoint: string;
     bucket: string;
     region: string;
+    accessKey: string; // 用户输入的明文（保存时用）
+    secretKey: string; // 用户输入的明文（保存时用）
+    accessKeyConfigured?: boolean; // 是否已配置
+    secretKeyConfigured?: boolean; // 是否已配置
   };
   local: {
     uploadDir: string;
@@ -86,8 +92,8 @@ export function ManageSettings() {
   const [adminPath, setAdminPath] = useState("");
   const [storage, setStorage] = useState<StorageSettings>({
     driver: "LOCAL",
-    github: { owner: "", repo: "", branch: "", cdnBase: "" },
-    s3: { endpoint: "", bucket: "", region: "" },
+    github: { owner: "", repo: "", branch: "", cdnBase: "", token: "", tokenConfigured: false },
+    s3: { endpoint: "", bucket: "", region: "", accessKey: "", secretKey: "", accessKeyConfigured: false, secretKeyConfigured: false },
     local: { uploadDir: "" },
   });
 
@@ -448,6 +454,37 @@ export function ManageSettings() {
                           placeholder="https://cdn.jsdelivr.net/gh"
                         />
                       </div>
+                      <div className="md:col-span-2">
+                        <label className={labelClass}>
+                          GitHub Token（Personal Access Token）
+                          {storage.github.tokenConfigured && (
+                            <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
+                          )}
+                        </label>
+                        <div className="relative">
+                          <input
+                            type="password"
+                            value={storage.github.token}
+                            onChange={(e) => setStorage({ ...storage, github: { ...storage.github, token: e.target.value } })}
+                            className={`${inputClass} pr-12`}
+                            placeholder={storage.github.tokenConfigured ? "留空则保持当前配置，输入新值则覆盖" : "ghp_xxxxxxxxxxxxxxxxxxxx"}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const input = document.querySelector<HTMLInputElement>('input[placeholder*="ghp_"]');
+                              if (input) input.type = input.type === "password" ? "text" : "password";
+                            }}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                            tabIndex={-1}
+                          >
+                            👁
+                          </button>
+                        </div>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          需要 repo 权限。加密存储在数据库中，环境变量 GITHUB_STORAGE_TOKEN 优先级更高。
+                        </p>
+                      </div>
                     </div>
                     <p className="text-xs text-muted-foreground">
                       访问 URL 格式：{storage.github.cdnBase || "https://cdn.jsdelivr.net/gh"}/{storage.github.owner || "owner"}/{storage.github.repo || "repo"}@{storage.github.branch || "main"}/{'{path}'}
@@ -490,7 +527,40 @@ export function ManageSettings() {
                           placeholder="auto / us-east-1"
                         />
                       </div>
+                      <div>
+                        <label className={labelClass}>
+                          Access Key ID
+                          {storage.s3.accessKeyConfigured && (
+                            <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
+                          )}
+                        </label>
+                        <input
+                          type="password"
+                          value={storage.s3.accessKey}
+                          onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, accessKey: e.target.value } })}
+                          className={inputClass}
+                          placeholder={storage.s3.accessKeyConfigured ? "留空则保持当前配置" : "AKIAxxxxxxxxxxxxxxxx"}
+                        />
+                      </div>
+                      <div>
+                        <label className={labelClass}>
+                          Secret Access Key
+                          {storage.s3.secretKeyConfigured && (
+                            <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
+                          )}
+                        </label>
+                        <input
+                          type="password"
+                          value={storage.s3.secretKey}
+                          onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, secretKey: e.target.value } })}
+                          className={inputClass}
+                          placeholder={storage.s3.secretKeyConfigured ? "留空则保持当前配置" : "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
+                        />
+                      </div>
                     </div>
+                    <p className="text-xs text-muted-foreground">
+                      敏感信息加密存储在数据库中，环境变量 S3_ACCESS_KEY / S3_SECRET_KEY 优先级更高。
+                    </p>
                   </div>
                 )}
 

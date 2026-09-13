@@ -1,7 +1,6 @@
 import type { StorageDriver, UploadResult } from "./types";
 import { generateKey } from "./utils";
 import type { StorageConfig } from "./config";
-import { getStorageSecrets } from "./config";
 
 /** GitHub 图床存储驱动（生产环境用）
  *
@@ -10,8 +9,9 @@ import { getStorageSecrets } from "./config";
  * - 分支：storage.github.branch
  * - 访问 URL：https://cdn.jsdelivr.net/gh/{owner}/{repo}@{branch}/{path}
  *
- * 敏感信息（Token）只从环境变量读取：
- * - GITHUB_STORAGE_TOKEN
+ * 敏感信息（Token）加密存储在 DB 中，环境变量优先级最高：
+ * - GITHUB_STORAGE_TOKEN（环境变量）
+ * - storage.github.token（DB 加密存储）
  *
  * 优点：免费、jsDelivr CDN 全球加速、公开仓库可直接访问
  * 缺点：单文件最大 100MB（GitHub 限制）、API 调用有速率限制
@@ -27,11 +27,12 @@ export class GithubStorageDriver implements StorageDriver {
       repo: process.env.GITHUB_STORAGE_REPO || "images",
       branch: process.env.GITHUB_STORAGE_BRANCH || "main",
       cdnBase: process.env.GITHUB_STORAGE_CDN_BASE || "https://cdn.jsdelivr.net/gh",
+      token: process.env.GITHUB_STORAGE_TOKEN || "",
     };
   }
 
   private get token(): string {
-    return getStorageSecrets().githubToken;
+    return this.config.token;
   }
 
   private get owner(): string {

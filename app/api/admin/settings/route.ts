@@ -13,6 +13,7 @@ import {
   deleteSetting,
 } from "@/lib/settings";
 import { getStorageConfig } from "@/lib/storage";
+import { encryptIfAvailable } from "@/lib/crypto";
 
 /**
  * 站点设置 API
@@ -36,13 +37,35 @@ export async function GET() {
       getStorageConfig(),
     ]);
 
+    // 敏感信息不返回明文，只返回是否已配置（布尔值）
+    const storageForClient = {
+      driver: storage.driver,
+      github: {
+        owner: storage.github.owner,
+        repo: storage.github.repo,
+        branch: storage.github.branch,
+        cdnBase: storage.github.cdnBase,
+        tokenConfigured: !!storage.github.token,
+      },
+      s3: {
+        endpoint: storage.s3.endpoint,
+        bucket: storage.s3.bucket,
+        region: storage.s3.region,
+        accessKeyConfigured: !!storage.s3.accessKey,
+        secretKeyConfigured: !!storage.s3.secretKey,
+      },
+      local: {
+        uploadDir: storage.local.uploadDir,
+      },
+    };
+
     return NextResponse.json({
       site,
       social,
       footer,
       aboutContent,
       adminPath: adminPath ?? "",
-      storage,
+      storage: storageForClient,
     });
   } catch (error) {
     console.error("获取设置失败：", error);
@@ -103,7 +126,10 @@ export async function PUT(request: Request) {
       }
     }
 
-    // 存储设置（非敏感配置，敏感信息如 Token/Secret 只从环境变量读取）
+    // 存储设置（非敏感配置直接存，敏感信息加密后存储）
+    // 需要删除的设置（敏感信息放空时删除，回退到环境变量）
+    const settingsToDelete: string[] = [];
+
     if (body.storage) {
       const { driver, github, s3, local } = body.storage;
       if (driver && ["LOCAL", "GITHUB", "S3"].includes(driver.toUpperCase())) {
@@ -114,11 +140,38 @@ export async function PUT(request: Request) {
         addSetting("storage.github.repo", github.repo);
         addSetting("storage.github.branch", github.branch);
         addSetting("storage.github.cdn_base", github.cdnBase);
+        // 敏感信息：Token 加密后存储，放空时删除记录
+        if (github.token !== undefined) {
+          if (github.token === "") {
+            settingsToDelete.push("storage.github.token");
+          } else {
+            const encrypted = encryptIfAvailable(github.token);
+            if (encrypted) addSetting("storage.github.token", encrypted);
+          }
+        }
       }
       if (s3) {
         addSetting("storage.s3.endpoint", s3.endpoint);
         addSetting("storage.s3.bucket", s3.bucket);
         addSetting("storage.s3.region", s3.region);
+        // 敏感信息：Access Key 加密后存储，放空时删除记录
+        if (s3.accessKey !== undefined) {
+          if (s3.accessKey === "") {
+            settingsToDelete.push("storage.s3.access_key");
+          } else {
+            const encrypted = encryptIfAvailable(s3.accessKey);
+            if (encrypted) addSetting("storage.s3.access_key", encrypted);
+          }
+        }
+        // 敏感信息：Secret Key 加密后存储，放空时删除记录
+        if (s3.secretKey !== undefined) {
+          if (s3.secretKey === "") {
+            settingsToDelete.push("storage.s3.secret_key");
+          } else {
+            const encrypted = encryptIfAvailable(s3.secretKey);
+            if (encrypted) addSetting("storage.s3.secret_key", encrypted);
+          }
+        }
       }
       if (local) {
         addSetting("storage.local.upload_dir", local.uploadDir);
@@ -130,9 +183,12 @@ export async function PUT(request: Request) {
       await setSettingsBatch(settingsToUpdate);
     }
 
-    // 删除需要清空的设置（adminPath 放空时删除，回退到环境变量/兜底）
+    // 删除需要清空的设置
     if (shouldDeleteAdminPath) {
       await deleteSetting("admin.path");
+    }
+    for (const key of settingsToDelete) {
+      await deleteSetting(key);
     }
 
     // 关于内容

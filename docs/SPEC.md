@@ -303,6 +303,9 @@ GITHUB_STORAGE_OWNER
 GITHUB_STORAGE_REPO
 GITHUB_STORAGE_BRANCH
 GITHUB_STORAGE_CDN_BASE   # jsDelivr
+# 加密（敏感信息加密存储在数据库中，AES-256-GCM）
+# 生成方式：node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+ENCRYPTION_KEY            # 32字节Base64，用于加密存储GitHub Token/S3 Key等敏感信息
 # 定时
 CRON_SECRET
 DEPLOY_PLATFORM=VERCEL|SERVER
