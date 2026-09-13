@@ -1,12 +1,17 @@
-/** 后台根路径：路由不匹配一律 404 伪装；未登录 → 登录页；非管理员 → 404 */
+/** 后台根路径：路由不匹配一律 404 伪装；用户表为空 → 引导页；未登录 → 登录页；非管理员 → 404 */
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import Link from "next/link";
+import { sql } from "drizzle-orm";
+import { db } from "@/db";
+import { users } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { getAdminPath } from "@/lib/admin-path";
 import { isAdminUser } from "@/lib/utils";
+import { env } from "@/db/env";
 import { AdminLogin } from "@/components/admin-login";
 import { SignOutButton } from "@/components/sign-out-button";
+import { SetupWizard } from "@/components/setup-wizard";
 
 export const dynamic = "force-dynamic";
 
@@ -19,6 +24,28 @@ export default async function AdminRootPage({
   const adminPath = getAdminPath();
   // 路由不匹配 → 404 伪装（不返回 403/302，防探测）
   if (adminSlug !== adminPath) notFound();
+
+  // 检查用户表是否为空（首次安装引导）
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(users);
+  const hasUsers = (row?.count ?? 0) > 0;
+
+  // 用户表为空 → 显示引导页（创建第一个管理员）
+  if (!hasUsers) {
+    return (
+      <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-12">
+        <header className="mb-8 text-center">
+          <p className="font-mono text-xs text-fg-muted">首次安装引导</p>
+          <h1 className="mt-2 text-xl font-semibold">初始化博客后台</h1>
+          <p className="mt-2 text-sm text-fg-muted">
+            创建第一个账号（自动成为管理员）。建议使用 GitHub 登录。
+          </p>
+        </header>
+        <SetupWizard needsSecret={Boolean(env("SETUP_SECRET"))} adminPath={adminPath} />
+      </main>
+    );
+  }
 
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) return <AdminLogin adminPath={adminPath} />;

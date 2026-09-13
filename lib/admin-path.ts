@@ -3,7 +3,9 @@
  * - 同步版本 getAdminPath()：仅从 env 读取（用于 client component props 初始化等）
  * - 异步版本 getAdminPathAsync()：env 优先 → DB settings 覆盖 → 兜底 admin
  *
- * 注意：兜底为 admin 时 /admin 静态引导页会占用该路径；引导完成后必须配置 ADMIN_PATH 才能进后台
+ * 注意：兜底为 admin 时，/admin 由动态路由 [adminSlug] 处理：
+ * - 用户表为空 → 显示引导页（创建第一个管理员）
+ * - 用户表不为空 → 显示登录页或后台首页
  */
 import { env } from "@/db/env";
 import { getSetting } from "@/lib/settings";
