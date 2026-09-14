@@ -8,6 +8,7 @@ import { CodeCopy } from "@/components/code-copy";
 import { ViewCounter } from "@/components/view-counter";
 import { ArticleToc } from "@/components/article-toc";
 import { ArticleFloatButtons } from "@/components/article-float-buttons";
+import { ArticleProgress } from "@/components/article-progress";
 import { Comments } from "@/components/comments";
 import { getGiscusSettings } from "@/lib/settings/index";
 import { CalendarDays, Clock } from "lucide-react";
@@ -90,6 +91,9 @@ export default async function PostPage({
         <div className="mx-auto grid w-full grid-cols-1 max-w-4xl">
           <div className="min-w-0">
             <article className="mx-auto w-full max-w-4xl animate-page-enter">
+              {/* 阅读进度条 */}
+              <ArticleProgress />
+
               {/* 封面图 */}
               {post.coverUrl ? (
                 <div className="mb-4 md:mb-8">

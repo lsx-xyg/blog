@@ -6,6 +6,7 @@ import { SiteHeader } from "@/components/site-header";
 import { MobileNav } from "@/components/mobile-nav";
 import { Footer } from "@/components/footer";
 import { ToastProvider } from "@/components/toast";
+import { PageProgress } from "@/components/page-progress";
 import { getSiteSettings, getFooterSettings } from "../lib/settings";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -89,6 +90,7 @@ export default async function RootLayout({
       {/* suppressHydrationWarning：忽略浏览器扩展注入属性（如 data-atm-ext-installed）导致的水合差异 */}
       <body suppressHydrationWarning className="min-h-screen flex-col">
         <ToastProvider>
+          <PageProgress />
           <SiteHeader
             adminPath={adminPath}
             siteName={site.name}
