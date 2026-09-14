@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatDate } from "@/lib/shared/utils";
 import { CalendarDays } from "lucide-react";
+import { LazyImage } from "@/components/lazy-image";
 
 /** 卡片所需字段（兼容 db Post 与 search-index JSON 两种来源） */
 export type CardPost = {
@@ -29,14 +30,11 @@ export function PostCard({ post }: { post: CardPost }) {
       className="group mb-6 flex break-inside-avoid flex-col rounded-xl border border-border bg-card p-6 transition duration-200 hover:-translate-y-0.5 hover:shadow-md hover:border-primary/20"
     >
       {post.coverUrl ? (
-        <div className="mb-4 -mt-2 aspect-video overflow-hidden rounded-lg bg-muted">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+        <div className="mb-4 -mt-2 aspect-video overflow-hidden rounded-lg">
+          <LazyImage
             src={post.coverUrl}
             alt={post.title}
-            loading="lazy"
-            decoding="async"
-            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full transition-transform duration-300 group-hover:scale-105"
           />
         </div>
       ) : null}

@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import type { GalleryMeta } from "@/lib/types/gallery";
 import { Filter, Sparkles, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { LazyImage } from "@/components/lazy-image";
 
 /**
  * 相册瀑布流组件
@@ -209,13 +210,11 @@ export function GalleryWall() {
               onClick={() => setPreviewImage(item.imageUrl)}
             >
               <div className="relative overflow-hidden rounded-lg border border-border">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <LazyImage
                   src={item.imageUrl}
                   alt={item.title || "相册图片"}
-                  loading="lazy"
-                  decoding="async"
                   className="w-full h-auto transition-transform duration-300 group-hover:scale-105"
+                  onClick={() => setPreviewImage(item.imageUrl)}
                 />
                 {/* 悬浮信息 */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
