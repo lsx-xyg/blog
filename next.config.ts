@@ -28,6 +28,46 @@ const nextConfig: NextConfig = {
   deploymentId,
 
   /**
+   * 图片优化配置
+   *
+   * 使用 Next.js Image 组件自动优化图片：
+   * - 自动转换为 WebP/AVIF 格式，减少体积
+   * - 自动调整尺寸，根据设备屏幕大小加载合适的图片
+   * - 懒加载，只加载视口内的图片
+   * - 占位符，图片加载前显示模糊占位
+   *
+   * 远程图片域名配置：
+   * - raw.githubusercontent.com：GitHub 图床
+   * - cdn.jsdelivr.net：jsDelivr CDN（GitHub 图床加速）
+   * - 其他 S3 兼容存储域名可以后续添加
+   */
+  images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "raw.githubusercontent.com",
+        pathname: "**",
+      },
+      {
+        protocol: "https",
+        hostname: "cdn.jsdelivr.net",
+        pathname: "**",
+      },
+      {
+        protocol: "https",
+        hostname: "**",
+        pathname: "**",
+      },
+    ],
+    // 支持的图片格式，优先 AVIF，然后 WebP
+    formats: ["image/avif", "image/webp"],
+    // 设备尺寸，用于生成响应式图片
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    // 图片尺寸，用于生成固定尺寸的图片
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+  },
+
+  /**
    * HTTP 缓存头配置
    *
    * 解决部署新版本后浏览器缓存导致的新旧版本资源不匹配问题：

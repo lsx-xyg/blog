@@ -18,8 +18,10 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-// 实时渲染：博客低流量，发布/删除立即可见（T7 前台客户端拉取元数据）
-export const dynamic = "force-dynamic";
+// ISR（增量静态再生）：每 60 秒重新生成一次页面
+// 平衡性能和实时性：发布新文章/更新站点设置后最多 60 秒生效
+// PostWall 组件是客户端组件，挂载后会拉取全量元数据，文章列表实时更新
+export const revalidate = 60;
 
 const PAGE_SIZE = 9;
 

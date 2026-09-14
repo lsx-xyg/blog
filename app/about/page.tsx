@@ -16,7 +16,9 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export const dynamic = "force-dynamic";
+// ISR（增量静态再生）：每 300 秒（5分钟）重新生成一次页面
+// 关于页内容更新不频繁，设置较长的 revalidate 时间
+export const revalidate = 300;
 
 export default async function AboutPage() {
   const [site, content] = await Promise.all([

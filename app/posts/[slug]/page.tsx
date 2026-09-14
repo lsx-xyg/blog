@@ -15,6 +15,11 @@ import { CalendarDays, Clock } from "lucide-react";
 
 export const dynamicParams = true;
 
+// ISR（增量静态再生）：每 60 秒重新生成一次页面
+// 新发布的文章或更新的文章最多 60 秒后生效
+// 阅读量统计是客户端组件（ViewCounter），不影响 ISR
+export const revalidate = 60;
+
 export async function generateStaticParams() {
   const posts = await listPublishedPosts();
   return posts.map((p) => ({ slug: p.slug ?? p.id }));
