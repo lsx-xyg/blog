@@ -362,11 +362,10 @@ export function ManageCronJobs() {
     REQUEST_METHODS.find((m) => m.value === method)?.label || `UNKNOWN(${method})`;
 
   return (
-    <div className="container mx-auto px-4 py-8 animate-page-enter">
-      <header className="mb-8">
-        <p className="font-mono text-xs text-muted-foreground">后台管理</p>
-        <h1 className="mt-1 text-2xl font-semibold">定时任务管理</h1>
-        <p className="mt-2 text-sm text-muted-foreground">
+    <div className="animate-page-enter">
+      <header className="mb-6">
+        <h1 className="text-xl font-semibold md:text-2xl">定时任务管理</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
           管理 cron-job.org 定时任务，支持高级配置（参照官方界面）
         </p>
       </header>

@@ -169,11 +169,11 @@ export function ManageSettings() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 animate-page-enter">
+    <div className="animate-page-enter">
       {/* 标题和操作 */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">站点设置</h1>
+          <h1 className="text-xl font-semibold md:text-2xl">站点设置</h1>
           <p className="mt-1 text-sm text-muted-foreground">配置站点信息、社交链接、页脚和关于页面</p>
         </div>
         <div className="flex items-center gap-2">

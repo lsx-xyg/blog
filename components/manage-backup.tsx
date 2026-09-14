@@ -153,11 +153,11 @@ export function ManageBackup() {
   }, [loadBackups]);
 
   return (
-    <div className="container mx-auto px-4 py-8 space-y-6 animate-page-enter">
+    <div className="space-y-6 animate-page-enter">
       {/* 页面标题 */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">备份管理</h1>
+          <h1 className="text-xl font-semibold md:text-2xl">备份管理</h1>
           <p className="text-muted-foreground mt-1 text-sm">管理数据库备份，支持手动创建、下载、删除和恢复</p>
         </div>
         <div className="flex flex-wrap gap-2">

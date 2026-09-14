@@ -82,11 +82,11 @@ export function ManageTags() {
   const totalMedia = tags.reduce((sum, t) => sum + t.mediaCount, 0);
 
   return (
-    <div className="container mx-auto px-4 py-8 animate-page-enter">
+    <div className="animate-page-enter">
       {/* 标题和操作 */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold">标签管理</h1>
+          <h1 className="text-xl font-semibold md:text-2xl">标签管理</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             共 {tags.length} 个标签 · {totalPosts} 次文章引用 · {totalMedia} 次图片引用
           </p>
@@ -98,7 +98,7 @@ export function ManageTags() {
             className="flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            刷新
+            <span className="hidden sm:inline">刷新</span>
           </button>
         </div>
       </div>
@@ -126,69 +126,120 @@ export function ManageTags() {
           </p>
         </div>
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="px-4 py-3 text-left text-sm font-medium">标签名称</th>
-                <th className="px-4 py-3 text-center text-sm font-medium">文章数</th>
-                <th className="px-4 py-3 text-center text-sm font-medium">图片数</th>
-                <th className="px-4 py-3 text-center text-sm font-medium">总引用</th>
-                <th className="px-4 py-3 text-right text-sm font-medium">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTags.map((tag, index) => (
-                <tr
-                  key={tag.id}
-                  className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors animate-fade-in-up"
-                  style={{ animationDelay: `${index * 30}ms` }}
-                >
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-2">
+        <>
+          {/* 桌面端：表格 */}
+          <div className="hidden md:block overflow-hidden rounded-xl border border-border">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="px-4 py-3 text-left text-sm font-medium">标签名称</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium">文章数</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium">图片数</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium">总引用</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTags.map((tag, index) => (
+                  <tr
+                    key={tag.id}
+                    className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors animate-fade-in-up"
+                    style={{ animationDelay: `${index * 30}ms` }}
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+                          {tag.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground font-mono">{tag.slug}</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center gap-1 text-sm">
+                        <FileText className="h-3.5 w-3.5 text-muted-foreground" />
+                        {tag.postCount}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center gap-1 text-sm">
+                        <Image className="h-3.5 w-3.5 text-muted-foreground" />
+                        {tag.mediaCount}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className={`text-sm font-semibold ${tag.totalCount > 0 ? "text-primary" : "text-muted-foreground"}`}>
+                        {tag.totalCount}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <button
+                        type="button"
+                        onClick={() => deleteTag(tag.id, tag.name)}
+                        disabled={deletingId === tag.id}
+                        className="inline-flex items-center gap-1 rounded-md border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                      >
+                        {deletingId === tag.id ? (
+                          <RefreshCw className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <Trash2 className="h-3 w-3" />
+                        )}
+                        删除
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* 移动端：卡片列表 */}
+          <div className="md:hidden space-y-3">
+            {filteredTags.map((tag, index) => (
+              <div
+                key={tag.id}
+                className="rounded-xl border border-border bg-surface p-4 animate-fade-in-up"
+                style={{ animationDelay: `${index * 30}ms` }}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
                       <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
                         {tag.name}
                       </span>
-                      <span className="text-xs text-muted-foreground font-mono">{tag.slug}</span>
+                      <span className="text-xs text-muted-foreground font-mono truncate">{tag.slug}</span>
                     </div>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="inline-flex items-center gap-1 text-sm">
-                      <FileText className="h-3.5 w-3.5 text-muted-foreground" />
-                      {tag.postCount}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="inline-flex items-center gap-1 text-sm">
-                      <Image className="h-3.5 w-3.5 text-muted-foreground" />
-                      {tag.mediaCount}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className={`text-sm font-semibold ${tag.totalCount > 0 ? "text-primary" : "text-muted-foreground"}`}>
-                      {tag.totalCount}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <button
-                      type="button"
-                      onClick={() => deleteTag(tag.id, tag.name)}
-                      disabled={deletingId === tag.id}
-                      className="inline-flex items-center gap-1 rounded-md border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
-                    >
-                      {deletingId === tag.id ? (
-                        <RefreshCw className="h-3 w-3 animate-spin" />
-                      ) : (
-                        <Trash2 className="h-3 w-3" />
-                      )}
-                      删除
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                    <div className="mt-3 flex items-center gap-4 text-sm">
+                      <span className="inline-flex items-center gap-1 text-muted-foreground">
+                        <FileText className="h-3.5 w-3.5" />
+                        {tag.postCount} 篇
+                      </span>
+                      <span className="inline-flex items-center gap-1 text-muted-foreground">
+                        <Image className="h-3.5 w-3.5" />
+                        {tag.mediaCount} 张
+                      </span>
+                      <span className={`inline-flex items-center font-semibold ${tag.totalCount > 0 ? "text-primary" : "text-muted-foreground"}`}>
+                        共 {tag.totalCount}
+                      </span>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => deleteTag(tag.id, tag.name)}
+                    disabled={deletingId === tag.id}
+                    className="inline-flex shrink-0 items-center gap-1 rounded-md border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                  >
+                    {deletingId === tag.id ? (
+                      <RefreshCw className="h-3 w-3 animate-spin" />
+                    ) : (
+                      <Trash2 className="h-3 w-3" />
+                    )}
+                    删除
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       {/* 提示 */}

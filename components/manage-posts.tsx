@@ -143,12 +143,12 @@ export function ManagePosts() {
   };
 
   return (
-    <main className="mx-auto max-w-4xl px-6 py-10 animate-page-enter">
-      <header className="mb-8">
-        <p className="font-mono text-sm text-fg-muted">
-          manage · 开发期入口（T8 认证后收紧）
+    <div className="animate-page-enter">
+      <header className="mb-6">
+        <h1 className="text-xl font-semibold md:text-2xl">文章管理</h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          创建、编辑、发布和管理你的博客文章
         </p>
-        <h1 className="mt-2 text-2xl font-semibold">文章管理</h1>
       </header>
 
       {error && (
@@ -404,6 +404,6 @@ export function ManagePosts() {
           </ul>
         )}
       </section>
-    </main>
+    </div>
   );
 }

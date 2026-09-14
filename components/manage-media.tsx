@@ -300,11 +300,11 @@ export function ManageMedia() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 animate-page-enter">
+    <div className="animate-page-enter">
       {/* 标题和操作 */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl font-bold">媒体库</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="text-xl font-semibold md:text-2xl">媒体库</h1>
           <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
             {currentDriver === StorageDriverType.LOCAL ? "本地存储" : currentDriver === StorageDriverType.GITHUB ? "GitHub 图床" : "S3 存储"}
           </span>
