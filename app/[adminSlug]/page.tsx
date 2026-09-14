@@ -105,12 +105,13 @@ export default async function AdminRootPage({
           <p className="text-base font-semibold">定时任务</p>
           <p className="mt-1 text-sm text-fg-muted">启动 / 停止 / 手动触发 / 查看状态（文章定时发布）</p>
         </Link>
-        <div className="rounded-xl border border-dashed border-border p-6 opacity-60">
-          <p className="text-base font-semibold">更多管理</p>
-          <p className="mt-1 text-sm text-fg-muted">
-            数据备份（T13 待实现）
-          </p>
-        </div>
+        <Link
+          href={`/${adminPath}/backup`}
+          className="rounded-xl border border-border bg-surface p-6 transition hover:border-fg-faint"
+        >
+          <p className="text-base font-semibold">备份管理</p>
+          <p className="mt-1 text-sm text-fg-muted">手动创建 / 下载 / 删除 / 恢复备份 / 定时备份</p>
+        </Link>
       </nav>
     </main>
   );

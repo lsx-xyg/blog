@@ -1,0 +1,24 @@
+/** 后台备份管理：动态路径，未匹配/未授权一律 404 伪装 */
+import { notFound } from "next/navigation";
+import { headers } from "next/headers";
+import { auth } from "@/lib/auth/auth";
+import { getAdminPathAsync } from "@/lib/shared/admin-path";
+import { isAdminUser } from "@/lib/shared/utils";
+import { ManageBackup } from "@/components/manage-backup";
+
+export const dynamic = "force-dynamic";
+
+export default async function AdminBackupPage({
+  params,
+}: {
+  params: Promise<{ adminSlug: string }>;
+}) {
+  const { adminSlug } = await params;
+  const adminPath = await getAdminPathAsync();
+  if (adminSlug !== adminPath) notFound();
+
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || !isAdminUser(session.user)) notFound();
+
+  return <ManageBackup />;
+}
