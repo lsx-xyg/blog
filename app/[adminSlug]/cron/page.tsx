@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { getAdminPathAsync } from "@/lib/shared/admin-path";
 import { isAdminUser } from "@/lib/shared/utils";
-import { ManageCron } from "@/components/manage-cron";
+import { ManageCronJobs } from "@/components/manage-cron-jobs";
 
 export const dynamic = "force-dynamic";
 
@@ -20,5 +20,5 @@ export default async function AdminCronPage({
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session || !isAdminUser(session.user)) notFound();
 
-  return <ManageCron />;
+  return <ManageCronJobs />;
 }
