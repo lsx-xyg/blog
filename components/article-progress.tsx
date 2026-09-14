@@ -42,6 +42,8 @@ interface ArticleProgressProps {
 
 export function ArticleProgress({ selector = "article" }: ArticleProgressProps) {
   const [progress, setProgress] = useState(0);
+  // 是否显示进度条（文章内容比视口还短时不显示，避免一直是满的横线影响美观）
+  const [visible, setVisible] = useState(false);
   const rafRef = useRef<number | null>(null);
   const tickingRef = useRef(false);
   const articleRef = useRef<HTMLElement | null>(null);
@@ -58,6 +60,7 @@ export function ArticleProgress({ selector = "article" }: ArticleProgressProps) 
     const article = articleRef.current;
     if (!article) {
       setProgress(0);
+      setVisible(false);
       return;
     }
 
@@ -69,10 +72,14 @@ export function ArticleProgress({ selector = "article" }: ArticleProgressProps) 
     const scrollableHeight = articleBottom - articleTop - viewportHeight;
 
     if (scrollableHeight <= 0) {
-      // 文章内容比视口还短，直接显示 100%
-      setProgress(100);
+      // 文章内容比视口还短，不显示进度条（避免一直是满的横线影响美观）
+      setProgress(0);
+      setVisible(false);
       return;
     }
+
+    // 文章内容足够长，显示进度条
+    setVisible(true);
 
     // 计算进度（0%-100%）
     // 当 scrollY < articleTop 时，进度为 0
@@ -151,7 +158,9 @@ export function ArticleProgress({ selector = "article" }: ArticleProgressProps) 
 
   return (
     <div
-      className="sticky top-0 left-0 right-0 z-[60] h-[3px] pointer-events-none -mt-[3px]"
+      className={`sticky top-0 left-0 right-0 z-[60] h-[3px] pointer-events-none -mt-[3px] transition-opacity duration-300 ${
+        visible ? "opacity-100" : "opacity-0"
+      }`}
       aria-hidden="true"
     >
       {/* 进度条背景（透明，不占视觉空间） */}
