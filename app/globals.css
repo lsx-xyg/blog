@@ -519,3 +519,96 @@ body {
 .bytemd-fullscreen {
   z-index: 9999 !important;
 }
+
+/* === ByteMD 编辑器移动端适配 === */
+@media (max-width: 768px) {
+  /* 编辑器容器最小高度 */
+  .bytemd-editor-wrapper .bytemd {
+    min-height: 400px;
+  }
+
+  /* 工具栏按钮更小 */
+  .bytemd-toolbar {
+    padding: 4px 8px;
+  }
+  .bytemd-toolbar-icon {
+    width: 28px;
+    height: 28px;
+    padding: 4px;
+  }
+  .bytemd-toolbar-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* 编辑区字体稍小 */
+  .bytemd-editor textarea {
+    font-size: 14px;
+    line-height: 1.7;
+    padding: 12px;
+  }
+
+  /* 预览区字体和间距调整 */
+  .bytemd-preview .markdown-body {
+    font-size: 15px;
+    line-height: 1.75;
+    padding: 0.75rem 1rem;
+  }
+  .bytemd-preview .markdown-body :is(h1, h2, h3, h4) {
+    margin: 1.5rem 0 0.75rem;
+    line-height: 1.35;
+  }
+  .bytemd-preview .markdown-body h1 { font-size: 1.35rem; }
+  .bytemd-preview .markdown-body h2 { font-size: 1.2rem; }
+  .bytemd-preview .markdown-body h3 { font-size: 1.08rem; }
+  .bytemd-preview .markdown-body h4 { font-size: 0.95rem; }
+  .bytemd-preview .markdown-body p { margin: 0.85rem 0; }
+  .bytemd-preview .markdown-body ul,
+  .bytemd-preview .markdown-body ol {
+    margin: 0.85rem 0;
+    padding-left: 1.4rem;
+  }
+  .bytemd-preview .markdown-body li { margin: 0.3rem 0; }
+  .bytemd-preview .markdown-body blockquote {
+    margin: 1rem 0;
+    padding-left: 0.85rem;
+  }
+  .bytemd-preview .markdown-body hr { margin: 1.5rem 0; }
+  .bytemd-preview .markdown-body table {
+    font-size: 13px;
+    margin: 1rem 0;
+  }
+  .bytemd-preview .markdown-body th,
+  .bytemd-preview .markdown-body td {
+    padding: 0.4rem 0.6rem;
+  }
+  .bytemd-preview .markdown-body img {
+    margin: 1rem 0;
+    border-radius: 8px;
+  }
+  .bytemd-preview .markdown-body pre {
+    padding: 0.85rem 1rem;
+    font-size: 12px;
+    line-height: 1.65;
+    margin: 1rem 0;
+    border-radius: 8px;
+  }
+  .bytemd-preview .markdown-body code:not(pre code) {
+    font-size: 0.85em;
+    padding: 0.12em 0.35em;
+  }
+
+  /* tab 模式下的标签页样式 */
+  .bytemd-tabs {
+    padding: 4px 8px;
+  }
+  .bytemd-tab {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+
+  /* 状态栏隐藏（移动端空间有限） */
+  .bytemd-status {
+    display: none;
+  }
+}

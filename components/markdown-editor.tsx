@@ -9,7 +9,7 @@ import { createHighlighterCore } from "@shikijs/core";
 import { createJavaScriptRegexEngine } from "@shikijs/engine-javascript";
 import type { Root, Element } from "hast";
 import { visit } from "unist-util-visit";
-import { Image as ImageIcon } from "lucide-react";
+import { Image as ImageIcon, Columns2, Eye, Pencil } from "lucide-react";
 import { MediaPicker } from "@/components/media-picker";
 import "bytemd/dist/index.css";
 import { MediaType } from "@/lib/types/media";
@@ -120,6 +120,22 @@ export function MarkdownEditor({
 }) {
   const [highlighter, setHighlighter] = useState<HighlighterCore | null>(null);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
+  const [editorMode, setEditorMode] = useState<"split" | "tab">("split");
+
+  // 响应式：移动端默认 tab 模式（标签页切换），桌面端默认 split 模式（左右分屏）
+  useEffect(() => {
+    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const handleChange = (e: MediaQueryListEvent) => {
+      setEditorMode(e.matches ? "tab" : "split");
+    };
+
+    // 初始设置
+    setEditorMode(mediaQuery.matches ? "tab" : "split");
+
+    // 监听变化
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
 
   // 异步初始化 Shiki highlighter
   useEffect(() => {
@@ -214,7 +230,7 @@ export function MarkdownEditor({
 
   return (
     <div className="bytemd-editor-wrapper overflow-hidden rounded-lg border border-border bg-background">
-      {/* 自定义工具栏：图片库按钮 */}
+      {/* 自定义工具栏：图片库按钮 + 模式切换 */}
       <div className="flex items-center gap-1 border-b border-border bg-muted/30 px-2 py-1">
         <button
           type="button"
@@ -223,10 +239,41 @@ export function MarkdownEditor({
           title="从媒体库选择图片"
         >
           <ImageIcon className="h-4 w-4" />
-          <span>图片库</span>
+          <span className="hidden sm:inline">图片库</span>
         </button>
-        <div className="ml-auto text-xs text-muted-foreground">
-          支持粘贴/拖拽上传，或点击「图片库」选择已有图片
+        <div className="ml-auto flex items-center gap-1">
+          {/* 模式切换按钮组 */}
+          <div className="flex items-center rounded-md border border-border overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setEditorMode("tab")}
+              className={`flex items-center gap-1 px-2 py-1 text-xs transition-colors ${
+                editorMode === "tab"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
+              title="编辑/预览标签页模式（推荐移动端）"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+              <span className="hidden md:inline">编辑</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditorMode("split")}
+              className={`flex items-center gap-1 px-2 py-1 text-xs transition-colors ${
+                editorMode === "split"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+              }`}
+              title="左右分屏模式（推荐桌面端）"
+            >
+              <Columns2 className="h-3.5 w-3.5" />
+              <span className="hidden md:inline">分屏</span>
+            </button>
+          </div>
+          <span className="hidden lg:inline ml-2 text-xs text-muted-foreground">
+            支持粘贴/拖拽上传，或点击「图片库」选择已有图片
+          </span>
         </div>
       </div>
 
@@ -235,7 +282,7 @@ export function MarkdownEditor({
         plugins={plugins}
         onChange={onChange}
         uploadImages={uploadImages}
-        mode="split"
+        mode={editorMode}
         placeholder="在此输入 Markdown 内容..."
       />
 
