@@ -93,7 +93,29 @@ export function GalleryWall() {
 
   if (loading) {
     return (
-      <div className="py-12 text-center text-sm text-muted-foreground">加载中…</div>
+      <div className="space-y-6">
+        {/* 工具栏骨架 */}
+        <div className="flex items-center justify-between">
+          <div className="h-9 w-32 animate-pulse rounded-lg border border-border bg-card" />
+          <div className="h-9 w-32 animate-pulse rounded-lg border border-border bg-card" />
+        </div>
+
+        {/* 瀑布流骨架（跟首页一致的卡片骨架） */}
+        <div className="columns-1 gap-4 sm:columns-2 lg:columns-3 xl:columns-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div
+              key={i}
+              className="mb-4 break-inside-avoid"
+            >
+              <div
+                className={`animate-pulse rounded-lg border border-border bg-card ${
+                  i % 3 === 0 ? "h-64" : i % 3 === 1 ? "h-48" : "h-56"
+                }`}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
     );
   }
 
