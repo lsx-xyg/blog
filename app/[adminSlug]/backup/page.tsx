@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth/auth";
 import { getAdminPathAsync } from "@/lib/shared/admin-path";
 import { isAdminUser } from "@/lib/shared/utils";
 import { ManageBackup } from "@/components/manage-backup";
+import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
 
 export const dynamic = "force-dynamic";
 
@@ -20,5 +21,10 @@ export default async function AdminBackupPage({
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session || !isAdminUser(session.user)) notFound();
 
-  return <ManageBackup />;
+  return (
+    <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8 animate-page-enter">
+      <AdminBreadcrumb current="备份管理" adminPath={adminPath} />
+      <ManageBackup />
+    </div>
+  );
 }
