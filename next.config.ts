@@ -1,4 +1,24 @@
 import type { NextConfig } from "next";
+import withBundleAnalyzer from "@next/bundle-analyzer";
+
+/**
+ * Bundle Analyzer 配置
+ *
+ * 使用 @next/bundle-analyzer 分析打包体积，找出大体积的依赖和页面。
+ *
+ * 使用方式：
+ * - 设置环境变量 ANALYZE=true，然后运行 npm run build
+ * - 或者运行 npm run analyze（已在 package.json 中配置）
+ *
+ * 分析结果会生成在 .next/analyze/ 目录下，包含：
+ * - client.html：客户端打包体积分析
+ * - server.html：服务端打包体积分析
+ *
+ * 参考：https://www.npmjs.com/package/@next/bundle-analyzer
+ */
+const bundleAnalyzer = withBundleAnalyzer({
+  enabled: process.env.ANALYZE === "true",
+});
 
 /**
  * 部署 ID（deploymentId）
@@ -135,4 +155,6 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
 };
 
-export default nextConfig;
+// 使用 bundleAnalyzer 包装 nextConfig
+// 当 ANALYZE=true 时，会生成打包体积分析报告
+export default bundleAnalyzer(nextConfig);
