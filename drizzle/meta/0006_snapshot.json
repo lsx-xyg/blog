@@ -1,6 +1,6 @@
 {
-  "id": "a386ca11-71f1-4476-9f64-89906456c8d0",
-  "prevId": "ab21f1f2-4424-4a4f-a0a1-6df4098085a9",
+  "id": "c5b12208-ade0-4526-8299-3d6c2c069f2c",
+  "prevId": "c61460ae-d57e-434c-a87d-b512f44da355",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -137,7 +137,6 @@
         "triggered_by": {
           "name": "triggered_by",
           "type": "backup_trigger",
-          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
           "default": "'MANUAL'"
@@ -254,7 +253,6 @@
         "type": {
           "name": "type",
           "type": "media_type",
-          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true
         },
@@ -266,7 +264,7 @@
         },
         "storage_driver": {
           "name": "storage_driver",
-          "type": "text",
+          "type": "storage_driver",
           "primaryKey": false,
           "notNull": true,
           "default": "'LOCAL'"
@@ -313,6 +311,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "featured": {
+          "name": "featured",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
         "uploaded_by": {
           "name": "uploaded_by",
           "type": "text",
@@ -325,13 +330,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "featured": {
-          "name": "featured",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         }
       },
       "indexes": {
@@ -398,6 +396,82 @@
       },
       "foreignKeys": {},
       "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.media_tags": {
+      "name": "media_tags",
+      "schema": "",
+      "columns": {
+        "media_id": {
+          "name": "media_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tag_id": {
+          "name": "tag_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "media_tags_tag_id_idx": {
+          "name": "media_tags_tag_id_idx",
+          "columns": [
+            {
+              "expression": "tag_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "media_tags_media_id_media_id_fk": {
+          "name": "media_tags_media_id_media_id_fk",
+          "tableFrom": "media_tags",
+          "tableTo": "media",
+          "columnsFrom": [
+            "media_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "media_tags_tag_id_tags_id_fk": {
+          "name": "media_tags_tag_id_tags_id_fk",
+          "tableFrom": "media_tags",
+          "tableTo": "tags",
+          "columnsFrom": [
+            "tag_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {
+        "media_tags_media_id_tag_id_pk": {
+          "name": "media_tags_media_id_tag_id_pk",
+          "columns": [
+            "media_id",
+            "tag_id"
+          ]
+        }
+      },
       "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
@@ -523,7 +597,6 @@
         "status": {
           "name": "status",
           "type": "post_status",
-          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
           "default": "'DRAFT'"
@@ -956,81 +1029,6 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
-    },
-    "public.media_tags": {
-      "name": "media_tags",
-      "schema": "",
-      "columns": {
-        "media_id": {
-          "name": "media_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "tag_id": {
-          "name": "tag_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        }
-      },
-      "indexes": {
-        "media_tags_tag_id_idx": {
-          "name": "media_tags_tag_id_idx",
-          "columns": [
-            {
-              "expression": "tag_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "media_tags_media_id_posts_id_fk": {
-          "name": "media_tags_media_id_posts_id_fk",
-          "tableFrom": "media_tags",
-          "tableTo": "media",
-          "columnsFrom": [
-            "media_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        },
-        "media_tags_tag_id_tags_id_fk": {
-          "name": "media_tags_tag_id_tags_id_fk",
-          "tableFrom": "media_tags",
-          "tableTo": "tags",
-          "columnsFrom": [
-            "tag_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {
-        "media_tags_media_id_tag_id_pk": {
-          "name": "media_tags_media_id_tag_id_pk",
-          "columns": [
-            "media_id",
-            "tag_id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {}
     }
   },
   "enums": {
@@ -1057,6 +1055,15 @@
         "DRAFT",
         "SCHEDULED",
         "PUBLISHED"
+      ]
+    },
+    "public.storage_driver": {
+      "name": "storage_driver",
+      "schema": "public",
+      "values": [
+        "LOCAL",
+        "GITHUB",
+        "S3"
       ]
     }
   },

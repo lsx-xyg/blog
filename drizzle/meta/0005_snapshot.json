@@ -1,6 +1,6 @@
 {
-  "id": "a386ca11-71f1-4476-9f64-89906456c8d0",
-  "prevId": "ab21f1f2-4424-4a4f-a0a1-6df4098085a9",
+  "id": "c61460ae-d57e-434c-a87d-b512f44da355",
+  "prevId": "a386ca11-71f1-4476-9f64-89906456c8d0",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -266,10 +266,11 @@
         },
         "storage_driver": {
           "name": "storage_driver",
-          "type": "text",
+          "type": "storage_driver",
           "primaryKey": false,
           "notNull": true,
-          "default": "'LOCAL'"
+          "default": "'LOCAL'::storage_driver",
+          "typeSchema": "public"
         },
         "storage_key": {
           "name": "storage_key",
@@ -1057,6 +1058,15 @@
         "DRAFT",
         "SCHEDULED",
         "PUBLISHED"
+      ]
+    },
+    "public.storage_driver": {
+      "name": "storage_driver",
+      "schema": "public",
+      "values": [
+        "LOCAL",
+        "GITHUB",
+        "S3"
       ]
     }
   },

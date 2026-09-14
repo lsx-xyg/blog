@@ -36,6 +36,20 @@
       "when": 1789280000000,
       "tag": "0004_courageous_spectrum",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789387844083,
+      "tag": "0005_silent_spectrum",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789387871663,
+      "tag": "0006_mixed_hobgoblin",
+      "breakpoints": true
     }
   ]
 }
