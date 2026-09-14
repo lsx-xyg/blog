@@ -86,7 +86,7 @@ export default async function PostPage({
   const giscusConfig = await getGiscusSettings();
 
   return (
-    <main className="container mx-auto px-2 py-4 md:px-4 md:py-8">
+    <main className="container mx-auto px-4 py-4 md:px-4 md:py-8 pb-24 md:pb-8">
       <div className="w-full">
         <div className="mx-auto grid w-full grid-cols-1 max-w-4xl">
           <div className="min-w-0">

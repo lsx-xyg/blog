@@ -329,6 +329,66 @@ body {
   border-radius: 0;
 }
 
+/* === mdx-content 移动端适配 === */
+@media (max-width: 768px) {
+  .mdx-content {
+    font-size: 15px;
+    line-height: 1.75;
+  }
+
+  .mdx-content :is(h1, h2, h3, h4) {
+    margin: 1.5rem 0 0.75rem;
+    line-height: 1.35;
+  }
+  .mdx-content h1 { font-size: 1.35rem; }
+  .mdx-content h2 { font-size: 1.2rem; }
+  .mdx-content h3 { font-size: 1.08rem; }
+  .mdx-content h4 { font-size: 0.95rem; }
+
+  .mdx-content p { margin: 0.85rem 0; }
+  .mdx-content ul,
+  .mdx-content ol {
+    margin: 0.85rem 0;
+    padding-left: 1.4rem;
+  }
+  .mdx-content li { margin: 0.3rem 0; }
+
+  .mdx-content blockquote {
+    margin: 1rem 0;
+    padding-left: 0.85rem;
+  }
+  .mdx-content hr {
+    margin: 1.5rem 0;
+  }
+
+  .mdx-content table {
+    font-size: 13px;
+    margin: 1rem 0;
+  }
+  .mdx-content th,
+  .mdx-content td {
+    padding: 0.4rem 0.6rem;
+  }
+
+  .mdx-content img {
+    margin: 1rem 0;
+    border-radius: 8px;
+  }
+
+  .mdx-content pre {
+    padding: 0.85rem 1rem;
+    font-size: 12px;
+    line-height: 1.65;
+    margin: 1rem 0;
+    border-radius: 8px;
+  }
+
+  .mdx-content code:not(pre code) {
+    font-size: 0.85em;
+    padding: 0.12em 0.35em;
+  }
+}
+
 /* 文章列表淡入动画（切换最新/精选时） */
 @keyframes fade-in-up {
   from {

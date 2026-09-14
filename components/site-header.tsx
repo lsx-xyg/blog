@@ -81,7 +81,7 @@ export function SiteHeader({
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-3" aria-label="返回首页">
+        <Link href="/" className="flex items-center space-x-3 py-2 px-1 -ml-1 rounded-lg hover:bg-accent/50 transition-colors active:bg-accent" aria-label="返回首页">
           <span className="relative flex shrink-0 overflow-hidden rounded-full h-12 w-12">
             <span className="flex h-full w-full items-center justify-center rounded-full bg-muted text-xl font-bold">
               林
