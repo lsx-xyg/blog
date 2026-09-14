@@ -15,7 +15,7 @@ import type {
   SiteSettings, 
   StorageSettings 
 } from "@/lib/types/settings";
-import {STORAGE_DRIVER_VALUES, StorageDriverType} from "@/lib/storage";
+import {STORAGE_DRIVER_VALUES, StorageDriverType} from "@/lib/types/storage";
 import {CronDeployPlatform} from "@/lib/types/settings";
 
 const plugins = [gfm()];
