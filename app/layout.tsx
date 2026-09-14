@@ -83,7 +83,7 @@ export default async function RootLayout({
         {/* LXGW WenKai Screen（霞鹜文楷屏显）：参考站 czhlove.cn 同款字体
             优化：preload 提前加载 + 异步加载避免阻塞首屏渲染
             - preload：提前加载字体 CSS，提升加载速度
-            - media="print" onload="this.media='all'"：异步加载 CSS，不阻塞首屏渲染
+            - 内联 script 动态创建 link 元素，异步加载 CSS，不阻塞首屏渲染
             - noscript fallback：禁用 JS 时正常加载
         */}
         <link
@@ -91,12 +91,22 @@ export default async function RootLayout({
           as="style"
           href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css"
         />
-        <link
-          rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css"
-          media="print"
-          onLoad={(e) => {
-            (e.target as HTMLLinkElement).media = "all";
+        {/* 异步加载字体 CSS：动态创建 link 元素，设置 media="print"，
+            加载完成后把 media 改成 "all"，这样不会阻塞首屏渲染 */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                var link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = 'https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css';
+                link.media = 'print';
+                link.onload = function() {
+                  link.media = 'all';
+                };
+                document.head.appendChild(link);
+              })();
+            `,
           }}
         />
         <noscript>
