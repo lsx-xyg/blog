@@ -80,11 +80,31 @@ export default async function RootLayout({
     <html lang="zh-CN" suppressHydrationWarning>
       {/* 首屏防 FOUC：渲染前同步应用主题（localStorage + prefers-color-scheme） */}
       <head>
-        {/* LXGW WenKai Screen（霞鹜文楷屏显）：参考站 czhlove.cn 同款字体，unicode-range 子集化按需加载 */}
+        {/* LXGW WenKai Screen（霞鹜文楷屏显）：参考站 czhlove.cn 同款字体
+            优化：preload 提前加载 + 异步加载避免阻塞首屏渲染
+            - preload：提前加载字体 CSS，提升加载速度
+            - media="print" onload="this.media='all'"：异步加载 CSS，不阻塞首屏渲染
+            - noscript fallback：禁用 JS 时正常加载
+        */}
+        <link
+          rel="preload"
+          as="style"
+          href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css"
+        />
         <link
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css"
+          media="print"
+          onLoad={(e) => {
+            (e.target as HTMLLinkElement).media = "all";
+          }}
         />
+        <noscript>
+          <link
+            rel="stylesheet"
+            href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css"
+          />
+        </noscript>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
       </head>
       {/* suppressHydrationWarning：忽略浏览器扩展注入属性（如 data-atm-ext-installed）导致的水合差异 */}
