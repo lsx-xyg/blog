@@ -34,7 +34,7 @@ export default async function AdminRootPage({
   // 用户表为空 → 显示引导页（创建第一个管理员）
   if (!hasUsers) {
     return (
-      <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-6 py-12">
+      <main className="mx-auto flex min-h-screen max-w-md flex-col px-6 pt-16 pb-12 md:pt-24">
         <header className="mb-8 text-center">
           <p className="font-mono text-xs text-fg-muted">首次安装引导</p>
           <h1 className="mt-2 text-xl font-semibold">初始化博客后台</h1>

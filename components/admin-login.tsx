@@ -46,7 +46,7 @@ export function AdminLogin({ adminPath }: { adminPath: string }) {
   const label = "text-xs font-medium text-fg-muted";
 
   return (
-    <div className="mx-auto flex min-h-screen max-w-sm flex-col justify-center px-6 py-12">
+    <div className="mx-auto flex min-h-screen max-w-sm flex-col px-6 pt-16 pb-12 md:pt-24">
       <header className="mb-8 text-center">
         <h1 className="text-xl font-semibold">后台登录</h1>
         <p className="mt-2 text-sm text-fg-muted">仅管理员可访问</p>
