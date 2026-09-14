@@ -49,6 +49,16 @@ export async function listAllPosts() {
   return db.select().from(posts).orderBy(desc(posts.createdAt));
 }
 
+/** 后台：按 ID 获取文章（含草稿/定时，用于编辑） */
+export async function getPostById(id: string) {
+  const rows = await db
+    .select()
+    .from(posts)
+    .where(eq(posts.id, id))
+    .limit(1);
+  return rows[0] ?? null;
+}
+
 /** 浏览量 +1（原子自增，防并发覆盖） */
 export async function incrementViewCount(id: string) {
   return db
