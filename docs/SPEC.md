@@ -267,16 +267,30 @@ interface StorageDriver {
 
 ---
 
-## 11. 备份与恢复（v1 简化版）
+## 11. 备份与恢复（已实现 ✅）
 
-**范围**：全量备份所有业务表（posts / tags / post_tags / media / media_tags / settings / friend_links / users / account），**不含 session / verification**。图片本体在存储层，不在备份范围。
+**范围**：全量备份所有业务表（users / sessions / accounts / verifications / posts / tags / post_tags / media / media_tags / settings / friend_links）。图片本体在存储层，不在备份范围。
 
 - **格式**：JSON 文件（schema 版本号 + 导出时间 + 各表数据数组）
-- **导出**：手动 → 生成 JSON 直接**下载到本地**；定时 → 上传到备份存储
-- **导入**：上传 JSON → 校验版本 → 事务内按外键顺序恢复（tags → media → posts → 关联表 → settings → friend_links → users/account）→ **覆盖式**，失败整体回滚；确认弹窗含覆盖警告
-- **定时备份**：复用 `StorageDriver`，`BACKUP_DRIVER = LOCAL | GITHUB | S3`，走 `backups/` 前缀；`VERCEL` 模式 cron-job.org 每日触发 `GET /api/cron/backup`，`SERVER` 模式 node-cron 每日；自动备份保留 7 份（`BACKUP_RETENTION`），旧备份自动删除
-- **历史**：后台备份页显示 backup_records（时间/大小/来源），可下载、可删除
-- ⚠️ **安全提醒**：备份含账号表数据（邮箱等）；`BACKUP_DRIVER=GITHUB` 上传时若 repo 公开，账号信息会公开——部署时自行权衡（私有 repo 或接受）
+- **导出**：手动 → 生成 JSON 上传到存储驱动，后台可下载；定时 → 自动上传到备份存储
+- **导入**：上传 JSON → 校验版本 → 按外键逆序清空 → 按外键顺序插入 → **覆盖式**；确认弹窗含覆盖警告
+- **定时备份**：复用 `StorageDriver`（STORAGE_DRIVER = LOCAL | GITHUB | S3），走 `backups/` 前缀；`VERCEL` 模式 cron-job.org 触发 `GET /api/cron/backup`，`SERVER` 模式 node-cron；自动备份保留策略可后续配置
+- **历史**：后台备份页显示 backup_records（时间/大小/触发方式），可下载、可删除、可恢复
+- ⚠️ **安全提醒**：备份含账号表数据（邮箱等）；`STORAGE_DRIVER=GITHUB` 上传时若 repo 公开，账号信息会公开——部署时自行权衡（私有 repo 或接受）
+
+### 实现细节
+
+- **核心逻辑**：`lib/backup/index.ts`
+  - `exportBackup()`: 导出全量备份（11张业务表）
+  - `importBackup()`: 导入备份（按依赖顺序清空和插入）
+  - `createBackup()`: 创建备份并上传到存储
+  - `listBackups()/getBackup()/deleteBackup()/downloadBackup()`
+- **API 路由**：
+  - `GET/POST /api/admin/backup` - 备份列表/创建备份
+  - `GET/DELETE /api/admin/backup/[id]` - 下载备份/删除备份
+  - `POST /api/admin/backup/restore` - 恢复备份（上传JSON文件）
+  - `GET /api/cron/backup` - 定时备份触发接口（CRON_SECRET鉴权）
+- **后台管理**：`app/[adminSlug]/backup/page.tsx` + `components/manage-backup.tsx`
 
 ---
 
@@ -373,9 +387,10 @@ NEXT_PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOUVJQps4DFcnk
 # 搜索（已实现纯客户端搜索，数据库全文搜索预留）
 # SEARCH_MODE=CLIENT|DATABASE
 
-# 备份（T13 未实现）
-# BACKUP_DRIVER=LOCAL|GITHUB|S3
-# BACKUP_RETENTION=7
+# 备份（T13 已实现 ✅）
+# 备份文件复用 STORAGE_DRIVER 存储驱动，走 backups/ 前缀
+# 定时备份复用 CRON_SECRET 和 DEPLOY_PLATFORM 配置
+# BACKUP_RETENTION=7（预留，自动删除旧备份）
 ```
 
 ---
@@ -393,9 +408,9 @@ NEXT_PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOUVJQps4DFcnk
 | `/api/admin/tags*` | admin | 标签 CRUD |
 | `/api/admin/friend-links*` | admin | 友链 CRUD |
 | `/api/admin/settings` | admin | 设置读写 |
-| `/api/admin/backups/export` | admin | 全量备份下载 |
-| `/api/admin/backups/import` | admin | 上传恢复 |
-| `/api/admin/backups` | admin | 历史列表 / 删除 |
+| `/api/admin/backup` | admin | 备份列表 / 创建备份 |
+| `/api/admin/backup/[id]` | admin | 下载备份 / 删除备份 |
+| `/api/admin/backup/restore` | admin | 上传恢复备份 |
 | `/api/cron/publish-scheduled` | CRON_SECRET | 定时发布扫描 |
 | `/api/cron/backup` | CRON_SECRET | 定时全量备份 |
 | `/api/rss` | 公开 | RSS/Atom |
