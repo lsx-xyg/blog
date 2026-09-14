@@ -6,10 +6,6 @@ export const metadata: Metadata = {
   description: "生活图片展示",
 };
 
-// 测试期间暂时设置为 force-dynamic，确保每次都重新加载
-// 后续可以改回静态生成（默认），因为数据是客户端获取的
-export const dynamic = "force-dynamic";
-
 /**
  * 相册页面
  *
@@ -20,6 +16,9 @@ export const dynamic = "force-dynamic";
  * - 最新/精选切换
  * - 图片懒加载
  * - 点击查看大图
+ *
+ * 注意：页面本身是静态生成的，数据由客户端组件 GalleryWall 获取。
+ * 这样可以利用 Next.js 的静态缓存，提升首屏加载速度。
  */
 export default function GalleryPage() {
   return (

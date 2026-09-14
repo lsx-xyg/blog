@@ -13,9 +13,6 @@ export const dynamic = "force-dynamic";
  * 缓存构建好的搜索索引，避免每次请求都重新查询数据库。
  * 缓存有效期 60 秒，过期后自动重新构建。
  * 发布新文章、上传新图片、修改标签后最多 60 秒生效。
- *
- * 注意：测试期间暂时禁用内存缓存，每次请求都重新查询数据库。
- * 后续可以通过环境变量 SEARCH_INDEX_CACHE_TTL 来控制缓存时间。
  */
 interface SearchIndexCache {
   data: {
@@ -33,8 +30,7 @@ interface SearchIndexCache {
   timestamp: number;
 }
 
-// 测试期间暂时禁用内存缓存（设置为 0）
-const CACHE_TTL = 0; // 60 * 1000; // 60 秒
+const CACHE_TTL = 60 * 1000; // 60 秒
 let cache: SearchIndexCache | null = null;
 
 /**
