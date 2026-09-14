@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { listPublishedPosts, listPublishedPostMeta } from "@/lib/posts";
 import { PostWall } from "@/components/post-wall";
 import { FileText, Tags, Star } from "lucide-react";
@@ -61,7 +62,22 @@ export default async function Home() {
         </div>
       </header>
 
-      <PostWall initialPosts={initialPosts} pageSize={PAGE_SIZE} />
+      {/* PostWall 使用了 useSearchParams()，需要包裹在 Suspense 边界中
+          否则静态生成（ISR）时会报错：useSearchParams() should be wrapped in a suspense boundary */}
+      <Suspense
+        fallback={
+          <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4">
+            {Array.from({ length: PAGE_SIZE }).map((_, i) => (
+              <div
+                key={i}
+                className="mb-6 h-48 animate-pulse rounded-xl border border-border bg-card"
+              />
+            ))}
+          </div>
+        }
+      >
+        <PostWall initialPosts={initialPosts} pageSize={PAGE_SIZE} />
+      </Suspense>
     </div>
   );
 }
