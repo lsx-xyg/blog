@@ -12,6 +12,7 @@ import { visit } from "unist-util-visit";
 import { Image as ImageIcon } from "lucide-react";
 import { MediaPicker } from "@/components/media-picker";
 import "bytemd/dist/index.css";
+import { MediaType } from "@/lib/types/media";
 
 /**
  * 异步初始化 Shiki highlighter
@@ -143,7 +144,7 @@ export function MarkdownEditor({
       try {
         const formData = new FormData();
         formData.append("file", file);
-        formData.append("type", "ARTICLE"); // 从编辑器上传默认是文章图片
+        formData.append("type", MediaType.ARTICLE); // 从编辑器上传默认是文章图片
 
         // 使用新的媒体库上传 API（自动保存到 media 表）
         const response = await fetch("/api/admin/media", {

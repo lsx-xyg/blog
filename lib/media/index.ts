@@ -4,14 +4,16 @@
 import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { media, posts, mediaTags, tags } from "@/db/schema";
-import { MediaType, StorageDriverType } from "@/lib/types/media";
+import { MediaType } from "@/lib/types/media";
+import { StorageDriverType } from "@/lib/storage";
 import { getOrCreateTags } from "@/lib/tags";
+import { PostStatus } from "@/lib/types/posts";
 
 /** 创建媒体记录 */
 export async function createMedia(data: {
   type: MediaType;
   url: string;
-  storageDriver?: StorageDriverType | string;
+  storageDriver?: StorageDriverType;
   storageKey?: string | null;
   title?: string | null;
   description?: string | null;
@@ -160,7 +162,7 @@ export async function findUnusedMedia() {
   const allPosts = await db
     .select({ content: posts.content })
     .from(posts)
-    .where(eq(posts.status, "PUBLISHED"));
+    .where(eq(posts.status, PostStatus.PUBLISHED));
 
   // 合并所有被引用的 URL
   const usedUrls = new Set<string>();

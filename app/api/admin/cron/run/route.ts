@@ -3,7 +3,7 @@
  */
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { requireAdmin, adminDenied } from "@/lib/auth-guard";
+import { requireAdmin, adminDenied } from "@/lib/auth/auth-guard";
 import { publishScheduledPosts } from "@/lib/posts";
 
 export const dynamic = "force-dynamic";

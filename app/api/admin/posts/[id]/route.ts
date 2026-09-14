@@ -3,7 +3,8 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { posts } from "@/db/schema";
-import { requireAdmin, adminDenied } from "@/lib/auth-guard";
+import { requireAdmin, adminDenied } from "@/lib/auth/auth-guard";
+import { POST_STATUS_VALUES, PostStatus } from "@/lib/types/posts";
 
 export const dynamic = "force-dynamic";
 
@@ -24,7 +25,7 @@ export async function PUT(
     return NextResponse.json({ error: "文章不存在" }, { status: 404 });
   }
 
-  const status = ["DRAFT", "SCHEDULED", "PUBLISHED"].includes(body.status)
+  const status = POST_STATUS_VALUES.includes(body.status)
     ? body.status
     : existing[0].status;
 
@@ -43,9 +44,9 @@ export async function PUT(
     patch.slug = trimmed || existing[0].id;
   }
   // 发布时补 publishedAt（已发布则保持）
-  if (status === "PUBLISHED" && !existing[0].publishedAt) {
+  if (status === PostStatus.PUBLISHED && !existing[0].publishedAt) {
     patch.publishedAt = new Date();
-  } else if (status !== "PUBLISHED" && existing[0].status === "PUBLISHED") {
+  } else if (status !== PostStatus.PUBLISHED && existing[0].status === PostStatus.PUBLISHED) {
     patch.publishedAt = null;
   }
   patch.status = status;

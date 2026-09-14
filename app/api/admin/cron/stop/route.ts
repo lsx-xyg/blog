@@ -2,9 +2,10 @@
  * POST /api/admin/cron/stop - 删除全局定时发布任务（cron-job.org）
  */
 import { NextResponse } from "next/server";
-import { requireAdmin, adminDenied } from "@/lib/auth-guard";
-import { deleteCronJob, findGlobalPublishJob } from "@/lib/cron-job";
-import { getDeployPlatform } from "@/lib/cron-utils";
+import { requireAdmin, adminDenied } from "@/lib/auth/auth-guard";
+import { deleteCronJob, findGlobalPublishJob } from "@/lib/cron";
+import { getDeployPlatform } from "@/lib/settings";
+import { CronDeployPlatform } from "@/lib/types/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,7 @@ export async function POST(req: Request) {
 
   const platform = await getDeployPlatform();
 
-  if (platform === "VERCEL") {
+  if (platform === CronDeployPlatform.VERCEL) {
     try {
       const job = await findGlobalPublishJob();
       if (!job) {

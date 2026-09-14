@@ -2,14 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublishedPostBySlugOrId, listPublishedPosts } from "@/lib/posts";
 import { renderMdx } from "@/lib/mdx";
-import { formatDate } from "@/lib/utils";
-import { extractToc } from "@/lib/toc";
+import { formatDate } from "@/lib/shared/utils";
+import { extractToc } from "@/lib/shared/toc";
 import { CodeCopy } from "@/components/code-copy";
 import { ViewCounter } from "@/components/view-counter";
 import { ArticleToc } from "@/components/article-toc";
 import { ArticleFloatButtons } from "@/components/article-float-buttons";
 import { Comments } from "@/components/comments";
-import { getGiscusSettings } from "@/lib/settings";
+import { getGiscusSettings } from "@/lib/settings/index";
 import { CalendarDays, Clock } from "lucide-react";
 
 export const dynamicParams = true;

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { List, Copy, Check } from "lucide-react";
-import type { TocItem } from "@/lib/toc";
-import { scrollToElement } from "@/lib/smooth-scroll";
+import type { TocItem } from "@/lib/shared/toc";
+import { scrollToElement } from "@/lib/shared/smooth-scroll";
 import {
   Sheet,
   SheetContent,

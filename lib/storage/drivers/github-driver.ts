@@ -1,6 +1,6 @@
-import type { StorageDriver, UploadResult } from "./types";
-import { generateKey } from "./utils";
-import type { StorageConfig } from "./config";
+import type { StorageDriverInterface, UploadResult } from "@/lib/types/storage";
+import { generateKey } from "../utils";
+import { StorageSettings } from "@/lib/types/settings";
 
 /** GitHub 图床存储驱动（生产环境用）
  *
@@ -16,12 +16,12 @@ import type { StorageConfig } from "./config";
  * 优点：免费、jsDelivr CDN 全球加速、公开仓库可直接访问
  * 缺点：单文件最大 100MB（GitHub 限制）、API 调用有速率限制
  */
-export class GithubStorageDriver implements StorageDriver {
+export class GithubStorageDriver implements StorageDriverInterface {
   name = "github" as const;
 
-  private config: StorageConfig["github"];
+  private config: StorageSettings["github"];
 
-  constructor(config?: StorageConfig["github"]) {
+  constructor(config?: StorageSettings["github"]) {
     this.config = config || {
       owner: process.env.GITHUB_STORAGE_OWNER || "lsx-xyg",
       repo: process.env.GITHUB_STORAGE_REPO || "images",

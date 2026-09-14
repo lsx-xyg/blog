@@ -8,7 +8,8 @@
 import "../db/load-env";
 import { db } from "../db";
 import { media } from "../db/schema";
-import { MediaType } from "../lib/types/media";
+import { MediaType } from "@/lib/types/media";
+import { StorageDriverType } from "@/lib/types/storage";
 
 async function main() {
   console.log("开始插入相册测试数据...");
@@ -59,7 +60,7 @@ async function main() {
       .values({
         type: MediaType.GALLERY,
         url: img.imageUrl,
-        storageDriver: "LOCAL",
+        storageDriver: StorageDriverType.LOCAL,
         storageKey: null,
         title: img.title,
         description: img.description,

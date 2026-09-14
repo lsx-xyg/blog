@@ -17,6 +17,7 @@ import {
 import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
 import { Switch } from "@/components/ui/switch";
 import { TagInput } from "@/components/tag-input";
+import { StorageDriverType } from "@/lib/types/storage";
 
 type MediaItem = {
   id: string;
@@ -76,7 +77,7 @@ export function ManageMedia() {
   const [lightboxTitle, setLightboxTitle] = useState<string>("");
 
   // 当前存储驱动
-  const [currentDriver, setCurrentDriver] = useState<string>("LOCAL");
+  const [currentDriver, setCurrentDriver] = useState<StorageDriverType>(StorageDriverType.LOCAL);
 
   // 加载当前存储驱动
   useEffect(() => {
@@ -305,7 +306,7 @@ export function ManageMedia() {
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold">媒体库</h1>
           <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-            {currentDriver === "LOCAL" ? "本地存储" : currentDriver === "GITHUB" ? "GitHub 图床" : "S3 存储"}
+            {currentDriver === StorageDriverType.LOCAL ? "本地存储" : currentDriver === StorageDriverType.GITHUB ? "GitHub 图床" : "S3 存储"}
           </span>
         </div>
         <div className="flex flex-wrap items-center gap-2">

@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
-import { ALLOWED_IMAGE_MIME_TYPES, MAX_IMAGE_SIZE } from "./types";
+import { extname } from "path";
+import { ALLOWED_IMAGE_MIME_TYPES, MAX_IMAGE_SIZE } from "../types/storage";
 
 /** 生成存储键：YYYY/MM/uuid.ext
  * 按日期分目录，UUID 文件名避免冲突，保留原扩展名
@@ -15,9 +16,7 @@ export function generateKey(originalFilename: string): string {
 
 /** 从文件名提取扩展名（包含点，如 .jpg） */
 export function getExtension(filename: string): string {
-  const idx = filename.lastIndexOf(".");
-  if (idx === -1) return "";
-  return filename.slice(idx).toLowerCase();
+  return extname(filename).toLowerCase(); 
 }
 
 /** 校验图片是否合法（MIME 类型 + 大小） */

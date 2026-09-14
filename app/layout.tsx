@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { getAdminPathAsync } from "@/lib/admin-path";
-import { THEME_INIT_SCRIPT } from "@/lib/theme";
+import { getAdminPathAsync } from "@/lib/shared/admin-path";
+import { THEME_INIT_SCRIPT } from "@/lib/shared/theme";
 import { SiteHeader } from "@/components/site-header";
 import { MobileNav } from "@/components/mobile-nav";
 import { Footer } from "@/components/footer";
 import { ToastProvider } from "@/components/toast";
-import { getSiteSettings, getFooterSettings } from "@/lib/settings";
+import { getSiteSettings, getFooterSettings } from "../lib/settings";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 

@@ -1,4 +1,4 @@
-import { getAboutContent, getSiteSettings } from "@/lib/settings";
+import { getAboutContent, getSiteSettings } from "@/lib/settings/index";
 import { renderMdx } from "@/lib/mdx";
 import type { Metadata } from "next";
 

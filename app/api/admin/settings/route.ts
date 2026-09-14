@@ -1,21 +1,23 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
-import { isAdminUser } from "@/lib/utils";
+import { isAdminUser } from "@/lib/shared/utils";
+import {
+  setSettingsBatch,
+  getSetting,
+  deleteSetting,
+} from "@/lib/settings";
 import {
   getSiteSettings,
   getSocialLinks,
   getFooterSettings,
-  getAboutContent,
-  setSettingsBatch,
-  setAboutContent,
-  getSetting,
-  deleteSetting,
-  getGiscusSettings,
-  getCronConfig,
-} from "@/lib/settings";
-import { getStorageConfig } from "@/lib/storage";
-import { encryptIfAvailable } from "@/lib/crypto";
+  getAboutContent, setAboutContent, getGiscusSettings,
+  getCronSettings,
+  getStorageSettings
+} from "@/lib/settings/index";
+import { encryptIfAvailable } from "@/lib/shared/crypto";
+import { CronDeployPlatform } from "@/lib/types/settings";
+import { STORAGE_DRIVER_VALUES } from "@/lib/storage";
 
 /**
  * 站点设置 API
@@ -36,9 +38,9 @@ export async function GET() {
       getFooterSettings(),
       getAboutContent(),
       getSetting<string>("admin.path"),
-      getStorageConfig(),
+      getStorageSettings(),
       getGiscusSettings(),
-      getCronConfig(),
+      getCronSettings(),
     ]);
 
     // 敏感信息不返回明文，只返回是否已配置（布尔值）
@@ -66,8 +68,8 @@ export async function GET() {
     // 定时任务配置（敏感信息不返回明文，只返回是否已配置）
     const cronForClient = {
       deployPlatform: cron.deployPlatform,
-      cronSecretConfigured: !!cron.cronSecret,
-      cronJobApiKeyConfigured: !!cron.cronJobApiKey,
+      cronSecretConfigured: !!cron.secret,
+      cronJobApiKeyConfigured: !!cron.jobApiKey,
     };
 
     return NextResponse.json({
@@ -161,7 +163,7 @@ export async function PUT(request: Request) {
 
     if (body.storage) {
       const { driver, github, s3, local } = body.storage;
-      if (driver && ["LOCAL", "GITHUB", "S3"].includes(driver.toUpperCase())) {
+      if (driver && STORAGE_DRIVER_VALUES.includes(driver.toUpperCase())) {
         addSetting("storage.driver", driver.toUpperCase());
       }
       if (github) {
@@ -200,7 +202,8 @@ export async function PUT(request: Request) {
       const { deployPlatform, cronSecret, cronJobApiKey } = body.cron;
       // DEPLOY_PLATFORM：非敏感信息，直接存
       if (deployPlatform !== undefined && deployPlatform !== null) {
-        const normalized = deployPlatform.toUpperCase() === "SERVER" ? "SERVER" : "VERCEL";
+        const normalized = deployPlatform.toUpperCase() === "SERVER" ? CronDeployPlatform.SERVER
+          : CronDeployPlatform.VERCEL;
         addSetting("cron.deploy_platform", normalized);
       }
       // 敏感信息：Cron Secret 加密后存储，放空时删除记录

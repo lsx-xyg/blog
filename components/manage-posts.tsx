@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { MarkdownEditor } from "@/components/markdown-editor";
 import { ChevronLeft, ChevronRight, FileText, Settings } from "lucide-react";
+import { PostStatus } from "@/lib/types/posts";
 
 /**
  * T8 后台文章管理（受动态路径保护，服务端已做 admin 鉴权）
@@ -17,7 +18,7 @@ type PostRow = {
   slug: string | null;
   summary: string | null;
   content: string;
-  status: "DRAFT" | "SCHEDULED" | "PUBLISHED";
+  status: PostStatus;
   featured: boolean;
   coverUrl: string | null;
   scheduledAt: string | null;
@@ -32,7 +33,7 @@ const emptyForm = {
   summary: "",
   content: "",
   coverUrl: "",
-  status: "DRAFT" as PostRow["status"],
+  status: PostStatus.DRAFT as PostStatus,
   featured: false,
   scheduledAt: "",
 };
@@ -259,9 +260,9 @@ export function ManagePosts() {
                     value={form.status}
                     onChange={(e) => set("status", e.target.value)}
                   >
-                    <option value="DRAFT">草稿</option>
-                    <option value="SCHEDULED">定时</option>
-                    <option value="PUBLISHED">发布</option>
+                    <option value={PostStatus.DRAFT}>草稿</option>
+                    <option value={PostStatus.SCHEDULED}>定时</option>
+                    <option value={PostStatus.PUBLISHED}>发布</option>
                   </select>
                 </div>
                 <div>
@@ -366,16 +367,16 @@ export function ManagePosts() {
               >
                 <span
                   className={`w-16 shrink-0 text-center font-mono text-xs ${
-                    p.status === "PUBLISHED"
+                    p.status === PostStatus.PUBLISHED
                       ? "text-green-600"
-                      : p.status === "SCHEDULED"
+                      : p.status === PostStatus.SCHEDULED
                         ? "text-amber-600"
                         : "text-fg-faint"
                   }`}
                 >
-                  {p.status === "PUBLISHED"
+                  {p.status === PostStatus.PUBLISHED
                     ? "已发布"
-                    : p.status === "SCHEDULED"
+                    : p.status === PostStatus.SCHEDULED
                       ? "定时"
                       : "草稿"}
                 </span>

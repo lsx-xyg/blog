@@ -1,5 +1,5 @@
-import type { StorageDriver, UploadResult } from "./types";
-import type { StorageConfig } from "./config";
+import type { StorageDriverInterface, UploadResult } from "@/lib/types/storage";
+import type { StorageSettings } from "@/lib/types/settings";
 
 /** S3 兼容存储驱动（占位，后续实现）
  *
@@ -17,12 +17,12 @@ import type { StorageConfig } from "./config";
  * 当前为占位实现，调用时抛出错误。
  * 实现时建议使用 @aws-sdk/client-s3 或 minio 库。
  */
-export class S3StorageDriver implements StorageDriver {
+export class S3StorageDriver implements StorageDriverInterface {
   name = "s3" as const;
 
-  private config: StorageConfig["s3"];
+  private config: StorageSettings["s3"];
 
-  constructor(config?: StorageConfig["s3"]) {
+  constructor(config?: StorageSettings["s3"]) {
     this.config = config || {
       endpoint: process.env.S3_ENDPOINT || "",
       bucket: process.env.S3_BUCKET || "",

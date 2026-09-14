@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { decrypt } from "../lib/crypto";
+import { decrypt } from "../lib/shared/crypto";
 
 const CIPHER = "/J+E+Axs+tSb4OI1:HLDRi1aWz06knWv5WguyHHyGQzwuZdHanlJ/Mscj4mMVXtTAzixSPe8A0Js=:I2bbm6yL5IkxDuipQ6VXdA==";
 

@@ -7,7 +7,16 @@ import { Editor } from "@bytemd/react";
 import gfm from "@bytemd/plugin-gfm";
 import "bytemd/dist/index.css";
 import { useToast } from "@/components/toast";
-import type { SiteSettings, SocialLinks, FooterSettings, StorageSettings, GiscusSettings, CronSettings } from "@/lib/settings";
+import type { 
+  CronSettings, 
+  FooterSettings, 
+  GiscusSettings, 
+  SocialLinks, 
+  SiteSettings, 
+  StorageSettings 
+} from "@/lib/types/settings";
+import {STORAGE_DRIVER_VALUES, StorageDriverType} from "@/lib/storage";
+import {CronDeployPlatform} from "@/lib/types/settings";
 
 const plugins = [gfm()];
 
@@ -52,7 +61,7 @@ export function ManageSettings() {
   const [aboutContent, setAboutContent] = useState("");
   const [adminPath, setAdminPath] = useState("");
   const [storage, setStorage] = useState<StorageSettings>({
-    driver: "LOCAL",
+    driver: StorageDriverType.LOCAL as StorageDriverType,
     github: { owner: "", repo: "", branch: "", cdnBase: "", token: "", tokenConfigured: false },
     s3: { endpoint: "", bucket: "", region: "", accessKey: "", secretKey: "", accessKeyConfigured: false, secretKeyConfigured: false },
     local: { uploadDir: "" },
@@ -66,11 +75,11 @@ export function ManageSettings() {
   });
 
   const [cron, setCron] = useState<CronSettings>({
-    deployPlatform: "VERCEL" as "VERCEL" | "SERVER",
-    cronSecret: "",
-    cronSecretConfigured: false,
-    cronJobApiKey: "",
-    cronJobApiKeyConfigured: false,
+    deployPlatform: CronDeployPlatform.VERCEL as CronDeployPlatform,
+    secret: "",
+    secretConfigured: false,
+    jobApiKey: "",
+    jobApiKeyConfigured: false,
   });
 
   // 加载设置
@@ -199,11 +208,10 @@ export function ManageSettings() {
                   key={section.id}
                   type="button"
                   onClick={() => setActiveSection(section.id)}
-                  className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm transition-colors ${
-                    activeSection === section.id
+                  className={`flex items-center gap-2 whitespace-nowrap rounded-lg px-3 py-2 text-sm transition-colors ${activeSection === section.id
                       ? "bg-primary text-primary-foreground"
                       : "hover:bg-accent"
-                  }`}
+                    }`}
                 >
                   <Icon className="h-4 w-4" />
                   {section.label}
@@ -402,25 +410,24 @@ export function ManageSettings() {
                 <div>
                   <label className={labelClass}>当前存储驱动</label>
                   <div className="flex gap-2">
-                    {(["LOCAL", "GITHUB", "S3"] as const).map((d) => (
+                    {STORAGE_DRIVER_VALUES.map((d) => (
                       <button
                         key={d}
                         type="button"
                         onClick={() => setStorage({ ...storage, driver: d })}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                          storage.driver === d
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${storage.driver === d
                             ? "bg-primary text-primary-foreground"
                             : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                        }`}
+                          }`}
                       >
-                        {d === "LOCAL" ? "本地存储" : d === "GITHUB" ? "GitHub 图床" : "S3 兼容存储"}
+                        {d === StorageDriverType.LOCAL ? "本地存储" : d === StorageDriverType.GITHUB ? "GitHub 图床" : "S3 兼容存储"}
                       </button>
                     ))}
                   </div>
                 </div>
 
                 {/* GitHub 配置 */}
-                {storage.driver === "GITHUB" && (
+                {storage.driver === StorageDriverType.GITHUB && (
                   <div className="space-y-4 p-4 rounded-lg bg-muted/50">
                     <h3 className="font-medium text-sm">GitHub 图床配置</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -503,7 +510,7 @@ export function ManageSettings() {
                 )}
 
                 {/* S3 配置 */}
-                {storage.driver === "S3" && (
+                {storage.driver === StorageDriverType.S3 && (
                   <div className="space-y-4 p-4 rounded-lg bg-muted/50">
                     <h3 className="font-medium text-sm">S3 兼容存储配置</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -575,7 +582,7 @@ export function ManageSettings() {
                 )}
 
                 {/* LOCAL 配置 */}
-                {storage.driver === "LOCAL" && (
+                {storage.driver === StorageDriverType.LOCAL && (
                   <div className="space-y-4 p-4 rounded-lg bg-muted/50">
                     <h3 className="font-medium text-sm">本地存储配置</h3>
                     <div>
@@ -673,10 +680,10 @@ export function ManageSettings() {
                   <select
                     className={`${inputClass} mt-1 w-full`}
                     value={cron.deployPlatform}
-                    onChange={(e) => setCron({ ...cron, deployPlatform: e.target.value as "VERCEL" | "SERVER" })}
+                    onChange={(e) => setCron({ ...cron, deployPlatform: e.target.value as CronDeployPlatform })}
                   >
-                    <option value="VERCEL">VERCEL（cron-job.org 外部定时任务）</option>
-                    <option value="SERVER">SERVER（node-cron 内置定时任务）</option>
+                    <option value={CronDeployPlatform.VERCEL}>VERCEL（cron-job.org 外部定时任务）</option>
+                    <option value={CronDeployPlatform.SERVER}>SERVER（node-cron 内置定时任务）</option>
                   </select>
                   <p className="mt-1 text-xs text-muted-foreground">
                     注意：应用启动时使用环境变量 DEPLOY_PLATFORM 决定是否启动 node-cron，修改后需重启应用生效。
@@ -685,16 +692,16 @@ export function ManageSettings() {
                 <div>
                   <label className={labelClass}>
                     CRON_SECRET（定时任务接口鉴权密钥）
-                    {cron.cronSecretConfigured && (
+                    {cron.secretConfigured && (
                       <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
                     )}
                   </label>
                   <input
                     type="password"
-                    value={cron.cronSecret}
-                    onChange={(e) => setCron({ ...cron, cronSecret: e.target.value })}
+                    value={cron.secret}
+                    onChange={(e) => setCron({ ...cron, secret: e.target.value })}
                     className={inputClass}
-                    placeholder={cron.cronSecretConfigured ? "留空则保持当前配置，输入新值则覆盖" : "生成方式：openssl rand -hex 32"}
+                    placeholder={cron.secretConfigured ? "留空则保持当前配置，输入新值则覆盖" : "生成方式：openssl rand -hex 32"}
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
                     用于定时任务接口鉴权，AES-256-GCM 加密存储。修改后需重新创建 cron-job.org 定时任务（URL 中编码了 secret）。
@@ -703,16 +710,16 @@ export function ManageSettings() {
                 <div>
                   <label className={labelClass}>
                     CRON_JOB_API_KEY（cron-job.org API Key）
-                    {cron.cronJobApiKeyConfigured && (
+                    {cron.jobApiKeyConfigured && (
                       <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
                     )}
                   </label>
                   <input
                     type="password"
-                    value={cron.cronJobApiKey}
-                    onChange={(e) => setCron({ ...cron, cronJobApiKey: e.target.value })}
+                    value={cron.jobApiKey}
+                    onChange={(e) => setCron({ ...cron, jobApiKey: e.target.value })}
                     className={inputClass}
-                    placeholder={cron.cronJobApiKeyConfigured ? "留空则保持当前配置，输入新值则覆盖" : "获取地址：https://cron-job.org/en/members/settings/"}
+                    placeholder={cron.jobApiKeyConfigured ? "留空则保持当前配置，输入新值则覆盖" : "获取地址：https://cron-job.org/en/members/settings/"}
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
                     VERCEL 模式下用于调用 cron-job.org API 创建/删除定时任务，AES-256-GCM 加密存储。

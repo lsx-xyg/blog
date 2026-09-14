@@ -2,10 +2,11 @@
  * GET /api/admin/cron - 获取定时任务状态
  */
 import { NextResponse } from "next/server";
-import { requireAdmin, adminDenied } from "@/lib/auth-guard";
-import { findGlobalPublishJob } from "@/lib/cron-job";
-import { getDeployPlatform } from "@/lib/cron-utils";
-import { getCronConfig, getSiteSettings } from "@/lib/settings";
+import { requireAdmin, adminDenied } from "@/lib/auth/auth-guard";
+import { findGlobalPublishJob } from "@/lib/cron";
+import { getDeployPlatform } from "@/lib/settings";
+import { getCronSettings, getSiteSettings } from "@/lib/settings/index";
+import { CronDeployPlatform } from "@/lib/types/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export async function GET(req: Request) {
 
   const [platform, cronConfig, siteSettings] = await Promise.all([
     getDeployPlatform(),
-    getCronConfig(),
+    getCronSettings(),
     getSiteSettings(),
   ]);
 
@@ -24,7 +25,7 @@ export async function GET(req: Request) {
     enabled: false,
   };
 
-  if (platform === "VERCEL" && cronConfig.cronJobApiKey) {
+  if (platform === CronDeployPlatform.VERCEL && cronConfig.jobApiKey) {
     try {
       const job = await findGlobalPublishJob();
       if (job) {
@@ -41,8 +42,8 @@ export async function GET(req: Request) {
 
   return NextResponse.json({
     platform,
-    cronSecretConfigured: !!cronConfig.cronSecret,
-    cronJobApiKeyConfigured: !!cronConfig.cronJobApiKey,
+    cronSecretConfigured: !!cronConfig.secret,
+    cronJobApiKeyConfigured: !!cronConfig.jobApiKey,
     siteUrl,
     job: jobStatus,
     endpoints: {

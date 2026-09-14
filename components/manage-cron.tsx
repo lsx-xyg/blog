@@ -14,9 +14,10 @@
 import { useEffect, useState } from "react";
 import { Play, Square, RefreshCw, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/toast";
+import { CronDeployPlatform } from "@/lib/types/settings";
 
 type CronStatus = {
-  platform: "VERCEL" | "SERVER";
+  platform: CronDeployPlatform;
   cronSecretConfigured: boolean;
   cronJobApiKeyConfigured: boolean;
   siteUrl: string;
@@ -100,7 +101,7 @@ export function ManageCron() {
   }
 
   const isRunning = status.job.enabled;
-  const canStart = status.platform === "VERCEL" && status.cronSecretConfigured && status.cronJobApiKeyConfigured && status.siteUrl;
+  const canStart = status.platform === CronDeployPlatform.VERCEL && status.cronSecretConfigured && status.cronJobApiKeyConfigured && status.siteUrl;
 
   return (
     <div className="container mx-auto px-4 py-8 animate-page-enter">
@@ -122,7 +123,7 @@ export function ManageCron() {
           </div>
           <p className="mt-2 text-lg font-semibold">{status.platform}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            {status.platform === "VERCEL" ? "cron-job.org 外部定时任务" : "node-cron 内置定时任务"}
+            {status.platform === CronDeployPlatform.VERCEL ? "cron-job.org 外部定时任务" : "node-cron 内置定时任务"}
           </p>
         </div>
 
@@ -245,7 +246,7 @@ export function ManageCron() {
 
         {/* 提示信息 */}
         <div className="mt-4 space-y-2 text-xs text-muted-foreground">
-          {!canStart && status.platform === "VERCEL" && (
+          {!canStart && status.platform === CronDeployPlatform.VERCEL && (
             <p className="flex items-start gap-2">
               <AlertCircle className="mt-0.5 h-3 w-3 flex-shrink-0 text-yellow-600" />
               <span>

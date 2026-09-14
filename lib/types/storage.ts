@@ -1,3 +1,4 @@
+
 /** 存储驱动抽象层（StorageDriver interface）
  *
  * 三个实现：
@@ -7,7 +8,6 @@
  *
  * 切换方式：环境变量 STORAGE_DRIVER=local|github|s3
  */
-
 /** 上传结果 */
 export interface UploadResult {
   /** 访问 URL（本地驱动返回 /uploads/...，GitHub 驱动返回 jsDelivr CDN URL） */
@@ -19,9 +19,9 @@ export interface UploadResult {
   /** MIME 类型 */
   mimeType: string;
 }
-
 /** 存储驱动接口 */
-export interface StorageDriver {
+
+export interface StorageDriverInterface {
   /** 上传文件 */
   upload(file: Buffer, filename: string, mimeType: string): Promise<UploadResult>;
   /** 删除文件（按 key） */
@@ -31,8 +31,8 @@ export interface StorageDriver {
   /** 驱动名称 */
   name: string;
 }
-
 /** 支持的图片 MIME 类型 */
+
 export const ALLOWED_IMAGE_MIME_TYPES = [
   "image/jpeg",
   "image/jpg",
@@ -40,6 +40,17 @@ export const ALLOWED_IMAGE_MIME_TYPES = [
   "image/webp",
   "image/gif",
 ] as const;
-
 /** 单张图片最大大小（10MB） */
+
 export const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+/** 存储驱动类型（用于 storage.driver 的 default/transform 类型对齐） */
+
+export const StorageDriverType = {
+  LOCAL: "LOCAL",
+  GITHUB: "GITHUB",
+  S3: "S3",
+} as const;
+
+export type StorageDriverType = (typeof StorageDriverType)[keyof typeof StorageDriverType]; /** 存储驱动枚举 */
+
+export const STORAGE_DRIVER_VALUES = Object.values(StorageDriverType) as StorageDriverType[];

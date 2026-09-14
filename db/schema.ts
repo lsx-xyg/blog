@@ -4,6 +4,10 @@
  * - 枚举值全大写（post_status / backup_trigger）
  * - 标签 name 原样存储（大小写敏感），slug 唯一冲突加后缀
  */
+import { BackupTrigger } from "@/lib/types/backup";
+import { MediaType } from "@/lib/types/media";
+import { PostStatus } from "@/lib/types/posts";
+import { StorageDriverType } from "@/lib/types/storage";
 import {
   pgTable,
   pgEnum,
@@ -21,15 +25,13 @@ import {
 
 /* ---------- 枚举（全大写） ---------- */
 
-export const postStatus = pgEnum("post_status", [
-  "DRAFT",
-  "SCHEDULED",
-  "PUBLISHED",
-]);
+export const postStatus = pgEnum("post_status", PostStatus);
 
-export const backupTrigger = pgEnum("backup_trigger", ["MANUAL", "AUTO"]);
+export const backupTrigger = pgEnum("backup_trigger", BackupTrigger);
 
-export const mediaType = pgEnum("media_type", ["ARTICLE", "GALLERY"]);
+export const mediaType = pgEnum("media_type", MediaType);
+
+export const storageDriverType = pgEnum("storage_driver", StorageDriverType);
 
 /* ---------- Better Auth 核心表（列名 camelCase，与适配器对齐；user 表扩展 isAdmin） ---------- */
 
@@ -95,7 +97,7 @@ export const posts = pgTable(
     summary: text("summary"),
     content: text("content").notNull(), // Markdown 原文
     coverUrl: text("cover_url"),
-    status: postStatus("status").notNull().default("DRAFT"),
+    status: postStatus("status").notNull().default(PostStatus.DRAFT),
     scheduledAt: timestamp("scheduled_at", { withTimezone: true }),
     featured: boolean("featured").notNull().default(false),
     viewCount: integer("view_count").notNull().default(0),
@@ -150,7 +152,7 @@ export const media = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     type: mediaType("type").notNull(), // ARTICLE | GALLERY（枚举，禁止硬编码）
     url: text("url").notNull(), // 访问 URL（存储驱动返回的公开 URL）
-    storageDriver: text("storage_driver").notNull().default("LOCAL"), // LOCAL | GITHUB | S3
+    storageDriver: storageDriverType("storage_driver").notNull().default(StorageDriverType.LOCAL), // LOCAL | GITHUB | S3
     storageKey: text("storage_key"), // 存储键（用于删除，如 2026/09/uuid.jpg）
     title: text("title"), // 可空
     description: text("description"), // 可空

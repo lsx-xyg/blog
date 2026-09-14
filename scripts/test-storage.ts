@@ -9,7 +9,7 @@
  * 4. 测试 GitHub 驱动上传（如果配置了 GITHUB_TOKEN 且 STORAGE_DRIVER=GITHUB）
  */
 import "../db/load-env";
-import { getStorageDriverSync, resetStorageDriver } from "@/lib/storage";
+import { getStorageDriverInstance, resetStorageDriver, StorageDriverType } from "@/lib/storage";
 import { validateImage } from "@/lib/storage";
 
 async function main() {
@@ -17,7 +17,7 @@ async function main() {
 
   // 支持命令行参数指定驱动：npx tsx scripts/test-storage.ts github
   const driverArg = process.argv[2]?.toUpperCase();
-  if (driverArg === "GITHUB" || driverArg === "LOCAL" || driverArg === "S3") {
+  if (driverArg === StorageDriverType.GITHUB || driverArg === StorageDriverType.LOCAL || driverArg === StorageDriverType.S3) {
     process.env.STORAGE_DRIVER = driverArg;
     resetStorageDriver();
     console.log(`（命令行强制指定驱动：${driverArg}）\n`);
@@ -41,7 +41,7 @@ async function main() {
 
   // 3. 获取存储驱动
   console.log("3. 获取存储驱动...");
-  const driver = getStorageDriverSync();
+  const driver = await getStorageDriverInstance();
   console.log(`   使用驱动：${driver.name}\n`);
 
   // 4. 测试上传

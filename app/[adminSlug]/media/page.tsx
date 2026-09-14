@@ -1,9 +1,9 @@
 /** 后台媒体库管理：动态路径（/[adminSlug]/media），未匹配/未授权一律 404 伪装 */
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
-import { getAdminPathAsync } from "@/lib/admin-path";
-import { isAdminUser } from "@/lib/utils";
+import { auth } from "@/lib/auth/auth";
+import { getAdminPathAsync } from "@/lib/shared/admin-path";
+import { isAdminUser } from "@/lib/shared/utils";
 import { ManageMedia } from "@/components/manage-media";
 
 export const dynamic = "force-dynamic";

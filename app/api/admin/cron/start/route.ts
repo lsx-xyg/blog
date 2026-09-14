@@ -2,10 +2,11 @@
  * POST /api/admin/cron/start - 创建全局定时发布任务（cron-job.org）
  */
 import { NextResponse } from "next/server";
-import { requireAdmin, adminDenied } from "@/lib/auth-guard";
-import { createGlobalPublishJob, findGlobalPublishJob } from "@/lib/cron-job";
-import { getDeployPlatform } from "@/lib/cron-utils";
-import { getCronConfig, getSiteSettings } from "@/lib/settings";
+import { requireAdmin, adminDenied } from "@/lib/auth/auth-guard";
+import { createGlobalPublishJob, findGlobalPublishJob } from "@/lib/cron";
+import { getDeployPlatform } from "@/lib/settings";
+import { getCronSettings, getSiteSettings } from "@/lib/settings/index";
+import { CronDeployPlatform } from "@/lib/types/settings";
 
 export const dynamic = "force-dynamic";
 
@@ -14,20 +15,20 @@ export async function POST(req: Request) {
 
   const [platform, cronConfig, siteSettings] = await Promise.all([
     getDeployPlatform(),
-    getCronConfig(),
+    getCronSettings(),
     getSiteSettings(),
   ]);
 
   const siteUrl = siteSettings.siteUrl;
 
-  if (!cronConfig.cronSecret) {
+  if (!cronConfig.secret) {
     return NextResponse.json(
       { error: "CRON_SECRET 未配置，无法启动定时任务" },
       { status: 400 },
     );
   }
 
-  if (platform === "VERCEL") {
+  if (platform === CronDeployPlatform.VERCEL) {
     if (!siteUrl) {
       return NextResponse.json(
         { error: "站点 URL 未配置，请在「设置 → 站点设置」中配置站点 URL" },
@@ -46,7 +47,7 @@ export async function POST(req: Request) {
         });
       }
 
-      const jobId = await createGlobalPublishJob(siteUrl, cronConfig.cronSecret);
+      const jobId = await createGlobalPublishJob(siteUrl, cronConfig.secret);
       return NextResponse.json({
         success: true,
         message: "定时任务已创建（每分钟执行一次）",

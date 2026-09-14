@@ -4,7 +4,8 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { posts } from "@/db/schema";
 import { listAllPosts } from "@/lib/posts";
-import { requireAdmin, adminDenied } from "@/lib/auth-guard";
+import { requireAdmin, adminDenied } from "@/lib/auth/auth-guard";
+import { POST_STATUS_VALUES, PostStatus } from "@/lib/types/posts";
 
 export const dynamic = "force-dynamic";
 
@@ -23,9 +24,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "title 和 content 必填" }, { status: 400 });
   }
 
-  const status = ["DRAFT", "SCHEDULED", "PUBLISHED"].includes(body.status)
+  const status = POST_STATUS_VALUES.includes(body.status)
     ? body.status
-    : "DRAFT";
+    : PostStatus.DRAFT;
   const slug = typeof body.slug === "string" && body.slug.trim() ? body.slug.trim() : null;
 
   const [created] = await db
@@ -42,7 +43,7 @@ export async function POST(req: Request) {
         body.scheduledAt && !Number.isNaN(Date.parse(body.scheduledAt))
           ? new Date(body.scheduledAt)
           : null,
-      publishedAt: status === "PUBLISHED" ? new Date() : null,
+      publishedAt: status === PostStatus.PUBLISHED ? new Date() : null,
     })
     .returning();
 

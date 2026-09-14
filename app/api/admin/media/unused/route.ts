@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
-import { isAdminUser } from "@/lib/utils";
+import { isAdminUser } from "@/lib/shared/utils";
 import { findUnusedMedia, batchDeleteMedia } from "@/lib/media";
-import { getStorageDriver } from "@/lib/storage";
+import { getStorageDriverInstance } from "@/lib/storage";
 
 /**
  * 未使用图片清理 API
@@ -55,7 +55,7 @@ export async function DELETE(request: Request) {
     }
 
     // 删除存储中的文件
-    const driver = await getStorageDriver();
+    const driver = await getStorageDriverInstance();
     for (const item of mediaToDelete) {
       if (item.storageKey) {
         try {

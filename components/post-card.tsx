@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/shared/utils";
 import { CalendarDays } from "lucide-react";
 
 /** 卡片所需字段（兼容 db Post 与 search-index JSON 两种来源） */

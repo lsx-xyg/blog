@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Laptop, Sun, Moon, Eye } from "lucide-react";
-import { applyTheme, getStoredTheme, type ThemeMode } from "@/lib/theme";
+import { applyTheme, getStoredTheme, type ThemeMode } from "@/lib/shared/theme";
 import {
   DropdownMenu,
   DropdownMenuContent,

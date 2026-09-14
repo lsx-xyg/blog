@@ -1,7 +1,7 @@
 import { listPublishedPosts, listPublishedPostMeta } from "@/lib/posts";
 import { PostWall } from "@/components/post-wall";
 import { FileText, Tags, Star } from "lucide-react";
-import { getSiteSettings } from "@/lib/settings";
+import { getSiteSettings } from "../lib/settings";
 import type { Metadata } from "next";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";

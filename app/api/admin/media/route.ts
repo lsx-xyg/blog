@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
-import { isAdminUser } from "@/lib/utils";
+import { isAdminUser } from "@/lib/shared/utils";
 import { listMedia, countMedia, createMedia } from "@/lib/media";
-import { getStorageDriver } from "@/lib/storage";
-import { MediaType, StorageDriverType } from "@/lib/types/media";
+import { getStorageDriverInstance } from "@/lib/storage";
+import { MediaType } from "@/lib/types/media";
+import { StorageDriverType } from "@/lib/types/storage";
 
 /**
  * 后台媒体库 API
@@ -76,7 +77,7 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(await file.arrayBuffer());
 
     // 调用存储驱动上传
-    const driver = await getStorageDriver();
+    const driver = await getStorageDriverInstance();
     const uploadResult = await driver.upload(buffer, file.name, file.type);
 
     // 创建媒体记录

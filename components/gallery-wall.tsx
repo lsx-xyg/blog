@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { GalleryMeta } from "@/lib/gallery";
+import type { GalleryMeta } from "@/lib/types/gallery";
 import { Filter, Sparkles, Clock, ChevronDown, ChevronUp } from "lucide-react";
 
 /**

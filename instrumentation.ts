@@ -1,3 +1,6 @@
+import { getDeployPlatform } from "@/lib/settings";
+import { CronDeployPlatform } from "@/lib/types/settings";
+
 /**
  * T12 定时任务：SERVER 模式下使用 node-cron 内置定时任务
  *
@@ -11,10 +14,14 @@
 export async function register() {
   // 只在 Node.js 运行时执行（不在 Edge 运行时执行）
   if (process.env.NEXT_RUNTIME === "nodejs") {
-    const platform = process.env.DEPLOY_PLATFORM || "VERCEL";
+    // 动态 import，让打包器把这条链放到 Node bundle，不进 Edge bundle
+    const { getDeployPlatform } = await import("@/lib/settings");
+    const { CronDeployPlatform } = await import("@/lib/types/settings");
+    
+    const platform = await getDeployPlatform() || CronDeployPlatform.VERCEL;
 
     // 只在 SERVER 模式下启动 node-cron
-    if (platform === "SERVER") {
+    if (platform === CronDeployPlatform.SERVER) {
       const { schedule } = await import("node-cron");
       const { publishScheduledPosts } = await import("@/lib/posts");
       const { revalidatePath } = await import("next/cache");

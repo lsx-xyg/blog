@@ -19,13 +19,13 @@
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
 import { publishScheduledPosts } from "@/lib/posts";
-import { getCronConfig } from "@/lib/settings";
+import { getCronSettings } from "@/lib/settings/index";
 
 export const dynamic = "force-dynamic";
 
 /** 校验 CRON_SECRET（支持环境变量和 DB 动态配置） */
 async function verifyCronSecret(req: Request): Promise<boolean> {
-  const { cronSecret } = await getCronConfig();
+  const { secret: cronSecret } = await getCronSettings();
   if (!cronSecret) {
     // 未配置 CRON_SECRET 时，拒绝所有请求（防止未授权访问）
     return false;

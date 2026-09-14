@@ -1,3 +1,5 @@
+//? todo 是否已弃用可以删除
+
 /**
  * 相册数据访问层（T5：列表/详情/CRUD；T7：全量轻量元数据 + 服务端过滤预留）
  *
@@ -8,23 +10,8 @@ import { and, desc, eq } from "drizzle-orm";
 import { db } from "@/db";
 import { tags, mediaTags, media } from "@/db/schema";
 import { MediaType } from "@/lib/types/media";
-
-/** 相册项（即 media 表中 type=GALLERY 的记录） */
-export type GalleryItemWithMedia = {
-  id: string;
-  title: string | null;
-  description: string | null;
-  featured: boolean;
-  createdAt: Date;
-  // media 表字段
-  imageUrl: string;
-  storageDriver: string;
-  storageKey: string | null;
-  mimeType: string | null;
-  size: number | null;
-  width: number | null;
-  height: number | null;
-};
+import { StorageDriverType } from "@/lib/types/storage";
+import { GalleryItemWithMedia, GalleryMeta } from "@/lib/types/gallery";
 
 /** 相册列表（按创建时间倒序，支持分页） */
 export async function listGalleryItems(opts?: {
@@ -86,7 +73,7 @@ export async function getGalleryItemById(id: string): Promise<GalleryItemWithMed
 /** 创建相册项（直接在 media 表创建 type=GALLERY 的记录） */
 export async function createGalleryItem(data: {
   url: string;
-  storageDriver?: string;
+  storageDriver?: StorageDriverType;
   storageKey?: string | null;
   title?: string | null;
   description?: string | null;
@@ -102,7 +89,7 @@ export async function createGalleryItem(data: {
     .values({
       type: MediaType.GALLERY,
       url: data.url,
-      storageDriver: data.storageDriver ?? "LOCAL",
+      storageDriver: data.storageDriver ?? StorageDriverType.LOCAL,
       storageKey: data.storageKey ?? null,
       title: data.title ?? null,
       description: data.description ?? null,
@@ -138,17 +125,6 @@ export async function updateGalleryItem(
 export async function deleteGalleryItem(id: string) {
   await db.delete(media).where(and(eq(media.id, id), eq(media.type, MediaType.GALLERY)));
 }
-
-/** search-index 元数据类型（T7 方案 A：全量轻量数据下发，前端筛选/搜索） */
-export type GalleryMeta = {
-  id: string;
-  title: string | null;
-  description: string | null;
-  imageUrl: string;
-  featured: boolean;
-  createdAt: Date;
-  tags: string[];
-};
 
 /**
  * 相册全量轻量元数据（含标签数组，按创建时间倒序）

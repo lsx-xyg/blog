@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Settings } from "lucide-react";
-import { authClient } from "@/lib/auth-client";
-import { isAdminUser } from "@/lib/utils";
+import { authClient } from "@/lib/auth/auth-client";
+import { isAdminUser } from "@/lib/shared/utils";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { SearchDialog } from "@/components/search-dialog";
 

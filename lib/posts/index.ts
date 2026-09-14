@@ -4,6 +4,7 @@
 import { and, desc, eq, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { posts, tags, postTags } from "@/db/schema";
+import { PostMeta, PostStatus } from "@/lib/types/posts";
 
 /** 已发布文章列表（按发布时间倒序，publishedAt 为空用 createdAt 兜底；支持分页） */
 export async function listPublishedPosts(opts?: {
@@ -14,7 +15,7 @@ export async function listPublishedPosts(opts?: {
   const query = db
     .select()
     .from(posts)
-    .where(eq(posts.status, "PUBLISHED"))
+    .where(eq(posts.status, PostStatus.PUBLISHED))
     .orderBy(sql`coalesce(${posts.publishedAt}, ${posts.createdAt}) desc`);
   if (limit != null) query.limit(limit);
   if (offset != null) query.offset(offset);
@@ -33,7 +34,7 @@ export async function getPublishedPostBySlugOrId(slugOrId: string) {
     .from(posts)
     .where(
       and(
-        eq(posts.status, "PUBLISHED"),
+        eq(posts.status, PostStatus.PUBLISHED),
         isUuid
           ? or(eq(posts.slug, slugOrId), eq(posts.id, slugOrId))
           : eq(posts.slug, slugOrId),
@@ -57,19 +58,6 @@ export async function incrementViewCount(id: string) {
     .returning({ id: posts.id, viewCount: posts.viewCount });
 }
 
-/** search-index 元数据类型（T7 方案 A：全量轻量数据下发，前端筛选/搜索） */
-export type PostMeta = {
-  id: string;
-  slug: string | null;
-  title: string;
-  summary: string | null;
-  coverUrl: string | null;
-  featured: boolean;
-  createdAt: Date;
-  publishedAt: Date | null;
-  tags: string[];
-};
-
 /**
  * 已发布文章全量轻量元数据（含标签数组，按发布时间倒序）
  * - 博客低流量场景，全量下发（方案 A 纯客户端筛选/搜索）
@@ -90,7 +78,7 @@ export async function listPublishedPostMeta(): Promise<PostMeta[]> {
     .from(posts)
     .leftJoin(postTags, eq(postTags.postId, posts.id))
     .leftJoin(tags, eq(tags.id, postTags.tagId))
-    .where(eq(posts.status, "PUBLISHED"))
+    .where(eq(posts.status, PostStatus.PUBLISHED))
     .orderBy(sql`coalesce(${posts.publishedAt}, ${posts.createdAt}) desc`);
 
   const map = new Map<string, PostMeta>();
@@ -127,7 +115,7 @@ export async function listPublishedPostsFiltered(opts?: {
   query?: string;
 }) {
   const { limit, offset, tags: tagNames, featured, query } = opts ?? {};
-  const where = [eq(posts.status, "PUBLISHED")];
+  const where = [eq(posts.status, PostStatus.PUBLISHED)];
   if (featured) where.push(eq(posts.featured, true));
   if (query?.trim()) {
     const q = `%${query.trim()}%`;
@@ -167,7 +155,7 @@ export async function getAllPostsForSitemap() {
       publishedAt: posts.publishedAt,
     })
     .from(posts)
-    .where(eq(posts.status, "PUBLISHED"))
+    .where(eq(posts.status, PostStatus.PUBLISHED))
     .orderBy(sql`coalesce(${posts.publishedAt}, ${posts.createdAt}) desc`);
 }
 
@@ -195,7 +183,7 @@ export async function publishScheduledPosts(): Promise<Array<{ id: string; slug:
     .from(posts)
     .where(
       and(
-        eq(posts.status, "SCHEDULED"),
+        eq(posts.status, PostStatus.SCHEDULED),
         sql`${posts.scheduledAt} <= ${nowIso}`,
       ),
     );
@@ -210,14 +198,14 @@ export async function publishScheduledPosts(): Promise<Array<{ id: string; slug:
     const [updated] = await db
       .update(posts)
       .set({
-        status: "PUBLISHED",
+        status: PostStatus.PUBLISHED,
         publishedAt: now,
         updatedAt: now,
       })
       .where(
         and(
           eq(posts.id, post.id),
-          eq(posts.status, "SCHEDULED"), // 双重检查，防止并发重复发布
+          eq(posts.status, PostStatus.SCHEDULED), // 双重检查，防止并发重复发布
         ),
       )
       .returning({ id: posts.id });
