@@ -4,7 +4,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import type { GalleryMeta } from "@/lib/types/gallery";
 import { Filter, Sparkles, Clock, ChevronDown, ChevronUp } from "lucide-react";
-import { LazyImage } from "@/components/lazy-image";
 
 /**
  * 相册瀑布流组件
@@ -274,12 +273,31 @@ export function GalleryWall() {
               className="mb-4 break-inside-avoid cursor-pointer group"
               onClick={() => setPreviewImage(item.imageUrl)}
             >
-              <div className="relative overflow-hidden rounded-lg border border-border">
-                <LazyImage
+              <div className="relative overflow-hidden rounded-lg border border-border bg-muted">
+                {/* 使用原生 <img> 而不是 next/image/LazyImage
+                 * 原因：
+                 * 1. 瀑布流需要图片自然高度，next/image 的 fill 模式要求父容器有明确高度
+                 * 2. 外部图片（picsum.photos 等）需要配置 remotePatterns
+                 * 3. 原生 <img> + loading="lazy" 已经足够，更简单可靠
+                 */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
                   src={item.imageUrl}
                   alt={item.title || "相册图片"}
-                  className="w-full h-auto transition-transform duration-300 group-hover:scale-105"
+                  loading="lazy"
+                  decoding="async"
+                  className="w-full h-auto transition-all duration-500 group-hover:scale-105 opacity-0"
                   onClick={() => setPreviewImage(item.imageUrl)}
+                  onLoad={(e) => {
+                    // 图片加载完成后淡入显示
+                    (e.target as HTMLImageElement).style.opacity = "1";
+                  }}
+                  onError={(e) => {
+                    console.error("[GalleryWall] 图片加载失败:", item.imageUrl);
+                    (e.target as HTMLImageElement).style.opacity = "0.3";
+                    // 显示一个占位符
+                    (e.target as HTMLImageElement).style.background = "hsl(var(--muted))";
+                  }}
                 />
                 {/* 悬浮信息 */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
