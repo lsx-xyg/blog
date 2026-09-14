@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import dynamic from "next/dynamic";
 import { getPublishedPostBySlugOrId, listPublishedPosts } from "@/lib/posts";
 import { renderMdx } from "@/lib/mdx";
 import { formatDate } from "@/lib/shared/utils";
@@ -11,23 +10,9 @@ import { ArticleToc } from "@/components/article-toc";
 import { ArticleFloatButtons } from "@/components/article-float-buttons";
 import { ArticleProgress } from "@/components/article-progress";
 import { ScrollToTop } from "@/components/scroll-to-top";
+import { CommentsLazy } from "@/components/comments-lazy";
 import { getGiscusSettings } from "@/lib/settings/index";
 import { CalendarDays, Clock } from "lucide-react";
-
-// 评论组件延迟加载（giscus 第三方脚本体积较大，不影响首屏渲染）
-// ssr: false - 只在客户端加载，避免服务端渲染时加载第三方脚本
-const Comments = dynamic(
-  () => import("@/components/comments").then((mod) => mod.Comments),
-  {
-    ssr: false,
-    loading: () => (
-      <div className="mt-8 rounded-xl border border-border bg-card p-8 text-center">
-        <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-        <p className="mt-4 text-sm text-muted-foreground">评论加载中...</p>
-      </div>
-    ),
-  },
-);
 
 export const dynamicParams = true;
 
@@ -158,8 +143,8 @@ export default async function PostPage({
               <div className="mdx-content">{renderMdx(post.content)}</div>
               <CodeCopy />
 
-              {/* giscus 评论 */}
-              <Comments config={giscusConfig} />
+              {/* giscus 评论（延迟加载，不影响首屏渲染） */}
+              <CommentsLazy config={giscusConfig} />
             </article>
           </div>
         </div>
