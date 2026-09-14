@@ -153,15 +153,15 @@ export function ManageBackup() {
   }, [loadBackups]);
 
   return (
-    <div className="container mx-auto py-8 space-y-6">
+    <div className="container mx-auto px-4 py-8 space-y-6 animate-page-enter">
       {/* 页面标题 */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">备份管理</h1>
-          <p className="text-muted-foreground mt-1">管理数据库备份，支持手动创建、下载、删除和恢复</p>
+          <p className="text-muted-foreground mt-1 text-sm">管理数据库备份，支持手动创建、下载、删除和恢复</p>
         </div>
-        <div className="flex gap-2">
-          <Button onClick={handleCreate} disabled={creating}>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={handleCreate} disabled={creating} size="sm">
             {creating ? "创建中..." : "创建备份"}
           </Button>
           <div className="relative">
@@ -172,11 +172,11 @@ export function ManageBackup() {
               disabled={restoring}
               className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
             />
-            <Button variant="outline" disabled={restoring}>
+            <Button variant="outline" disabled={restoring} size="sm">
               {restoring ? "恢复中..." : "恢复备份"}
             </Button>
           </div>
-          <Button variant="ghost" onClick={loadBackups} disabled={loading}>
+          <Button variant="ghost" onClick={loadBackups} disabled={loading} size="sm">
             刷新
           </Button>
         </div>
@@ -211,20 +211,20 @@ export function ManageBackup() {
               {backups.map((backup) => (
                 <div
                   key={backup.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors"
                 >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium">{backup.fileKey.split("/").pop()}</span>
-                      <Badge variant={backup.triggeredBy === "AUTO" ? "secondary" : "default"}>
+                  <div className="space-y-1 min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-sm truncate">{backup.fileKey.split("/").pop()}</span>
+                      <Badge variant={backup.triggeredBy === "AUTO" ? "secondary" : "default"} className="text-xs">
                         {backup.triggeredBy === "AUTO" ? "自动" : "手动"}
                       </Badge>
                     </div>
-                    <div className="text-sm text-muted-foreground">
+                    <div className="text-xs text-muted-foreground">
                       {formatSize(backup.size)} · {formatDate(backup.createdAt)}
                     </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 shrink-0">
                     <Button variant="ghost" size="sm" onClick={() => handleDownload(backup.id)}>
                       下载
                     </Button>
