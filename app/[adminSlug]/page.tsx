@@ -14,6 +14,7 @@ import { env } from "@/db/env";
 import { AdminLogin } from "@/components/admin-login";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SetupWizard } from "@/components/setup-wizard";
+import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -30,7 +31,6 @@ import {
   Timer,
   DatabaseBackup,
   ChevronRight,
-  Home,
 } from "lucide-react";
 
 export const dynamic = "force-dynamic";
@@ -116,14 +116,7 @@ export default async function AdminRootPage({
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8 animate-page-enter">
       {/* 面包屑导航 */}
-      <nav className="mb-4 flex items-center gap-1 text-sm text-muted-foreground" aria-label="面包屑">
-        <Link href="/" className="flex items-center gap-1 hover:text-foreground transition-colors">
-          <Home className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">首页</span>
-        </Link>
-        <ChevronRight className="h-3.5 w-3.5" />
-        <span className="text-foreground font-medium">后台管理</span>
-      </nav>
+      <AdminBreadcrumb current="后台管理" adminPath={adminPath} />
 
       {/* 欢迎信息 + 退出按钮 */}
       <header className="mb-6 flex items-center justify-between">

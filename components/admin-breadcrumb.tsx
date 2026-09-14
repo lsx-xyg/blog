@@ -13,6 +13,7 @@
  */
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, ChevronRight, LayoutDashboard } from "lucide-react";
@@ -36,6 +37,27 @@ export function AdminBreadcrumb({ current, parent, adminPath }: AdminBreadcrumbP
 
   // 从路径中自动提取后台路径（第一段）
   const extractedAdminPath = adminPath || pathname.split("/")[1] || "admin";
+
+  // 页面加载时滚动到顶部，避免 Next.js 滚动恢复或组件加载导致的位置偏移
+  useEffect(() => {
+    // 使用 requestAnimationFrame 确保在浏览器渲染后执行
+    const rafId = requestAnimationFrame(() => {
+      // 先尝试 instant 滚动（现代浏览器支持），不支持则用 auto
+      try {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+      } catch {
+        window.scrollTo(0, 0);
+      }
+    });
+    // 双重保险：在下一帧再滚动一次，确保数据加载后也能回到顶部
+    const secondRafId = requestAnimationFrame(() => {
+      window.scrollTo(0, 0);
+    });
+    return () => {
+      cancelAnimationFrame(rafId);
+      cancelAnimationFrame(secondRafId);
+    };
+  }, [pathname]);
 
   return (
     <nav
