@@ -95,12 +95,23 @@ export function ManagePosts() {
   const [statusFilter, setStatusFilter] = useState<"all" | PostStatus>("all");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [batchLoading, setBatchLoading] = useState(false);
+  // 文章列表加载状态（用于刷新按钮和初始加载）
+  const [listLoading, setListLoading] = useState(true);
 
   const load = useCallback(async () => {
-    const r = await fetch("/api/admin/posts");
-    if (r.ok) {
-      const d = await r.json();
-      setPosts(d.posts);
+    setListLoading(true);
+    try {
+      const r = await fetch("/api/admin/posts");
+      if (r.ok) {
+        const d = await r.json();
+        setPosts(d.posts);
+      } else {
+        setError("加载文章列表失败");
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "加载文章列表失败");
+    } finally {
+      setListLoading(false);
     }
   }, []);
 
@@ -137,26 +148,34 @@ export function ManagePosts() {
     setLoading(true);
     setError("");
     try {
+      // 判断是新建还是编辑
+      // editingId === "new" 表示新建模式
+      // editingId 为其他值表示编辑模式
+      const isNewPost = editingId === "new";
+
       // 编辑时内容留空 → 不传 content，服务端保持原值
       const payload: Record<string, unknown> = {
         ...form,
         scheduledAt: form.scheduledAt || null,
       };
-      if (editingId && !form.content) delete payload.content;
-      if (editingId) {
-        const r = await fetch(`/api/admin/posts/${editingId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!r.ok) throw new Error("保存失败");
-      } else {
+      if (!isNewPost && !form.content) delete payload.content;
+
+      if (isNewPost) {
+        // 新建文章
         const r = await fetch("/api/admin/posts", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
         if (!r.ok) throw new Error("创建失败");
+      } else {
+        // 编辑文章
+        const r = await fetch(`/api/admin/posts/${editingId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!r.ok) throw new Error("保存失败");
       }
       resetForm();
       await load();
@@ -298,9 +317,11 @@ export function ManagePosts() {
         </p>
       )}
 
+      {/* 编辑模式：显示编辑表单（只有在点击"新建文章"或"编辑"时才显示） */}
+      {editingId !== null && (
       <form
         onSubmit={save}
-        className="mb-10 rounded-xl border border-border bg-surface p-6"
+        className="mb-10 rounded-xl border border-border bg-surface p-6 animate-fade-in-up"
       >
         {/* 步骤条 */}
         <div className="mb-6 flex items-center">
@@ -490,6 +511,7 @@ export function ManagePosts() {
           </div>
         </div>
       </form>
+      )}
 
       <section>
         {/* 标题和搜索筛选 */}
@@ -498,6 +520,21 @@ export function ManagePosts() {
             全部文章（{filteredPosts.length}/{posts.length}）
           </h2>
           <div className="flex flex-wrap items-center gap-2">
+            {/* 新建文章按钮（只有在非编辑模式下才显示） */}
+            {editingId === null && (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingId("new"); // 使用 "new" 表示新建模式
+                  setForm(emptyForm);
+                  setCurrentStep(1);
+                }}
+                className="flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+              >
+                <FileText className="h-4 w-4" />
+                新建文章
+              </button>
+            )}
             {/* 搜索框 */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -524,10 +561,11 @@ export function ManagePosts() {
             <button
               type="button"
               onClick={load}
-              className="flex items-center gap-1 rounded-lg border border-input px-3 py-1.5 text-sm hover:bg-accent transition-colors"
+              disabled={listLoading}
+              className="flex items-center gap-1 rounded-lg border border-input px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="刷新列表"
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className={`h-4 w-4 ${listLoading ? "animate-spin" : ""}`} />
             </button>
           </div>
         </div>
@@ -579,7 +617,32 @@ export function ManagePosts() {
           </div>
         )}
 
-        {filteredPosts.length === 0 ? (
+        {/* 文章列表加载中：显示骨架屏 */}
+        {listLoading ? (
+          <div className="overflow-hidden rounded-xl border border-border bg-surface">
+            {/* 表头骨架 */}
+            <div className="flex items-center gap-3 border-b border-border bg-muted/50 px-4 py-2.5">
+              <div className="h-4 w-4 animate-pulse rounded bg-muted" />
+              <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+              <div className="h-3 flex-1 animate-pulse rounded bg-muted" />
+              <div className="h-3 w-12 animate-pulse rounded bg-muted" />
+              <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+            </div>
+            {/* 列表骨架（5 行） */}
+            <ul className="divide-y divide-border">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <li key={i} className="flex items-center gap-3 px-4 py-3">
+                  <div className="h-4 w-4 shrink-0 animate-pulse rounded bg-muted" />
+                  <div className="h-4 w-16 shrink-0 animate-pulse rounded bg-muted" />
+                  <div className="h-4 flex-1 animate-pulse rounded bg-muted" />
+                  <div className="hidden h-4 w-24 animate-pulse rounded bg-muted sm:block" />
+                  <div className="h-4 w-12 shrink-0 animate-pulse rounded bg-muted" />
+                  <div className="h-8 w-20 shrink-0 animate-pulse rounded bg-muted" />
+                </li>
+              ))}
+            </ul>
+          </div>
+        ) : filteredPosts.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border p-12 text-center">
             <FileText className="mx-auto h-12 w-12 text-muted-foreground/50" />
             <p className="mt-4 text-sm text-muted-foreground">
