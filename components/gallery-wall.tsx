@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import type { GalleryMeta } from "@/lib/types/gallery";
 import { Filter, Sparkles, Clock, ChevronDown, ChevronUp } from "lucide-react";
 import { LazyImage } from "@/components/lazy-image";
@@ -17,8 +18,10 @@ import { LazyImage } from "@/components/lazy-image";
  * - 点击图片查看大图（简单实现）
  */
 export function GalleryWall() {
+  const pathname = usePathname();
   const [items, setItems] = useState<GalleryMeta[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [onlyFeatured, setOnlyFeatured] = useState(false);
   const [visibleCount, setVisibleCount] = useState(9);
@@ -27,15 +30,38 @@ export function GalleryWall() {
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   // 拉取全量轻量元数据
+  // 依赖 pathname，确保路由变化时重新获取数据（避免 Next.js Router Cache 导致不刷新）
   useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
     fetch("/api/search-index")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) {
+          throw new Error(`HTTP ${r.status}`);
+        }
+        return r.json();
+      })
       .then((data) => {
-        setItems(data.gallery || []);
+        if (cancelled) return;
+        const gallery = data.gallery || [];
+        console.log("[GalleryWall] 获取到相册数据:", gallery.length, "条");
+        console.log("[GalleryWall] 完整响应:", data);
+        setItems(gallery);
         setLoading(false);
       })
-      .catch(() => setLoading(false));
-  }, []);
+      .catch((err) => {
+        if (cancelled) return;
+        console.error("[GalleryWall] 获取数据失败:", err);
+        setError(err instanceof Error ? err.message : "未知错误");
+        setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [pathname]);
 
   // 所有标签（去重）
   const allTags = useMemo(() => {
@@ -90,6 +116,23 @@ export function GalleryWall() {
       prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag],
     );
   };
+
+  // 错误状态显示
+  if (error) {
+    return (
+      <div className="rounded-xl border border-destructive/50 bg-destructive/10 p-8 text-center">
+        <p className="text-lg font-medium text-destructive">加载失败</p>
+        <p className="mt-2 text-sm text-destructive/80">{error}</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="mt-4 rounded-lg bg-destructive px-4 py-2 text-sm text-destructive-foreground hover:bg-destructive/90"
+        >
+          重新加载
+        </button>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
