@@ -10,6 +10,7 @@ import { ArticleToc } from "@/components/article-toc";
 import { ArticleFloatButtons } from "@/components/article-float-buttons";
 import { ArticleProgress } from "@/components/article-progress";
 import { Comments } from "@/components/comments";
+import { ScrollToTop } from "@/components/scroll-to-top";
 import { getGiscusSettings } from "@/lib/settings/index";
 import { CalendarDays, Clock } from "lucide-react";
 
@@ -92,6 +93,9 @@ export default async function PostPage({
 
   return (
     <main className="container mx-auto px-4 py-4 md:px-4 md:py-8 pb-24 md:pb-8">
+      {/* 滚动到顶部：解决页面加载时滚动位置不在顶部的问题 */}
+      <ScrollToTop />
+
       <div className="w-full">
         <div className="mx-auto grid w-full grid-cols-1 max-w-4xl">
           <div className="min-w-0">
