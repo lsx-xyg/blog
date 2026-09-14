@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/shared/utils";
 
 /**
  * 通用懒加载图片组件
@@ -111,7 +112,7 @@ export function LazyImage({
   return (
     <div
       ref={imgRef}
-      className={`relative overflow-hidden ${className || ""}`}
+      className={cn("relative overflow-hidden", className)}
       style={{
         backgroundColor: placeholderColor || "hsl(var(--muted))",
       }}
@@ -142,9 +143,10 @@ export function LazyImage({
           decoding="async"
           onLoad={handleLoad}
           onError={handleError}
-          className={`h-full w-full object-cover transition-opacity duration-500 ${
-            isLoaded ? "opacity-100" : "opacity-0"
-          }`}
+          className={cn(
+            "h-full w-full object-cover transition-opacity duration-500",
+            isLoaded ? "opacity-100" : "opacity-0",
+          )}
         />
       )}
     </div>
