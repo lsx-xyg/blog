@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   description: "生活图片展示",
 };
 
+// 测试期间暂时设置为 force-dynamic，确保每次都重新加载
+// 后续可以改回静态生成（默认），因为数据是客户端获取的
+export const dynamic = "force-dynamic";
+
 /**
  * 相册页面
  *
