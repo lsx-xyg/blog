@@ -37,6 +37,7 @@ import {
 } from "@/db/schema";
 import { getStorageDriverInstance } from "@/lib/storage";
 import { BackupTrigger } from "@/lib/types/backup";
+import { encryptIfAvailable, decryptIfAvailable, isEncryptionAvailable } from "@/lib/shared/crypto";
 import { eq, desc } from "drizzle-orm";
 
 /** 备份版本 */
@@ -79,26 +80,80 @@ const TABLE_SCHEMA_MAP: Record<BackupTableName, any> = {
 export interface BackupData {
   version: string;
   createdAt: string;
+  /** 敏感字段是否已加密（true=已加密，false=已脱敏/null） */
+  sensitiveFieldsEncrypted: boolean;
   tables: Record<string, unknown[]>;
+}
+
+/** accounts 表中的敏感字段（GitHub OAuth token、密码等） */
+const ACCOUNT_SENSITIVE_FIELDS = ["accessToken", "refreshToken", "idToken", "password"] as const;
+
+/**
+ * 处理 accounts 表的敏感字段
+ * - 如果 ENCRYPTION_KEY 已配置，加密敏感字段
+ * - 如果未配置，脱敏（替换为 null），避免 GitHub secret scanning 检测到
+ */
+function sanitizeAccountRow(row: Record<string, unknown>): Record<string, unknown> {
+  const result = { ...row };
+  for (const field of ACCOUNT_SENSITIVE_FIELDS) {
+    if (result[field] !== null && result[field] !== undefined) {
+      if (isEncryptionAvailable()) {
+        result[field] = encryptIfAvailable(result[field] as string);
+      } else {
+        // 未配置加密密钥时脱敏，避免 GitHub secret scanning 阻止上传
+        result[field] = null;
+      }
+    }
+  }
+  return result;
+}
+
+/**
+ * 恢复 accounts 表的敏感字段（解密）
+ */
+function restoreAccountRow(row: Record<string, unknown>): Record<string, unknown> {
+  const result = { ...row };
+  for (const field of ACCOUNT_SENSITIVE_FIELDS) {
+    if (result[field] !== null && result[field] !== undefined && typeof result[field] === "string") {
+      result[field] = decryptIfAvailable(result[field] as string);
+    }
+  }
+  return result;
 }
 
 /**
  * 导出全量备份
  *
+ * 敏感字段处理：
+ * - accounts 表的 accessToken/refreshToken/idToken/password 会被加密（ENCRYPTION_KEY 已配置时）或脱敏（未配置时为 null）
+ * - 这样可以避免 GitHub secret scanning 阻止备份上传
+ *
  * @returns 备份数据对象
  */
 export async function exportBackup(): Promise<BackupData> {
   const tables: Record<string, unknown[]> = {};
+  const encryptionAvailable = isEncryptionAvailable();
 
   for (const tableName of BACKUP_TABLES) {
     const schema = TABLE_SCHEMA_MAP[tableName];
     const rows = await db.select().from(schema);
-    tables[tableName] = rows;
+
+    // 对 accounts 表的敏感字段进行加密或脱敏
+    if (tableName === "accounts") {
+      tables[tableName] = rows.map((row) => sanitizeAccountRow(row as Record<string, unknown>));
+    } else {
+      tables[tableName] = rows;
+    }
+  }
+
+  if (!encryptionAvailable) {
+    console.warn("[backup] ENCRYPTION_KEY 未配置，accounts 表的敏感字段（token/密码）已脱敏为 null，恢复后需要重新登录");
   }
 
   return {
     version: BACKUP_VERSION,
     createdAt: new Date().toISOString(),
+    sensitiveFieldsEncrypted: encryptionAvailable,
     tables,
   };
 }
@@ -108,6 +163,10 @@ export async function exportBackup(): Promise<BackupData> {
  *
  * 注意：这是危险操作，会清空所有业务表然后插入备份数据。
  * Better Auth 的核心表（user/session/account/verification）也会被恢复。
+ *
+ * 敏感字段处理：
+ * - 如果备份时 sensitiveFieldsEncrypted=true，会自动解密 accounts 表的敏感字段
+ * - 如果备份时 sensitiveFieldsEncrypted=false（脱敏），敏感字段为 null，恢复后需要重新登录
  *
  * @param backupData 备份数据对象
  */
@@ -127,7 +186,13 @@ export async function importBackup(backupData: BackupData): Promise<void> {
   // 按顺序插入数据
   for (const tableName of BACKUP_TABLES) {
     const schema = TABLE_SCHEMA_MAP[tableName];
-    const rows = backupData.tables[tableName];
+    let rows = backupData.tables[tableName];
+
+    // 对 accounts 表的敏感字段进行解密
+    if (tableName === "accounts" && backupData.sensitiveFieldsEncrypted) {
+      rows = rows.map((row) => restoreAccountRow(row as Record<string, unknown>));
+    }
+
     if (rows && rows.length > 0) {
       // 分批插入，避免单次插入过多
       const batchSize = 100;
@@ -136,6 +201,10 @@ export async function importBackup(backupData: BackupData): Promise<void> {
         await db.insert(schema).values(batch as never[]);
       }
     }
+  }
+
+  if (!backupData.sensitiveFieldsEncrypted) {
+    console.warn("[backup] 备份时敏感字段已脱敏，accounts 表的 token/密码为 null，恢复后需要重新登录");
   }
 }
 
