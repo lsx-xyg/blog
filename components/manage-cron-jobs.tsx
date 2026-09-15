@@ -459,8 +459,12 @@ export function ManageCronJobs() {
           </div>
         ) : (
           <div className="divide-y divide-border">
-            {jobs.map((job) => (
-              <div key={job.jobId} className="p-4">
+            {jobs.map((job, index) => (
+              <div
+                key={job.jobId}
+                style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}
+                className="p-4 animate-fade-in-up"
+              >
                 <div className="flex items-start justify-between gap-4">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-3">

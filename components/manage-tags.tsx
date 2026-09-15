@@ -139,12 +139,13 @@ export function ManageTags() {
                   <th className="px-4 py-3 text-right text-sm font-medium">操作</th>
                 </tr>
               </thead>
-              <tbody>
+              {/* 筛选变化时通过 key 重新挂载，触发入场动画 */}
+              <tbody key={search}>
                 {filteredTags.map((tag, index) => (
                   <tr
                     key={tag.id}
                     className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors animate-fade-in-up"
-                    style={{ animationDelay: `${index * 30}ms` }}
+                    style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}
                   >
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
@@ -192,8 +193,8 @@ export function ManageTags() {
             </table>
           </div>
 
-          {/* 移动端：卡片列表 */}
-          <div className="md:hidden space-y-3">
+          {/* 移动端：卡片列表（筛选变化时重新挂载触发动画） */}
+          <div key={search} className="md:hidden space-y-3">
             {filteredTags.map((tag, index) => (
               <div
                 key={tag.id}
