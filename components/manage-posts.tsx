@@ -310,30 +310,55 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
 
         {/* 文章列表加载中：显示骨架屏 */}
         {listLoading ? (
-          <div className="overflow-hidden rounded-xl border border-border bg-surface">
-            {/* 表头骨架 */}
-            <div className="flex items-center gap-3 border-b border-border bg-muted/50 px-4 py-2.5">
-              <div className="h-4 w-4 animate-pulse rounded bg-muted" />
-              <div className="h-3 w-16 animate-pulse rounded bg-muted" />
-              <div className="h-3 flex-1 animate-pulse rounded bg-muted" />
-              <div className="hidden h-3 w-44 shrink-0 animate-pulse rounded bg-muted md:block" />
-              <div className="h-3 w-12 animate-pulse rounded bg-muted" />
-              <div className="h-3 w-16 animate-pulse rounded bg-muted" />
-            </div>
-            {/* 列表骨架（5 行） */}
-            <ul className="divide-y divide-border">
+          <>
+            {/* 桌面骨架：表格形态 */}
+            <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-surface">
+              <div className="flex items-center gap-3 border-b border-border bg-muted/50 px-4 py-3">
+                <div className="h-4 w-4 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-20 shrink-0 animate-pulse rounded bg-muted" />
+                <div className="h-3 flex-1 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-48 shrink-0 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-40 shrink-0 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-24 shrink-0 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-28 shrink-0 animate-pulse rounded bg-muted" />
+              </div>
               {Array.from({ length: 5 }).map((_, i) => (
-                <li key={i} className="flex items-center gap-3 px-4 py-3">
+                <div
+                  key={i}
+                  className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-0"
+                >
                   <div className="h-4 w-4 shrink-0 animate-pulse rounded bg-muted" />
-                  <div className="h-4 w-16 shrink-0 animate-pulse rounded bg-muted" />
-                  <div className="h-4 flex-1 animate-pulse rounded bg-muted" />
-                  <div className="hidden h-4 w-24 animate-pulse rounded bg-muted sm:block" />
-                  <div className="h-4 w-12 shrink-0 animate-pulse rounded bg-muted" />
-                  <div className="h-8 w-20 shrink-0 animate-pulse rounded bg-muted" />
-                </li>
+                  <div className="h-3 w-20 shrink-0 animate-pulse rounded bg-muted" />
+                  <div className="h-3 flex-1 animate-pulse rounded bg-muted" />
+                  <div className="h-3 w-48 shrink-0 animate-pulse rounded bg-muted" />
+                  <div className="h-3 w-40 shrink-0 animate-pulse rounded bg-muted" />
+                  <div className="h-3 w-24 shrink-0 animate-pulse rounded bg-muted" />
+                  <div className="h-6 w-28 shrink-0 animate-pulse rounded bg-muted" />
+                </div>
               ))}
-            </ul>
-          </div>
+            </div>
+            {/* 移动骨架：紧凑行形态 */}
+            <div className="md:hidden overflow-hidden rounded-xl border border-border bg-surface">
+              <div className="flex items-center gap-3 border-b border-border bg-muted/50 px-4 py-2.5">
+                <div className="h-4 w-4 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+                <div className="h-3 flex-1 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-12 animate-pulse rounded bg-muted" />
+                <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+              </div>
+              <ul className="divide-y divide-border">
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <li key={i} className="flex items-center gap-3 px-4 py-3">
+                    <div className="h-4 w-4 shrink-0 animate-pulse rounded bg-muted" />
+                    <div className="h-4 w-16 shrink-0 animate-pulse rounded bg-muted" />
+                    <div className="h-4 flex-1 animate-pulse rounded bg-muted" />
+                    <div className="h-4 w-12 shrink-0 animate-pulse rounded bg-muted" />
+                    <div className="h-8 w-20 shrink-0 animate-pulse rounded bg-muted" />
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </>
         ) : filteredPosts.length === 0 ? (
           <div className="rounded-xl border border-dashed border-border p-12 text-center">
             <FileText className="mx-auto h-12 w-12 text-muted-foreground/50" />
@@ -346,137 +371,213 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
             </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-xl border border-border bg-surface">
-            {/* 表头：全选复选框 */}
-            <div className="flex items-center gap-3 border-b border-border bg-muted/50 px-4 py-2.5">
-              <button
-                type="button"
-                onClick={toggleSelectAll}
-                className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-                title={selectedIds.size === filteredPosts.length ? "取消全选" : "全选"}
-              >
-                {selectedIds.size === filteredPosts.length && filteredPosts.length > 0 ? (
-                  <CheckSquare className="h-4 w-4 text-primary" />
-                ) : (
-                  <Square className="h-4 w-4" />
-                )}
-              </button>
-              <span className="w-16 shrink-0 text-center text-xs font-medium text-muted-foreground">状态</span>
-              <span className="min-w-0 flex-1 text-xs font-medium text-muted-foreground">标题</span>
-              <span className="hidden w-44 shrink-0 text-xs font-medium text-muted-foreground md:block">标签</span>
-              <span className="hidden font-mono text-xs text-muted-foreground sm:block">Slug</span>
-              <span className="shrink-0 font-mono text-xs text-muted-foreground">阅读</span>
-              <span className="shrink-0 text-right text-xs font-medium text-muted-foreground w-20">操作</span>
+          <>
+            {/* 桌面端：表格（与其他管理页统一样式，列天然对齐） */}
+            <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-surface">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border bg-muted/50">
+                    <th className="w-12 px-4 py-3 text-left">
+                      <button
+                        type="button"
+                        onClick={toggleSelectAll}
+                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        title={selectedIds.size === filteredPosts.length ? "取消全选" : "全选"}
+                      >
+                        {selectedIds.size === filteredPosts.length && filteredPosts.length > 0 ? (
+                          <CheckSquare className="h-4 w-4 text-primary" />
+                        ) : (
+                          <Square className="h-4 w-4" />
+                        )}
+                      </button>
+                    </th>
+                    <th className="w-20 px-4 py-3 text-center text-sm font-medium text-muted-foreground">状态</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">标题</th>
+                    <th className="w-48 px-4 py-3 text-left text-sm font-medium text-muted-foreground">标签</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Slug</th>
+                    <th className="w-24 px-4 py-3 text-center text-sm font-medium text-muted-foreground">阅读</th>
+                    <th className="w-28 px-4 py-3 text-right text-sm font-medium text-muted-foreground">操作</th>
+                  </tr>
+                </thead>
+                <tbody key={`${statusFilter}-${search}`}>
+                  {filteredPosts.map((p, i) => (
+                    <tr
+                      key={p.id}
+                      style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
+                      className={`border-b border-border last:border-0 animate-fade-in-up transition-colors ${
+                        selectedIds.has(p.id) ? "bg-primary/5" : "hover:bg-muted/30"
+                      }`}
+                    >
+                      <td className="px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={() => toggleSelect(p.id)}
+                          className="text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {selectedIds.has(p.id) ? (
+                            <CheckSquare className="h-4 w-4 text-primary" />
+                          ) : (
+                            <Square className="h-4 w-4" />
+                          )}
+                        </button>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <span
+                          className={`inline-flex items-center gap-1 font-mono text-xs ${
+                            p.status === PostStatus.PUBLISHED
+                              ? "text-green-600"
+                              : p.status === PostStatus.SCHEDULED
+                                ? "text-amber-600"
+                                : "text-fg-faint"
+                          }`}
+                        >
+                          {p.status === PostStatus.PUBLISHED
+                            ? "已发布"
+                            : p.status === PostStatus.SCHEDULED
+                              ? "定时"
+                              : "草稿"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="block max-w-[280px] truncate">{p.title}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {Array.isArray(p.tags) && p.tags.length > 0 ? (
+                          <div className="flex flex-wrap items-center gap-1">
+                            {p.tags.slice(0, 3).map((t) => (
+                              <span
+                                key={t}
+                                className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                              >
+                                {t}
+                              </span>
+                            ))}
+                            {p.tags.length > 3 && (
+                              <span className="text-[11px] text-fg-faint">
+                                +{p.tags.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-fg-faint">—</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 font-mono text-xs text-fg-faint">
+                        /posts/{p.slug ?? p.id}
+                      </td>
+                      <td className="px-4 py-3 text-center font-mono text-xs text-fg-faint">
+                        {p.viewCount} 阅
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="inline-flex items-center gap-3">
+                          <button
+                            onClick={() => {
+                              triggerNavigationStart();
+                              router.push(`/${adminPath}/posts/${p.id}/edit`);
+                            }}
+                            className="text-primary hover:underline text-sm"
+                          >
+                            编辑
+                          </button>
+                          <button
+                            onClick={() => remove(p)}
+                            className="text-red-500 hover:underline text-sm"
+                          >
+                            删除
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            {/* 文章列表：筛选条件变化时通过 key 重新挂载，触发入场动画 */}
-            <ul
-              key={`${statusFilter}-${search}`}
-              className="divide-y divide-border"
-            >
-              {filteredPosts.map((p, i) => (
-                <li
-                  key={p.id}
-                  style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
-                  className={`animate-fade-in-up flex items-center gap-3 px-4 py-3 text-base transition-colors ${
-                    selectedIds.has(p.id) ? "bg-primary/5" : "hover:bg-muted/30"
-                  }`}
-                >
-                  {/* 复选框 */}
-                  <button
-                    type="button"
-                    onClick={() => toggleSelect(p.id)}
-                    className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-                  >
-                    {selectedIds.has(p.id) ? (
-                      <CheckSquare className="h-4 w-4 text-primary" />
-                    ) : (
-                      <Square className="h-4 w-4" />
-                    )}
-                  </button>
-                  {/* 状态 */}
-                  <span
-                    className={`w-16 shrink-0 text-center font-mono text-xs ${
-                      p.status === PostStatus.PUBLISHED
-                        ? "text-green-600"
-                        : p.status === PostStatus.SCHEDULED
-                          ? "text-amber-600"
-                          : "text-fg-faint"
+
+            {/* 移动端：紧凑行列表（Slug 与独立标签列隐藏，标签附在标题下方） */}
+            <div className="md:hidden overflow-hidden rounded-xl border border-border bg-surface">
+              <ul
+                key={`${statusFilter}-${search}`}
+                className="divide-y divide-border"
+              >
+                {filteredPosts.map((p, i) => (
+                  <li
+                    key={p.id}
+                    style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
+                    className={`animate-fade-in-up flex items-center gap-3 px-4 py-3 text-base transition-colors ${
+                      selectedIds.has(p.id) ? "bg-primary/5" : "hover:bg-muted/30"
                     }`}
                   >
-                    {p.status === PostStatus.PUBLISHED
-                      ? "已发布"
-                      : p.status === PostStatus.SCHEDULED
-                        ? "定时"
-                        : "草稿"}
-                  </span>
-                  {/* 标题（移动端标题下方附标签，md+ 标签独立成列） */}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate">{p.title}</p>
-                    {Array.isArray(p.tags) && p.tags.length > 0 && (
-                      <div className="mt-1 flex flex-wrap items-center gap-1 md:hidden">
-                        {p.tags.slice(0, 3).map((t) => (
-                          <span
-                            key={t}
-                            className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
-                          >
-                            {t}
-                          </span>
-                        ))}
-                        {p.tags.length > 3 && (
-                          <span className="text-[11px] text-fg-faint">
-                            +{p.tags.length - 3}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  {/* 标签列（md+ 独立展示，不占标题空间） */}
-                  <div className="hidden w-44 shrink-0 flex-wrap items-center gap-1 md:flex">
-                    {Array.isArray(p.tags) &&
-                      p.tags.slice(0, 3).map((t) => (
-                        <span
-                          key={t}
-                          className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
-                        >
-                          {t}
-                        </span>
-                      ))}
-                    {Array.isArray(p.tags) && p.tags.length > 3 && (
-                      <span className="text-[11px] text-fg-faint">
-                        +{p.tags.length - 3}
-                      </span>
-                    )}
-                  </div>
-                  {/* Slug */}
-                  <span className="hidden font-mono text-xs text-fg-faint sm:block">
-                    /posts/{p.slug ?? p.id}
-                  </span>
-                  {/* 阅读量 */}
-                  <span className="shrink-0 font-mono text-xs text-fg-faint">
-                    {p.viewCount} 阅
-                  </span>
-                  {/* 操作按钮 */}
-                  <div className="flex shrink-0 items-center gap-2 w-20 justify-end">
                     <button
-                      onClick={() => {
-                        triggerNavigationStart();
-                        router.push(`/${adminPath}/posts/${p.id}/edit`);
-                      }}
-                      className="text-primary hover:underline text-sm"
+                      type="button"
+                      onClick={() => toggleSelect(p.id)}
+                      className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
                     >
-                      编辑
+                      {selectedIds.has(p.id) ? (
+                        <CheckSquare className="h-4 w-4 text-primary" />
+                      ) : (
+                        <Square className="h-4 w-4" />
+                      )}
                     </button>
-                    <button
-                      onClick={() => remove(p)}
-                      className="text-red-500 hover:underline text-sm"
+                    <span
+                      className={`w-16 shrink-0 text-center font-mono text-xs ${
+                        p.status === PostStatus.PUBLISHED
+                          ? "text-green-600"
+                          : p.status === PostStatus.SCHEDULED
+                            ? "text-amber-600"
+                            : "text-fg-faint"
+                      }`}
                     >
-                      删除
-                    </button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+                      {p.status === PostStatus.PUBLISHED
+                        ? "已发布"
+                        : p.status === PostStatus.SCHEDULED
+                          ? "定时"
+                          : "草稿"}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate">{p.title}</p>
+                      {Array.isArray(p.tags) && p.tags.length > 0 && (
+                        <div className="mt-1 flex flex-wrap items-center gap-1">
+                          {p.tags.slice(0, 3).map((t) => (
+                            <span
+                              key={t}
+                              className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                            >
+                              {t}
+                            </span>
+                          ))}
+                          {p.tags.length > 3 && (
+                            <span className="text-[11px] text-fg-faint">
+                              +{p.tags.length - 3}
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <span className="shrink-0 font-mono text-xs text-fg-faint">
+                      {p.viewCount} 阅
+                    </span>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <button
+                        onClick={() => {
+                          triggerNavigationStart();
+                          router.push(`/${adminPath}/posts/${p.id}/edit`);
+                        }}
+                        className="text-primary hover:underline text-sm"
+                      >
+                        编辑
+                      </button>
+                      <button
+                        onClick={() => remove(p)}
+                        className="text-red-500 hover:underline text-sm"
+                      >
+                        删除
+                      </button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </>
         )}
       </section>
     </div>
