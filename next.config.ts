@@ -48,6 +48,26 @@ const nextConfig: NextConfig = {
   deploymentId,
 
   /**
+   * 实验性功能配置
+   */
+  experimental: {
+    /**
+     * optimizePackageImports - 优化大型库的导入
+     *
+     * 自动将全量导入转换为按需导入，减少打包体积。
+     * 适用于那些没有提供 ES Module 按需导入的大型库。
+     *
+     * 优化的库：
+     * - lucide-react：图标库，全量导入体积很大（约 1MB+）
+     * - date-fns：日期处理库（如果使用）
+     * - lodash：工具库（如果使用）
+     *
+     * 参考：https://nextjs.org/docs/app/api-reference/next-config-js/optimizePackageImports
+     */
+    optimizePackageImports: ["lucide-react"],
+  },
+
+  /**
    * 图片优化配置
    *
    * 使用 Next.js Image 组件自动优化图片：
