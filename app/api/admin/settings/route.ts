@@ -259,7 +259,7 @@ export async function PUT(request: Request) {
 
     // 定时任务配置
     if (body.cron) {
-      const { deployPlatform, cronSecret, cronJobApiKey } = body.cron;
+      const { deployPlatform, secret, jobApiKey } = body.cron;
       // DEPLOY_PLATFORM：非敏感信息，直接存
       if (deployPlatform !== undefined && deployPlatform !== null) {
         const normalized = deployPlatform.toUpperCase() === "SERVER" ? CronDeployPlatform.SERVER
@@ -267,9 +267,9 @@ export async function PUT(request: Request) {
         addSetting("cron.deploy_platform", normalized);
       }
       // 敏感信息：Cron Secret 加密后存储，放空时删除记录
-      handleSecret(cronSecret, "cron.secret");
+      handleSecret(secret, "cron.secret");
       // CRON_JOB_API_KEY：敏感信息，加密存储；放空时删除（回退环境变量）
-      handleSecret(cronJobApiKey, "cron.job_api_key");
+      handleSecret(jobApiKey, "cron.job_api_key");
     }
 
     // 批量更新设置
