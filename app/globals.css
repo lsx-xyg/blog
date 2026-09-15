@@ -8,6 +8,49 @@
 @custom-variant data-starting-style (&:where([data-starting-style]));
 @custom-variant data-ending-style (&:where([data-ending-style]));
 
+/* === Sheet 组件动画（直接用 CSS 定义，确保动画生效） === */
+[data-slot="sheet-content"] {
+  transition: transform 0.3s ease-out, opacity 0.3s ease-out !important;
+}
+
+/* 底部弹出：从下往上滑入 */
+[data-slot="sheet-content"][data-side="bottom"][data-starting-style],
+[data-slot="sheet-content"][data-side="bottom"][data-ending-style] {
+  transform: translateY(100%) !important;
+  opacity: 0 !important;
+}
+
+/* 右侧弹出：从右往左滑入 */
+[data-slot="sheet-content"][data-side="right"][data-starting-style],
+[data-slot="sheet-content"][data-side="right"][data-ending-style] {
+  transform: translateX(100%) !important;
+  opacity: 0 !important;
+}
+
+/* 左侧弹出：从左往右滑入 */
+[data-slot="sheet-content"][data-side="left"][data-starting-style],
+[data-slot="sheet-content"][data-side="left"][data-ending-style] {
+  transform: translateX(-100%) !important;
+  opacity: 0 !important;
+}
+
+/* 顶部弹出：从上往下滑入 */
+[data-slot="sheet-content"][data-side="top"][data-starting-style],
+[data-slot="sheet-content"][data-side="top"][data-ending-style] {
+  transform: translateY(-100%) !important;
+  opacity: 0 !important;
+}
+
+/* 遮罩层动画 */
+[data-slot="sheet-overlay"] {
+  transition: opacity 0.3s ease-out !important;
+}
+
+[data-slot="sheet-overlay"][data-starting-style],
+[data-slot="sheet-overlay"][data-ending-style] {
+  opacity: 0 !important;
+}
+
 /* ===== 主题切换平滑过渡动画 ===== */
 html {
   transition: background-color 0.3s ease, color 0.3s ease;
