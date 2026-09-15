@@ -13,15 +13,34 @@ import { Image as ImageIcon, Columns2, Eye, Pencil } from "lucide-react";
 import { MediaPicker } from "@/components/media-picker";
 import "bytemd/dist/index.css";
 import { MediaType } from "@/lib/types/media";
+import { getStoredTheme, type ThemeMode } from "@/lib/shared/theme";
+
+/**
+ * Shiki 主题映射
+ * - light: github-light
+ * - dark: github-dark
+ * - warm: github-dark-dimmed（护眼模式使用稍暗的主题）
+ * - system: 根据系统主题自动选择
+ */
+const SHIKI_THEME_MAP: Record<ThemeMode, string> = {
+  light: "github-light",
+  dark: "github-dark",
+  warm: "github-dark-dimmed",
+  system: "github-dark", // system 主题默认使用 dark，实际会根据系统主题动态切换
+};
 
 /**
  * 异步初始化 Shiki highlighter
- * 使用 JavaScript 引擎（无需 WASM），与详情页 (lib/mdx.tsx) 使用相同的 github-dark 主题
+ * 使用 JavaScript 引擎（无需 WASM），预先加载所有可能的主题，支持动态切换
  */
 async function createShikiHighlighter(): Promise<HighlighterCore> {
   const highlighter = await createHighlighterCore({
     engine: createJavaScriptRegexEngine(),
-    themes: [import("shiki/themes/github-dark.mjs")],
+    themes: [
+      import("shiki/themes/github-light.mjs"),
+      import("shiki/themes/github-dark.mjs"),
+      import("shiki/themes/github-dark-dimmed.mjs"),
+    ],
     langs: [
       import("shiki/langs/typescript.mjs"),
       import("shiki/langs/javascript.mjs"),
@@ -46,7 +65,7 @@ async function createShikiHighlighter(): Promise<HighlighterCore> {
  * 创建同步的 Shiki 代码高亮 rehype 插件
  * 使用 highlighter.codeToHast 同步方法，避免异步 transformer 导致 ByteMD 预览返回 undefined
  */
-function createShikiRehypePlugin(highlighter: HighlighterCore): BytemdPlugin {
+function createShikiRehypePlugin(highlighter: HighlighterCore, theme: string): BytemdPlugin {
   return {
     rehype: (p) =>
       p.use(() => (tree: Root) => {
@@ -74,7 +93,7 @@ function createShikiRehypePlugin(highlighter: HighlighterCore): BytemdPlugin {
             // 使用同步方法 codeToHast 生成高亮后的 hast
             const hastRoot = highlighter.codeToHast(code, {
               lang: highlighter.getLoadedLanguages().includes(lang as any) ? lang : "text",
-              theme: "github-dark",
+              theme,
             });
 
             // 从 Root 中提取 pre 元素
@@ -94,6 +113,16 @@ function createShikiRehypePlugin(highlighter: HighlighterCore): BytemdPlugin {
         });
       }),
   };
+}
+
+/**
+ * 获取当前生效的主题（解析 system 主题）
+ */
+function getEffectiveTheme(mode: ThemeMode): "light" | "dark" | "warm" {
+  if (mode === "system") {
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  }
+  return mode;
 }
 
 /**
@@ -121,6 +150,9 @@ export function MarkdownEditor({
   const [highlighter, setHighlighter] = useState<HighlighterCore | null>(null);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [editorMode, setEditorMode] = useState<"split" | "tab">("split");
+  // 主题状态
+  const [themeMode, setThemeMode] = useState<ThemeMode>("system");
+  const [effectiveTheme, setEffectiveTheme] = useState<"light" | "dark" | "warm">("dark");
 
   // 响应式：移动端默认 tab 模式（标签页切换），桌面端默认 split 模式（左右分屏）
   useEffect(() => {
@@ -137,9 +169,44 @@ export function MarkdownEditor({
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, []);
 
-  // 异步初始化 Shiki highlighter
+  // 监听主题变化（使用 MutationObserver 监听 html 元素的 class 变化）
+  useEffect(() => {
+    // 初始获取主题
+    const initialTheme = getStoredTheme();
+    setThemeMode(initialTheme);
+    setEffectiveTheme(getEffectiveTheme(initialTheme));
+
+    // 监听系统主题变化
+    const systemMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleSystemThemeChange = () => {
+      if (themeMode === "system") {
+        setEffectiveTheme(getEffectiveTheme("system"));
+      }
+    };
+    systemMediaQuery.addEventListener("change", handleSystemThemeChange);
+
+    // 监听 html 元素的 class 变化（主题切换时会修改 class）
+    const observer = new MutationObserver(() => {
+      const currentTheme = getStoredTheme();
+      setThemeMode(currentTheme);
+      setEffectiveTheme(getEffectiveTheme(currentTheme));
+    });
+
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
+    return () => {
+      systemMediaQuery.removeEventListener("change", handleSystemThemeChange);
+      observer.disconnect();
+    };
+  }, [themeMode]);
+
+  // 异步初始化 Shiki highlighter（只创建一次，预先加载所有主题）
   useEffect(() => {
     let cancelled = false;
+
     createShikiHighlighter()
       .then((h) => {
         if (!cancelled) setHighlighter(h);
@@ -147,6 +214,7 @@ export function MarkdownEditor({
       .catch((err) => {
         console.error("Shiki highlighter 初始化失败：", err);
       });
+
     return () => {
       cancelled = true;
     };
@@ -213,10 +281,11 @@ export function MarkdownEditor({
     onChange(value ? `${value}${markdown}` : markdown);
   };
 
-  // 构建插件列表（highlighter 就绪后才添加 Shiki 插件）
+  // 构建插件列表（highlighter 就绪后才添加 Shiki 插件，使用当前主题）
   const plugins: BytemdPlugin[] = [gfm()];
   if (highlighter) {
-    plugins.push(createShikiRehypePlugin(highlighter));
+    const shikiTheme = SHIKI_THEME_MAP[effectiveTheme];
+    plugins.push(createShikiRehypePlugin(highlighter, shikiTheme));
   }
 
   // highlighter 未就绪时显示加载状态
