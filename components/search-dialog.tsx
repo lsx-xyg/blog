@@ -44,9 +44,21 @@ type SearchPost = {
 export function SearchDialog() {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const [posts, setPosts] = useState<SearchPost[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
+
+  // 搜索防抖：输入实时显示，检索延迟 200ms 执行（合并连续输入，避免频繁检索与动画闪烁）
+  useEffect(() => {
+    if (query.trim() === "") {
+      // 清空输入时立即清空结果，不等防抖
+      setDebouncedQuery("");
+      return;
+    }
+    const t = setTimeout(() => setDebouncedQuery(query), 200);
+    return () => clearTimeout(t);
+  }, [query]);
 
   // 初始化 minisearch 索引
   const index = useMemo(() => {
@@ -80,15 +92,15 @@ export function SearchDialog() {
     };
   }, [open, index]);
 
-  // 实时搜索结果
+  // 搜索结果（基于防抖后的查询词）
   const results = useMemo(() => {
-    if (!query.trim()) return [];
+    if (!debouncedQuery.trim()) return [];
     try {
-      return index.search(query.trim(), { prefix: true, fuzzy: 0.2 }).slice(0, 8);
+      return index.search(debouncedQuery.trim(), { prefix: true, fuzzy: 0.2 }).slice(0, 8);
     } catch {
       return [];
     }
-  }, [query, index]);
+  }, [debouncedQuery, index]);
 
   useEffect(() => {
     if (open) {
@@ -178,7 +190,7 @@ export function SearchDialog() {
 
             {/* 搜索结果列表 */}
             <div className="max-h-[50vh] overflow-y-auto">
-              {query.trim() === "" ? (
+              {debouncedQuery.trim() === "" ? (
                 <div className="p-8 text-center text-muted-foreground">
                   <p className="text-sm">输入关键词开始搜索</p>
                   <p className="text-xs mt-2">支持标题、摘要、标签搜索</p>
@@ -188,7 +200,7 @@ export function SearchDialog() {
                   <p className="text-sm">没有找到相关文章</p>
                 </div>
               ) : (
-                <ul key={query} className="divide-y">
+                <ul key={debouncedQuery} className="divide-y">
                   {results.map((r, i) => (
                     <li
                       key={r.id}
