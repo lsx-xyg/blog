@@ -43,6 +43,7 @@ type PostRow = {
   publishedAt: string | null;
   viewCount: number;
   createdAt: string;
+  tags: string[]; // 标签名称数组（列表展示用）
 };
 
 interface ManagePostsProps {
@@ -402,8 +403,27 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
                         ? "定时"
                         : "草稿"}
                   </span>
-                  {/* 标题 */}
-                  <span className="min-w-0 flex-1 truncate">{p.title}</span>
+                  {/* 标题 + 标签胶囊 */}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate">{p.title}</p>
+                    {Array.isArray(p.tags) && p.tags.length > 0 && (
+                      <div className="mt-1 flex flex-wrap items-center gap-1">
+                        {p.tags.slice(0, 3).map((t) => (
+                          <span
+                            key={t}
+                            className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                          >
+                            {t}
+                          </span>
+                        ))}
+                        {p.tags.length > 3 && (
+                          <span className="text-[11px] text-fg-faint">
+                            +{p.tags.length - 3}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                   {/* Slug */}
                   <span className="hidden font-mono text-xs text-fg-faint sm:block">
                     /posts/{p.slug ?? p.id}

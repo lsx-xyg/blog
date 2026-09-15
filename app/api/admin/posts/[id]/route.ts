@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { posts } from "@/db/schema";
+import { setPostTags } from "@/lib/posts";
 import { requireAdmin, adminDenied } from "@/lib/auth/auth-guard";
 import { POST_STATUS_VALUES, PostStatus } from "@/lib/types/posts";
 
@@ -52,11 +53,29 @@ export async function PUT(
   patch.status = status;
   patch.updatedAt = new Date();
 
-  const [updated] = await db
-    .update(posts)
-    .set(patch)
-    .where(eq(posts.id, id))
-    .returning();
+  const hasTags = Array.isArray(body.tags);
+
+  // 更新文章 + 写入标签在同一个事务内，保证原子性（tags 非数组时保持原逻辑，兼容批量改状态）
+  let updated: typeof existing[0] | undefined;
+  if (hasTags) {
+    const tags = body.tags.filter((t: unknown) => typeof t === "string");
+    updated = await db.transaction(async (tx) => {
+      const [row] = await tx
+        .update(posts)
+        .set(patch)
+        .where(eq(posts.id, id))
+        .returning();
+      await setPostTags(id, tags, tx);
+      return row;
+    });
+  } else {
+    const [row] = await db
+      .update(posts)
+      .set(patch)
+      .where(eq(posts.id, id))
+      .returning();
+    updated = row;
+  }
 
   // 首页 + 文章页即时失效（旧 slug 页也可能已缓存）
   revalidatePath("/");

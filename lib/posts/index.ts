@@ -4,7 +4,11 @@
 import { and, desc, eq, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { posts, tags, postTags } from "@/db/schema";
+import { getOrCreateTags } from "@/lib/tags";
 import { PostMeta, PostStatus } from "@/lib/types/posts";
+
+/** 数据库事务类型（用于 setPostTags 支持在事务内执行，与文章创建/更新原子提交） */
+type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 /** 已发布文章列表（按发布时间倒序，publishedAt 为空用 createdAt 兜底；支持分页） */
 export async function listPublishedPosts(opts?: {
@@ -44,19 +48,93 @@ export async function getPublishedPostBySlugOrId(slugOrId: string) {
   return rows[0] ?? null;
 }
 
-/** 后台：全部文章（含草稿/定时），最新在前 */
+/** 后台：全部文章（含草稿/定时），最新在前，附带标签名数组 */
 export async function listAllPosts() {
-  return db.select().from(posts).orderBy(desc(posts.createdAt));
+  const rows = await db
+    .select({
+      id: posts.id,
+      title: posts.title,
+      slug: posts.slug,
+      summary: posts.summary,
+      content: posts.content,
+      status: posts.status,
+      featured: posts.featured,
+      coverUrl: posts.coverUrl,
+      scheduledAt: posts.scheduledAt,
+      publishedAt: posts.publishedAt,
+      viewCount: posts.viewCount,
+      createdAt: posts.createdAt,
+      updatedAt: posts.updatedAt,
+      tagName: tags.name,
+    })
+    .from(posts)
+    .leftJoin(postTags, eq(postTags.postId, posts.id))
+    .leftJoin(tags, eq(tags.id, postTags.tagId))
+    .orderBy(desc(posts.createdAt));
+
+  const map = new Map<
+    string,
+    Omit<(typeof rows)[number], "tagName"> & { tags: string[] }
+  >();
+  for (const r of rows) {
+    let item = map.get(r.id);
+    if (!item) {
+      const { tagName: _t, ...rest } = r;
+      item = { ...rest, tags: [] };
+      map.set(r.id, item);
+    }
+    if (r.tagName) item.tags.push(r.tagName);
+  }
+  return [...map.values()];
 }
 
-/** 后台：按 ID 获取文章（含草稿/定时，用于编辑） */
+/** 后台：按 ID 获取文章（含草稿/定时，用于编辑），附带标签名数组 */
 export async function getPostById(id: string) {
   const rows = await db
     .select()
     .from(posts)
     .where(eq(posts.id, id))
     .limit(1);
-  return rows[0] ?? null;
+  const post = rows[0];
+  if (!post) return null;
+  const tagNames = await getPostTags(id);
+  return { ...post, tags: tagNames };
+}
+
+/** 按文章 ID 获取标签名列表（按名称排序） */
+export async function getPostTags(postId: string) {
+  const rows = await db
+    .select({ name: tags.name })
+    .from(postTags)
+    .innerJoin(tags, eq(tags.id, postTags.tagId))
+    .where(eq(postTags.postId, postId))
+    .orderBy(tags.name);
+  return rows.map((r) => r.name);
+}
+
+/**
+ * 设置文章标签（全量替换，自动创建不存在的标签）
+ *
+ * 说明：
+ * - post_tags 关联的删除/插入使用传入的事务（与文章创建/更新原子提交）
+ * - 标签本身的创建（getOrCreateTags）走全局连接、幂等可重试，失败不影响文章数据
+ */
+export async function setPostTags(postId: string, tagNames: string[], tx?: PgTx) {
+  const client = tx ?? db;
+
+  // 先删除旧的关联
+  await client.delete(postTags).where(eq(postTags.postId, postId));
+
+  // 获取或创建标签（返回标签 ID 数组）
+  const tagIds = await getOrCreateTags(tagNames);
+
+  // 插入新的关联
+  for (const tagId of tagIds) {
+    await client
+      .insert(postTags)
+      .values({ postId, tagId })
+      .onConflictDoNothing();
+  }
 }
 
 /** 浏览量 +1（原子自增，防并发覆盖） */

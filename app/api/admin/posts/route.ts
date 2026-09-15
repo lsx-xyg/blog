@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { posts } from "@/db/schema";
-import { listAllPosts } from "@/lib/posts";
+import { listAllPosts, setPostTags } from "@/lib/posts";
 import { requireAdmin, adminDenied } from "@/lib/auth/auth-guard";
 import { POST_STATUS_VALUES, PostStatus } from "@/lib/types/posts";
 
@@ -16,7 +16,7 @@ export async function GET(req: Request) {
   return NextResponse.json({ posts: rows });
 }
 
-/** 后台：创建文章（slug 留空 → 用 ID 兜底，SPEC §4.2） */
+/** 后台：创建文章（slug 留空 → 用 ID 兜底，SPEC §4.2；tags 可选，全量写入 post_tags） */
 export async function POST(req: Request) {
   if (!(await requireAdmin(req))) return adminDenied();
   const body = await req.json().catch(() => null);
@@ -28,34 +28,44 @@ export async function POST(req: Request) {
     ? body.status
     : PostStatus.DRAFT;
   const slug = typeof body.slug === "string" && body.slug.trim() ? body.slug.trim() : null;
+  const tags = Array.isArray(body.tags)
+    ? body.tags.filter((t: unknown) => typeof t === "string")
+    : [];
 
-  const [created] = await db
-    .insert(posts)
-    .values({
-      title: body.title.trim(),
-      slug,
-      summary: typeof body.summary === "string" ? body.summary : null,
-      content: body.content,
-      coverUrl: typeof body.coverUrl === "string" ? body.coverUrl : null,
-      status,
-      featured: Boolean(body.featured),
-      scheduledAt:
-        body.scheduledAt && !Number.isNaN(Date.parse(body.scheduledAt))
-          ? new Date(body.scheduledAt)
-          : null,
-      publishedAt: status === PostStatus.PUBLISHED ? new Date() : null,
-    })
-    .returning();
-
-  if (!created.slug) {
-    const [updated] = await db
-      .update(posts)
-      .set({ slug: created.id })
-      .where(eq(posts.id, created.id))
+  // 创建文章 + 写入标签在同一个事务内，保证原子性
+  const created = await db.transaction(async (tx) => {
+    const [row] = await tx
+      .insert(posts)
+      .values({
+        title: body.title.trim(),
+        slug,
+        summary: typeof body.summary === "string" ? body.summary : null,
+        content: body.content,
+        coverUrl: typeof body.coverUrl === "string" ? body.coverUrl : null,
+        status,
+        featured: Boolean(body.featured),
+        scheduledAt:
+          body.scheduledAt && !Number.isNaN(Date.parse(body.scheduledAt))
+            ? new Date(body.scheduledAt)
+            : null,
+        publishedAt: status === PostStatus.PUBLISHED ? new Date() : null,
+      })
       .returning();
-    revalidatePath("/");
-    return NextResponse.json({ post: updated }, { status: 201 });
-  }
+
+    // slug 留空 → 用 ID 兜底
+    if (!row.slug) {
+      const [updated] = await tx
+        .update(posts)
+        .set({ slug: row.id })
+        .where(eq(posts.id, row.id))
+        .returning();
+      if (tags.length > 0) await setPostTags(row.id, tags, tx);
+      return updated;
+    }
+
+    if (tags.length > 0) await setPostTags(row.id, tags, tx);
+    return row;
+  });
 
   revalidatePath("/");
   return NextResponse.json({ post: created }, { status: 201 });

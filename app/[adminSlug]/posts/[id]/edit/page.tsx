@@ -50,6 +50,7 @@ export default async function EditPostPage({
     status: post.status,
     featured: post.featured,
     scheduledAt: post.scheduledAt ? post.scheduledAt.toISOString().slice(0, 16) : "",
+    tags: post.tags ?? [],
   };
 
   return (

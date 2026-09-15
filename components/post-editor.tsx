@@ -20,7 +20,7 @@
  * - adminPath: 后台路径，用于返回列表页
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
@@ -30,6 +30,7 @@ import {
   Settings,
 } from "lucide-react";
 import { PostStatus } from "@/lib/types/posts";
+import { TagInput } from "@/components/tag-input";
 
 /**
  * MarkdownEditor 动态导入（Bundle 优化）
@@ -61,6 +62,7 @@ export type PostFormData = {
   status: PostStatus;
   featured: boolean;
   scheduledAt: string;
+  tags: string[]; // 标签名称数组
 };
 
 export const emptyForm: PostFormData = {
@@ -72,6 +74,7 @@ export const emptyForm: PostFormData = {
   status: PostStatus.DRAFT,
   featured: false,
   scheduledAt: "",
+  tags: [],
 };
 
 const STEPS = [
@@ -94,6 +97,24 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
+  // 全部已有标签（供 TagInput 下拉提示）
+  const [allTags, setAllTags] = useState<{ id: string; name: string; slug: string }[]>([]);
+
+  // 加载已有标签
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/admin/tags")
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("加载标签失败"))))
+      .then((d) => {
+        if (!cancelled) setAllTags(d.tags || []);
+      })
+      .catch(() => {
+        /* 标签下拉提示加载失败不阻塞编辑，静默降级 */
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const set = (k: keyof PostFormData, v: string | boolean) =>
     setForm((f) => ({ ...f, [k]: v }));
@@ -261,6 +282,17 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                     onChange={(e) => set("coverUrl", e.target.value)}
                     placeholder="https://…（T3 上传后可用图床 URL）"
                   />
+                </div>
+                <div className="md:col-span-2">
+                  <label className={label}>标签</label>
+                  <div className="mt-1">
+                    <TagInput
+                      value={form.tags}
+                      onChange={(tags) => setForm((f) => ({ ...f, tags }))}
+                      allTags={allTags}
+                      placeholder="输入标签后回车添加，可下拉选择已有标签"
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className={label}>状态</label>
