@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Save, RefreshCw, Globe, Link2, FileText, Settings as SettingsIcon } from "lucide-react";
+import { Save, RefreshCw, Globe, Link2, FileText, Settings as SettingsIcon, Eye, Check, Copy } from "lucide-react";
 import { useToast } from "@/components/toast";
 import type { 
   CronSettings, 
@@ -16,6 +16,8 @@ import type {
 import {STORAGE_DRIVER_VALUES, StorageDriverType} from "@/lib/types/storage";
 import {CronDeployPlatform} from "@/lib/types/settings";
 import { StorageConfigForm } from "@/components/storage-config-form";
+import { SecretRevealDialog } from "@/components/secret-reveal-dialog";
+import { usePasswordStatus, getAdminPathFromUrl } from "@/components/use-password-status";
 
 /**
  * AboutEditor 动态导入（Bundle 优化）
@@ -114,6 +116,78 @@ export function ManageSettings() {
     jobApiKey: "",
     jobApiKeyConfigured: false,
   });
+
+  // 敏感信息二次验证（#18）：cron.secret / cron.jobApiKey 查看明文
+  const [revealDialog, setRevealDialog] = useState<{ key: string; label: string } | null>(null);
+  const [revealed, setRevealed] = useState<{ key: string; value: string } | null>(null);
+  const [countdown, setCountdown] = useState(30);
+  const [copied, setCopied] = useState(false);
+  // 账号是否已设置密码（无密码时点「查看」直接引导设置密码页）
+  const { hasPassword } = usePasswordStatus();
+
+  // 明文 30 秒倒计时，到期自动隐藏
+  useEffect(() => {
+    if (!revealed) return;
+    setCountdown(30);
+    const timer = setInterval(() => setCountdown((c) => c - 1), 1000);
+    return () => clearInterval(timer);
+  }, [revealed]);
+
+  useEffect(() => {
+    if (revealed && countdown <= 0) setRevealed(null);
+  }, [countdown, revealed]);
+
+  const handleCopy = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* 剪贴板不可用时静默 */
+    }
+  };
+
+  /** cron 敏感字段「查看明文」按钮；无密码账号直接引导设置密码页 */
+  const cronRevealButton = (key: string, label: string, configured?: boolean) =>
+    configured ? (
+      <button
+        type="button"
+        onClick={() => {
+          if (hasPassword === false) {
+            window.location.href = `/${getAdminPathFromUrl()}/account`;
+            return;
+          }
+          setRevealDialog({ key, label });
+        }}
+        className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        tabIndex={-1}
+        title="验证后查看明文"
+      >
+        <Eye className="h-3.5 w-3.5" />
+        查看
+      </button>
+    ) : null;
+
+  /** cron 敏感字段明文展示条（30 秒自动隐藏） */
+  const cronRevealBanner = (key: string, label: string) =>
+    revealed?.key === key ? (
+      <div className="mt-2 flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+        <span className="shrink-0 text-xs text-muted-foreground">{label}：</span>
+        <code className="flex-1 break-all text-sm text-foreground">{revealed.value}</code>
+        <button
+          type="button"
+          onClick={() => handleCopy(revealed.value)}
+          className="shrink-0 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          title="复制明文"
+        >
+          {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? "已复制" : "复制"}
+        </button>
+        <span className="shrink-0 text-xs text-muted-foreground" title="到期自动隐藏">
+          {countdown}s
+        </span>
+      </div>
+    ) : null;
 
   // 加载设置
   const loadSettings = async () => {
@@ -540,6 +614,17 @@ export function ManageSettings() {
           {activeSection === "cron" && (
             <div className="rounded-xl border border-border bg-card p-6 animate-fade-in-up">
               <h2 className="text-lg font-semibold mb-2">定时任务设置（T12 文章定时发布）</h2>
+              {hasPassword === false && (
+                <div className="mb-4 rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2.5 text-sm text-amber-700 dark:text-amber-400">
+                  当前账号未设置密码（通过 GitHub 登录创建），敏感信息查看前需要先设置密码。
+                  <a
+                    href={`/${getAdminPathFromUrl()}/account`}
+                    className="ml-1 font-medium underline underline-offset-2"
+                  >
+                    前往设置密码 →
+                  </a>
+                </div>
+              )}
               <p className="text-sm text-muted-foreground mb-6">
                 两套实现，通过部署平台切换：
                 <br />
@@ -579,20 +664,9 @@ export function ManageSettings() {
                       className={`${inputClass} pr-12`}
                       placeholder={cron.secretConfigured ? "留空则保持当前配置，输入新值则覆盖" : "生成方式：openssl rand -hex 32"}
                     />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const inputs = document.querySelectorAll<HTMLInputElement>('input[type="password"]');
-                        inputs.forEach((input) => {
-                          input.type = input.type === "password" ? "text" : "password";
-                        });
-                      }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      tabIndex={-1}
-                    >
-                      👁
-                    </button>
+                    {cronRevealButton("cron.secret", "CRON_SECRET", cron.secretConfigured)}
                   </div>
+                  {cronRevealBanner("cron.secret", "CRON_SECRET")}
                   <p className="mt-1 text-xs text-muted-foreground">
                     用于定时任务接口鉴权，AES-256-GCM 加密存储。修改后需重新创建 cron-job.org 定时任务（URL 中编码了 secret）。
                   </p>
@@ -612,20 +686,9 @@ export function ManageSettings() {
                       className={`${inputClass} pr-12`}
                       placeholder={cron.jobApiKeyConfigured ? "留空则保持当前配置，输入新值则覆盖" : "获取地址：https://cron-job.org/en/members/settings/"}
                     />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const inputs = document.querySelectorAll<HTMLInputElement>('input[type="password"]');
-                        inputs.forEach((input) => {
-                          input.type = input.type === "password" ? "text" : "password";
-                        });
-                      }}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                      tabIndex={-1}
-                    >
-                      👁
-                    </button>
+                    {cronRevealButton("cron.jobApiKey", "CRON_JOB_API_KEY", cron.jobApiKeyConfigured)}
                   </div>
+                  {cronRevealBanner("cron.jobApiKey", "CRON_JOB_API_KEY")}
                   <p className="mt-1 text-xs text-muted-foreground">
                     VERCEL 模式下用于调用 cron-job.org API 创建/删除定时任务，AES-256-GCM 加密存储。
                   </p>
@@ -660,6 +723,20 @@ export function ManageSettings() {
           )}
         </div>
       </div>
+
+      {/* 敏感信息二次验证弹窗（cron 密钥） */}
+      <SecretRevealDialog
+        open={!!revealDialog}
+        fieldLabel={revealDialog?.label ?? ""}
+        fieldKey={revealDialog?.key ?? ""}
+        onClose={() => setRevealDialog(null)}
+        onRevealed={(value) => {
+          if (revealDialog) {
+            setRevealed({ key: revealDialog.key, value });
+            setRevealDialog(null);
+          }
+        }}
+      />
     </div>
   );
 }

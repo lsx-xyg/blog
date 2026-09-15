@@ -5,6 +5,7 @@ import { Check, Copy, Eye } from "lucide-react";
 import { STORAGE_DRIVER_VALUES, StorageDriverType } from "@/lib/types/storage";
 import type { StorageSettings } from "@/lib/types/settings";
 import { SecretRevealDialog } from "@/components/secret-reveal-dialog";
+import { usePasswordStatus, getAdminPathFromUrl } from "@/components/use-password-status";
 
 interface StorageConfigFormProps {
   storage: StorageSettings;
@@ -36,6 +37,8 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
   const [revealed, setRevealed] = useState<{ key: string; value: string } | null>(null);
   const [countdown, setCountdown] = useState(REVEAL_SECONDS);
   const [copied, setCopied] = useState(false);
+  // 账号是否已设置密码（无密码时点「查看」直接引导设置密码页）
+  const { hasPassword } = usePasswordStatus();
 
   // 明文 30 秒倒计时，到期自动隐藏
   useEffect(() => {
@@ -65,12 +68,18 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
     }
   };
 
-  /** 已配置敏感字段的「查看明文」按钮 */
+  /** 已配置敏感字段的「查看明文」按钮；无密码账号直接引导设置密码页 */
   const revealButton = (key: string, label: string, configured?: boolean) =>
     configured ? (
       <button
         type="button"
-        onClick={() => setRevealDialog({ key, label })}
+        onClick={() => {
+          if (hasPassword === false) {
+            window.location.href = `/${getAdminPathFromUrl()}/account`;
+            return;
+          }
+          setRevealDialog({ key, label });
+        }}
         className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         tabIndex={-1}
         title="验证后查看明文"
@@ -103,6 +112,19 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
 
   return (
     <div className="space-y-6">
+      {/* 无密码提示：敏感信息查看前需先设置密码 */}
+      {hasPassword === false && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2.5 text-sm text-amber-700 dark:text-amber-400">
+          当前账号未设置密码（通过 GitHub 登录创建），敏感信息查看前需要先设置密码。
+          <a
+            href={`/${getAdminPathFromUrl()}/account`}
+            className="ml-1 font-medium underline underline-offset-2"
+          >
+            前往设置密码 →
+          </a>
+        </div>
+      )}
+
       {/* 当前驱动 */}
       <div>
         <label className={labelClass}>当前存储驱动</label>

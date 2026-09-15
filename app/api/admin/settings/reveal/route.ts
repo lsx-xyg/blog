@@ -34,6 +34,8 @@ const SECRET_KEYS: Record<string, string> = {
   "storage_private.github.token": "storage_private.github.token",
   "storage_private.s3.accessKey": "storage_private.s3.access_key",
   "storage_private.s3.secretKey": "storage_private.s3.secret_key",
+  "cron.secret": "cron.secret",
+  "cron.jobApiKey": "cron.job_api_key",
 };
 
 export async function POST(request: Request) {
