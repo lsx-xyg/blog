@@ -316,6 +316,7 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
               <div className="h-4 w-4 animate-pulse rounded bg-muted" />
               <div className="h-3 w-16 animate-pulse rounded bg-muted" />
               <div className="h-3 flex-1 animate-pulse rounded bg-muted" />
+              <div className="hidden h-3 w-44 shrink-0 animate-pulse rounded bg-muted md:block" />
               <div className="h-3 w-12 animate-pulse rounded bg-muted" />
               <div className="h-3 w-16 animate-pulse rounded bg-muted" />
             </div>
@@ -362,6 +363,7 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
               </button>
               <span className="w-16 shrink-0 text-center text-xs font-medium text-muted-foreground">状态</span>
               <span className="min-w-0 flex-1 text-xs font-medium text-muted-foreground">标题</span>
+              <span className="hidden w-44 shrink-0 text-xs font-medium text-muted-foreground md:block">标签</span>
               <span className="hidden font-mono text-xs text-muted-foreground sm:block">Slug</span>
               <span className="shrink-0 font-mono text-xs text-muted-foreground">阅读</span>
               <span className="shrink-0 text-right text-xs font-medium text-muted-foreground w-20">操作</span>
@@ -403,11 +405,11 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
                         ? "定时"
                         : "草稿"}
                   </span>
-                  {/* 标题 + 标签胶囊 */}
+                  {/* 标题（移动端标题下方附标签，md+ 标签独立成列） */}
                   <div className="min-w-0 flex-1">
                     <p className="truncate">{p.title}</p>
                     {Array.isArray(p.tags) && p.tags.length > 0 && (
-                      <div className="mt-1 flex flex-wrap items-center gap-1">
+                      <div className="mt-1 flex flex-wrap items-center gap-1 md:hidden">
                         {p.tags.slice(0, 3).map((t) => (
                           <span
                             key={t}
@@ -422,6 +424,23 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
                           </span>
                         )}
                       </div>
+                    )}
+                  </div>
+                  {/* 标签列（md+ 独立展示，不占标题空间） */}
+                  <div className="hidden w-44 shrink-0 flex-wrap items-center gap-1 md:flex">
+                    {Array.isArray(p.tags) &&
+                      p.tags.slice(0, 3).map((t) => (
+                        <span
+                          key={t}
+                          className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                        >
+                          {t}
+                        </span>
+                      ))}
+                    {Array.isArray(p.tags) && p.tags.length > 3 && (
+                      <span className="text-[11px] text-fg-faint">
+                        +{p.tags.length - 3}
+                      </span>
                     )}
                   </div>
                   {/* Slug */}
