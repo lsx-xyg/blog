@@ -86,7 +86,7 @@ export function AdminBreadcrumb({ current, parent, adminPath }: AdminBreadcrumbP
 
       {/* 父级页面（可选） */}
       {parent && (
-        <>
+        <div className="flex items-center gap-1">
           <ChevronRight className="h-3.5 w-3.5 shrink-0" />
           {parent.href ? (
             <Link
@@ -98,16 +98,16 @@ export function AdminBreadcrumb({ current, parent, adminPath }: AdminBreadcrumbP
           ) : (
             <span>{parent.label}</span>
           )}
-        </>
+        </div>
       )}
 
       {/* 当前页面（只有 current 有值时才显示） */}
-      {current && (
-        <>
+      {current ? (
+        <div className="flex items-center gap-1">
           <ChevronRight className="h-3.5 w-3.5 shrink-0" />
           <span className="text-foreground font-medium truncate">{current}</span>
-        </>
-      )}
+        </div>
+      ) : null}
     </nav>
   );
 }

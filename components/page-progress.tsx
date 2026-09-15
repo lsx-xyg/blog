@@ -114,6 +114,14 @@ export function PageProgress() {
       // 检查是否是下载链接
       if (link.hasAttribute("download")) return;
 
+      // 检查是否和当前页面是同一个页面（去除 hash 和 query）
+      const currentPath = window.location.pathname;
+      const targetPath = href.split("#")[0].split("?")[0];
+      if (currentPath === targetPath) {
+        // 同一个页面，不触发进度条，直接返回
+        return;
+      }
+
       // 开始显示进度条
       startLoading();
     };
