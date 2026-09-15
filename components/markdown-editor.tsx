@@ -179,9 +179,14 @@ export function MarkdownEditor({
     // 监听系统主题变化
     const systemMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
     const handleSystemThemeChange = () => {
-      if (themeMode === "system") {
-        setEffectiveTheme(getEffectiveTheme("system"));
-      }
+      setEffectiveTheme((prev) => {
+        // 只有当前是 system 模式时才更新
+        const current = getStoredTheme();
+        if (current === "system") {
+          return getEffectiveTheme("system");
+        }
+        return prev;
+      });
     };
     systemMediaQuery.addEventListener("change", handleSystemThemeChange);
 
@@ -201,7 +206,7 @@ export function MarkdownEditor({
       systemMediaQuery.removeEventListener("change", handleSystemThemeChange);
       observer.disconnect();
     };
-  }, [themeMode]);
+  }, []); // 空依赖数组，只运行一次
 
   // 异步初始化 Shiki highlighter（只创建一次，预先加载所有主题）
   useEffect(() => {
@@ -347,6 +352,7 @@ export function MarkdownEditor({
       </div>
 
       <Editor
+        key={`bytemd-editor-${effectiveTheme}`}
         value={value}
         plugins={plugins}
         onChange={onChange}

@@ -520,6 +520,98 @@ body {
   z-index: 9999 !important;
 }
 
+/* === ByteMD 编辑器全局主题样式（跟随站点主题切换） === */
+.bytemd {
+  background: var(--bg) !important;
+  border-color: var(--border) !important;
+  color: var(--fg) !important;
+}
+
+.bytemd-toolbar {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--fg) !important;
+}
+
+.bytemd-toolbar-icon {
+  color: var(--fg-muted) !important;
+}
+
+.bytemd-toolbar-icon:hover {
+  background: var(--selection) !important;
+  color: var(--fg) !important;
+}
+
+.bytemd-toolbar-icon.active {
+  background: var(--selection) !important;
+  color: var(--fg) !important;
+}
+
+.bytemd-editor {
+  background: var(--bg) !important;
+}
+
+.bytemd-editor textarea {
+  background: var(--bg) !important;
+  color: var(--fg) !important;
+  caret-color: var(--fg) !important;
+}
+
+.bytemd-editor textarea::placeholder {
+  color: var(--fg-faint) !important;
+}
+
+.bytemd-preview {
+  background: var(--bg) !important;
+  border-color: var(--border) !important;
+}
+
+.bytemd-status {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+  color: var(--fg-muted) !important;
+}
+
+.bytemd-tabs {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+.bytemd-tab {
+  color: var(--fg-muted) !important;
+  border-color: transparent !important;
+}
+
+.bytemd-tab:hover {
+  color: var(--fg) !important;
+  background: var(--selection) !important;
+}
+
+.bytemd-tab.active {
+  color: var(--fg) !important;
+  background: var(--bg) !important;
+  border-color: var(--border) !important;
+  border-bottom-color: var(--bg) !important;
+}
+
+/* 深色主题下的代码块样式（Shiki 会覆盖，但提供兜底） */
+.dark .bytemd-preview .markdown-body pre {
+  background: #0d1117 !important;
+  color: #e6edf3 !important;
+}
+
+/* 浅色主题下的代码块样式 */
+:not(.dark):not(.theme-warm) .bytemd-preview .markdown-body pre {
+  background: #f6f8fa !important;
+  color: #24292f !important;
+}
+
+/* 护眼主题下的代码块样式 */
+.theme-warm .bytemd-preview .markdown-body pre {
+  background: #1e1e1e !important;
+  color: #d4d4d4 !important;
+}
+
 /* === ByteMD 编辑器移动端适配 === */
 @media (max-width: 768px) {
   /* 编辑器容器最小高度 */
