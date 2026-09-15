@@ -28,6 +28,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { PostStatus } from "@/lib/types/posts";
+import { triggerNavigationStart } from "@/lib/shared/navigation";
 
 type PostRow = {
   id: string;
@@ -215,7 +216,10 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
             {/* 新建文章按钮 */}
             <button
               type="button"
-              onClick={() => router.push(`/${adminPath}/posts/new`)}
+              onClick={() => {
+                triggerNavigationStart();
+                router.push(`/${adminPath}/posts/new`);
+              }}
               className="flex shrink-0 items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
             >
               <FileText className="h-4 w-4" />
@@ -411,7 +415,10 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
                   {/* 操作按钮 */}
                   <div className="flex shrink-0 items-center gap-2 w-20 justify-end">
                     <button
-                      onClick={() => router.push(`/${adminPath}/posts/${p.id}/edit`)}
+                      onClick={() => {
+                        triggerNavigationStart();
+                        router.push(`/${adminPath}/posts/${p.id}/edit`);
+                      }}
                       className="text-primary hover:underline text-sm"
                     >
                       编辑

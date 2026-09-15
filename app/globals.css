@@ -624,22 +624,10 @@ body {
   border-bottom-color: var(--bg) !important;
 }
 
-/* 深色主题下的代码块样式（Shiki 会覆盖，但提供兜底） */
-.dark .bytemd-preview .markdown-body pre {
+/* 代码块使用固定的深色背景（与前台文章详情页保持一致，不随主题变化） */
+.bytemd-preview .markdown-body pre {
   background: #0d1117 !important;
   color: #e6edf3 !important;
-}
-
-/* 浅色主题下的代码块样式 */
-:not(.dark):not(.theme-warm) .bytemd-preview .markdown-body pre {
-  background: #f6f8fa !important;
-  color: #24292f !important;
-}
-
-/* 护眼主题下的代码块样式 */
-.theme-warm .bytemd-preview .markdown-body pre {
-  background: #1e1e1e !important;
-  color: #d4d4d4 !important;
 }
 
 /* === ByteMD 编辑器移动端适配 === */

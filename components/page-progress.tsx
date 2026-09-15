@@ -122,6 +122,20 @@ export function PageProgress() {
     return () => document.removeEventListener("click", handleClick);
   }, []);
 
+  // 监听全局导航事件（router.push() 触发）
+  useEffect(() => {
+    const handleNavigationStart = () => startLoading();
+    const handleNavigationEnd = () => finishLoading();
+
+    window.addEventListener("navigationstart", handleNavigationStart);
+    window.addEventListener("navigationend", handleNavigationEnd);
+
+    return () => {
+      window.removeEventListener("navigationstart", handleNavigationStart);
+      window.removeEventListener("navigationend", handleNavigationEnd);
+    };
+  }, []);
+
   // 监听路由变化，路由变化后完成进度
   useEffect(() => {
     // 路由变化后，延迟一小段时间完成进度（让用户看到 100% 的状态）
