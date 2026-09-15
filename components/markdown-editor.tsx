@@ -161,6 +161,11 @@ function createShikiRehypePlugin(highlighter: HighlighterCore, theme: string): B
               node.tagName = highlighted.tagName;
               node.properties = highlighted.properties;
               node.children = highlighted.children as Element["children"];
+
+              // 移除内联 style 属性，让 CSS 样式生效（与前台文章详情页保持一致）
+              if (node.properties && "style" in node.properties) {
+                delete node.properties.style;
+              }
             }
           } catch (err) {
             console.error("[Shiki] 代码高亮失败:", err);
@@ -341,11 +346,11 @@ export function MarkdownEditor({
     onChange(value ? `${value}${markdown}` : markdown);
   };
 
-  // 构建插件列表（highlighter 就绪后才添加 Shiki 插件，使用当前主题）
+  // 构建插件列表（highlighter 就绪后才添加 Shiki 插件）
+  // 注意：preview 代码块使用固定的 github-dark 主题，与前台文章详情页保持一致
   const plugins: BytemdPlugin[] = [gfm()];
   if (highlighter) {
-    const shikiTheme = SHIKI_THEME_MAP[effectiveTheme];
-    plugins.push(createShikiRehypePlugin(highlighter, shikiTheme));
+    plugins.push(createShikiRehypePlugin(highlighter, "github-dark"));
   }
 
   // highlighter 未就绪时显示加载状态
