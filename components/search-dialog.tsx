@@ -147,14 +147,14 @@ export function SearchDialog() {
       {open &&
         createPortal(
           <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh]">
-          {/* 半透明虚化遮罩 */}
+          {/* 半透明虚化遮罩（淡入） */}
           <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-search-backdrop"
             onClick={() => setOpen(false)}
           />
 
-          {/* 搜索面板 */}
-          <div className="relative w-full max-w-2xl mx-4 rounded-2xl border bg-popover shadow-2xl overflow-hidden">
+          {/* 搜索面板（从顶部下滑淡入） */}
+          <div className="relative w-full max-w-2xl mx-4 rounded-2xl border bg-popover shadow-2xl overflow-hidden animate-search-panel">
             {/* 搜索输入框 */}
             <div className="flex items-center gap-3 p-4 border-b">
               <Search className="h-5 w-5 text-muted-foreground shrink-0" strokeWidth={2.5} />
@@ -188,9 +188,13 @@ export function SearchDialog() {
                   <p className="text-sm">没有找到相关文章</p>
                 </div>
               ) : (
-                <ul className="divide-y">
-                  {results.map((r) => (
-                    <li key={r.id}>
+                <ul key={query} className="divide-y">
+                  {results.map((r, i) => (
+                    <li
+                      key={r.id}
+                      style={{ animationDelay: `${Math.min(i * 20, 200)}ms` }}
+                      className="animate-fade-in-up"
+                    >
                       <button
                         type="button"
                         onClick={() => goPost(r as unknown as SearchPost)}
