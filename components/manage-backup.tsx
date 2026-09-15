@@ -15,6 +15,7 @@ import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useToast } from "@/components/toast";
 
 interface BackupRecord {
@@ -51,6 +52,14 @@ export function ManageBackup() {
   const [creating, setCreating] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // 确认对话框状态
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [restoreConfirmOpen, setRestoreConfirmOpen] = useState(false);
+  const [pendingRestoreFile, setPendingRestoreFile] = useState<File | null>(null);
+  const [restoreInputRef, setRestoreInputRef] = useState<HTMLInputElement | null>(null);
+
   const { showToast } = useToast();
 
   /** 加载备份列表 */
@@ -90,62 +99,85 @@ export function ManageBackup() {
     window.open(`/api/admin/backup/${id}`, "_blank");
   }, []);
 
-  /** 删除备份 */
-  const handleDelete = useCallback(
-    async (id: string) => {
-      if (!confirm("确定要删除这个备份吗？此操作不可恢复。")) return;
-      try {
-        setDeletingId(id);
-        const res = await fetch(`/api/admin/backup/${id}`, { method: "DELETE" });
-        if (!res.ok) throw new Error("删除失败");
-        showToast("备份删除成功", "success");
-        await loadBackups();
-      } catch (e) {
-        showToast("删除备份失败", "error");
-      } finally {
-        setDeletingId(null);
-      }
-    },
-    [loadBackups, showToast],
-  );
+  /** 删除备份（打开确认对话框） */
+  const handleDelete = useCallback((id: string) => {
+    setPendingDeleteId(id);
+    setDeleteConfirmOpen(true);
+  }, []);
 
-  /** 恢复备份 */
+  /** 确认删除备份 */
+  const confirmDelete = useCallback(async () => {
+    if (!pendingDeleteId) return;
+    try {
+      setDeletingId(pendingDeleteId);
+      const res = await fetch(`/api/admin/backup/${pendingDeleteId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("删除失败");
+      showToast("备份删除成功", "success");
+      await loadBackups();
+    } catch (e) {
+      showToast("删除备份失败", "error");
+    } finally {
+      setDeletingId(null);
+      setPendingDeleteId(null);
+      setDeleteConfirmOpen(false);
+    }
+  }, [pendingDeleteId, loadBackups, showToast]);
+
+  /** 恢复备份（打开确认对话框） */
   const handleRestore = useCallback(
-    async (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
 
-      if (!confirm("确定要恢复这个备份吗？这会清空当前所有数据并替换为备份数据，此操作不可恢复！")) {
-        e.target.value = "";
-        return;
-      }
-
-      try {
-        setRestoring(true);
-        const formData = new FormData();
-        formData.append("file", file);
-
-        const res = await fetch("/api/admin/backup/restore", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          throw new Error(data.error || "恢复失败");
-        }
-
-        showToast("数据恢复成功", "success");
-        await loadBackups();
-      } catch (err) {
-        showToast(err instanceof Error ? err.message : "恢复备份失败", "error");
-      } finally {
-        setRestoring(false);
-        e.target.value = "";
-      }
+      // 保存待恢复的文件，打开确认对话框
+      setPendingRestoreFile(file);
+      setRestoreConfirmOpen(true);
     },
-    [loadBackups, showToast],
+    [],
   );
+
+  /** 确认恢复备份 */
+  const confirmRestore = useCallback(async () => {
+    if (!pendingRestoreFile) return;
+    try {
+      setRestoring(true);
+      const formData = new FormData();
+      formData.append("file", pendingRestoreFile);
+
+      const res = await fetch("/api/admin/backup/restore", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || "恢复失败");
+      }
+
+      showToast("数据恢复成功", "success");
+      await loadBackups();
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "恢复备份失败", "error");
+    } finally {
+      setRestoring(false);
+      setPendingRestoreFile(null);
+      setRestoreConfirmOpen(false);
+      // 清空 input 的值，允许再次选择同一个文件
+      if (restoreInputRef) {
+        restoreInputRef.value = "";
+      }
+    }
+  }, [pendingRestoreFile, restoreInputRef, loadBackups, showToast]);
+
+  /** 取消恢复 */
+  const cancelRestore = useCallback(() => {
+    setPendingRestoreFile(null);
+    setRestoreConfirmOpen(false);
+    // 清空 input 的值
+    if (restoreInputRef) {
+      restoreInputRef.value = "";
+    }
+  }, [restoreInputRef]);
 
   // 初始加载
   useEffect(() => {
@@ -166,6 +198,7 @@ export function ManageBackup() {
           </Button>
           <div className="relative">
             <input
+              ref={setRestoreInputRef}
               type="file"
               accept=".json"
               onChange={handleRestore}
@@ -244,6 +277,33 @@ export function ManageBackup() {
           )}
         </CardContent>
       </Card>
+
+      {/* 删除确认对话框 */}
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        title="确认删除备份"
+        description="确定要删除这个备份吗？此操作不可恢复，删除后无法找回备份文件。"
+        confirmText="删除"
+        cancelText="取消"
+        variant="destructive"
+        onConfirm={confirmDelete}
+        onCancel={() => {
+          setPendingDeleteId(null);
+          setDeleteConfirmOpen(false);
+        }}
+      />
+
+      {/* 恢复确认对话框 */}
+      <ConfirmDialog
+        open={restoreConfirmOpen}
+        title="确认恢复备份"
+        description={`确定要恢复备份 "${pendingRestoreFile?.name || ""}" 吗？这会清空当前所有数据并替换为备份数据，此操作不可恢复！建议先创建一个当前数据的备份。`}
+        confirmText="恢复"
+        cancelText="取消"
+        variant="destructive"
+        onConfirm={confirmRestore}
+        onCancel={cancelRestore}
+      />
     </div>
   );
 }

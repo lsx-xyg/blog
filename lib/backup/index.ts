@@ -128,6 +128,29 @@ function restoreAccountRow(row: Record<string, unknown>): Record<string, unknown
 }
 
 /**
+ * 把行数据中的日期字符串转换为 Date 对象
+ *
+ * 备份导出时，Drizzle 返回的日期字段是 Date 对象，但是 JSON.stringify
+ * 会把 Date 对象序列化为 ISO 字符串。恢复时需要把这些字符串转换回
+ * Date 对象，否则 Drizzle 插入时会调用 toISOString() 失败。
+ *
+ * 判断规则：字段名以 "At" 结尾（如 createdAt、updatedAt、publishedAt），
+ * 且值是字符串且能被 Date 解析。
+ */
+function convertDateFields(row: Record<string, unknown>): Record<string, unknown> {
+  const result = { ...row };
+  for (const [key, value] of Object.entries(result)) {
+    if (typeof value === "string" && key.endsWith("At")) {
+      const date = new Date(value);
+      if (!isNaN(date.getTime())) {
+        result[key] = date;
+      }
+    }
+  }
+  return result;
+}
+
+/**
  * 导出全量备份
  *
  * 敏感字段处理：
@@ -194,18 +217,30 @@ export async function importBackup(backupData: BackupData): Promise<void> {
     const schema = TABLE_SCHEMA_MAP[tableName];
     let rows = backupData.tables[tableName];
 
-    // 对 accounts 表的敏感字段进行解密
-    if (tableName === "accounts" && backupData.sensitiveFieldsEncrypted) {
-      rows = rows.map((row) => restoreAccountRow(row as Record<string, unknown>));
-    }
+    if (!rows || rows.length === 0) continue;
 
-    if (rows && rows.length > 0) {
-      // 分批插入，避免单次插入过多
-      const batchSize = 100;
-      for (let i = 0; i < rows.length; i += batchSize) {
-        const batch = rows.slice(i, i + batchSize);
-        await db.insert(schema).values(batch as never[]);
+    // 对每一行数据进行处理：
+    // 1. accounts 表的敏感字段解密
+    // 2. 日期字符串转换为 Date 对象（JSON 序列化后 Date 变成字符串，需要转换回来）
+    const processedRows = rows.map((row) => {
+      let processed = row as Record<string, unknown>;
+
+      // accounts 表敏感字段解密
+      if (tableName === "accounts" && backupData.sensitiveFieldsEncrypted) {
+        processed = restoreAccountRow(processed);
       }
+
+      // 日期字段转换
+      processed = convertDateFields(processed);
+
+      return processed;
+    });
+
+    // 分批插入，避免单次插入过多
+    const batchSize = 100;
+    for (let i = 0; i < processedRows.length; i += batchSize) {
+      const batch = processedRows.slice(i, i + batchSize);
+      await db.insert(schema).values(batch as never[]);
     }
   }
 
