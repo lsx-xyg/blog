@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Eye, Loader2, Lock, X } from "lucide-react";
+import { ChevronRight, Eye, Loader2, Lock, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 /**
@@ -39,6 +39,7 @@ export function SecretRevealDialog({
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [noPassword, setNoPassword] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // 打开时清空状态并聚焦密码框
@@ -47,6 +48,7 @@ export function SecretRevealDialog({
       setPassword("");
       setError("");
       setLoading(false);
+      setNoPassword(false);
       // 延迟聚焦，等弹窗渲染完成
       const t = setTimeout(() => inputRef.current?.focus(), 50);
       return () => clearTimeout(t);
@@ -89,6 +91,11 @@ export function SecretRevealDialog({
       });
       const data = await res.json();
       if (!res.ok) {
+        if (data.code === "NO_PASSWORD") {
+          setNoPassword(true);
+          setLoading(false);
+          return;
+        }
         setError(data.error || "验证失败，请稍后重试");
         setLoading(false);
         return;
@@ -133,53 +140,70 @@ export function SecretRevealDialog({
           </div>
         </div>
 
-        {/* 密码输入 */}
-        <div className="mt-5">
-          <label htmlFor="reveal-password" className="block text-sm font-medium mb-1.5">
-            管理员密码
-          </label>
-          <input
-            id="reveal-password"
-            ref={inputRef}
-            type="password"
-            value={password}
-            onChange={(e) => {
-              setPassword(e.target.value);
-              if (error) setError("");
-            }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") handleSubmit();
-            }}
-            placeholder="请输入管理员登录密码"
-            className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
-          />
-          {error && (
-            <p className="mt-2 text-sm text-destructive">{error}</p>
-          )}
-        </div>
+        {/* 密码输入 / 无密码引导 */}
+        {noPassword ? (
+          <div className="mt-5 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
+            <p className="text-sm text-amber-700 dark:text-amber-400">
+              当前账号未设置密码（通过 GitHub 登录创建）。请先在「账号设置」中设置密码，再使用明文查看功能。
+            </p>
+            <a
+              href={`/${window.location.pathname.split("/")[1] || "dashboard"}/account`}
+              className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+            >
+              前往账号设置
+              <ChevronRight className="h-4 w-4" />
+            </a>
+          </div>
+        ) : (
+          <div className="mt-5">
+            <label htmlFor="reveal-password" className="block text-sm font-medium mb-1.5">
+              管理员密码
+            </label>
+            <input
+              id="reveal-password"
+              ref={inputRef}
+              type="password"
+              value={password}
+              onChange={(e) => {
+                setPassword(e.target.value);
+                if (error) setError("");
+              }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSubmit();
+              }}
+              placeholder="请输入管理员登录密码"
+              className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
+            />
+            {error && (
+              <p className="mt-2 text-sm text-destructive">{error}</p>
+            )}
+          </div>
+        )}
 
         {/* 按钮组 */}
         <div className="mt-6 flex justify-end gap-3">
           <Button type="button" variant="outline" onClick={onClose}>
             取消
           </Button>
-          <Button
-            type="button"
-            onClick={handleSubmit}
-            disabled={loading || !password.trim()}
-          >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                验证中…
-              </>
-            ) : (
-              <>
-                <Eye className="mr-2 h-4 w-4" />
-                查看明文
-              </>
-            )}
-          </Button>
+          {!noPassword && (
+            <Button
+              type="button"
+              onClick={handleSubmit}
+              disabled={loading || !password.trim()}
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  验证中…
+                </>
+              ) : (
+                <>
+                  <Eye className="mr-2 h-4 w-4" />
+                  查看明文
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
     </div>,

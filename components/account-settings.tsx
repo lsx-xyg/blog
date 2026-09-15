@@ -66,8 +66,55 @@ export function AccountSettings() {
   const hasPassword = providers.includes("credential");
   const hasGithub = providers.includes("github");
 
+  // 刷新已关联登录方式（设置密码成功后调用，切换为"修改密码"模式）
+  const refreshProviders = async () => {
+    try {
+      const res = await authClient.listAccounts();
+      if (!res.error && res.data) {
+        setProviders(res.data.map((a) => a.providerId));
+      }
+    } catch {
+      /* 静默 */
+    }
+  };
+
   const handleChangePassword = async () => {
     setMessage(null);
+    // 无密码账号：首次设置密码，不需要当前密码（服务端 setPassword）
+    if (!hasPassword) {
+      if (newPassword.length < 8) {
+        setMessage({ type: "error", text: "新密码至少 8 位" });
+        return;
+      }
+      if (newPassword !== confirmPassword) {
+        setMessage({ type: "error", text: "两次输入的新密码不一致" });
+        return;
+      }
+      setPwLoading(true);
+      try {
+        const res = await fetch("/api/admin/account/set-password", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ newPassword }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setMessage({ type: "error", text: data.error || "设置失败" });
+        } else {
+          setMessage({ type: "success", text: "密码设置成功，已可使用密码登录与二次验证" });
+          setNewPassword("");
+          setConfirmPassword("");
+          await refreshProviders();
+        }
+      } catch {
+        setMessage({ type: "error", text: "网络错误，请稍后重试" });
+      } finally {
+        setPwLoading(false);
+      }
+      return;
+    }
+
+    // 已有密码账号：修改密码，需验证当前密码
     if (!currentPassword) {
       setMessage({ type: "error", text: "请输入当前密码" });
       return;
@@ -165,26 +212,28 @@ export function AccountSettings() {
         </div>
       </div>
 
-      {/* 修改密码 */}
+      {/* 修改 / 设置密码 */}
       <div className="rounded-2xl border border-border bg-card p-6">
-        <h2 className="text-base font-semibold">修改密码</h2>
+        <h2 className="text-base font-semibold">{hasPassword ? "修改密码" : "设置密码"}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           {hasPassword
             ? "修改后其他设备上的登录会话将失效，需要重新登录。"
-            : "当前账号没有密码（可能通过 GitHub 登录创建），设置后即可使用密码登录。"}
+            : "当前账号没有密码（通过 GitHub 登录创建），设置密码后即可使用密码登录，并可启用敏感信息的密码二次验证。"}
         </p>
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <label className={labelClass}>当前密码</label>
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              className={inputClass}
-              placeholder={hasPassword ? "请输入当前密码" : "留空则跳过旧密码校验（首次设置密码）"}
-              autoComplete="current-password"
-            />
-          </div>
+          {hasPassword && (
+            <div className="sm:col-span-2">
+              <label className={labelClass}>当前密码</label>
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                className={inputClass}
+                placeholder="请输入当前密码"
+                autoComplete="current-password"
+              />
+            </div>
+          )}
           <div>
             <label className={labelClass}>新密码</label>
             <input
@@ -215,8 +264,10 @@ export function AccountSettings() {
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 提交中…
               </>
-            ) : (
+            ) : hasPassword ? (
               "修改密码"
+            ) : (
+              "设置密码"
             )}
           </Button>
         </div>

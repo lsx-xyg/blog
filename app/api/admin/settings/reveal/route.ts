@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
+import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth/auth";
 import { isAdminUser } from "@/lib/shared/utils";
 import { getSetting } from "@/lib/settings";
 import { decryptIfAvailable } from "@/lib/shared/crypto";
+import { db } from "@/db";
+import { accounts } from "@/db/schema";
 
 /**
  * 敏感信息查看 API（#18：二次验证）
@@ -12,9 +15,10 @@ import { decryptIfAvailable } from "@/lib/shared/crypto";
  *
  * 流程：
  * 1. 校验当前会话为管理员
- * 2. 用 Better Auth 校验管理员密码（二次验证，不信任当前会话本身）
- * 3. 按白名单读取对应加密值并解密，只返回单个字段
- * 4. 记录查看日志（谁、何时、查看了哪个字段）
+ * 2. 检查账号是否设置了密码（纯 GitHub OAuth 账号无密码 → 403 引导先设置密码）
+ * 3. 用 Better Auth 校验管理员密码（二次验证，不信任当前会话本身）
+ * 4. 按白名单读取对应加密值并解密，只返回单个字段
+ * 5. 记录查看日志（谁、何时、查看了哪个字段）
  *
  * 安全：
  * - 字段白名单限制，无法越权读取其他配置
@@ -60,6 +64,24 @@ export async function POST(request: Request) {
   if (!email) {
     return NextResponse.json({ error: "当前账号无邮箱，无法验证" }, { status: 400 });
   }
+
+  // 纯 GitHub OAuth 账号没有密码：引导先设置密码，再使用密码二次验证
+  const [credentialAccount] = await db
+    .select({ password: accounts.password })
+    .from(accounts)
+    .where(
+      and(
+        eq(accounts.userId, session.user.id),
+        eq(accounts.providerId, "credential")
+      )
+    );
+  if (!credentialAccount?.password) {
+    return NextResponse.json(
+      { error: "当前账号未设置密码，请先在「账号设置」中设置密码后，再使用明文查看功能", code: "NO_PASSWORD" },
+      { status: 403 }
+    );
+  }
+
   try {
     // 验证密码正确性；验证产生的临时 session 依赖 better-auth 过期机制自动清理
     await auth.api.signInEmail({
