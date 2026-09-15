@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Save, RefreshCw, Globe, Link2, FileText, Settings as SettingsIcon, Eye, Check, Copy } from "lucide-react";
+import { Save, RefreshCw, Globe, Link2, FileText, Settings as SettingsIcon, Eye, EyeOff, Check, Copy } from "lucide-react";
 import { useToast } from "@/components/toast";
 import type { 
   CronSettings, 
@@ -122,8 +122,11 @@ export function ManageSettings() {
   const [revealed, setRevealed] = useState<{ key: string; value: string } | null>(null);
   const [countdown, setCountdown] = useState(30);
   const [copied, setCopied] = useState(false);
-  // 账号是否已设置密码（无密码时点「查看」直接引导设置密码页）
+  // 账号是否已设置密码（无密码时点「查看」触发新手引导设置密码）
   const { hasPassword } = usePasswordStatus();
+  // 输入内容显示/隐藏（👁）
+  const [showCronSecret, setShowCronSecret] = useState(false);
+  const [showCronJobApiKey, setShowCronJobApiKey] = useState(false);
 
   // 明文 30 秒倒计时，到期自动隐藏
   useEffect(() => {
@@ -147,26 +150,48 @@ export function ManageSettings() {
     }
   };
 
-  /** cron 敏感字段「查看明文」按钮；无密码账号直接引导设置密码页 */
+  /** label 行「查看已配置明文」按钮；无密码账号触发新手引导设置密码（#18） */
   const cronRevealButton = (key: string, label: string, configured?: boolean) =>
     configured ? (
       <button
         type="button"
-        onClick={() => {
+        data-guide="reveal-view"
+        onClick={(e) => {
           if (hasPassword === false) {
-            window.location.href = `/${getAdminPathFromUrl()}/account`;
+            // 无密码：触发新手引导（弹窗说明 + 按钮引导设置密码），不弹验证框
+            window.dispatchEvent(
+              new CustomEvent("guide:trigger", {
+                detail: {
+                  event: "reveal-click",
+                  page: "/settings",
+                  element: e.currentTarget as HTMLElement,
+                },
+              })
+            );
             return;
           }
           setRevealDialog({ key, label });
         }}
-        className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        tabIndex={-1}
+        className="ml-2 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         title="验证后查看明文"
       >
         <Eye className="h-3.5 w-3.5" />
         查看
       </button>
     ) : null;
+
+  /** 输入框内 👁：切换输入内容显示/隐藏（type=password 语义） */
+  const eyeToggle = (show: boolean, onToggle: () => void) => (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+      tabIndex={-1}
+      title={show ? "隐藏输入内容" : "显示输入内容"}
+    >
+      {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+    </button>
+  );
 
   /** cron 敏感字段明文展示条（30 秒自动隐藏） */
   const cronRevealBanner = (key: string, label: string) =>
@@ -655,16 +680,17 @@ export function ManageSettings() {
                     {cron.secretConfigured && (
                       <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
                     )}
+                    {cronRevealButton("cron.secret", "CRON_SECRET", cron.secretConfigured)}
                   </label>
                   <div className="relative">
                     <input
-                      type="password"
+                      type={showCronSecret ? "text" : "password"}
                       value={cron.secret}
                       onChange={(e) => setCron({ ...cron, secret: e.target.value })}
-                      className={`${inputClass} pr-12`}
+                      className={`${inputClass} pr-10`}
                       placeholder={cron.secretConfigured ? "留空则保持当前配置，输入新值则覆盖" : "生成方式：openssl rand -hex 32"}
                     />
-                    {cronRevealButton("cron.secret", "CRON_SECRET", cron.secretConfigured)}
+                    {eyeToggle(showCronSecret, () => setShowCronSecret((v) => !v))}
                   </div>
                   {cronRevealBanner("cron.secret", "CRON_SECRET")}
                   <p className="mt-1 text-xs text-muted-foreground">
@@ -677,16 +703,17 @@ export function ManageSettings() {
                     {cron.jobApiKeyConfigured && (
                       <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
                     )}
+                    {cronRevealButton("cron.jobApiKey", "CRON_JOB_API_KEY", cron.jobApiKeyConfigured)}
                   </label>
                   <div className="relative">
                     <input
-                      type="password"
+                      type={showCronJobApiKey ? "text" : "password"}
                       value={cron.jobApiKey}
                       onChange={(e) => setCron({ ...cron, jobApiKey: e.target.value })}
-                      className={`${inputClass} pr-12`}
+                      className={`${inputClass} pr-10`}
                       placeholder={cron.jobApiKeyConfigured ? "留空则保持当前配置，输入新值则覆盖" : "获取地址：https://cron-job.org/en/members/settings/"}
                     />
-                    {cronRevealButton("cron.jobApiKey", "CRON_JOB_API_KEY", cron.jobApiKeyConfigured)}
+                    {eyeToggle(showCronJobApiKey, () => setShowCronJobApiKey((v) => !v))}
                   </div>
                   {cronRevealBanner("cron.jobApiKey", "CRON_JOB_API_KEY")}
                   <p className="mt-1 text-xs text-muted-foreground">

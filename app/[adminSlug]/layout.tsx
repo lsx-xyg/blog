@@ -10,6 +10,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { getAdminPathAsync } from "@/lib/shared/admin-path";
 import { isAdminUser } from "@/lib/shared/utils";
+import { GuideManager } from "@/components/guide/guide-manager";
 
 export const dynamic = "force-dynamic";
 
@@ -57,5 +58,6 @@ export default async function AdminLayout({
   // 非管理员 → 404 伪装
   if (!isAdminUser(session.user)) notFound();
 
-  return <>{children}</>;
+  // 引导管理器（onborda 懒加载）：仅登录管理员渲染
+  return <GuideManager>{children}</GuideManager>;
 }

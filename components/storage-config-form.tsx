@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check, Copy, Eye } from "lucide-react";
+import { Check, Copy, Eye, EyeOff } from "lucide-react";
 import { STORAGE_DRIVER_VALUES, StorageDriverType } from "@/lib/types/storage";
 import type { StorageSettings } from "@/lib/types/settings";
 import { SecretRevealDialog } from "@/components/secret-reveal-dialog";
@@ -37,8 +37,12 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
   const [revealed, setRevealed] = useState<{ key: string; value: string } | null>(null);
   const [countdown, setCountdown] = useState(REVEAL_SECONDS);
   const [copied, setCopied] = useState(false);
-  // 账号是否已设置密码（无密码时点「查看」直接引导设置密码页）
+  // 账号是否已设置密码（无密码时点「查看」触发新手引导设置密码）
   const { hasPassword } = usePasswordStatus();
+  // 输入内容显示/隐藏（👁）
+  const [showGithubToken, setShowGithubToken] = useState(false);
+  const [showAccessKey, setShowAccessKey] = useState(false);
+  const [showSecretKey, setShowSecretKey] = useState(false);
 
   // 明文 30 秒倒计时，到期自动隐藏
   useEffect(() => {
@@ -68,26 +72,48 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
     }
   };
 
-  /** 已配置敏感字段的「查看明文」按钮；无密码账号直接引导设置密码页 */
+  /** label 行「查看已配置明文」按钮；无密码账号触发新手引导设置密码（#18） */
   const revealButton = (key: string, label: string, configured?: boolean) =>
     configured ? (
       <button
         type="button"
-        onClick={() => {
+        data-guide="reveal-view"
+        onClick={(e) => {
           if (hasPassword === false) {
-            window.location.href = `/${getAdminPathFromUrl()}/account`;
+            // 无密码：触发新手引导（弹窗说明 + 按钮引导设置密码），不弹验证框
+            window.dispatchEvent(
+              new CustomEvent("guide:trigger", {
+                detail: {
+                  event: "reveal-click",
+                  page: "/settings",
+                  element: e.currentTarget as HTMLElement,
+                },
+              })
+            );
             return;
           }
           setRevealDialog({ key, label });
         }}
-        className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-        tabIndex={-1}
+        className="ml-2 inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
         title="验证后查看明文"
       >
         <Eye className="h-3.5 w-3.5" />
         查看
       </button>
     ) : null;
+
+  /** 输入框内 👁：切换输入内容显示/隐藏（type=password 语义） */
+  const eyeToggle = (show: boolean, onToggle: () => void) => (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+      tabIndex={-1}
+      title={show ? "隐藏输入内容" : "显示输入内容"}
+    >
+      {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+    </button>
+  );
 
   /** 明文展示条（30 秒自动隐藏，grid 布局下跨两列显示） */
   const revealBanner = (key: string, label: string) =>
@@ -218,16 +244,17 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
                 {storage.github.tokenConfigured && (
                   <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
                 )}
+                {revealButton(`${secretPrefix(isPrivate)}.github.token`, "GitHub Token", storage.github.tokenConfigured)}
               </label>
               <div className="relative">
                 <input
-                  type="password"
+                  type={showGithubToken ? "text" : "password"}
                   value={storage.github.token}
                   onChange={(e) => setStorage({ ...storage, github: { ...storage.github, token: e.target.value } })}
-                  className={`${inputClass} pr-14`}
+                  className={`${inputClass} pr-10`}
                   placeholder={storage.github.tokenConfigured ? "留空则保持当前配置，输入新值则覆盖" : "ghp_xxxxxxxxxxxxxxxxxxxx"}
                 />
-                {revealButton(`${secretPrefix(isPrivate)}.github.token`, "GitHub Token", storage.github.tokenConfigured)}
+                {eyeToggle(showGithubToken, () => setShowGithubToken((v) => !v))}
               </div>
               {revealBanner(`${secretPrefix(isPrivate)}.github.token`, "GitHub Token")}
               <p className="mt-1 text-xs text-muted-foreground">
@@ -299,15 +326,18 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
                 {storage.s3.accessKeyConfigured && (
                   <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
                 )}
+                {revealButton(`${secretPrefix(isPrivate)}.s3.accessKey`, "Access Key ID", storage.s3.accessKeyConfigured)}
               </label>
-              <input
-                type="password"
-                value={storage.s3.accessKey}
-                onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, accessKey: e.target.value } })}
-                className={`${inputClass} pr-14`}
-                placeholder={storage.s3.accessKeyConfigured ? "留空则保持当前配置" : "AKIAxxxxxxxxxxxxxxxx"}
-              />
-              {revealButton(`${secretPrefix(isPrivate)}.s3.accessKey`, "Access Key ID", storage.s3.accessKeyConfigured)}
+              <div className="relative">
+                <input
+                  type={showAccessKey ? "text" : "password"}
+                  value={storage.s3.accessKey}
+                  onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, accessKey: e.target.value } })}
+                  className={`${inputClass} pr-10`}
+                  placeholder={storage.s3.accessKeyConfigured ? "留空则保持当前配置" : "AKIAxxxxxxxxxxxxxxxx"}
+                />
+                {eyeToggle(showAccessKey, () => setShowAccessKey((v) => !v))}
+              </div>
             </div>
             {revealBanner(`${secretPrefix(isPrivate)}.s3.accessKey`, "Access Key ID")}
             <div>
@@ -316,15 +346,18 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
                 {storage.s3.secretKeyConfigured && (
                   <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
                 )}
+                {revealButton(`${secretPrefix(isPrivate)}.s3.secretKey`, "Secret Access Key", storage.s3.secretKeyConfigured)}
               </label>
-              <input
-                type="password"
-                value={storage.s3.secretKey}
-                onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, secretKey: e.target.value } })}
-                className={`${inputClass} pr-14`}
-                placeholder={storage.s3.secretKeyConfigured ? "留空则保持当前配置" : "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
-              />
-              {revealButton(`${secretPrefix(isPrivate)}.s3.secretKey`, "Secret Access Key", storage.s3.secretKeyConfigured)}
+              <div className="relative">
+                <input
+                  type={showSecretKey ? "text" : "password"}
+                  value={storage.s3.secretKey}
+                  onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, secretKey: e.target.value } })}
+                  className={`${inputClass} pr-10`}
+                  placeholder={storage.s3.secretKeyConfigured ? "留空则保持当前配置" : "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
+                />
+                {eyeToggle(showSecretKey, () => setShowSecretKey((v) => !v))}
+              </div>
             </div>
             {revealBanner(`${secretPrefix(isPrivate)}.s3.secretKey`, "Secret Access Key")}
           </div>

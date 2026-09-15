@@ -105,6 +105,12 @@ export function AccountSettings() {
           setNewPassword("");
           setConfirmPassword("");
           await refreshProviders();
+          // 新手引导：设置密码完成 → 通知 GuideManager 标记 completed
+          try {
+            window.dispatchEvent(new CustomEvent("guide:complete"));
+          } catch {
+            /* 无引导引擎时静默 */
+          }
         }
       } catch {
         setMessage({ type: "error", text: "网络错误，请稍后重试" });
@@ -213,7 +219,7 @@ export function AccountSettings() {
       </div>
 
       {/* 修改 / 设置密码 */}
-      <div className="rounded-2xl border border-border bg-card p-6">
+      <div className="rounded-2xl border border-border bg-card p-6" data-guide="account-set-password">
         <h2 className="text-base font-semibold">{hasPassword ? "修改密码" : "设置密码"}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
           {hasPassword

@@ -96,6 +96,34 @@ _Avoid_: 别名、url path、permalink
 站点的视觉配色方案，支持四种模式：light（浅色）、dark（深色）、warm（护眼/米黄）、system（跟随系统）。通过 html 元素的 class（dark / theme-warm）切换，CSS 变量驱动。
 _Avoid_: 配色、颜色模式、color scheme
 
+**Onboarding Guide（新手引导）**：
+后台的可配置交互引导，帮助管理员完成特定操作流程（如无密码账号设置密码）。配置存储在 guiders 表中（guide_key / page / steps / status / target_condition / priority），运行时由 GuideManager 统一驱动。改版通过更换带版本号的 guide_key 使老用户重新触发。
+_Avoid_: 引导、教程、tour、wizard
+
+**Guide Step（引导步骤）**：
+引导中的单个步骤，包含 target（Guide Anchor 锚点名）、title、content、placement 等字段。步骤数组以 JSONB 存储在 guiders.steps 中。
+_Avoid_: 步骤、step、tooltip
+
+**Guide Anchor（引导锚点）**：
+页面上带 data-guide 属性的元素，引导步骤通过 `[data-guide="<target>"]` 选择器定位高亮目标。不依赖 class 和层级结构。
+_Avoid_: 锚点、target element、定位点
+
+**Guide Key（引导键）**：
+引导的唯一标识，带版本号（如 reveal_password_setup_v1）。用户进度按 guide_key 独立追踪，互不干扰；引导改版换新 key，老用户自然重新触发。
+_Avoid_: 引导 ID、guide id
+
+**Guide Progress（引导进度）**：
+用户对某个引导的完成状态，存储在 user_guide_progress 表中，UNIQUE(user_id, guide_key)。status 枚举：not_started / in_progress / completed / skipped。in_progress 时记录 current_step，下次从该步骤续接。
+_Avoid_: 进度、onboarding state
+
+**Guide Manager（引导管理器）**：
+前端统一引导引擎（仅挂载于后台 admin layout），负责按页面 + 触发事件查询 published 引导配置、查询用户进度、触发或续接引导、上报步骤进度。页面只声明 data-guide 锚点，不直接操作引导逻辑。
+_Avoid_: 引导引擎、guide engine、onborda provider
+
+**Sensitive Setting Reveal（敏感配置查看）**：
+通过管理员密码二次验证后临时查看敏感配置明文的功能。无密码账号（纯 GitHub OAuth 创建）点击查看时触发 Onboarding Guide 引导设置密码。明文展示 30 秒倒计时自动隐藏。
+_Avoid_: 查看明文、reveal、显示密钥
+
 **Reading Progress（阅读进度）**：
 文章详情页顶部的进度条，实时显示当前阅读位置占文章总长度的百分比。只计算文章内容区域，不包含评论区。
 _Avoid_: 进度条、scroll progress
@@ -140,4 +168,5 @@ _Avoid_: 部署环境、deploy target
 - 标签名称原样存储，不强制大写
 - 数据库表名使用蛇形命名（如 post_tags、media_tags）
 - 环境变量使用全大写下划线分隔（如 STORAGE_DRIVER、GITHUB_TOKEN）
+- data-guide 锚点名使用 kebab-case（如 editor-save、reveal-view）
 - 新增术语时，必须同时记录 _Avoid_ 列表，防止同义词混用

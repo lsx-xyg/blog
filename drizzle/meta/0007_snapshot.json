@@ -250,12 +250,6 @@
           "notNull": true,
           "default": "'MANUAL'"
         },
-        "storage_driver": {
-          "name": "storage_driver",
-          "type": "storage_driver",
-          "primaryKey": false,
-          "notNull": false
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",

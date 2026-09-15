@@ -5,6 +5,8 @@
  * - 标签 name 原样存储（大小写敏感），slug 唯一冲突加后缀
  */
 import { BackupTrigger, BackupAuditAction } from "@/lib/types/backup";
+import { GuideProgressStatus, GuideStatus } from "@/lib/types/guides";
+import type { GuideStep, GuideTargetCondition } from "@/lib/types/guides";
 import { MediaType } from "@/lib/types/media";
 import { PostStatus } from "@/lib/types/posts";
 import { StorageDriverType } from "@/lib/types/storage";
@@ -34,6 +36,10 @@ export const mediaType = pgEnum("media_type", MediaType);
 export const storageDriverType = pgEnum("storage_driver", StorageDriverType);
 
 export const backupAuditAction = pgEnum("backup_audit_action", BackupAuditAction);
+
+export const guideStatus = pgEnum("guide_status", GuideStatus);
+
+export const guideProgressStatus = pgEnum("guide_progress_status", GuideProgressStatus);
 
 /* ---------- Better Auth 核心表（列名 camelCase，与适配器对齐；user 表扩展 isAdmin） ---------- */
 
@@ -254,6 +260,64 @@ export const backupAuditLogs = pgTable("backup_audit_logs", {
   createdAtIdx: index("backup_audit_created_at_idx").on(table.createdAt),
 }));
 
+/* ---------- guiders 引导配置表（Onboarding Guide） ---------- */
+
+export const guiders = pgTable(
+  "guiders",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** 唯一标识，带版本号（如 reveal_password_setup_v1），改版换 key 老用户重新触发 */
+    guideKey: text("guide_key").notNull().unique(),
+    title: text("title").notNull(),
+    /** 适用路由（如 /settings），前端按页面过滤 */
+    page: text("page").notNull(),
+    /** 步骤数组 [{id,target,title,content,placement}] */
+    steps: jsonb("steps").notNull().$type<GuideStep[]>(),
+    /** draft / published / archived */
+    status: guideStatus("status").notNull().default(GuideStatus.DRAFT),
+    /** 触发条件 {event,page}，行为 + 页面组合 */
+    targetCondition: jsonb("target_condition").$type<GuideTargetCondition | null>(),
+    /** 同页面多引导排序（小者优先） */
+    priority: integer("priority").notNull().default(0),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("guiders_status_idx").on(t.status),
+    index("guiders_page_idx").on(t.page),
+  ]
+);
+
+/* ---------- user_guide_progress 用户引导进度表 ---------- */
+
+export const userGuideProgress = pgTable(
+  "user_guide_progress",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    guideKey: text("guide_key").notNull(),
+    /** not_started / in_progress / completed / skipped */
+    status: guideProgressStatus("status")
+      .notNull()
+      .default(GuideProgressStatus.NOT_STARTED),
+    /** in_progress 时记录当前步骤，下次从该步骤续接 */
+    currentStep: integer("current_step").notNull().default(0),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("user_guide_progress_user_guide_key_unique").on(
+      t.userId,
+      t.guideKey
+    ),
+    index("user_guide_progress_status_idx").on(t.status),
+  ]
+);
+
 /* ---------- 类型导出（M2+ 使用） ---------- */
 export type Post = typeof posts.$inferSelect;
 export type NewPost = typeof posts.$inferInsert;
@@ -266,3 +330,5 @@ export type BackupRecord = typeof backupRecords.$inferSelect;
 export type BackupAuditLog = typeof backupAuditLogs.$inferSelect;
 export type NewBackupAuditLog = typeof backupAuditLogs.$inferInsert;
 export type User = typeof users.$inferSelect;
+export type Guider = typeof guiders.$inferSelect;
+export type UserGuideProgress = typeof userGuideProgress.$inferSelect;
