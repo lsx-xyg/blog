@@ -4,6 +4,10 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/* Base UI 动画自定义变体 */
+@custom-variant data-starting-style (&:where([data-starting-style]));
+@custom-variant data-ending-style (&:where([data-ending-style]));
+
 /* ===== 主题切换平滑过渡动画 ===== */
 html {
   transition: background-color 0.3s ease, color 0.3s ease;
