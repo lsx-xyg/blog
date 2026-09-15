@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 import { isAdminUser } from "@/lib/shared/utils";
 import { getMediaById, updateMedia, deleteMedia } from "@/lib/media";
-import { getStorageDriverInstance } from "@/lib/storage";
+import { getPublicStorageDriver } from "@/lib/storage";
 import { MediaType } from "@/lib/types/media";
 
 /**
@@ -69,7 +69,7 @@ export async function DELETE(
     // 先删除存储中的文件
     if (existing.storageKey) {
       try {
-        const driver = await getStorageDriverInstance();
+        const driver = await getPublicStorageDriver();
         await driver.delete(existing.storageKey);
       } catch (error) {
         console.error("删除存储文件失败（数据库记录仍会删除）：", error);

@@ -9,7 +9,7 @@
  * 4. 测试 GitHub 驱动上传（如果配置了 GITHUB_TOKEN 且 STORAGE_DRIVER=GITHUB）
  */
 import "../db/load-env";
-import { getStorageDriverInstance, resetStorageDriver, StorageDriverType } from "@/lib/storage";
+import { getPublicStorageDriver, resetStorageDriver, StorageDriverType } from "@/lib/storage";
 import { validateImage } from "@/lib/storage";
 
 async function main() {
@@ -39,9 +39,9 @@ async function main() {
   }
   console.log("   校验通过\n");
 
-  // 3. 获取存储驱动
-  console.log("3. 获取存储驱动...");
-  const driver = await getStorageDriverInstance();
+  // 3. 获取公开存储驱动
+  console.log("3. 获取公开存储驱动...");
+  const driver = await getPublicStorageDriver();
   console.log(`   使用驱动：${driver.name}\n`);
 
   // 4. 测试上传

@@ -84,10 +84,20 @@ export function ManageSettings() {
   const [adminPath, setAdminPath] = useState("");
   const [storage, setStorage] = useState<StorageSettings>({
     driver: StorageDriverType.LOCAL as StorageDriverType,
-    github: { owner: "", repo: "", branch: "", cdnBase: "", token: "", tokenConfigured: false },
-    s3: { endpoint: "", bucket: "", region: "", accessKey: "", secretKey: "", accessKeyConfigured: false, secretKeyConfigured: false },
-    local: { uploadDir: "" },
+    github: { owner: "", repo: "", branch: "", cdnBase: "", directory: "", token: "", tokenConfigured: false },
+    s3: { endpoint: "", bucket: "", region: "", directory: "", accessKey: "", secretKey: "", accessKeyConfigured: false, secretKeyConfigured: false },
+    local: { uploadDir: "", directory: "" },
   });
+
+  const [privateStorage, setPrivateStorage] = useState<StorageSettings>({
+    driver: StorageDriverType.LOCAL as StorageDriverType,
+    github: { owner: "", repo: "", branch: "", cdnBase: "", directory: "", token: "", tokenConfigured: false },
+    s3: { endpoint: "", bucket: "", region: "", directory: "", accessKey: "", secretKey: "", accessKeyConfigured: false, secretKeyConfigured: false },
+    local: { uploadDir: "", directory: "" },
+  });
+
+  // 存储设置分区：公开存储 / 私有存储 切换
+  const [storageTab, setStorageTab] = useState<"public" | "private">("public");
 
   const [giscus, setGiscus] = useState<GiscusSettings>({
     repo: "",
@@ -118,6 +128,7 @@ export function ManageSettings() {
         setAdminPath(data.adminPath ?? "");
         setOriginalAdminPath(data.adminPath ?? ""); // 保存原始路径，用于检测是否变更
         if (data.storage) setStorage(data.storage);
+        if (data.privateStorage) setPrivateStorage(data.privateStorage);
         if (data.giscus) setGiscus(data.giscus);
         if (data.cron) setCron(data.cron);
       }
@@ -139,7 +150,7 @@ export function ManageSettings() {
       const res = await fetch("/api/admin/settings", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ site, social, footer, aboutContent, adminPath, storage, giscus, cron }),
+        body: JSON.stringify({ site, social, footer, aboutContent, adminPath, storage, privateStorage, giscus, cron }),
       });
       if (res.ok) {
         // 检测 admin_path 是否发生了变化
@@ -421,6 +432,30 @@ export function ManageSettings() {
                   敏感信息不回显，只显示「已配置」状态，留空则保持当前配置。
                   修改驱动后，新上传的文件将使用新驱动，已上传的文件不受影响。
                 </p>
+              </div>
+
+              {/* 公开/私有存储切换标签 */}
+              <div className="flex gap-2 mb-6">
+                <button
+                  type="button"
+                  onClick={() => setStorageTab("public")}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${storageTab === "public"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                    }`}
+                >
+                  公开存储（图片/视频）
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setStorageTab("private")}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${storageTab === "private"
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
+                    }`}
+                >
+                  私有存储（备份/敏感数据）
+                </button>
               </div>
 
               <div className="space-y-6">

@@ -13,7 +13,8 @@ import {
   getFooterSettings,
   getAboutContent, setAboutContent, getGiscusSettings,
   getCronSettings,
-  getStorageSettings
+  getStorageSettings,
+  getPrivateStorageSettings
 } from "@/lib/settings/index";
 import { encryptIfAvailable } from "@/lib/shared/crypto";
 import { CronDeployPlatform } from "@/lib/types/settings";
@@ -32,13 +33,14 @@ export async function GET() {
   }
 
   try {
-    const [site, social, footer, aboutContent, adminPath, storage, giscus, cron] = await Promise.all([
+    const [site, social, footer, aboutContent, adminPath, storage, privateStorage, giscus, cron] = await Promise.all([
       getSiteSettings(),
       getSocialLinks(),
       getFooterSettings(),
       getAboutContent(),
       getSetting<string>("admin.path"),
       getStorageSettings(),
+      getPrivateStorageSettings(),
       getGiscusSettings(),
       getCronSettings(),
     ]);
@@ -62,6 +64,32 @@ export async function GET() {
       },
       local: {
         uploadDir: storage.local.uploadDir,
+        directory: storage.local.directory,
+      },
+    };
+
+    // 私有存储配置（用于备份等敏感数据，敏感信息不返回明文）
+    const privateStorageForClient = {
+      driver: privateStorage.driver,
+      github: {
+        owner: privateStorage.github.owner,
+        repo: privateStorage.github.repo,
+        branch: privateStorage.github.branch,
+        cdnBase: privateStorage.github.cdnBase,
+        directory: privateStorage.github.directory,
+        tokenConfigured: !!privateStorage.github.token,
+      },
+      s3: {
+        endpoint: privateStorage.s3.endpoint,
+        bucket: privateStorage.s3.bucket,
+        region: privateStorage.s3.region,
+        directory: privateStorage.s3.directory,
+        accessKeyConfigured: !!privateStorage.s3.accessKey,
+        secretKeyConfigured: !!privateStorage.s3.secretKey,
+      },
+      local: {
+        uploadDir: privateStorage.local.uploadDir,
+        directory: privateStorage.local.directory,
       },
     };
 
@@ -79,6 +107,7 @@ export async function GET() {
       aboutContent,
       adminPath: adminPath ?? "",
       storage: storageForClient,
+      privateStorage: privateStorageForClient,
       giscus,
       cron: cronForClient,
     });
@@ -171,6 +200,7 @@ export async function PUT(request: Request) {
         addSetting("storage.github.repo", github.repo);
         addSetting("storage.github.branch", github.branch);
         addSetting("storage.github.cdn_base", github.cdnBase);
+        addSetting("storage.github.directory", github.directory);
         // 敏感信息：Token 加密后存储，放空时删除记录
         handleSecret(github.token, "storage.github.token");
       }
@@ -178,6 +208,7 @@ export async function PUT(request: Request) {
         addSetting("storage.s3.endpoint", s3.endpoint);
         addSetting("storage.s3.bucket", s3.bucket);
         addSetting("storage.s3.region", s3.region);
+        addSetting("storage.s3.directory", s3.directory);
         // 敏感信息：Access Key 加密后存储，放空时删除记录
         handleSecret(s3.accessKey, "storage.s3.access_key");
         // 敏感信息：Secret Key 加密后存储，放空时删除记录
@@ -185,6 +216,35 @@ export async function PUT(request: Request) {
       }
       if (local) {
         addSetting("storage.local.upload_dir", local.uploadDir);
+        addSetting("storage.local.directory", local.directory);
+      }
+    }
+
+    // 私有存储配置（用于备份等敏感数据）
+    if (body.privateStorage) {
+      const { driver, github, s3, local } = body.privateStorage;
+      if (driver && STORAGE_DRIVER_VALUES.includes(driver.toUpperCase())) {
+        addSetting("storage_private.driver", driver.toUpperCase());
+      }
+      if (github) {
+        addSetting("storage_private.github.owner", github.owner);
+        addSetting("storage_private.github.repo", github.repo);
+        addSetting("storage_private.github.branch", github.branch);
+        addSetting("storage_private.github.cdn_base", github.cdnBase);
+        addSetting("storage_private.github.directory", github.directory);
+        handleSecret(github.token, "storage_private.github.token");
+      }
+      if (s3) {
+        addSetting("storage_private.s3.endpoint", s3.endpoint);
+        addSetting("storage_private.s3.bucket", s3.bucket);
+        addSetting("storage_private.s3.region", s3.region);
+        addSetting("storage_private.s3.directory", s3.directory);
+        handleSecret(s3.accessKey, "storage_private.s3.access_key");
+        handleSecret(s3.secretKey, "storage_private.s3.secret_key");
+      }
+      if (local) {
+        addSetting("storage_private.local.upload_dir", local.uploadDir);
+        addSetting("storage_private.local.directory", local.directory);
       }
     }
 

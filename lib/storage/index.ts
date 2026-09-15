@@ -1,5 +1,5 @@
 import  { type StorageDriverInterface, StorageDriverType } from "@/lib/types/storage";
-import { getStorageSettings } from "@/lib/settings";
+import { getStorageSettings, getPrivateStorageSettings } from "@/lib/settings";
 import { LocalStorageDriver, GithubStorageDriver, S3StorageDriver } from "@/lib/storage/drivers";
 
 export * from "@/lib/types/storage";
@@ -7,48 +7,81 @@ export * from "@/lib/storage/drivers";
 export * from "@/lib/storage/utils";
 
 /** 缓存驱动实例（按 driver 类型缓存，避免重复创建） */
-const cached = new Map<StorageDriverType, StorageDriverInterface>();
+const publicCached = new Map<StorageDriverType, StorageDriverInterface>();
+const privateCached = new Map<StorageDriverType, StorageDriverInterface>();
 
 /**
- * 获取当前配置的存储驱动（异步，从 DB 读取配置）
- *
- * 配置优先级：env > DB > default（由 getStorageSettings / getConfig 统一处理）
- * - LOCAL：本地文件存储（开发默认）
- * - GITHUB：GitHub 图床（生产推荐）
- * - S3：S3 兼容存储（占位）
- *
- * 注意：这是异步函数，因为需要查询数据库获取动态配置。
- * 调用时需要 await。
- * 
- * @returns 存储驱动实例
+ * 根据配置创建存储驱动实例
  */
-export async function getStorageDriverInstance(): Promise<StorageDriverInterface> {
-  const StorageSettings = await getStorageSettings();
-  const driverType = StorageSettings.driver;
-
-  // 检查缓存
-  let instance = cached.get(driverType);
-  if (instance) return instance;
-
+function createDriverInstance(
+  driverType: StorageDriverType,
+  settings: { github: any; s3: any; local: any }
+): StorageDriverInterface {
   switch (driverType) {
     case StorageDriverType.GITHUB:
-      instance = new GithubStorageDriver(StorageSettings.github);
-      break;
+      return new GithubStorageDriver(settings.github);
     case StorageDriverType.S3:
-      instance = new S3StorageDriver(StorageSettings.s3);
-      break;
+      return new S3StorageDriver(settings.s3);
     case StorageDriverType.LOCAL:
     default:
-      instance = new LocalStorageDriver(StorageSettings.local);
-      break;
+      return new LocalStorageDriver(settings.local);
   }
+}
 
-  // 缓存实例
-  cached.set(driverType, instance);
+/**
+ * 获取公开存储驱动实例（用于图片、视频等公开资源）
+ *
+ * 配置优先级：env > DB > default
+ * - LOCAL：本地文件存储（开发默认），目录 public/uploads
+ * - GITHUB：GitHub 公开仓库 + jsDelivr CDN（生产推荐），仓库名 public
+ * - S3：S3 兼容公开 bucket
+ *
+ * @returns 公开存储驱动实例
+ */
+export async function getPublicStorageDriver(): Promise<StorageDriverInterface> {
+  const settings = await getStorageSettings();
+  const driverType = settings.driver;
+
+  let instance = publicCached.get(driverType);
+  if (instance) return instance;
+
+  instance = createDriverInstance(driverType, settings);
+  publicCached.set(driverType, instance);
   return instance;
 }
 
-/** 重置驱动缓存（配置变更后调用，使新配置生效） */
+/**
+ * 获取私有存储驱动实例（用于数据库备份等敏感数据）
+ *
+ * 配置前缀：storagePrivate.*
+ * - LOCAL：本地私有目录 private/storage（不暴露到 Web）
+ * - GITHUB：GitHub 私有仓库 backups（只有用户自己能访问）
+ * - S3：S3 兼容私有 bucket
+ *
+ * @returns 私有存储驱动实例
+ */
+export async function getPrivateStorageDriver(): Promise<StorageDriverInterface> {
+  const settings = await getPrivateStorageSettings();
+  const driverType = settings.driver;
+
+  let instance = privateCached.get(driverType);
+  if (instance) return instance;
+
+  instance = createDriverInstance(driverType, settings);
+  privateCached.set(driverType, instance);
+  return instance;
+}
+
+/**
+ * 兼容旧代码：获取当前配置的存储驱动（等同于公开存储）
+ * @deprecated 请使用 getPublicStorageDriver() 或 getPrivateStorageDriver()
+ */
+export async function getStorageDriverInstance(): Promise<StorageDriverInterface> {
+  return getPublicStorageDriver();
+}
+
+/** 重置所有驱动缓存（配置变更后调用，使新配置生效） */
 export function resetStorageDriver(): void {
-  cached.clear();
+  publicCached.clear();
+  privateCached.clear();
 }

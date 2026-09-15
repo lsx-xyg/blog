@@ -27,6 +27,7 @@ export class S3StorageDriver implements StorageDriverInterface {
       endpoint: process.env.S3_ENDPOINT || "",
       bucket: process.env.S3_BUCKET || "",
       region: process.env.S3_REGION || "auto",
+      directory: process.env.S3_DIRECTORY || "",
       accessKey: process.env.S3_ACCESS_KEY || "",
       secretKey: process.env.S3_SECRET_KEY || "",
     };
@@ -38,6 +39,15 @@ export class S3StorageDriver implements StorageDriverInterface {
 
   private get secretKey(): string {
     return this.config.secretKey;
+  }
+
+  private get directory(): string {
+    return this.config.directory || "";
+  }
+
+  /** 构建完整路径（包含子目录） */
+  private buildPath(key: string): string {
+    return this.directory ? `${this.directory}/${key}` : key;
   }
 
   async upload(_file: Buffer, _filename: string, _mimeType: string): Promise<UploadResult> {

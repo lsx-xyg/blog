@@ -24,9 +24,10 @@ export class GithubStorageDriver implements StorageDriverInterface {
   constructor(config?: StorageSettings["github"]) {
     this.config = config || {
       owner: process.env.GITHUB_STORAGE_OWNER || "lsx-xyg",
-      repo: process.env.GITHUB_STORAGE_REPO || "images",
+      repo: process.env.GITHUB_STORAGE_REPO || "public",
       branch: process.env.GITHUB_STORAGE_BRANCH || "main",
       cdnBase: process.env.GITHUB_STORAGE_CDN_BASE || "https://cdn.jsdelivr.net/gh",
+      directory: process.env.GITHUB_STORAGE_DIRECTORY || "",
       token: process.env.GITHUB_STORAGE_TOKEN || "",
     };
   }
@@ -51,9 +52,19 @@ export class GithubStorageDriver implements StorageDriverInterface {
     return this.config.cdnBase;
   }
 
+  private get directory(): string {
+    return this.config.directory || "";
+  }
+
+  /** 构建完整路径（包含子目录） */
+  private buildPath(key: string): string {
+    return this.directory ? `${this.directory}/${key}` : key;
+  }
+
   /** 构建 jsDelivr CDN URL */
   getUrl(key: string): string {
-    return `${this.cdnBase}/${this.owner}/${this.repo}@${this.branch}/${key}`;
+    const fullPath = this.buildPath(key);
+    return `${this.cdnBase}/${this.owner}/${this.repo}@${this.branch}/${fullPath}`;
   }
 
   async upload(file: Buffer, filename: string, mimeType: string): Promise<UploadResult> {
@@ -62,7 +73,8 @@ export class GithubStorageDriver implements StorageDriverInterface {
     }
 
     const key = generateKey(filename);
-    const apiUrl = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${key}`;
+    const fullPath = this.buildPath(key);
+    const apiUrl = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${fullPath}`;
 
     // base64 编码文件内容
     const content = file.toString("base64");
@@ -99,7 +111,8 @@ export class GithubStorageDriver implements StorageDriverInterface {
       throw new Error("GITHUB_STORAGE_TOKEN 环境变量未设置");
     }
 
-    const apiUrl = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${key}`;
+    const fullPath = this.buildPath(key);
+    const apiUrl = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${fullPath}`;
 
     // 先获取文件 sha
     const getResponse = await fetch(apiUrl, {

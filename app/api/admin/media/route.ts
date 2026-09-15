@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 import { isAdminUser } from "@/lib/shared/utils";
 import { listMedia, countMedia, createMedia } from "@/lib/media";
-import { getStorageDriverInstance } from "@/lib/storage";
+import { getPublicStorageDriver } from "@/lib/storage";
 import { MediaType } from "@/lib/types/media";
 import { StorageDriverType } from "@/lib/types/storage";
 
@@ -76,8 +76,8 @@ export async function POST(request: Request) {
     // 读取文件内容
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // 调用存储驱动上传
-    const driver = await getStorageDriverInstance();
+    // 调用公开存储驱动上传（媒体资源需要公开访问）
+    const driver = await getPublicStorageDriver();
     const uploadResult = await driver.upload(buffer, file.name, file.type);
 
     // 创建媒体记录

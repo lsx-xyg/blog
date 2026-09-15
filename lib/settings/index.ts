@@ -24,7 +24,8 @@ import type {
     GiscusSettings,
     SiteSettings,
     SocialLinks,
-    StorageSettings
+    StorageSettings,
+    PrivateStorageSettings
 } from "@/lib/types/settings";
 
 /* ---------------- 再导出：层 0 ---------------- */
@@ -120,6 +121,16 @@ export async function getCronSettings(): Promise<CronSettings> {
  */
 export async function getStorageSettings(): Promise<StorageSettings> {
   return (await getConfigGroup("storage"));
+}
+
+/**
+ * 从 DB 读取私有存储配置（用于备份等敏感数据）
+ *
+ * 配置前缀：storagePrivate.*
+ * 环境变量前缀：STORAGE_PRIVATE_* / GITHUB_PRIVATE_* / S3_PRIVATE_*
+ */
+export async function getPrivateStorageSettings(): Promise<PrivateStorageSettings> {
+  return (await getConfigGroup("storagePrivate"));
 }
 
 // ========================

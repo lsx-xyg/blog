@@ -61,6 +61,7 @@ export type StorageSettings = {
         repo: string;
         branch: string;
         cdnBase: string;
+        directory: string; // 仓库内的子目录（如 uploads / backups）
         token: string; // 用户输入的明文（保存时用）
         tokenConfigured?: boolean; // 是否已配置（加载时显示用，不返回明文）
     };
@@ -68,6 +69,7 @@ export type StorageSettings = {
         endpoint: string;
         bucket: string;
         region: string;
+        directory: string; // bucket 内的子目录
         accessKey: string; // 用户输入的明文（保存时用）
         secretKey: string; // 用户输入的明文（保存时用）
         accessKeyConfigured?: boolean; // 是否已配置
@@ -75,8 +77,12 @@ export type StorageSettings = {
     };
     local: {
         uploadDir: string;
+        directory: string; // uploadDir 内的子目录
     };
 };
+
+/** 私有存储配置类型（与公开存储结构相同，用于备份等敏感数据） */
+export type PrivateStorageSettings = StorageSettings;
 
 /** 定时任务部署平台类型 */
 export const CronDeployPlatform = {

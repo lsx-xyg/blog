@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth/auth";
 import { isAdminUser } from "@/lib/shared/utils";
-import { getStorageDriverInstance, validateImage } from "@/lib/storage";
+import { getPublicStorageDriver, validateImage } from "@/lib/storage";
 
 /** 上传图片 API
  *
@@ -42,8 +42,8 @@ export async function POST(request: NextRequest) {
     // 读取文件内容
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // 调用存储驱动上传
-    const driver = await getStorageDriverInstance();
+    // 调用公开存储驱动上传（图片需要公开访问）
+    const driver = await getPublicStorageDriver();
     const result = await driver.upload(buffer, file.name, file.type);
 
     // 返回结果中包含 storageDriver，用于后续删除时选择对应平台
@@ -74,8 +74,8 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: "缺少 key 参数" }, { status: 400 });
     }
 
-    // 调用存储驱动删除
-    const driver = await getStorageDriverInstance();
+    // 调用公开存储驱动删除
+    const driver = await getPublicStorageDriver();
     await driver.delete(key);
 
     return NextResponse.json({ success: true, key });

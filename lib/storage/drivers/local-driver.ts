@@ -18,9 +18,11 @@ export class LocalStorageDriver implements StorageDriverInterface {
   name = "local" as const;
 
   private uploadDirConfig: string;
+  private directoryConfig: string;
 
   constructor(config?: StorageSettings["local"]) {
     this.uploadDirConfig = config?.uploadDir || "public/uploads";
+    this.directoryConfig = config?.directory || "";
   }
 
   /** 上传根目录 */
@@ -28,9 +30,20 @@ export class LocalStorageDriver implements StorageDriverInterface {
     return join(process.cwd(), this.uploadDirConfig);
   }
 
+  /** 子目录 */
+  private get directory(): string {
+    return this.directoryConfig;
+  }
+
+  /** 构建完整路径（包含子目录） */
+  private buildPath(key: string): string {
+    return this.directory ? `${this.directory}/${key}` : key;
+  }
+
   async upload(file: Buffer, filename: string, mimeType: string): Promise<UploadResult> {
     const key = generateKey(filename);
-    const filePath = join(this.uploadDir, key);
+    const fullPath = this.buildPath(key);
+    const filePath = join(this.uploadDir, fullPath);
 
     // 确保目录存在
     await mkdir(dirname(filePath), { recursive: true });
@@ -39,7 +52,7 @@ export class LocalStorageDriver implements StorageDriverInterface {
     await writeFile(filePath, file);
 
     return {
-      url: `/uploads/${key}`,
+      url: `/uploads/${fullPath}`,
       key,
       size: file.length,
       mimeType,
@@ -47,7 +60,8 @@ export class LocalStorageDriver implements StorageDriverInterface {
   }
 
   async delete(key: string): Promise<void> {
-    const filePath = join(this.uploadDir, key);
+    const fullPath = this.buildPath(key);
+    const filePath = join(this.uploadDir, fullPath);
     try {
       await unlink(filePath);
     } catch {
@@ -56,6 +70,7 @@ export class LocalStorageDriver implements StorageDriverInterface {
   }
 
   getUrl(key: string): string {
-    return `/uploads/${key}`;
+    const fullPath = this.buildPath(key);
+    return `/uploads/${fullPath}`;
   }
 }

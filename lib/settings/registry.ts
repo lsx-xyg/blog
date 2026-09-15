@@ -195,7 +195,7 @@ export const registry = {
     "storage.github.repo": {
         key: "storage.github.repo",
         env: "GITHUB_STORAGE_REPO",
-        default: "images",
+        default: "public",
     },
     "storage.github.branch": {
         key: "storage.github.branch",
@@ -206,6 +206,11 @@ export const registry = {
         key: "storage.github.cdn_base",
         env: "GITHUB_STORAGE_CDN_BASE",
         default: "https://cdn.jsdelivr.net/gh",
+    },
+    "storage.github.directory": {
+        key: "storage.github.directory",
+        env: "GITHUB_STORAGE_DIRECTORY",
+        default: "",
     },
     "storage.github.token": {
         key: "storage.github.token",
@@ -228,6 +233,11 @@ export const registry = {
         env: "S3_REGION",
         default: "auto",
     },
+    "storage.s3.directory": {
+        key: "storage.s3.directory",
+        env: "S3_DIRECTORY",
+        default: "",
+    },
     "storage.s3.accessKey": {
         key: "storage.s3.access_key",
         env: "S3_ACCESS_KEY",
@@ -244,6 +254,94 @@ export const registry = {
         key: "storage.local.upload_dir",
         env: "LOCAL_UPLOAD_DIR",
         default: "public/uploads",
+    },
+    "storage.local.directory": {
+        key: "storage.local.directory",
+        env: "LOCAL_STORAGE_DIRECTORY",
+        default: "",
+    },
+    // === 私有存储配置（用于备份等敏感数据）===
+    "storagePrivate.driver": {
+        key: "storage_private.driver",
+        env: "STORAGE_PRIVATE_DRIVER",
+        default: StorageDriverType.LOCAL,
+        transform: (v) => {
+            const u = v.toUpperCase();
+            return u === StorageDriverType.GITHUB || u === StorageDriverType.S3 ? u : StorageDriverType.LOCAL;
+        },
+    },
+    "storagePrivate.github.owner": {
+        key: "storage_private.github.owner",
+        env: "GITHUB_PRIVATE_OWNER",
+        default: "lsx-xyg",
+    },
+    "storagePrivate.github.repo": {
+        key: "storage_private.github.repo",
+        env: "GITHUB_PRIVATE_REPO",
+        default: "backups",
+    },
+    "storagePrivate.github.branch": {
+        key: "storage_private.github.branch",
+        env: "GITHUB_PRIVATE_BRANCH",
+        default: "main",
+    },
+    "storagePrivate.github.cdnBase": {
+        key: "storage_private.github.cdn_base",
+        env: "GITHUB_PRIVATE_CDN_BASE",
+        default: "https://cdn.jsdelivr.net/gh",
+    },
+    "storagePrivate.github.directory": {
+        key: "storage_private.github.directory",
+        env: "GITHUB_PRIVATE_DIRECTORY",
+        default: "backups",
+    },
+    "storagePrivate.github.token": {
+        key: "storage_private.github.token",
+        env: "GITHUB_PRIVATE_TOKEN",
+        default: "",
+        secret: true,
+    },
+    "storagePrivate.s3.endpoint": {
+        key: "storage_private.s3.endpoint",
+        env: "S3_PRIVATE_ENDPOINT",
+        default: "",
+    },
+    "storagePrivate.s3.bucket": {
+        key: "storage_private.s3.bucket",
+        env: "S3_PRIVATE_BUCKET",
+        default: "",
+    },
+    "storagePrivate.s3.region": {
+        key: "storage_private.s3.region",
+        env: "S3_PRIVATE_REGION",
+        default: "auto",
+    },
+    "storagePrivate.s3.directory": {
+        key: "storage_private.s3.directory",
+        env: "S3_PRIVATE_DIRECTORY",
+        default: "backups",
+    },
+    "storagePrivate.s3.accessKey": {
+        key: "storage_private.s3.access_key",
+        env: "S3_PRIVATE_ACCESS_KEY",
+        default: "",
+        secret: true,
+    },
+    "storagePrivate.s3.secretKey": {
+        key: "storage_private.s3.secret_key",
+        env: "S3_PRIVATE_SECRET_KEY",
+        default: "",
+        secret: true,
+    },
+    "storagePrivate.local.uploadDir": {
+        key: "storage_private.local.upload_dir",
+        env: "LOCAL_PRIVATE_DIR",
+        default: "private/storage",
+    },
+    "storagePrivate.local.directory": {
+        key: "storage_private.local.directory",
+        env: "LOCAL_PRIVATE_SUBDIRECTORY",
+        default: "backups",
     },
 } satisfies Record<string, ConfigDef<any>>;
 

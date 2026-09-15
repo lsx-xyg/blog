@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth/auth";
 import { headers } from "next/headers";
 import { isAdminUser } from "@/lib/shared/utils";
 import { findUnusedMedia, batchDeleteMedia } from "@/lib/media";
-import { getStorageDriverInstance } from "@/lib/storage";
+import { getPublicStorageDriver } from "@/lib/storage";
 
 /**
  * 未使用图片清理 API
@@ -54,8 +54,8 @@ export async function DELETE(request: Request) {
       return NextResponse.json({ success: true, deleted: 0, message: "没有需要删除的图片" });
     }
 
-    // 删除存储中的文件
-    const driver = await getStorageDriverInstance();
+    // 删除公开存储中的文件
+    const driver = await getPublicStorageDriver();
     for (const item of mediaToDelete) {
       if (item.storageKey) {
         try {

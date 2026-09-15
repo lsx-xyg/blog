@@ -35,7 +35,7 @@ import {
   accounts,
   verifications,
 } from "@/db/schema";
-import { getStorageDriverInstance } from "@/lib/storage";
+import { getPrivateStorageDriver } from "@/lib/storage";
 import { BackupTrigger } from "@/lib/types/backup";
 import { encryptIfAvailable, decryptIfAvailable, isEncryptionAvailable } from "@/lib/shared/crypto";
 import { eq, desc } from "drizzle-orm";
@@ -230,8 +230,8 @@ export async function createBackup(
   const timestamp = now.toISOString().replace(/[:.]/g, "-");
   const filename = `backups/${dateStr}/backup-${timestamp}.json`;
 
-  // 4. 上传到存储
-  const driver = await getStorageDriverInstance();
+  // 4. 上传到私有存储（备份文件包含敏感数据，必须存储在私有仓库/bucket）
+  const driver = await getPrivateStorageDriver();
   const uploadResult = await driver.upload(buffer, filename, "application/json");
 
   // 5. 创建备份记录
@@ -284,7 +284,7 @@ export async function deleteBackup(id: string): Promise<void> {
 
   // 1. 删除存储中的文件
   try {
-    const driver = await getStorageDriverInstance();
+    const driver = await getPrivateStorageDriver();
     await driver.delete(record.fileKey);
   } catch (e) {
     // 存储文件删除失败不影响数据库记录删除，记录日志即可
@@ -307,9 +307,9 @@ export async function downloadBackup(id: string): Promise<{ buffer: Buffer; file
     throw new Error(`备份记录不存在: ${id}`);
   }
 
-  // 从存储中读取文件
+  // 从私有存储中读取文件
   // 注意：不同驱动的读取方式不同，这里统一通过 URL fetch
-  const driver = await getStorageDriverInstance();
+  const driver = await getPrivateStorageDriver();
   const url = driver.getUrl(record.fileKey);
 
   const response = await fetch(url);
