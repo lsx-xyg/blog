@@ -115,8 +115,8 @@ export default async function AdminRootPage({
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8 animate-page-enter">
-      {/* 面包屑导航 */}
-      <AdminBreadcrumb current="后台管理" adminPath={adminPath} />
+      {/* 面包屑导航：后台首页不显示当前页面，避免重复 */}
+      <AdminBreadcrumb adminPath={adminPath} />
 
       {/* 欢迎信息 + 退出按钮 */}
       <header className="mb-6 flex items-center justify-between">

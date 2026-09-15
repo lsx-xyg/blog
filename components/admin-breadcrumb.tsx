@@ -24,8 +24,8 @@ interface BreadcrumbItem {
 }
 
 interface AdminBreadcrumbProps {
-  /** 当前页面名称 */
-  current: string;
+  /** 当前页面名称，为空则不显示最后一层（后台首页使用） */
+  current?: string;
   /** 父级页面（可选），例如编辑文章的父级是文章管理 */
   parent?: BreadcrumbItem;
   /** 后台路径，默认从路径中自动提取 */
@@ -101,10 +101,13 @@ export function AdminBreadcrumb({ current, parent, adminPath }: AdminBreadcrumbP
         </>
       )}
 
-      <ChevronRight className="h-3.5 w-3.5 shrink-0" />
-
-      {/* 当前页面 */}
-      <span className="text-foreground font-medium truncate">{current}</span>
+      {/* 当前页面（只有 current 有值时才显示） */}
+      {current && (
+        <>
+          <ChevronRight className="h-3.5 w-3.5 shrink-0" />
+          <span className="text-foreground font-medium truncate">{current}</span>
+        </>
+      )}
     </nav>
   );
 }
