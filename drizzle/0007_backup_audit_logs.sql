@@ -1,5 +1,11 @@
 -- 创建备份审计操作枚举
-CREATE TYPE "backup_audit_action" AS ENUM ('CREATE', 'DOWNLOAD', 'DELETE', 'RESTORE');
+-- PostgreSQL 不支持 CREATE TYPE IF NOT EXISTS，用 DO 块检查是否存在
+DO $$
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'backup_audit_action') THEN
+    CREATE TYPE "backup_audit_action" AS ENUM ('CREATE', 'DOWNLOAD', 'DELETE', 'RESTORE');
+  END IF;
+END$$;
 --> statement-breakpoint
 -- 创建备份审计日志表
 CREATE TABLE IF NOT EXISTS "backup_audit_logs" (
