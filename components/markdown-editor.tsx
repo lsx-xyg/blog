@@ -14,6 +14,61 @@ import { MediaPicker } from "@/components/media-picker";
 import "bytemd/dist/index.css";
 import { MediaType } from "@/lib/types/media";
 import { getStoredTheme, type ThemeMode } from "@/lib/shared/theme";
+import type { BytemdLocale } from "bytemd";
+
+/**
+ * ByteMD 中文 locale 配置
+ * 将所有界面文字翻译成中文
+ */
+const ZH_LOCALE: Partial<BytemdLocale> = {
+  write: "编辑",
+  preview: "预览",
+  writeOnly: "仅编辑",
+  exitWriteOnly: "退出仅编辑",
+  previewOnly: "仅预览",
+  exitPreviewOnly: "退出仅预览",
+  help: "帮助",
+  closeHelp: "关闭帮助",
+  toc: "目录",
+  closeToc: "关闭目录",
+  fullscreen: "全屏",
+  exitFullscreen: "退出全屏",
+  source: "源码",
+  cheatsheet: "Markdown 速查表",
+  shortcuts: "快捷键",
+  words: "字数",
+  lines: "行数",
+  sync: "同步滚动",
+  top: "回到顶部",
+  limited: "已达最大长度",
+  h1: "一级标题",
+  h2: "二级标题",
+  h3: "三级标题",
+  h4: "四级标题",
+  h5: "五级标题",
+  h6: "六级标题",
+  headingText: "标题文本",
+  bold: "粗体",
+  boldText: "粗体文本",
+  italic: "斜体",
+  italicText: "斜体文本",
+  quote: "引用",
+  quotedText: "引用文本",
+  link: "链接",
+  linkText: "链接文本",
+  image: "图片",
+  imageAlt: "图片描述",
+  imageTitle: "图片标题",
+  code: "行内代码",
+  codeText: "代码文本",
+  codeBlock: "代码块",
+  codeLang: "代码语言",
+  ul: "无序列表",
+  ulItem: "列表项",
+  ol: "有序列表",
+  olItem: "列表项",
+  hr: "分割线",
+};
 
 /**
  * Shiki 主题映射
@@ -359,6 +414,7 @@ export function MarkdownEditor({
         uploadImages={uploadImages}
         mode={editorMode}
         placeholder="在此输入 Markdown 内容..."
+        locale={ZH_LOCALE}
       />
 
       {/* 媒体库选择器 */}

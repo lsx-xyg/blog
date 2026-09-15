@@ -523,13 +523,15 @@ body {
 /* === ByteMD 编辑器全局主题样式（跟随站点主题切换） === */
 .bytemd {
   background: var(--bg) !important;
-  border-color: var(--border) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0.5rem !important;
   color: var(--fg) !important;
+  overflow: hidden !important;
 }
 
 .bytemd-toolbar {
   background: var(--surface) !important;
-  border-color: var(--border) !important;
+  border-bottom: 1px solid var(--border) !important;
   color: var(--fg) !important;
 }
 
@@ -560,7 +562,7 @@ body {
 
 .bytemd-editor .CodeMirror-gutters {
   background: var(--surface) !important;
-  border-color: var(--border) !important;
+  border-right: 1px solid var(--border) !important;
 }
 
 .bytemd-editor .CodeMirror-linenumber {
@@ -585,38 +587,24 @@ body {
   color: var(--fg-faint) !important;
 }
 
-/* 调整边框样式，避免深色主题下太粗太黑 */
-.bytemd {
-  border-width: 1px !important;
-  border-radius: 0.5rem !important;
-}
-
-.bytemd-toolbar {
-  border-bottom-width: 1px !important;
-}
-
+/* 分屏模式下预览区左边框 */
 .bytemd-split .bytemd-preview {
-  border-left-width: 1px !important;
-}
-
-.bytemd-status {
-  border-top-width: 1px !important;
+  border-left: 1px solid var(--border) !important;
 }
 
 .bytemd-preview {
   background: var(--bg) !important;
-  border-color: var(--border) !important;
 }
 
 .bytemd-status {
   background: var(--surface) !important;
-  border-color: var(--border) !important;
+  border-top: 1px solid var(--border) !important;
   color: var(--fg-muted) !important;
 }
 
 .bytemd-tabs {
   background: var(--surface) !important;
-  border-color: var(--border) !important;
+  border-bottom: 1px solid var(--border) !important;
 }
 
 .bytemd-tab {

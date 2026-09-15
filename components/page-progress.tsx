@@ -4,16 +4,15 @@
  * 页面加载进度条组件
  *
  * 功能：
- * - 路由切换时在页面顶部显示加载进度条
- * - 页面初始加载时也显示
+ * - 点击链接时立即在页面顶部显示加载进度条（提供即时反馈）
+ * - 路由切换完成后进度到 100% 并隐藏
  * - 颜色跟随三色主题
  * - 末端带轻微 glow 效果
  * - 高度 2-3px，不占空间
  *
  * 实现方式：
- * - 使用 usePathname 监听路由变化
- * - 路由变化时显示进度条，模拟加载进度（0% -> 90%）
- * - 页面加载完成（useEffect 触发）后进度到 100% 并隐藏
+ * - 全局监听链接点击事件，点击时立即显示进度条（0% -> 90%）
+ * - 使用 usePathname 监听路由变化，路由变化后完成进度（90% -> 100% -> 隐藏）
  * - 使用 CSS transition 实现平滑动画
  */
 
@@ -26,6 +25,7 @@ export function PageProgress() {
   const [visible, setVisible] = useState(false);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLoadingRef = useRef(false);
 
   // 清除定时器
   const clearTimers = () => {
@@ -41,6 +41,8 @@ export function PageProgress() {
 
   // 开始加载动画（0% -> 90%）
   const startLoading = () => {
+    if (isLoadingRef.current) return;
+    isLoadingRef.current = true;
     clearTimers();
     setVisible(true);
     setProgress(0);
@@ -64,6 +66,9 @@ export function PageProgress() {
 
   // 完成加载（90% -> 100% -> 隐藏）
   const finishLoading = () => {
+    if (!isLoadingRef.current) return;
+    isLoadingRef.current = false;
+
     if (timerRef.current) {
       clearInterval(timerRef.current);
       timerRef.current = null;
@@ -79,19 +84,53 @@ export function PageProgress() {
     }, 300);
   };
 
-  // 监听路由变化
+  // 全局监听链接点击事件，点击时立即显示进度条
   useEffect(() => {
-    startLoading();
+    const handleClick = (e: MouseEvent) => {
+      // 找到点击的链接元素
+      const target = e.target as HTMLElement;
+      const link = target.closest("a[href]") as HTMLAnchorElement | null;
 
-    // 模拟页面加载完成（实际项目中可以监听 router.events 或 window.load）
-    // 这里用一个短延迟模拟，因为 Next.js App Router 的客户端导航很快
+      if (!link) return;
+
+      const href = link.getAttribute("href");
+      if (!href) return;
+
+      // 只处理站内链接（相对路径或同域名）
+      const isExternal =
+        href.startsWith("http://") ||
+        href.startsWith("https://") ||
+        href.startsWith("mailto:") ||
+        href.startsWith("tel:") ||
+        href.startsWith("#");
+
+      if (isExternal) return;
+
+      // 检查是否是新标签页打开（target="_blank" 或按住 cmd/ctrl）
+      const isNewTab =
+        link.target === "_blank" || e.metaKey || e.ctrlKey || e.shiftKey;
+      if (isNewTab) return;
+
+      // 检查是否是下载链接
+      if (link.hasAttribute("download")) return;
+
+      // 开始显示进度条
+      startLoading();
+    };
+
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, []);
+
+  // 监听路由变化，路由变化后完成进度
+  useEffect(() => {
+    // 路由变化后，延迟一小段时间完成进度（让用户看到 100% 的状态）
     const finishTimer = setTimeout(() => {
       finishLoading();
-    }, 500);
+    }, 200);
 
     return () => {
       clearTimeout(finishTimer);
-      clearTimers();
     };
   }, [pathname]);
 
