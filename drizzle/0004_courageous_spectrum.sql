@@ -1,6 +1,6 @@
 -- 重构：去掉 gallery_items / gallery_item_tags，精选字段放到 media，新建 media_tags
 -- 1. 先把 gallery_items.featured 同步到 media.featured（需要先添加字段）
-ALTER TABLE "media" ADD COLUMN "featured" boolean NOT NULL DEFAULT false;
+ALTER TABLE "media" ADD COLUMN IF NOT EXISTS "featured" boolean NOT NULL DEFAULT false;
 --> statement-breakpoint
 -- 2. 同步精选状态
 UPDATE "media" SET "featured" = gi.featured
@@ -8,7 +8,7 @@ FROM "gallery_items" gi
 WHERE gi.media_id = "media".id AND gi.featured = true;
 --> statement-breakpoint
 -- 3. 创建 media_tags 关联表
-CREATE TABLE "media_tags" (
+CREATE TABLE IF NOT EXISTS "media_tags" (
 	"media_id" uuid NOT NULL,
 	"tag_id" uuid NOT NULL,
 	CONSTRAINT "media_tags_media_id_tag_id_pk" PRIMARY KEY("media_id","tag_id")

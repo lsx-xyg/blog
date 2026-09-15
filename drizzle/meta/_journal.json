@@ -50,6 +50,20 @@
       "when": 1789387871663,
       "tag": "0006_mixed_hobgoblin",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789456800000,
+      "tag": "0007_backup_audit_logs",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789456801000,
+      "tag": "0008_backup_storage_driver",
+      "breakpoints": true
     }
   ]
 }
