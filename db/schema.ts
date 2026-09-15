@@ -4,7 +4,7 @@
  * - 枚举值全大写（post_status / backup_trigger）
  * - 标签 name 原样存储（大小写敏感），slug 唯一冲突加后缀
  */
-import { BackupTrigger } from "@/lib/types/backup";
+import { BackupTrigger, BackupAuditAction } from "@/lib/types/backup";
 import { MediaType } from "@/lib/types/media";
 import { PostStatus } from "@/lib/types/posts";
 import { StorageDriverType } from "@/lib/types/storage";
@@ -32,6 +32,8 @@ export const backupTrigger = pgEnum("backup_trigger", BackupTrigger);
 export const mediaType = pgEnum("media_type", MediaType);
 
 export const storageDriverType = pgEnum("storage_driver", StorageDriverType);
+
+export const backupAuditAction = pgEnum("backup_audit_action", BackupAuditAction);
 
 /* ---------- Better Auth 核心表（列名 camelCase，与适配器对齐；user 表扩展 isAdmin） ---------- */
 
@@ -224,6 +226,30 @@ export const backupRecords = pgTable("backup_records", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+/* ---------- backup_audit_logs 备份审计日志表 ---------- */
+
+export const backupAuditLogs = pgTable("backup_audit_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  // 关联的备份记录 ID（备份被删除后仍保留日志，所以允许为 null）
+  backupId: uuid("backup_id"),
+  // 备份文件的 key（冗余存储，方便查询已删除的备份）
+  fileKey: text("file_key").notNull(),
+  // 操作类型（CREATE/DOWNLOAD/DELETE/RESTORE）
+  action: backupAuditAction("action").notNull(),
+  // 操作人 ID（未登录操作为 null）
+  userId: text("user_id"),
+  // 操作人 IP 地址
+  ipAddress: text("ip_address"),
+  // 操作人 User-Agent
+  userAgent: text("user_agent"),
+  // 操作时间
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => ({
+  backupIdx: index("backup_audit_backup_idx").on(table.backupId),
+  actionIdx: index("backup_audit_action_idx").on(table.action),
+  createdAtIdx: index("backup_audit_created_at_idx").on(table.createdAt),
+}));
+
 /* ---------- 类型导出（M2+ 使用） ---------- */
 export type Post = typeof posts.$inferSelect;
 export type NewPost = typeof posts.$inferInsert;
@@ -233,4 +259,6 @@ export type NewMedia = typeof media.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
 export type FriendLink = typeof friendLinks.$inferSelect;
 export type BackupRecord = typeof backupRecords.$inferSelect;
+export type BackupAuditLog = typeof backupAuditLogs.$inferSelect;
+export type NewBackupAuditLog = typeof backupAuditLogs.$inferInsert;
 export type User = typeof users.$inferSelect;

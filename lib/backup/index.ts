@@ -30,18 +30,22 @@ import {
   settings,
   friendLinks,
   backupRecords,
+  backupAuditLogs,
   users,
   sessions,
   accounts,
   verifications,
 } from "@/db/schema";
 import { getPrivateStorageDriver } from "@/lib/storage";
-import { BackupTrigger } from "@/lib/types/backup";
+import { BackupTrigger, BackupAuditAction } from "@/lib/types/backup";
 import { encryptIfAvailable, decryptIfAvailable, isEncryptionAvailable } from "@/lib/shared/crypto";
 import { eq, desc } from "drizzle-orm";
 
 /** 备份版本 */
 const BACKUP_VERSION = "1.0";
+
+/** 加密备份文件的魔数标记（用于判断文件是否已加密） */
+const ENCRYPTED_MAGIC = "BACKUP_ENC_V1:";
 
 /** 需要备份的表（按依赖顺序排列，恢复时按此顺序清空和插入） */
 const BACKUP_TABLES = [
@@ -220,21 +224,42 @@ export async function createBackup(
   // 1. 导出备份数据
   const backupData = await exportBackup();
 
-  // 2. 序列化为 JSON Buffer
+  // 2. 序列化为 JSON
   const jsonContent = JSON.stringify(backupData, null, 2);
-  const buffer = Buffer.from(jsonContent, "utf-8");
 
-  // 3. 生成文件名（按日期分目录）
+  // 3. 加密备份内容（如果配置了 ENCRYPTION_KEY）
+  // 加密后的格式：ENCRYPTED_MAGIC + encrypt(jsonContent)
+  // 这样即使私有仓库被访问，没有密钥也无法读取备份内容
+  let contentToUpload = jsonContent;
+  let isEncrypted = false;
+  if (isEncryptionAvailable()) {
+    try {
+      const encrypted = encryptIfAvailable(jsonContent);
+      if (encrypted && encrypted !== jsonContent) {
+        contentToUpload = `${ENCRYPTED_MAGIC}${encrypted}`;
+        isEncrypted = true;
+        console.log("[backup] 备份内容已加密（AES-256-GCM）");
+      }
+    } catch (e) {
+      console.error("[backup] 备份加密失败，将使用明文存储：", e);
+    }
+  } else {
+    console.warn("[backup] ENCRYPTION_KEY 未配置，备份内容将明文存储（建议配置加密密钥）");
+  }
+
+  const buffer = Buffer.from(contentToUpload, "utf-8");
+
+  // 4. 生成文件名（按日期分目录）
   const now = new Date();
   const dateStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}`;
   const timestamp = now.toISOString().replace(/[:.]/g, "-");
   const filename = `backups/${dateStr}/backup-${timestamp}.json`;
 
-  // 4. 上传到私有存储（备份文件包含敏感数据，必须存储在私有仓库/bucket）
+  // 5. 上传到私有存储（备份文件包含敏感数据，必须存储在私有仓库/bucket）
   const driver = await getPrivateStorageDriver();
   const uploadResult = await driver.upload(buffer, filename, "application/json");
 
-  // 5. 创建备份记录
+  // 6. 创建备份记录
   const [record] = await db
     .insert(backupRecords)
     .values({
@@ -243,6 +268,9 @@ export async function createBackup(
       triggeredBy,
     })
     .returning();
+
+  // 7. 记录审计日志
+  await logBackupAudit(record.id, record.fileKey, BackupAuditAction.CREATE);
 
   return {
     record,
@@ -282,6 +310,9 @@ export async function deleteBackup(id: string): Promise<void> {
     throw new Error(`备份记录不存在: ${id}`);
   }
 
+  // 0. 记录审计日志（在删除前记录，因为删除后备份记录就不存在了）
+  await logBackupAudit(record.id, record.fileKey, BackupAuditAction.DELETE);
+
   // 1. 删除存储中的文件
   try {
     const driver = await getPrivateStorageDriver();
@@ -318,14 +349,105 @@ export async function downloadBackup(id: string): Promise<{ buffer: Buffer; file
   }
 
   const arrayBuffer = await response.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
+  let buffer = Buffer.from(arrayBuffer);
+
+  // 检查是否是加密的备份文件
+  const contentStr = buffer.toString("utf-8");
+  if (contentStr.startsWith(ENCRYPTED_MAGIC)) {
+    console.log("[backup] 检测到加密备份文件，正在解密...");
+    const encryptedContent = contentStr.slice(ENCRYPTED_MAGIC.length);
+    try {
+      const decrypted = decryptIfAvailable(encryptedContent);
+      if (decrypted && decrypted !== encryptedContent) {
+        buffer = Buffer.from(decrypted, "utf-8");
+        console.log("[backup] 备份文件解密成功");
+      } else {
+        console.error("[backup] 备份文件解密失败（可能是 ENCRYPTION_KEY 未配置或不正确）");
+        throw new Error("备份文件解密失败，请检查 ENCRYPTION_KEY 配置");
+      }
+    } catch (e) {
+      console.error("[backup] 备份文件解密异常：", e);
+      throw new Error(`备份文件解密失败: ${e instanceof Error ? e.message : String(e)}`);
+    }
+  }
 
   // 从 fileKey 提取文件名
   const filename = record.fileKey.split("/").pop() || "backup.json";
+
+  // 记录审计日志
+  await logBackupAudit(record.id, record.fileKey, BackupAuditAction.DOWNLOAD);
 
   return {
     buffer,
     filename,
     mimeType: "application/json",
   };
+}
+
+/* ---------- 审计日志 ---------- */
+
+/**
+ * 记录备份审计日志
+ *
+ * @param backupId 备份记录 ID（可选，备份被删除后仍可记录）
+ * @param fileKey 备份文件 key
+ * @param action 操作类型（CREATE/DOWNLOAD/DELETE/RESTORE）
+ * @param userId 操作人 ID（可选）
+ * @param ipAddress 操作人 IP 地址（可选）
+ * @param userAgent 操作人 User-Agent（可选）
+ */
+export async function logBackupAudit(
+  backupId: string | null,
+  fileKey: string,
+  action: BackupAuditAction,
+  userId?: string | null,
+  ipAddress?: string | null,
+  userAgent?: string | null,
+): Promise<void> {
+  try {
+    await db.insert(backupAuditLogs).values({
+      backupId,
+      fileKey,
+      action,
+      userId: userId ?? null,
+      ipAddress: ipAddress ?? null,
+      userAgent: userAgent ?? null,
+    });
+  } catch (e) {
+    // 审计日志记录失败不影响主流程，只记录错误
+    console.error("[backup] 记录审计日志失败：", e);
+  }
+}
+
+/**
+ * 获取备份审计日志列表
+ *
+ * @param limit 限制数量（默认 100）
+ * @param backupId 按备份 ID 筛选（可选）
+ * @param action 按操作类型筛选（可选）
+ * @returns 审计日志列表（按时间倒序）
+ */
+export async function listBackupAuditLogs(
+  limit = 100,
+  backupId?: string,
+  action?: BackupAuditAction,
+): Promise<(typeof backupAuditLogs.$inferSelect)[]> {
+  // 直接查询所有结果，然后在内存中过滤
+  // （drizzle 的动态 where 条件类型比较复杂，这里简化处理）
+  const results = await db
+    .select()
+    .from(backupAuditLogs)
+    .orderBy(desc(backupAuditLogs.createdAt))
+    .limit(limit);
+
+  // 在内存中过滤
+  let filtered = results;
+  if (backupId) {
+    filtered = filtered.filter((r) => r.backupId === backupId);
+  }
+  if (action) {
+    filtered = filtered.filter((r) => r.action === action);
+  }
+
+  return filtered;
 }

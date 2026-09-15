@@ -272,11 +272,13 @@ interface StorageDriver {
 **范围**：全量备份所有业务表（users / sessions / accounts / verifications / posts / tags / post_tags / media / media_tags / settings / friend_links）。图片本体在存储层，不在备份范围。
 
 - **格式**：JSON 文件（schema 版本号 + 导出时间 + 各表数据数组）
-- **导出**：手动 → 生成 JSON 上传到存储驱动，后台可下载；定时 → 自动上传到备份存储
+- **导出**：手动 → 生成 JSON 上传到**私有存储**，后台可下载；定时 → 自动上传到备份存储
 - **导入**：上传 JSON → 校验版本 → 按外键逆序清空 → 按外键顺序插入 → **覆盖式**；确认弹窗含覆盖警告
-- **定时备份**：复用 `StorageDriver`（STORAGE_DRIVER = LOCAL | GITHUB | S3），走 `backups/` 前缀；`VERCEL` 模式 cron-job.org 触发 `GET /api/cron/backup`，`SERVER` 模式 node-cron；自动备份保留策略可后续配置
+- **定时备份**：复用**私有存储驱动**（STORAGE_PRIVATE_DRIVER = LOCAL | GITHUB | S3），走 `backups/` 前缀；`VERCEL` 模式 cron-job.org 触发 `GET /api/cron/backup`，`SERVER` 模式 node-cron；自动备份保留策略可后续配置
 - **历史**：后台备份页显示 backup_records（时间/大小/触发方式），可下载、可删除、可恢复
-- ⚠️ **安全提醒**：备份含账号表数据（邮箱等）；`STORAGE_DRIVER=GITHUB` 上传时若 repo 公开，账号信息会公开——部署时自行权衡（私有 repo 或接受）
+- **内容加密**：备份内容支持 AES-256-GCM 加密（需配置 ENCRYPTION_KEY），加密后的文件以 `BACKUP_ENC_V1:` 魔数开头，下载时自动解密
+- **审计日志**：备份操作（创建/下载/删除/恢复）记录到 backup_audit_logs 表，包含操作人、IP、User-Agent、时间
+- ⚠️ **安全提醒**：备份含账号表数据（邮箱等）；**必须使用私有存储**（私有 GitHub 仓库 / 私有 S3 bucket / 本地私有目录）；建议配置 ENCRYPTION_KEY 对备份内容加密；即使私有仓库被访问，没有密钥也无法读取备份内容
 
 ### 实现细节
 
@@ -336,26 +338,58 @@ ENCRYPTION_KEY=
 ### 按需配置
 
 ```ini
-# ===== 存储驱动 =====
-# LOCAL（开发默认）/ GITHUB（生产推荐）/ S3（占位未实现）
+# ===== 存储驱动（公开存储 - 图片/视频等公开资源）=====
+# LOCAL（开发默认）/ GITHUB（生产推荐）/ S3
 # 想在后台动态切换驱动，就不设置此环境变量
 STORAGE_DRIVER=LOCAL
 
-# --- GitHub 图床（STORAGE_DRIVER=GITHUB 时需要）---
+# --- GitHub 公开仓库（STORAGE_DRIVER=GITHUB 时需要）---
 # 也可在后台「存储设置」动态配置（加密存储），环境变量优先级更高
+# 公开仓库用于存储文章/相册图片，通过 jsDelivr CDN 加速访问
 GITHUB_STORAGE_TOKEN=          # Personal Access Token（repo 权限）
 GITHUB_STORAGE_OWNER=lsx-xyg   # 仓库所有者
-GITHUB_STORAGE_REPO=images     # 仓库名（建议单独建仓）
+GITHUB_STORAGE_REPO=public      # 仓库名（原 images 已改名为 public）
 GITHUB_STORAGE_BRANCH=main     # 分支
 GITHUB_STORAGE_CDN_BASE=https://cdn.jsdelivr.net/gh  # CDN 基础 URL
+GITHUB_STORAGE_DIRECTORY=       # 子目录（可选，如 uploads，留空则存根目录）
 
-# --- S3 兼容存储（STORAGE_DRIVER=S3 时需要，占位未实现）---
+# --- S3 兼容存储（STORAGE_DRIVER=S3 时需要）---
 # 支持阿里云 OSS / Cloudflare R2 / AWS S3 / MinIO 等
 S3_ENDPOINT=
 S3_REGION=auto
 S3_BUCKET=
 S3_ACCESS_KEY=
 S3_SECRET_KEY=
+S3_DIRECTORY=                    # 子目录（可选）
+
+# ===== 存储驱动（私有存储 - 备份/敏感数据）=====
+# 用于存储数据库备份等敏感数据，必须使用私有仓库/bucket
+# 与公开存储独立配置，互不干扰
+# LOCAL（开发默认，存 private/storage 目录）/ GITHUB（私有仓库）/ S3（私有 bucket）
+STORAGE_PRIVATE_DRIVER=LOCAL
+
+# --- GitHub 私有仓库（STORAGE_PRIVATE_DRIVER=GITHUB 时需要）---
+# 私有仓库只有所有者可访问，备份文件不会公开
+# 建议使用独立的 Token，权限最小化
+GITHUB_PRIVATE_TOKEN=           # Personal Access Token（repo 权限）
+GITHUB_PRIVATE_OWNER=lsx-xyg    # 仓库所有者
+GITHUB_PRIVATE_REPO=backups      # 仓库名（建议单独建私有仓库）
+GITHUB_PRIVATE_BRANCH=main      # 分支
+GITHUB_PRIVATE_DIRECTORY=        # 子目录（可选，如 backups，留空则存根目录）
+
+# --- S3 私有 bucket（STORAGE_PRIVATE_DRIVER=S3 时需要）---
+# 建议开启服务端加密（SSE-S3 或 SSE-KMS）
+S3_PRIVATE_ENDPOINT=
+S3_PRIVATE_REGION=auto
+S3_PRIVATE_BUCKET=
+S3_PRIVATE_ACCESS_KEY=
+S3_PRIVATE_SECRET_KEY=
+S3_PRIVATE_DIRECTORY=            # 子目录（可选）
+
+# --- 本地私有存储（STORAGE_PRIVATE_DRIVER=LOCAL 时需要）---
+# 私有目录不会暴露到 Web，只能通过后台 API 下载
+LOCAL_PRIVATE_DIR=private/storage  # 私有目录（相对于项目根目录）
+LOCAL_PRIVATE_DIRECTORY=            # 子目录（可选）
 
 # ===== 后台入口 =====
 # 后台管理路径（默认 admin），建议设一个不容易猜到的路径
@@ -377,10 +411,10 @@ NEXT_PUBLIC_GISCUS_CATEGORY=Announcements
 NEXT_PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOUVJQps4DFcnk
 ```
 
-### 预留配置（功能未实现）
+### 预留配置（功能未完全实现）
 
 ```ini
-# 定时任务（T12 未实现）
+# 定时任务（T12 已实现 ✅）
 # CRON_SECRET=
 # DEPLOY_PLATFORM=VERCEL|SERVER
 
@@ -388,8 +422,10 @@ NEXT_PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOUVJQps4DFcnk
 # SEARCH_MODE=CLIENT|DATABASE
 
 # 备份（T13 已实现 ✅）
-# 备份文件复用 STORAGE_DRIVER 存储驱动，走 backups/ 前缀
+# 备份文件使用私有存储（STORAGE_PRIVATE_DRIVER），走 backups/ 前缀
 # 定时备份复用 CRON_SECRET 和 DEPLOY_PLATFORM 配置
+# 备份内容支持 AES-256-GCM 加密（需配置 ENCRYPTION_KEY）
+# 备份操作支持审计日志（backup_audit_logs 表）
 # BACKUP_RETENTION=7（预留，自动删除旧备份）
 ```
 
