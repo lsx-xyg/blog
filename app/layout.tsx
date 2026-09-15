@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { getAdminPathAsync } from "@/lib/shared/admin-path";
-import { THEME_INIT_SCRIPT } from "@/lib/shared/theme";
+import { THEME_INIT_SCRIPT, THEME_INIT_SCRIPT_SRC } from "@/lib/shared/theme";
 import { SiteHeader } from "@/components/site-header";
 import { MobileNav } from "@/components/mobile-nav";
 import { Footer } from "@/components/footer";
@@ -116,6 +116,9 @@ export default async function RootLayout({
           />
         </noscript>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        {/* 外部文件兜底：硬导航 404 等错误壳路径下，head 内容由客户端动态插入，
+            内联脚本不会执行，src 形式的脚本会被浏览器正常加载执行，保证主题一致 */}
+        <script src={THEME_INIT_SCRIPT_SRC} async />
       </head>
       {/* suppressHydrationWarning：忽略浏览器扩展注入属性（如 data-atm-ext-installed）导致的水合差异 */}
       <body suppressHydrationWarning className="min-h-screen flex-col">
