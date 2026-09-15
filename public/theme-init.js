@@ -34,6 +34,10 @@
         c.add("dark");
       }
     }
+    // 同步写 cookie，供服务端 SSR 渲染 html 主题 class（消除 404 等路径的闪烁，一次性自愈）
+    if (t) {
+      document.cookie = "site-theme=" + t + "; path=/; max-age=31536000; samesite=lax";
+    }
   } catch (e) {
     /* localStorage 不可用时静默降级为默认主题 */
   }

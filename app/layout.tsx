@@ -1,7 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import { cookies } from "next/headers";
 import { getAdminPathAsync } from "@/lib/shared/admin-path";
-import { THEME_INIT_SCRIPT, THEME_INIT_SCRIPT_SRC } from "@/lib/shared/theme";
+import {
+  THEME_INIT_SCRIPT,
+  THEME_INIT_SCRIPT_SRC,
+  THEME_KEY,
+  getThemeClassFromValue,
+} from "@/lib/shared/theme";
 import { SiteHeader } from "@/components/site-header";
 import { MobileNav } from "@/components/mobile-nav";
 import { Footer } from "@/components/footer";
@@ -76,8 +82,18 @@ export default async function RootLayout({
     getAdminPathAsync(),
   ]);
 
+  // 服务端读取主题 cookie，直接在 <html> 上渲染主题 class：
+  // 正常页面 SSR 时 html 已带正确 class（零 FOUC）；
+  // 硬导航 404 等错误壳路径下，客户端接管时也会应用到 html，避免主题闪烁
+  const cookieStore = await cookies();
+  const themeClass = getThemeClassFromValue(cookieStore.get(THEME_KEY)?.value);
+
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
+    <html
+      lang="zh-CN"
+      suppressHydrationWarning
+      className={themeClass || undefined}
+    >
       {/* 首屏防 FOUC：渲染前同步应用主题（localStorage + prefers-color-scheme） */}
       <head>
         {/* LXGW WenKai Screen（霞鹜文楷屏显）：参考站 czhlove.cn 同款字体
