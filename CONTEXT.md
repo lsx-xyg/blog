@@ -43,7 +43,7 @@ _Avoid_: 认证系统、auth、next-auth
 ### 存储领域
 
 **Storage Driver（存储驱动）**：
-文件存储的抽象接口，定义 upload/delete/getUrl 三个方法。支持三种实现：LOCAL（本地文件系统）、GITHUB（GitHub 仓库 + jsDelivr CDN）、S3（S3 兼容存储）。
+文件存储的抽象接口，定义 upload/delete/getUrl/download 四个方法。支持三种实现：LOCAL（本地文件系统）、GITHUB（GitHub 仓库 + jsDelivr CDN）、S3（S3 兼容存储）。download 方法用于从存储中读取文件内容，GitHub 驱动重写此方法使用 API+Token 下载私有仓库文件，其他驱动默认实现为 fetch(getUrl())。
 _Avoid_: 存储、uploader、file storage
 
 **Public Storage（公开存储）**：
@@ -111,8 +111,20 @@ _Avoid_: 瀑布流布局、masonry、grid
 ### 运维领域
 
 **Backup（备份）**：
-数据库的完整导出，以 JSON 格式存储。支持手动导出下载和定时自动备份。备份文件上传到 Private Storage。支持导入恢复。
+数据库的完整导出，以 JSON 格式存储。支持手动导出下载和定时自动备份。备份文件上传到 Private Storage。支持导入恢复。备份记录中存储 storage_driver 字段，记录备份创建时使用的存储驱动，切换驱动后旧备份仍可操作。
 _Avoid_: 数据库备份、dump、export
+
+**Backup Storage Driver（备份存储驱动）**：
+backup_records 表中的字段，记录备份创建时使用的存储驱动类型（GITHUB/S3/LOCAL）。下载/删除备份时优先使用此字段对应的驱动实例，不可用时回退到当前配置的私有存储驱动。解决切换驱动后旧备份无法操作的问题。
+_Avoid_: 备份平台、backup platform
+
+**Backup Encryption（备份加密）**：
+备份文件内容的 AES-256-GCM 加密，需配置 ENCRYPTION_KEY 环境变量。加密后的文件以 BACKUP_ENC_V1: 魔数开头，下载时自动检测并解密。即使私有仓库被访问，没有密钥也无法读取备份内容。未配置密钥时明文存储并警告。
+_Avoid_: 加密备份、encrypted backup
+
+**Backup Audit Log（备份审计日志）**：
+备份操作的审计记录，存储在 backup_audit_logs 表中。记录 CREATE/DOWNLOAD/DELETE/RESTORE 四种操作类型，包含操作人、IP 地址、User-Agent、操作时间。用于追踪备份文件的访问和操作历史。
+_Avoid_: 审计日志、audit log
 
 **Cron Job（定时任务）**：
 定期执行的后台任务，用于定时发布文章和定时备份。支持两种部署模式：VERCEL（通过 cron-job.org 外部 API 触发）和 SERVER（使用 node-cron 本地执行）。通过环境变量或站点设置切换。

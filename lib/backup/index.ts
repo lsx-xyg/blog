@@ -36,8 +36,10 @@ import {
   accounts,
   verifications,
 } from "@/db/schema";
-import { getPrivateStorageDriver } from "@/lib/storage";
+import { getPrivateStorageDriver, getPrivateStorageDriverByType } from "@/lib/storage";
+import type { StorageDriverInterface } from "@/lib/types/storage";
 import { BackupTrigger, BackupAuditAction } from "@/lib/types/backup";
+import { StorageDriverType } from "@/lib/types/storage";
 import { encryptIfAvailable, decryptIfAvailable, isEncryptionAvailable } from "@/lib/shared/crypto";
 import { eq, desc } from "drizzle-orm";
 
@@ -259,13 +261,16 @@ export async function createBackup(
   const driver = await getPrivateStorageDriver();
   const uploadResult = await driver.upload(buffer, filename, "application/json");
 
-  // 6. 创建备份记录
+  // 6. 创建备份记录（记录创建时使用的存储驱动，便于切换驱动后仍能操作旧备份）
+  // driver.name 返回小写（local/github/s3），转换为大写的 StorageDriverType
+  const driverType = driver.name.toUpperCase() as StorageDriverType;
   const [record] = await db
     .insert(backupRecords)
     .values({
       fileKey: uploadResult.key,
       size: uploadResult.size,
       triggeredBy,
+      storageDriver: driverType,
     })
     .returning();
 
@@ -314,8 +319,20 @@ export async function deleteBackup(id: string): Promise<void> {
   await logBackupAudit(record.id, record.fileKey, BackupAuditAction.DELETE);
 
   // 1. 删除存储中的文件
+  // 优先使用备份记录中存储的驱动（切换驱动后旧备份仍可删除）
   try {
-    const driver = await getPrivateStorageDriver();
+    let driver: StorageDriverInterface;
+    if (record.storageDriver) {
+      const driverByType = await getPrivateStorageDriverByType(record.storageDriver);
+      if (driverByType) {
+        driver = driverByType;
+      } else {
+        driver = await getPrivateStorageDriver();
+        console.warn(`[backup] 记录的存储驱动 ${record.storageDriver} 配置不可用，回退到当前配置的驱动`);
+      }
+    } else {
+      driver = await getPrivateStorageDriver();
+    }
     await driver.delete(record.fileKey);
   } catch (e) {
     // 存储文件删除失败不影响数据库记录删除，记录日志即可
@@ -339,17 +356,24 @@ export async function downloadBackup(id: string): Promise<{ buffer: Buffer; file
   }
 
   // 从私有存储中读取文件
-  // 注意：不同驱动的读取方式不同，这里统一通过 URL fetch
-  const driver = await getPrivateStorageDriver();
-  const url = driver.getUrl(record.fileKey);
-
-  const response = await fetch(url);
-  if (!response.ok) {
-    throw new Error(`下载备份文件失败: ${response.status} ${response.statusText}`);
+  // 优先使用备份记录中存储的驱动（切换驱动后旧备份仍可操作）
+  // 如果记录的驱动配置不可用，回退到当前配置的私有存储驱动
+  let driver: StorageDriverInterface;
+  if (record.storageDriver) {
+    const driverByType = await getPrivateStorageDriverByType(record.storageDriver);
+    if (driverByType) {
+      driver = driverByType;
+      console.log(`[backup] 使用记录的存储驱动: ${record.storageDriver}`);
+    } else {
+      driver = await getPrivateStorageDriver();
+      console.warn(`[backup] 记录的存储驱动 ${record.storageDriver} 配置不可用，回退到当前配置的驱动`);
+    }
+  } else {
+    driver = await getPrivateStorageDriver();
   }
 
-  const arrayBuffer = await response.arrayBuffer();
-  let buffer = Buffer.from(arrayBuffer);
+  // 使用 driver.download() 方法，支持私有仓库（GitHub API+Token）和公开仓库（fetch URL）
+  let buffer = await driver.download(record.fileKey);
 
   // 检查是否是加密的备份文件
   const contentStr = buffer.toString("utf-8");

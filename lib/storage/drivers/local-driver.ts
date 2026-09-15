@@ -1,4 +1,4 @@
-import { mkdir, writeFile, unlink } from "fs/promises";
+import { mkdir, writeFile, unlink, readFile } from "fs/promises";
 import { join, dirname } from "path";
 import type { StorageDriverInterface, UploadResult } from "@/lib/types/storage";
 import { generateKey } from "../utils";
@@ -72,5 +72,11 @@ export class LocalStorageDriver implements StorageDriverInterface {
   getUrl(key: string): string {
     const fullPath = this.buildPath(key);
     return `/uploads/${fullPath}`;
+  }
+
+  async download(key: string): Promise<Buffer> {
+    const fullPath = this.buildPath(key);
+    const filePath = join(this.uploadDir, fullPath);
+    return readFile(filePath);
   }
 }

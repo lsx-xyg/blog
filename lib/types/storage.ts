@@ -28,6 +28,14 @@ export interface StorageDriverInterface {
   delete(key: string): Promise<void>;
   /** 根据 key 获取访问 URL */
   getUrl(key: string): string;
+  /**
+   * 下载文件内容（按 key）
+   *
+   * 对于公开仓库/公开 bucket，可以直接 fetch(getUrl())
+   * 对于私有仓库/私有 bucket，需要使用 API+Token 或预签名 URL 下载
+   * GitHub 驱动重写此方法，使用 Contents API + Token 下载私有仓库文件
+   */
+  download(key: string): Promise<Buffer>;
   /** 驱动名称 */
   name: string;
 }

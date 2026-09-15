@@ -223,6 +223,10 @@ export const backupRecords = pgTable("backup_records", {
   fileKey: text("file_key").notNull(),
   size: bigint("size", { mode: "number" }).notNull(),
   triggeredBy: backupTrigger("triggered_by").notNull().default("MANUAL"),
+  // 备份创建时使用的存储驱动（GITHUB/S3/LOCAL）
+  // 用于切换驱动后仍能正确下载/删除旧备份
+  // null 表示未知，回退到当前配置的私有存储驱动
+  storageDriver: storageDriverType("storage_driver"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

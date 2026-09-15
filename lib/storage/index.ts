@@ -80,6 +80,55 @@ export async function getStorageDriverInstance(): Promise<StorageDriverInterface
   return getPublicStorageDriver();
 }
 
+/**
+ * 根据驱动类型获取私有存储驱动实例（用于操作旧备份）
+ *
+ * 当备份记录中存储了 storage_driver 字段时，使用此函数获取对应驱动的实例。
+ * 如果该驱动的配置不可用（比如没有配置 Token），返回 null。
+ * 调用方应在返回 null 时回退到当前配置的私有存储驱动。
+ *
+ * @param driverType 驱动类型（GITHUB/S3/LOCAL）
+ * @returns 驱动实例，或 null（配置不可用时）
+ */
+export async function getPrivateStorageDriverByType(
+  driverType: StorageDriverType
+): Promise<StorageDriverInterface | null> {
+  // 先检查缓存
+  const cached = privateCached.get(driverType);
+  if (cached) return cached;
+
+  // 获取私有存储配置
+  const settings = await getPrivateStorageSettings();
+
+  // 检查对应驱动的配置是否可用
+  let configAvailable = false;
+  switch (driverType) {
+    case StorageDriverType.GITHUB:
+      // GitHub 驱动需要 Token
+      configAvailable = !!settings.github.token;
+      break;
+    case StorageDriverType.S3:
+      // S3 驱动需要 endpoint 和 bucket
+      configAvailable = !!settings.s3.endpoint && !!settings.s3.bucket;
+      break;
+    case StorageDriverType.LOCAL:
+    default:
+      // Local 驱动总是可用
+      configAvailable = true;
+      break;
+  }
+
+  if (!configAvailable) {
+    console.warn(`[storage] 私有存储驱动 ${driverType} 配置不可用，将回退到当前配置的驱动`);
+    return null;
+  }
+
+  // 创建驱动实例并缓存
+  const instance = createDriverInstance(driverType, settings);
+  privateCached.set(driverType, instance);
+  return instance;
+}
+
 /** 重置所有驱动缓存（配置变更后调用，使新配置生效） */
 export function resetStorageDriver(): void {
   publicCached.clear();

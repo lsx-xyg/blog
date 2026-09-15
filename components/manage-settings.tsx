@@ -571,13 +571,28 @@ export function ManageSettings() {
                       <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
                     )}
                   </label>
-                  <input
-                    type="password"
-                    value={cron.secret}
-                    onChange={(e) => setCron({ ...cron, secret: e.target.value })}
-                    className={inputClass}
-                    placeholder={cron.secretConfigured ? "留空则保持当前配置，输入新值则覆盖" : "生成方式：openssl rand -hex 32"}
-                  />
+                  <div className="relative">
+                    <input
+                      type="password"
+                      value={cron.secret}
+                      onChange={(e) => setCron({ ...cron, secret: e.target.value })}
+                      className={`${inputClass} pr-12`}
+                      placeholder={cron.secretConfigured ? "留空则保持当前配置，输入新值则覆盖" : "生成方式：openssl rand -hex 32"}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const inputs = document.querySelectorAll<HTMLInputElement>('input[type="password"]');
+                        inputs.forEach((input) => {
+                          input.type = input.type === "password" ? "text" : "password";
+                        });
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      tabIndex={-1}
+                    >
+                      👁
+                    </button>
+                  </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     用于定时任务接口鉴权，AES-256-GCM 加密存储。修改后需重新创建 cron-job.org 定时任务（URL 中编码了 secret）。
                   </p>
@@ -589,13 +604,28 @@ export function ManageSettings() {
                       <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
                     )}
                   </label>
-                  <input
-                    type="password"
-                    value={cron.jobApiKey}
-                    onChange={(e) => setCron({ ...cron, jobApiKey: e.target.value })}
-                    className={inputClass}
-                    placeholder={cron.jobApiKeyConfigured ? "留空则保持当前配置，输入新值则覆盖" : "获取地址：https://cron-job.org/en/members/settings/"}
-                  />
+                  <div className="relative">
+                    <input
+                      type="password"
+                      value={cron.jobApiKey}
+                      onChange={(e) => setCron({ ...cron, jobApiKey: e.target.value })}
+                      className={`${inputClass} pr-12`}
+                      placeholder={cron.jobApiKeyConfigured ? "留空则保持当前配置，输入新值则覆盖" : "获取地址：https://cron-job.org/en/members/settings/"}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const inputs = document.querySelectorAll<HTMLInputElement>('input[type="password"]');
+                        inputs.forEach((input) => {
+                          input.type = input.type === "password" ? "text" : "password";
+                        });
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                      tabIndex={-1}
+                    >
+                      👁
+                    </button>
+                  </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     VERCEL 模式下用于调用 cron-job.org API 创建/删除定时任务，AES-256-GCM 加密存储。
                   </p>

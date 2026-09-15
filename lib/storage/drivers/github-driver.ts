@@ -151,4 +151,85 @@ export class GithubStorageDriver implements StorageDriverInterface {
       throw new Error(`GitHub 删除失败：${deleteResponse.status}`);
     }
   }
+
+  /**
+   * 下载文件内容（支持私有仓库）
+   *
+   * 使用 GitHub Contents API + Token 下载，不依赖公开访问 URL。
+   * 对于小于 1MB 的文件，Contents API 直接返回 Base64 编码的内容。
+   * 对于大于 1MB 的文件，自动切换到 Git Blob API 下载。
+   */
+  async download(key: string): Promise<Buffer> {
+    if (!this.token) {
+      throw new Error("GitHub Token 未设置，无法下载私有仓库文件");
+    }
+
+    const fullPath = this.buildPath(key);
+    const apiUrl = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/${fullPath}?ref=${this.branch}`;
+
+    // 先用 Contents API 获取文件内容
+    const response = await fetch(apiUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `token ${this.token}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    });
+
+    if (!response.ok) {
+      if (response.status === 404) {
+        throw new Error(`文件不存在：${fullPath}`);
+      }
+      const errorText = await response.text();
+      throw new Error(`GitHub 下载失败：${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+
+    // Contents API 返回的 content 字段是 Base64 编码的（仅小于 1MB 的文件）
+    if (data.content) {
+      // 移除换行符后解码
+      const base64Content = data.content.replace(/\n/g, "");
+      return Buffer.from(base64Content, "base64");
+    }
+
+    // 如果没有 content 字段，可能是文件太大（>1MB），需要用 Git Blob API
+    if (data.sha) {
+      console.log(`[github-driver] 文件 ${fullPath} 大于 1MB，使用 Blob API 下载`);
+      return this.downloadBlob(data.sha);
+    }
+
+    throw new Error(`GitHub API 返回格式异常，无法下载文件：${fullPath}`);
+  }
+
+  /**
+   * 使用 Git Blob API 下载大文件（>1MB）
+   *
+   * Blob API 返回的内容也是 Base64 编码的，但没有 1MB 限制
+   */
+  private async downloadBlob(sha: string): Promise<Buffer> {
+    const blobUrl = `https://api.github.com/repos/${this.owner}/${this.repo}/git/blobs/${sha}`;
+
+    const response = await fetch(blobUrl, {
+      method: "GET",
+      headers: {
+        Authorization: `token ${this.token}`,
+        Accept: "application/vnd.github.v3+json",
+      },
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`GitHub Blob 下载失败：${response.status} ${errorText}`);
+    }
+
+    const data = await response.json();
+
+    if (data.content) {
+      const base64Content = data.content.replace(/\n/g, "");
+      return Buffer.from(base64Content, "base64");
+    }
+
+    throw new Error("GitHub Blob API 返回格式异常");
+  }
 }

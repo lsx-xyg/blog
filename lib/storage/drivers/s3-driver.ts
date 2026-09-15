@@ -67,4 +67,10 @@ export class S3StorageDriver implements StorageDriverInterface {
       "S3 存储驱动尚未实现。请设置 STORAGE_DRIVER=local 或 STORAGE_DRIVER=github，或实现 S3StorageDriver。"
     );
   }
+
+  async download(_key: string): Promise<Buffer> {
+    throw new Error(
+      "S3 存储驱动尚未实现。请设置 STORAGE_DRIVER=local 或 STORAGE_DRIVER=github，或实现 S3StorageDriver。"
+    );
+  }
 }
