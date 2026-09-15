@@ -551,14 +551,56 @@ body {
   background: var(--bg) !important;
 }
 
-.bytemd-editor textarea {
+/* ByteMD 使用 CodeMirror，不是原生 textarea */
+.bytemd-editor .CodeMirror {
   background: var(--bg) !important;
   color: var(--fg) !important;
-  caret-color: var(--fg) !important;
+  font-family: var(--font-mono) !important;
 }
 
-.bytemd-editor textarea::placeholder {
+.bytemd-editor .CodeMirror-gutters {
+  background: var(--surface) !important;
+  border-color: var(--border) !important;
+}
+
+.bytemd-editor .CodeMirror-linenumber {
+  color: var(--fg-muted) !important;
+}
+
+.bytemd-editor .CodeMirror-cursor {
+  border-color: var(--fg) !important;
+}
+
+.bytemd-editor .CodeMirror-selected {
+  background: var(--selection) !important;
+}
+
+.bytemd-editor .CodeMirror-line::selection,
+.bytemd-editor .CodeMirror-line > span::selection,
+.bytemd-editor .CodeMirror-line > span > span::selection {
+  background: var(--selection) !important;
+}
+
+.bytemd-editor .CodeMirror pre.CodeMirror-placeholder {
   color: var(--fg-faint) !important;
+}
+
+/* 调整边框样式，避免深色主题下太粗太黑 */
+.bytemd {
+  border-width: 1px !important;
+  border-radius: 0.5rem !important;
+}
+
+.bytemd-toolbar {
+  border-bottom-width: 1px !important;
+}
+
+.bytemd-split .bytemd-preview {
+  border-left-width: 1px !important;
+}
+
+.bytemd-status {
+  border-top-width: 1px !important;
 }
 
 .bytemd-preview {
