@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import {
   ChevronLeft,
@@ -82,7 +83,13 @@ const STEPS = [
   { id: 2, label: "基本信息", icon: Settings },
 ];
 
-export function ManagePosts() {
+interface ManagePostsProps {
+  /** 后台路径，用于生成跳转 URL */
+  adminPath: string;
+}
+
+export function ManagePosts({ adminPath }: ManagePostsProps) {
+  const router = useRouter();
   const [posts, setPosts] = useState<PostRow[]>([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -525,11 +532,7 @@ export function ManagePosts() {
             {editingId === null && (
               <button
                 type="button"
-                onClick={() => {
-                  setEditingId("new"); // 使用 "new" 表示新建模式
-                  setForm(emptyForm);
-                  setCurrentStep(1);
-                }}
+                onClick={() => router.push(`/${adminPath}/posts/new`)}
                 className="flex shrink-0 items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
               >
                 <FileText className="h-4 w-4" />
@@ -726,7 +729,7 @@ export function ManagePosts() {
                   {/* 操作按钮 */}
                   <div className="flex shrink-0 items-center gap-2 w-20 justify-end">
                     <button
-                      onClick={() => startEdit(p)}
+                      onClick={() => router.push(`/${adminPath}/posts/${p.id}/edit`)}
                       className="text-primary hover:underline text-sm"
                     >
                       编辑
