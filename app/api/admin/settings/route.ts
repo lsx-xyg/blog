@@ -96,8 +96,8 @@ export async function GET() {
     // 定时任务配置（敏感信息不返回明文，只返回是否已配置）
     const cronForClient = {
       deployPlatform: cron.deployPlatform,
-      cronSecretConfigured: !!cron.secret,
-      cronJobApiKeyConfigured: !!cron.jobApiKey,
+      secretConfigured: !!cron.secret,
+      jobApiKeyConfigured: !!cron.jobApiKey,
     };
 
     return NextResponse.json({
