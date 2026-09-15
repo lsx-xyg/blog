@@ -1,7 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { Check, Copy, Eye } from "lucide-react";
 import { STORAGE_DRIVER_VALUES, StorageDriverType } from "@/lib/types/storage";
 import type { StorageSettings } from "@/lib/types/settings";
+import { SecretRevealDialog } from "@/components/secret-reveal-dialog";
 
 interface StorageConfigFormProps {
   storage: StorageSettings;
@@ -14,11 +17,90 @@ const inputClass =
   "w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all";
 const labelClass = "block text-sm font-medium mb-1.5";
 
+/** 敏感信息字段 key 前缀（与后端 SECRET_KEYS 白名单对应） */
+const secretPrefix = (isPrivate: boolean) =>
+  isPrivate ? "storage_private" : "storage";
+
+/** 明文展示时长（秒） */
+const REVEAL_SECONDS = 30;
+
 /**
  * 存储配置表单组件
  * 用于公开存储和私有存储的配置，根据 isPrivate 显示不同的提示文案
+ * 敏感字段（GitHub Token / S3 Access Key / Secret Key）支持二次验证后临时查看明文（#18）
  */
 export function StorageConfigForm({ storage, setStorage, isPrivate = false }: StorageConfigFormProps) {
+  // 二次验证弹窗状态（#18）
+  const [revealDialog, setRevealDialog] = useState<{ key: string; label: string } | null>(null);
+  // 已通过验证正在展示的明文（不写入表单 state，30 秒后自动隐藏）
+  const [revealed, setRevealed] = useState<{ key: string; value: string } | null>(null);
+  const [countdown, setCountdown] = useState(REVEAL_SECONDS);
+  const [copied, setCopied] = useState(false);
+
+  // 明文 30 秒倒计时，到期自动隐藏
+  useEffect(() => {
+    if (!revealed) return;
+    setCountdown(REVEAL_SECONDS);
+    const timer = setInterval(() => {
+      setCountdown((c) => c - 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [revealed]);
+
+  // 倒计时归零后自动隐藏明文
+  useEffect(() => {
+    if (revealed && countdown <= 0) {
+      setRevealed(null);
+    }
+  }, [countdown, revealed]);
+
+  // 复制明文到剪贴板
+  const handleCopy = async (value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      /* 剪贴板不可用时静默 */
+    }
+  };
+
+  /** 已配置敏感字段的「查看明文」按钮 */
+  const revealButton = (key: string, label: string, configured?: boolean) =>
+    configured ? (
+      <button
+        type="button"
+        onClick={() => setRevealDialog({ key, label })}
+        className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+        tabIndex={-1}
+        title="验证后查看明文"
+      >
+        <Eye className="h-3.5 w-3.5" />
+        查看
+      </button>
+    ) : null;
+
+  /** 明文展示条（30 秒自动隐藏，grid 布局下跨两列显示） */
+  const revealBanner = (key: string, label: string) =>
+    revealed?.key === key ? (
+      <div className="md:col-span-2 mt-2 flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+        <span className="shrink-0 text-xs text-muted-foreground">{label}：</span>
+        <code className="flex-1 break-all text-sm text-foreground">{revealed.value}</code>
+        <button
+          type="button"
+          onClick={() => handleCopy(revealed.value)}
+          className="shrink-0 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          title="复制明文"
+        >
+          {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
+          {copied ? "已复制" : "复制"}
+        </button>
+        <span className="shrink-0 text-xs text-muted-foreground" title="到期自动隐藏">
+          {countdown}s
+        </span>
+      </div>
+    ) : null;
+
   return (
     <div className="space-y-6">
       {/* 当前驱动 */}
@@ -120,23 +202,12 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
                   type="password"
                   value={storage.github.token}
                   onChange={(e) => setStorage({ ...storage, github: { ...storage.github, token: e.target.value } })}
-                  className={`${inputClass} pr-12`}
+                  className={`${inputClass} pr-14`}
                   placeholder={storage.github.tokenConfigured ? "留空则保持当前配置，输入新值则覆盖" : "ghp_xxxxxxxxxxxxxxxxxxxx"}
                 />
-                <button
-                  type="button"
-                  onClick={() => {
-                    const inputs = document.querySelectorAll<HTMLInputElement>('input[type="password"]');
-                    inputs.forEach((input) => {
-                      input.type = input.type === "password" ? "text" : "password";
-                    });
-                  }}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  tabIndex={-1}
-                >
-                  👁
-                </button>
+                {revealButton(`${secretPrefix(isPrivate)}.github.token`, "GitHub Token", storage.github.tokenConfigured)}
               </div>
+              {revealBanner(`${secretPrefix(isPrivate)}.github.token`, "GitHub Token")}
               <p className="mt-1 text-xs text-muted-foreground">
                 需要 repo 权限。加密存储在数据库中，环境变量 {isPrivate ? "GITHUB_PRIVATE_TOKEN" : "GITHUB_STORAGE_TOKEN"} 优先级更高。
               </p>
@@ -211,10 +282,12 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
                 type="password"
                 value={storage.s3.accessKey}
                 onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, accessKey: e.target.value } })}
-                className={inputClass}
+                className={`${inputClass} pr-14`}
                 placeholder={storage.s3.accessKeyConfigured ? "留空则保持当前配置" : "AKIAxxxxxxxxxxxxxxxx"}
               />
+              {revealButton(`${secretPrefix(isPrivate)}.s3.accessKey`, "Access Key ID", storage.s3.accessKeyConfigured)}
             </div>
+            {revealBanner(`${secretPrefix(isPrivate)}.s3.accessKey`, "Access Key ID")}
             <div>
               <label className={labelClass}>
                 Secret Access Key
@@ -226,10 +299,12 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
                 type="password"
                 value={storage.s3.secretKey}
                 onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, secretKey: e.target.value } })}
-                className={inputClass}
+                className={`${inputClass} pr-14`}
                 placeholder={storage.s3.secretKeyConfigured ? "留空则保持当前配置" : "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
               />
+              {revealButton(`${secretPrefix(isPrivate)}.s3.secretKey`, "Secret Access Key", storage.s3.secretKeyConfigured)}
             </div>
+            {revealBanner(`${secretPrefix(isPrivate)}.s3.secretKey`, "Secret Access Key")}
           </div>
           <p className="text-xs text-muted-foreground">
             敏感信息加密存储在数据库中，环境变量 {isPrivate ? "S3_PRIVATE_ACCESS_KEY / S3_PRIVATE_SECRET_KEY" : "S3_ACCESS_KEY / S3_SECRET_KEY"} 优先级更高。
@@ -273,6 +348,19 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
           </p>
         </div>
       )}
+
+      {/* 敏感信息二次验证弹窗（#18 方案 C：管理员密码验证） */}
+      <SecretRevealDialog
+        open={!!revealDialog}
+        fieldLabel={revealDialog?.label ?? ""}
+        fieldKey={revealDialog?.key ?? ""}
+        onClose={() => setRevealDialog(null)}
+        onRevealed={(value) => {
+          if (revealDialog) {
+            setRevealed({ key: revealDialog.key, value });
+          }
+        }}
+      />
     </div>
   );
 }
