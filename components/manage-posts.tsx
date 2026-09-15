@@ -368,12 +368,16 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
               <span className="shrink-0 font-mono text-xs text-muted-foreground">阅读</span>
               <span className="shrink-0 text-right text-xs font-medium text-muted-foreground w-20">操作</span>
             </div>
-            {/* 文章列表 */}
-            <ul className="divide-y divide-border">
-              {filteredPosts.map((p) => (
+            {/* 文章列表：筛选条件变化时通过 key 重新挂载，触发入场动画 */}
+            <ul
+              key={`${statusFilter}-${search}`}
+              className="divide-y divide-border"
+            >
+              {filteredPosts.map((p, i) => (
                 <li
                   key={p.id}
-                  className={`flex items-center gap-3 px-4 py-3 text-base transition-colors ${
+                  style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
+                  className={`animate-fade-in-up flex items-center gap-3 px-4 py-3 text-base transition-colors ${
                     selectedIds.has(p.id) ? "bg-primary/5" : "hover:bg-muted/30"
                   }`}
                 >

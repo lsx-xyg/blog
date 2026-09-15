@@ -31,6 +31,7 @@ import {
 } from "lucide-react";
 import { PostStatus } from "@/lib/types/posts";
 import { TagInput } from "@/components/tag-input";
+import { useToast } from "@/components/toast";
 
 /**
  * MarkdownEditor 动态导入（Bundle 优化）
@@ -93,6 +94,7 @@ interface PostEditorProps {
 
 export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) {
   const router = useRouter();
+  const { showToast } = useToast();
   const [form, setForm] = useState<PostFormData>(initialData ?? emptyForm);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -147,7 +149,10 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        if (!r.ok) throw new Error("创建失败");
+        if (!r.ok) {
+          const data = await r.json().catch(() => null);
+          throw new Error(data?.error || `创建失败（${r.status}）`);
+        }
       } else {
         // 编辑文章
         const r = await fetch(`/api/admin/posts/${postId}`, {
@@ -155,13 +160,22 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        if (!r.ok) throw new Error("保存失败");
+        if (!r.ok) {
+          const data = await r.json().catch(() => null);
+          throw new Error(data?.error || `保存失败（${r.status}）`);
+        }
       }
 
       // 保存成功后返回文章列表页
+      showToast(
+        `文章「${form.title.trim() || "未命名"}」${isNewPost ? "创建成功" : "保存成功"}`,
+        "success",
+      );
       router.push(`/${adminPath}/posts`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "操作失败");
+      const msg = err instanceof Error ? err.message : "操作失败";
+      setError(msg);
+      showToast(`保存失败：${msg}`, "error");
     } finally {
       setLoading(false);
     }
