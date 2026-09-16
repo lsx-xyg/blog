@@ -97,8 +97,15 @@ function SortableCard({ def }: { def: CardDef }) {
   return (
     <Card
       ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`group transition-all hover:shadow-md ${
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        // touch-action: none 让触摸拖拽不被浏览器滚动手势抢占；长按不禁用系统菜单
+        touchAction: "none",
+      }}
+      // 阻止长按弹出系统右键菜单（移动端拖拽手势会误触）
+      onContextMenu={(e) => e.preventDefault()}
+      className={`group select-none transition-all hover:shadow-md ${
         isDragging
           ? "z-50 scale-[1.03] shadow-xl ring-2 ring-primary/40"
           : ""
