@@ -30,6 +30,7 @@ import {
   ChevronUp,
   History as HistoryIcon,
   Loader2,
+  AlertTriangle,
 } from "lucide-react";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
@@ -47,7 +48,7 @@ import {
   formatScheduleArray,
 } from "@/lib/cron/form";
 import { CronJobHistoryDialog } from "@/components/cron-job-history";
-import { isSystemJob } from "@/lib/cron/system-jobs";
+import { matchSystemJob } from "@/lib/cron/system-jobs";
 
 type CronStatus = {
   platform: CronDeployPlatform;
@@ -365,7 +366,12 @@ export function ManageCronJobs() {
     REQUEST_METHODS.find((m) => m.value === method)?.label || `UNKNOWN(${method})`;
 
   // 系统任务在「系统定时任务」区统一管理，此处过滤掉避免重复
-  const visibleJobs = jobs === null ? [] : jobs.filter((j) => !isSystemJob(j));
+  // 我的任务区：保留普通任务 + 失联系统任务（标题/URL 命中系统特征但匹配不到预设，避免「消失」）
+  const SYSTEM_ROUTE_FRAGMENTS = ["/api/cron/backup", "/api/cron/publish-scheduled"];
+  const visibleJobs =
+    jobs === null
+      ? []
+      : jobs.filter((j) => !matchSystemJob(j));
 
   return (
     <div className="animate-page-enter">
@@ -628,6 +634,22 @@ export function ManageCronJobs() {
                         }`}
                       />
                       <h3 className="truncate font-medium">{job.title || "(无标题)"}</h3>
+                      {(() => {
+                        const orphan =
+                          !matchSystemJob(job) &&
+                          (job.title.includes("[系统") ||
+                            job.title.includes("[blog:") ||
+                            SYSTEM_ROUTE_FRAGMENTS.some((r) => job.url.includes(r)));
+                        return orphan ? (
+                          <span
+                            title="标题或 URL 命中系统任务特征，但无法匹配任何预设——可能是标题被改动（失联）或自建任务。可在系统任务区重新「启动」自动修复。"
+                            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400"
+                          >
+                            <AlertTriangle className="h-3 w-3" />
+                            疑似系统任务
+                          </span>
+                        ) : null;
+                      })()}
                       <span className="rounded bg-muted px-2 py-0.5 font-mono text-xs">
                         {methodLabel(job.requestMethod)}
                       </span>

@@ -48,7 +48,7 @@ describe("SYSTEM_JOB_PRESETS", () => {
       siteUrl: "https://blog.example.com",
       cronSecret: "sec",
     });
-    expect(cfg.title).toBe("[系统:publish_scheduled] 定时发布扫描（每分钟）");
+    expect(cfg.title).toBe("[blog:publish_scheduled] 定时发布扫描（每分钟）");
     expect(cfg.url).toBe("https://blog.example.com/api/cron/publish-scheduled");
     expect(cfg.extendedData?.headers).toEqual({ "X-Cron-Secret": "sec" });
     expect(cfg.schedule?.minutes).toEqual([-1]);
@@ -60,7 +60,7 @@ describe("SYSTEM_JOB_PRESETS", () => {
       siteUrl: "https://blog.example.com",
       cronSecret: "sec",
     });
-    expect(cfg.title).toBe("[系统:backup] 自动备份（每天 03:00）");
+    expect(cfg.title).toBe("[blog:backup] 自动备份（每天 03:00）");
     expect(cfg.url).toBe("https://blog.example.com/api/cron/backup");
     expect(cfg.extendedData?.headers).toEqual({ "X-Cron-Secret": "sec" });
     expect(cfg.schedule?.hours).toEqual([3]);
@@ -72,9 +72,12 @@ describe("SYSTEM_JOB_PRESETS", () => {
 });
 
 describe("getPresetKeyFromTitle（唯一 key 对应）", () => {
-  it("从 [系统:key] 标题解析出 key", () => {
+  it("从 [blog:key] 标题解析出 key", () => {
+    expect(getPresetKeyFromTitle("[blog:backup] 自动备份（每天 03:00）")).toBe("backup");
+    expect(getPresetKeyFromTitle("[blog:publish_scheduled] 定时发布扫描（每分钟）")).toBe("publish_scheduled");
+  });
+  it("兼容旧格式 [系统:key] 解析", () => {
     expect(getPresetKeyFromTitle("[系统:backup] 自动备份（每天 03:00）")).toBe("backup");
-    expect(getPresetKeyFromTitle("[系统:publish_scheduled] 定时发布扫描（每分钟）")).toBe("publish_scheduled");
   });
   it("旧标题 [系统] 前缀/普通标题解析为 null", () => {
     expect(getPresetKeyFromTitle("[系统] 定时发布扫描（每分钟）")).toBeNull();
@@ -95,9 +98,15 @@ describe("isSystemJob / matchSystemJob（兼容旧标题）", () => {
   it("普通用户任务不识别为系统任务", () => {
     expect(isSystemJob(makeJob("我的自定义任务"))).toBe(false);
   });
-  it("matchSystemJob 按 [系统:key] 精确匹配", () => {
+  it("matchSystemJob 按 [blog:key] 精确匹配", () => {
+    expect(matchSystemJob(makeJob("[blog:backup] 自动备份（每天 03:00）"))?.key).toBe("backup");
+    expect(matchSystemJob(makeJob("[blog:publish_scheduled] 定时发布扫描（每分钟）"))?.key).toBe("publish_scheduled");
+  });
+  it("matchSystemJob 兼容旧格式 [系统:key] 匹配", () => {
     expect(matchSystemJob(makeJob("[系统:backup] 自动备份（每天 03:00）"))?.key).toBe("backup");
-    expect(matchSystemJob(makeJob("[系统:publish_scheduled] 定时发布扫描（每分钟）"))?.key).toBe("publish_scheduled");
+  });
+  it("matchSystemJob 对未知 key 返回 null（失联任务）", () => {
+    expect(matchSystemJob(makeJob("[blog:unknown] 某任务"))).toBeNull();
   });
   it("matchSystemJob 旧标题按名称兜底匹配", () => {
     expect(matchSystemJob(makeJob("博客定时发布扫描（每分钟）"))?.key).toBe("publish_scheduled");

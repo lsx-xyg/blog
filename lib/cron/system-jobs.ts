@@ -30,7 +30,7 @@ export const SYSTEM_JOB_PRESETS: SystemJobPreset[] = [
     description: "每分钟扫描一次，自动发布所有到期的定时文章",
     supportsRun: true,
     createConfig: ({ siteUrl, cronSecret }) => ({
-      title: "[系统:publish_scheduled] 定时发布扫描（每分钟）",
+      title: "[blog:publish_scheduled] 定时发布扫描（每分钟）",
       url: `${siteUrl}/api/cron/publish-scheduled`,
       enabled: true,
       saveResponses: false,
@@ -56,7 +56,7 @@ export const SYSTEM_JOB_PRESETS: SystemJobPreset[] = [
     description: "每天凌晨 03:00 自动备份全部业务数据，上传到配置的存储驱动",
     supportsRun: true,
     createConfig: ({ siteUrl, cronSecret }) => ({
-      title: "[系统:backup] 自动备份（每天 03:00）",
+      title: "[blog:backup] 自动备份（每天 03:00）",
       url: `${siteUrl}/api/cron/backup`,
       enabled: true,
       saveResponses: false,
@@ -78,17 +78,22 @@ export const SYSTEM_JOB_PRESETS: SystemJobPreset[] = [
   },
 ];
 
+/** 系统任务标题项目名前缀（唯一标识空间，防止与其他应用任务冲突） */
+export const SYS_TITLE_TAG = "blog";
+
 /**
  * 从任务标题解析预设 key（唯一对应，不依赖名称文本）
- * 标题格式：`[系统:backup] 自动备份（每天 03:00）`
- * 解析失败（旧格式或无 key）返回 null
+ * 标题格式：`[blog:backup] 自动备份（每天 03:00）`（项目名:业务key）
+ * 兼容旧格式 `[系统:backup]`；解析失败返回 null
  */
 export function getPresetKeyFromTitle(title: string): string | null {
-  const m = title.match(/^\[系统:([a-z0-9_]+)\]/);
+  const m =
+    title.match(new RegExp("^\\[" + SYS_TITLE_TAG + ":([a-z0-9_]+)\\]")) ||
+    title.match(/^\[系统:([a-z0-9_]+)\]/);
   return m ? m[1] : null;
 }
 
-/** 判断任务是否属于系统任务（标题带 [系统:key] / [系统] 前缀，或名称匹配预设，兼容旧标题） */
+/** 判断任务是否属于系统任务（标题带 [blog:key] / [系统:key] / [系统] 前缀，或名称匹配预设，兼容旧标题） */
 export function isSystemJob(job: CronJob): boolean {
   return (
     getPresetKeyFromTitle(job.title) !== null ||
@@ -98,7 +103,7 @@ export function isSystemJob(job: CronJob): boolean {
 }
 
 /** 匹配任务对应的系统任务预设（无匹配返回 null）
- * 优先按标题中的 [系统:key] 精确匹配，旧标题按名称兜底 */
+ * 优先按标题中的 [blog:key] / [系统:key] 精确匹配，旧标题按名称兜底 */
 export function matchSystemJob(job: CronJob): SystemJobPreset | null {
   const key = getPresetKeyFromTitle(job.title);
   if (key) {

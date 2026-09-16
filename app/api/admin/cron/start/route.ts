@@ -5,11 +5,11 @@
  */
 import { NextResponse } from "next/server";
 import { requireAdmin, adminDenied } from "@/lib/auth/auth-guard";
-import { createSystemJob, findSystemJob, updateCronJob } from "@/lib/cron";
+import { createSystemJob, findSystemJob, listCronJobs, updateCronJob } from "@/lib/cron";
 import { getDeployPlatform } from "@/lib/settings";
 import { getCronSettings, getSiteSettings } from "@/lib/settings/index";
 import { CronDeployPlatform } from "@/lib/types/settings";
-import { getSystemJobPreset } from "@/lib/cron/system-jobs";
+import { getPresetKeyFromTitle, getSystemJobPreset } from "@/lib/cron/system-jobs";
 
 export const dynamic = "force-dynamic";
 
@@ -50,7 +50,13 @@ export async function POST(req: Request) {
     }
 
     try {
-      // 先检查是否已存在：存在则启用（不删除、保留历史），不存在则创建
+      // 预设的目标配置（标题 / URL 用）
+      const presetCfg = preset.createConfig({
+        siteUrl,
+        cronSecret: cronConfig.secret,
+      });
+
+      // 先检查是否已存在：存在则启用（不删除、保留历史）
       const existing = await findSystemJob(presetKey);
       if (existing) {
         if (!existing.enabled) {
@@ -60,6 +66,25 @@ export async function POST(req: Request) {
           success: true,
           message: existing.enabled ? "定时任务已在运行" : "定时任务已启用",
           jobId: existing.jobId,
+        });
+      }
+
+      // 标题匹配不到：按 URL 找失联任务（标题被改动导致），修复标题并启用，避免重复创建
+      const jobs = await listCronJobs();
+      const orphan = jobs.find(
+        (j) =>
+          j.url === presetCfg.url &&
+          getPresetKeyFromTitle(j.title) !== presetKey,
+      );
+      if (orphan) {
+        await updateCronJob(orphan.jobId, {
+          enabled: true,
+          title: presetCfg.title,
+        });
+        return NextResponse.json({
+          success: true,
+          message: `检测到失联的${preset.name}任务（标题被改动），已修复标题并启用`,
+          jobId: orphan.jobId,
         });
       }
 

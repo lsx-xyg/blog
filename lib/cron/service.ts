@@ -7,7 +7,7 @@
  * 依赖方向：service.ts → client.ts / system-jobs.ts（单向）
  */
 import type { CronJob } from "@/lib/types/cron";
-import { SYSTEM_JOB_PRESETS, getSystemJobPreset } from "@/lib/cron/system-jobs";
+import { SYSTEM_JOB_PRESETS, getPresetKeyFromTitle, getSystemJobPreset } from "@/lib/cron/system-jobs";
 import { createCronJob, listCronJobs } from "@/lib/cron/client";
 
 /**
@@ -48,15 +48,15 @@ export async function findSystemJob(
   if (presetKey) {
     const preset = getSystemJobPreset(presetKey);
     if (!preset) return null;
-    // 优先按标题中的 [系统:key] 精确匹配（唯一对应），旧标题按名称兜底
+    // 优先按标题中的 [blog:key] / [系统:key] 解析精确匹配（唯一对应），旧标题按名称兜底
     return (
-      jobs.find((j) => j.title.includes(`[系统:${presetKey}]`)) ||
+      jobs.find((j) => getPresetKeyFromTitle(j.title) === presetKey) ||
       jobs.find((j) => j.title.includes(preset.name)) ||
       null
     );
   }
   return (
-    jobs.find((j) => j.title.includes("[系统:publish_scheduled]")) ||
+    jobs.find((j) => getPresetKeyFromTitle(j.title) === "publish_scheduled") ||
     jobs.find((j) => j.title.includes("定时发布扫描")) ||
     null
   );
@@ -82,7 +82,7 @@ export async function listSystemJobsStatus(): Promise<
   const jobs = await listCronJobs();
   return SYSTEM_JOB_PRESETS.map((preset) => {
     const job =
-      jobs.find((j) => j.title.includes(`[系统:${preset.key}]`)) ||
+      jobs.find((j) => getPresetKeyFromTitle(j.title) === preset.key) ||
       jobs.find((j) => j.title.includes(preset.name)) ||
       null;
     return {
