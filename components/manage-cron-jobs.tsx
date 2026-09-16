@@ -353,43 +353,57 @@ export function ManageCronJobs() {
     setShowForm(true);
     setShowAdvanced(true);
 
-    // 获取详细信息（包含 headers 和 body）
+    // 获取详细信息完整回填（含 url/schedule/headers/auth/notification），
+    // 兼容系统任务：即使传入的 job 只有 jobId/title，也能正确打开编辑表单
     try {
       const res = await fetch(`/api/admin/cron/jobs/${job.jobId}`);
       if (res.ok) {
         const data = await res.json();
         const detailed = data.job;
-        if (detailed?.extendedData?.headers) {
+        if (detailed) {
           setForm((prev) => ({
             ...prev,
-            headers: Object.entries(detailed.extendedData.headers).map(([key, value]) => ({
-              key,
-              value: value as string,
-            })),
+            title: detailed.title || prev.title,
+            url: detailed.url || prev.url,
+            enabled: detailed.enabled ?? prev.enabled,
+            saveResponses: detailed.saveResponses ?? prev.saveResponses,
+            requestMethod: detailed.requestMethod ?? prev.requestMethod,
+            requestTimeout: detailed.requestTimeout ?? prev.requestTimeout,
+            redirectSuccess: detailed.redirectSuccess ?? prev.redirectSuccess,
+            schedule: detailed.schedule
+              ? {
+                  timezone: detailed.schedule.timezone || "Asia/Shanghai",
+                  minutes: formatScheduleArray(detailed.schedule.minutes),
+                  hours: formatScheduleArray(detailed.schedule.hours),
+                  mdays: formatScheduleArray(detailed.schedule.mdays),
+                  months: formatScheduleArray(detailed.schedule.months),
+                  wdays: formatScheduleArray(detailed.schedule.wdays),
+                }
+              : prev.schedule,
+            headers: detailed.extendedData?.headers
+              ? Object.entries(detailed.extendedData.headers).map(([key, value]) => ({
+                  key,
+                  value: value as string,
+                }))
+              : [],
             body: detailed.extendedData?.body || "",
-          }));
-        }
-        if (detailed?.auth) {
-          setForm((prev) => ({
-            ...prev,
-            auth: {
-              enable: detailed.auth.enable ?? false,
-              user: detailed.auth.user || "",
-              password: detailed.auth.password || "",
-            },
-          }));
-        }
-        if (detailed?.notification) {
-          setForm((prev) => ({
-            ...prev,
-            notification: {
-              onFailure: detailed.notification.onFailure ?? false,
-              onFailureCount: detailed.notification.onFailureCount ?? 1,
-              onSuccess: detailed.notification.onSuccess ?? false,
-              onDisable: detailed.notification.onDisable ?? false,
-              onSslCertExpiry: detailed.notification.onSslCertExpiry ?? false,
-              onSslCertExpirySeconds: detailed.notification.onSslCertExpirySeconds ?? 604800,
-            },
+            auth: detailed.auth
+              ? {
+                  enable: detailed.auth.enable ?? false,
+                  user: detailed.auth.user || "",
+                  password: detailed.auth.password || "",
+                }
+              : prev.auth,
+            notification: detailed.notification
+              ? {
+                  onFailure: detailed.notification.onFailure ?? false,
+                  onFailureCount: detailed.notification.onFailureCount ?? 1,
+                  onSuccess: detailed.notification.onSuccess ?? false,
+                  onDisable: detailed.notification.onDisable ?? false,
+                  onSslCertExpiry: detailed.notification.onSslCertExpiry ?? false,
+                  onSslCertExpirySeconds: detailed.notification.onSslCertExpirySeconds ?? 604800,
+                }
+              : prev.notification,
           }));
         }
       }
@@ -649,6 +663,16 @@ export function ManageCronJobs() {
                           手动触发
                         </button>
                       )}
+                      {job.jobId ? (
+                        <button
+                          type="button"
+                          onClick={() => openEditForm({ jobId: job.jobId!, title: job.name, enabled: job.enabled } as CronJob)}
+                          title="编辑"
+                          className="rounded-lg p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                      ) : null}
                       {job.jobId ? (
                         <button
                           type="button"

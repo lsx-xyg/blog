@@ -17,15 +17,15 @@ export async function GET(
   try {
     const { id, identifier } = await params;
     const jobId = parseInt(id, 10);
-    const execId = parseInt(identifier, 10);
-    if (isNaN(jobId) || isNaN(execId)) {
+    // identifier 是 cron-job.org 的字符串标识符（如 8440447-16-8-204），不做数值转换
+    if (isNaN(jobId) || !identifier) {
       return NextResponse.json(
         { error: "无效的任务 ID 或执行标识符" },
         { status: 400 },
       );
     }
 
-    const detail = await getJobHistoryDetail(jobId, execId);
+    const detail = await getJobHistoryDetail(jobId, identifier);
     return NextResponse.json({ executionDetails: detail });
   } catch (error) {
     console.error("获取执行详情失败：", error);

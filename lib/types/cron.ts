@@ -116,55 +116,49 @@ export type CronJobConfig = {
     onSslCertExpirySeconds: number;
   };
 };
-/** 执行历史列表项（ExecutionInfo，官方文档） */
+/** 执行历史列表项（cron-job.org history，官方字段） */
 
 export type CronJobHistoryItem = {
+  jobLogId: number;
   jobId: number;
-  /** 状态码：0=OK，其他见 CronJobExecutionStatus */
-  status: number;
+  /** 执行详情标识符（字符串，详情接口用） */
+  identifier: string;
+  /** 实际执行时间（Unix 秒） */
+  date: number;
+  /** 计划执行时间（Unix 秒） */
+  datePlanned: number;
+  /** 执行抖动（毫秒） */
+  jitter: number;
+  url: string;
   /** 执行时长（毫秒） */
   duration: number;
-  /** 执行时间（Unix 秒） */
-  execution: number;
-  url: string;
-  /** HTTP 方法（0-8，同 RequestMethod） */
-  method: number;
-  /** 执行详情标识符 */
-  id: number;
-};
-/** 单次执行详情（ExecutionDetails，官方文档） */
-
-export type CronJobExecutionDetail = {
-  jobId: number;
-  jobTitle: string;
-  url: string;
-  id: number;
-  execution: number;
-  plannedExecution: number;
-  executionJitter: number;
-  duration: number;
+  /** 状态码（history 语义，配合 statusText 使用） */
   status: number;
-  requestTimeout: number;
-  requestMethod: number;
-  redirectSuccess: boolean;
+  /** 官方状态文本：OK / REQUEST_FAILED / NO_RESPONSE / TIMEOUT / SSL_CERT_INVALID / REQUEST_TOO_LARGE / INTERNAL_ERROR / FAILING_SINCE */
+  statusText: string;
+  /** HTTP 状态码（仅 statusText=OK 时有意义） */
+  httpStatus: number;
+  /** 响应头（原始文本或 false） */
+  headers: string | false;
+  /** 响应体（原始文本或 false） */
+  body: string | false;
+  /** 性能统计（微秒） */
+  stats?: CronJobExecutionStats;
   sslCertExpiry: number;
-  effectiveURL: string;
-  schedule?: CronJobSchedule;
-  /** 性能统计（毫秒） */
-  times?: {
-    dnsLookup: number;
-    connection: number;
-    tlsHandshake: number;
-    firstByte: number;
-    total: number;
-  };
-  httpStatusCode: number;
-  headers?: {
-    response: Record<string, string> | string;
-  };
-  body?: string | { type: string; content: string };
-  saveResponses: boolean;
 };
+
+/** 执行性能统计（cron-job.org stats，微秒） */
+export type CronJobExecutionStats = {
+  nameLookup: number;
+  connect: number;
+  appConnect: number;
+  preTransfer: number;
+  startTransfer: number;
+  total: number;
+};
+
+/** 单次执行详情（与列表项同构，额外含响应头/体） */
+export type CronJobExecutionDetail = CronJobHistoryItem;
 /** 执行状态码（官方文档） */
 
 export const CronJobExecutionStatus = {

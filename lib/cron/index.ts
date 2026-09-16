@@ -146,13 +146,13 @@ export async function getJobHistory(jobId: number): Promise<CronJobHistoryItem[]
  */
 export async function getJobHistoryDetail(
   jobId: number,
-  identifier: number,
+  identifier: string,
 ): Promise<CronJobExecutionDetail> {
-  const result = await apiRequest<{ executionDetails: CronJobExecutionDetail }>(
+  const result = await apiRequest<{ jobHistoryDetails: CronJobExecutionDetail }>(
     "GET",
     `/jobs/${jobId}/history/${identifier}`,
   );
-  return result.executionDetails;
+  return result.jobHistoryDetails;
 }
 
 /**
