@@ -75,8 +75,8 @@ export function SiteHeader({
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-transform duration-300 ease-in-out ${
-        hidden ? "-translate-y-full" : "translate-y-0"
+      className={`sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-500 ease-in-out will-change-transform ${
+        hidden ? "-translate-y-full opacity-0 shadow-none" : "translate-y-0 opacity-100 shadow-sm"
       }`}
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4">

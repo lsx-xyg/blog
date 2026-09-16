@@ -45,21 +45,21 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) =
 
   const icons = {
     success: <CheckCircle className="h-5 w-5 text-white" />,
-    error: <XCircle className="h-5 w-5 text-red-500" />,
-    info: <Info className="h-5 w-5 text-blue-500" />,
+    error: <XCircle className="h-5 w-5 text-white" />,
+    info: <Info className="h-5 w-5 text-white" />,
   };
 
   const bgColors = {
-    // 成功：实心深绿底 + 白字，保证高对比可读
+    // 三类统一实心色底 + 白字，风格一致、高对比可读
     success: "bg-green-600 border-green-700 shadow-green-600/30",
-    error: "bg-red-50 border-red-200 dark:bg-red-950/50 dark:border-red-800",
-    info: "bg-blue-50 border-blue-200 dark:bg-blue-950/50 dark:border-blue-800",
+    error: "bg-red-600 border-red-700 shadow-red-600/30",
+    info: "bg-blue-600 border-blue-700 shadow-blue-600/30",
   };
 
   const textColors = {
     success: "text-white",
-    error: "text-foreground",
-    info: "text-foreground",
+    error: "text-white",
+    info: "text-white",
   };
 
   return (
@@ -77,7 +77,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) =
           setVisible(false);
           setTimeout(() => onRemove(toast.id), 300);
         }}
-        className={`ml-2 transition-colors ${toast.type === "success" ? "text-green-100 hover:text-white" : "text-muted-foreground hover:text-foreground"}`}
+        className="ml-2 text-white/70 transition-colors hover:text-white"
         aria-label="关闭"
       >
         <X className="h-4 w-4" />
