@@ -15,6 +15,7 @@ import {
   ZoomIn,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
 import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
 import { Switch } from "@/components/ui/switch";
 import { TagInput } from "@/components/tag-input";
@@ -498,14 +499,14 @@ export function ManageMedia() {
 
       {/* 媒体网格（key 变化时触发切换动画） */}
       {loading ? (
-        <div className="py-12 text-center text-sm text-muted-foreground animate-pulse">加载中…</div>
+        <AdminLoadingState />
       ) : items.length === 0 ? (
-        <div
-          key={`empty-${typeFilter}-${search}`}
-          className="rounded-xl border border-dashed border-border p-12 text-center animate-fade-in-up"
-        >
-          <ImageIcon className="mx-auto h-12 w-12 text-muted-foreground/50" />
-          <p className="mt-4 text-sm text-muted-foreground">还没有图片，点击上方按钮上传第一张吧</p>
+        <div key={`empty-${typeFilter}-${search}`}>
+          <AdminEmptyState
+            icon={<ImageIcon className="h-12 w-12" />}
+            title="还没有图片"
+            description="点击上方按钮上传第一张吧"
+          />
         </div>
       ) : (
         <>

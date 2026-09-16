@@ -27,6 +27,7 @@ import {
   normalizeTargetCondition,
 } from "@/lib/types/guides";
 import { GUIDE_EVENT_ANCHORS } from "@/lib/guide-events";
+import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
 
 /**
  * 引导管理组件（guiders 表 CRUD）
@@ -634,13 +635,12 @@ export function ManageGuides() {
         </div>
 
         {loading ? (
-          <div className="py-10 text-center text-sm text-muted-foreground">
-            加载中…
-          </div>
+          <AdminLoadingState />
         ) : guides.length === 0 ? (
-          <div className="py-10 text-center text-sm text-muted-foreground">
-            暂无引导配置，点击右上角「新建引导」创建。
-          </div>
+          <AdminEmptyState
+            title="暂无引导配置"
+            description="点击右上角「新建引导」创建"
+          />
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">

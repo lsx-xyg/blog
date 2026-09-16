@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Trash2, Search, Tag, FileText, Image, RefreshCw, AlertTriangle } from "lucide-react";
+import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
+
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 
 type TagWithCount = {
@@ -131,14 +133,13 @@ export function ManageTags() {
 
       {/* 标签列表 */}
       {loading ? (
-        <div className="py-12 text-center text-sm text-muted-foreground animate-pulse">加载中…</div>
+        <AdminLoadingState />
       ) : filteredTags.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-12 text-center animate-fade-in-up">
-          <Tag className="mx-auto h-12 w-12 text-muted-foreground/50" />
-          <p className="mt-4 text-sm text-muted-foreground">
-            {search ? "没有找到匹配的标签" : "还没有标签，发布文章或上传图片时会自动创建"}
-          </p>
-        </div>
+        <AdminEmptyState
+          icon={<Tag className="h-12 w-12" />}
+          title={search ? "没有找到匹配的标签" : "还没有标签"}
+          description={search ? undefined : "发布文章或上传图片时会自动创建"}
+        />
       ) : (
         <>
           {/* 桌面端：表格 */}

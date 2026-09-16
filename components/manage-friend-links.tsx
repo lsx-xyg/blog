@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Trash2, Edit3, Link2, RefreshCw, X } from "lucide-react";
+import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
+
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 
 type FriendLink = {
@@ -197,12 +199,13 @@ export function ManageFriendLinks() {
 
       {/* 友链列表 */}
       {loading ? (
-        <div className="py-12 text-center text-sm text-muted-foreground animate-pulse">加载中…</div>
+        <AdminLoadingState />
       ) : links.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-border p-12 text-center animate-fade-in-up">
-          <Link2 className="mx-auto h-12 w-12 text-muted-foreground/50" />
-          <p className="mt-4 text-sm text-muted-foreground">还没有友链，点击右上角添加</p>
-        </div>
+        <AdminEmptyState
+          icon={<Link2 className="h-12 w-12" />}
+          title="还没有友链"
+          description="点击右上角添加"
+        />
       ) : (
         <div className="overflow-hidden rounded-xl border border-border">
           <table className="w-full">
