@@ -73,6 +73,14 @@ type FormState = {
     user: string;
     password: string;
   };
+  notification: {
+    onFailure: boolean;
+    onFailureCount: number;
+    onSuccess: boolean;
+    onDisable: boolean;
+    onSslCertExpiry: boolean;
+    onSslCertExpirySeconds: number;
+  };
 };
 
 const DEFAULT_FORM: FormState = {
@@ -97,6 +105,14 @@ const DEFAULT_FORM: FormState = {
     enable: false,
     user: "",
     password: "",
+  },
+  notification: {
+    onFailure: false,
+    onFailureCount: 1,
+    onSuccess: false,
+    onDisable: false,
+    onSslCertExpiry: false,
+    onSslCertExpirySeconds: 604800,
   },
 };
 
@@ -159,6 +175,14 @@ function jobToForm(job: CronJob): FormState {
       user: "",
       password: "",
     },
+    notification: {
+      onFailure: false,
+      onFailureCount: 1,
+      onSuccess: false,
+      onDisable: false,
+      onSslCertExpiry: false,
+      onSslCertExpirySeconds: 604800,
+    },
   };
 }
 
@@ -199,6 +223,16 @@ function formToConfig(form: FormState): CronJobConfig {
     };
   }
 
+  // 通知设置
+  config.notification = {
+    onFailure: form.notification.onFailure,
+    onFailureCount: Math.max(1, form.notification.onFailureCount),
+    onSuccess: form.notification.onSuccess,
+    onDisable: form.notification.onDisable,
+    onSslCertExpiry: form.notification.onSslCertExpiry,
+    onSslCertExpirySeconds: form.notification.onSslCertExpirySeconds,
+  };
+
   return config;
 }
 
@@ -215,6 +249,7 @@ export function ManageCronJobs() {
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
   const [historyJob, setHistoryJob] = useState<CronJob | null>(null);
 
   // 页面打开不自动请求（免费版 cron-job.org API 每日配额有限），各按钮独立触发对应 API
@@ -334,6 +369,19 @@ export function ManageCronJobs() {
               enable: detailed.auth.enable ?? false,
               user: detailed.auth.user || "",
               password: detailed.auth.password || "",
+            },
+          }));
+        }
+        if (detailed?.notification) {
+          setForm((prev) => ({
+            ...prev,
+            notification: {
+              onFailure: detailed.notification.onFailure ?? false,
+              onFailureCount: detailed.notification.onFailureCount ?? 1,
+              onSuccess: detailed.notification.onSuccess ?? false,
+              onDisable: detailed.notification.onDisable ?? false,
+              onSslCertExpiry: detailed.notification.onSslCertExpiry ?? false,
+              onSslCertExpirySeconds: detailed.notification.onSslCertExpirySeconds ?? 604800,
             },
           }));
         }
@@ -828,6 +876,129 @@ export function ManageCronJobs() {
                     多个值用逗号分隔，例如：0,15,30,45 表示每 15 分钟执行一次
                   </p>
                 </div>
+              </div>
+
+              {/* 通知设置 */}
+              <div className="rounded-lg border border-border p-4">
+                <button
+                  type="button"
+                  onClick={() => setShowNotification(!showNotification)}
+                  className="flex w-full items-center justify-between text-left font-medium"
+                >
+                  <span>通知设置</span>
+                  {showNotification ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </button>
+
+                {showNotification && (
+                  <div className="mt-4 space-y-3">
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={form.notification.onFailure}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              notification: { ...form.notification, onFailure: e.target.checked },
+                            })
+                          }
+                          className="h-4 w-4 rounded border-input"
+                        />
+                        失败时通知
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={form.notification.onSuccess}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              notification: { ...form.notification, onSuccess: e.target.checked },
+                            })
+                          }
+                          className="h-4 w-4 rounded border-input"
+                        />
+                        成功后通知
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={form.notification.onDisable}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              notification: { ...form.notification, onDisable: e.target.checked },
+                            })
+                          }
+                          className="h-4 w-4 rounded border-input"
+                        />
+                        自动禁用时通知
+                      </label>
+                      <label className="flex items-center gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={form.notification.onSslCertExpiry}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              notification: { ...form.notification, onSslCertExpiry: e.target.checked },
+                            })
+                          }
+                          className="h-4 w-4 rounded border-input"
+                        />
+                        SSL 证书即将过期时通知
+                      </label>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-1 block text-xs text-muted-foreground">
+                          失败多少次后通知（最小 1）
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          value={form.notification.onFailureCount}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              notification: {
+                                ...form.notification,
+                                onFailureCount: parseInt(e.target.value, 10) || 1,
+                              },
+                            })
+                          }
+                          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                          disabled={!form.notification.onFailure}
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs text-muted-foreground">
+                          SSL 过期提前通知（秒，默认 604800 = 7 天）
+                        </label>
+                        <input
+                          type="number"
+                          min={0}
+                          value={form.notification.onSslCertExpirySeconds}
+                          onChange={(e) =>
+                            setForm({
+                              ...form,
+                              notification: {
+                                ...form.notification,
+                                onSslCertExpirySeconds: parseInt(e.target.value, 10) || 0,
+                              },
+                            })
+                          }
+                          className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                          disabled={!form.notification.onSslCertExpiry}
+                        />
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      通知通过 cron-job.org 发送到账号绑定的邮箱/渠道。失败多次通知需先开启「失败时通知」。
+                    </p>
+                  </div>
+                )}
               </div>
 
               {/* 高级配置（请求头和请求体） */}
