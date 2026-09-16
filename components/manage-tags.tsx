@@ -121,7 +121,7 @@ export function ManageTags() {
         value={search}
         onChange={setSearch}
         placeholder="搜索标签..."
-        className="mb-6 max-w-md"
+        className="mb-4 max-w-md"
       />
 
       {/* 标签列表 */}
