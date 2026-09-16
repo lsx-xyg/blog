@@ -102,7 +102,7 @@ function SortableLink({ def, adminPath }: { def: QuickLinkDef; adminPath: string
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
-        touchAction: "none",
+        // 不设 touch-action: none：长按等待期保留页面滚动，激活后 dnd-kit 自动接管
       }}
       onContextMenu={(e) => e.preventDefault()}
       className={`group flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition select-none hover:border-fg-faint hover:shadow-sm ${

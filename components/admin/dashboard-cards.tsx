@@ -100,8 +100,8 @@ function SortableCard({ def }: { def: CardDef }) {
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
-        // touch-action: none 让触摸拖拽不被浏览器滚动手势抢占；长按不禁用系统菜单
-        touchAction: "none",
+        // 注意：不能设 touch-action: none——长按等待期需要让浏览器正常滚动页面，
+        // 否则上下滑动会一直被当成拖拽手势（dnd-kit delay 模式下激活后自动接管滚动）
       }}
       // 阻止长按弹出系统右键菜单（移动端拖拽手势会误触）
       onContextMenu={(e) => e.preventDefault()}
