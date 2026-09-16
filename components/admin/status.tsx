@@ -10,10 +10,84 @@
  */
 import type { ReactNode } from "react";
 
-export function AdminLoadingState({ className = "" }: { className?: string }) {
+/**
+ * 加载骨架屏（统一后台列表加载样式）
+ *
+ * - 默认 "table"：桌面表格形态 + 移动紧凑行形态（响应式）
+ * - "grid"：媒体网格方块形态
+ *
+ * 取代手写骨架屏与纯文字「加载中…」，视觉占位减少布局跳动。
+ */
+export type AdminLoadingStateProps = {
+  variant?: "table" | "grid";
+  className?: string;
+};
+
+export function AdminLoadingState({ variant = "table", className = "" }: AdminLoadingStateProps) {
+  if (variant === "grid") {
+    return (
+      <div className={`grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 ${className}`}>
+        {Array.from({ length: 10 }).map((_, i) => (
+          <div
+            key={i}
+            className="aspect-video overflow-hidden rounded-lg border border-border bg-muted/30"
+          >
+            <div className="h-full w-full animate-pulse bg-muted" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className={`py-12 text-center text-sm text-muted-foreground animate-pulse ${className}`}>
-      加载中…
+    <div className={`animate-fade-in-up ${className}`} aria-busy="true" aria-label="加载中">
+      {/* 桌面骨架：表格形态 */}
+      <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-surface">
+        <div className="flex items-center gap-3 border-b border-border bg-muted/50 px-4 py-3">
+          <div className="h-4 w-4 shrink-0 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-20 shrink-0 animate-pulse rounded bg-muted" />
+          <div className="h-3 flex-1 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-48 shrink-0 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-40 shrink-0 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-24 shrink-0 animate-pulse rounded bg-muted" />
+          <div className="h-6 w-28 shrink-0 animate-pulse rounded bg-muted" />
+        </div>
+        {Array.from({ length: 5 }).map((_, i) => (
+          <div
+            key={i}
+            className="flex items-center gap-3 border-b border-border px-4 py-3 last:border-0"
+          >
+            <div className="h-4 w-4 shrink-0 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-20 shrink-0 animate-pulse rounded bg-muted" />
+            <div className="h-3 flex-1 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-48 shrink-0 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-40 shrink-0 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-24 shrink-0 animate-pulse rounded bg-muted" />
+            <div className="h-6 w-28 shrink-0 animate-pulse rounded bg-muted" />
+          </div>
+        ))}
+      </div>
+      {/* 移动骨架：紧凑行形态 */}
+      <div className="md:hidden overflow-hidden rounded-xl border border-border bg-surface">
+        <div className="flex items-center gap-3 border-b border-border bg-muted/50 px-4 py-2.5">
+          <div className="h-4 w-4 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+          <div className="h-3 flex-1 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-12 animate-pulse rounded bg-muted" />
+          <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+        </div>
+        <ul className="divide-y divide-border">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <li key={i} className="flex items-center gap-3 px-4 py-3">
+              <div className="h-4 w-4 shrink-0 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-16 shrink-0 animate-pulse rounded bg-muted" />
+              <div className="h-4 flex-1 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-12 shrink-0 animate-pulse rounded bg-muted" />
+              <div className="h-8 w-20 shrink-0 animate-pulse rounded bg-muted" />
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   );
 }

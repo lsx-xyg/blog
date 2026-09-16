@@ -500,7 +500,7 @@ export function ManageMedia() {
 
       {/* 媒体网格（key 变化时触发切换动画） */}
       {loading ? (
-        <AdminLoadingState />
+        <AdminLoadingState variant="grid" />
       ) : items.length === 0 ? (
         <div key={`empty-${typeFilter}-${search}`}>
           <AdminEmptyState
