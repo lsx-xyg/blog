@@ -15,23 +15,21 @@ import { AdminLogin } from "@/components/admin-login";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SetupWizard } from "@/components/setup-wizard";
 import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
+import DashboardCards from "@/components/admin/dashboard-cards";
+import QuickLinks from "@/components/admin/quick-links";
+import { getSetting } from "@/lib/settings/store";
+import {
+  normalizeCardOrder,
+  normalizeQuickOrder,
+  DASHBOARD_ORDER_KEY,
+  QUICK_ORDER_KEY,
+} from "@/lib/admin/dashboard-order";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   FileText,
-  Eye,
-  Tag,
   Image as ImageIcon,
-  Link2,
-  Clock,
   Calendar,
-  TrendingUp,
-  FileEdit,
-  Settings,
-  Timer,
-  DatabaseBackup,
-  UserRound,
-  Route,
   ChevronRight,
 } from "lucide-react";
 
@@ -115,6 +113,12 @@ export default async function AdminRootPage({
     totalViews: totalViews[0]?.sum ?? 0,
   };
 
+  // 读取用户自定义排序（未自定义返回 null → 前端使用默认顺序）
+  const savedCardOrder = await getSetting<string[]>(DASHBOARD_ORDER_KEY);
+  const cardOrder = savedCardOrder ? normalizeCardOrder(savedCardOrder) : null;
+  const savedQuickOrder = await getSetting<string[]>(QUICK_ORDER_KEY);
+  const quickOrder = savedQuickOrder ? normalizeQuickOrder(savedQuickOrder) : null;
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8 animate-page-enter">
       {/* 面包屑导航：后台首页不显示当前页面，避免重复 */}
@@ -131,127 +135,9 @@ export default async function AdminRootPage({
         <SignOutButton />
       </header>
 
-      {/* 统计卡片行 */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
-        {/* 文章总数 */}
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">文章总数</p>
-                <p className="mt-1 text-2xl font-bold">{stats.totalPosts}</p>
-              </div>
-              <div className="rounded-lg bg-primary/10 p-2">
-                <FileText className="h-5 w-5 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 已发布 */}
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">已发布</p>
-                <p className="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">{stats.publishedPosts}</p>
-              </div>
-              <div className="rounded-lg bg-green-500/10 p-2">
-                <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 草稿 */}
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">草稿</p>
-                <p className="mt-1 text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.draftPosts}</p>
-              </div>
-              <div className="rounded-lg bg-yellow-500/10 p-2">
-                <FileEdit className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 定时发布 */}
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">定时发布</p>
-                <p className="mt-1 text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.scheduledPosts}</p>
-              </div>
-              <div className="rounded-lg bg-blue-500/10 p-2">
-                <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 总访问量 */}
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">总访问量</p>
-                <p className="mt-1 text-2xl font-bold">{stats.totalViews.toLocaleString()}</p>
-              </div>
-              <div className="rounded-lg bg-purple-500/10 p-2">
-                <Eye className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 标签总数 */}
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">标签总数</p>
-                <p className="mt-1 text-2xl font-bold">{stats.totalTags}</p>
-              </div>
-              <div className="rounded-lg bg-orange-500/10 p-2">
-                <Tag className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 媒体总数 */}
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">媒体总数</p>
-                <p className="mt-1 text-2xl font-bold">{stats.totalMedia}</p>
-              </div>
-              <div className="rounded-lg bg-pink-500/10 p-2">
-                <ImageIcon className="h-5 w-5 text-pink-600 dark:text-pink-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 友链总数 */}
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">友链总数</p>
-                <p className="mt-1 text-2xl font-bold">{stats.totalFriendLinks}</p>
-              </div>
-              <div className="rounded-lg bg-cyan-500/10 p-2">
-                <Link2 className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* 统计卡片行：可拖拽排序（拖把手），顺序跨设备保存，默认顺序兜底 */}
+      <div className="mb-6">
+        <DashboardCards stats={stats} initialOrder={cardOrder} />
       </div>
 
       {/* 最近活动区域 */}
@@ -352,137 +238,9 @@ export default async function AdminRootPage({
         </Card>
       </div>
 
-      {/* 快捷入口 */}
-      <div>
-        <h2 className="mb-3 text-base font-semibold">快捷入口</h2>
-        <nav className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Link
-            href={`/${adminPath}/posts`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-primary/10 p-2">
-                <FileText className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">文章管理</p>
-                <p className="text-xs text-fg-muted">创建 / 编辑 / 发布</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href={`/${adminPath}/media`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-pink-500/10 p-2">
-                <ImageIcon className="h-4 w-4 text-pink-600 dark:text-pink-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">媒体库</p>
-                <p className="text-xs text-fg-muted">图片管理 / 清理</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href={`/${adminPath}/tags`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-orange-500/10 p-2">
-                <Tag className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">标签管理</p>
-                <p className="text-xs text-fg-muted">查看 / 删除 / 统计</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href={`/${adminPath}/friend-links`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-cyan-500/10 p-2">
-                <Link2 className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">友链管理</p>
-                <p className="text-xs text-fg-muted">添加 / 编辑 / 删除</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href={`/${adminPath}/settings`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-gray-500/10 p-2">
-                <Settings className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">站点设置</p>
-                <p className="text-xs text-fg-muted">站名 / SEO / 存储 / 评论</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href={`/${adminPath}/cron`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-blue-500/10 p-2">
-                <Timer className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">定时任务</p>
-                <p className="text-xs text-fg-muted">启动 / 停止 / 手动触发</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href={`/${adminPath}/backup`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-green-500/10 p-2">
-                <DatabaseBackup className="h-4 w-4 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">备份管理</p>
-                <p className="text-xs text-fg-muted">创建 / 下载 / 恢复</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href={`/${adminPath}/account`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-violet-500/10 p-2">
-                <UserRound className="h-4 w-4 text-violet-600 dark:text-violet-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">账号设置</p>
-                <p className="text-xs text-fg-muted">修改密码 / 关联 GitHub</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href={`/${adminPath}/guides`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-orange-500/10 p-2">
-                <Route className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">引导管理</p>
-                <p className="text-xs text-fg-muted">新手引导配置</p>
-              </div>
-            </div>
-          </Link>
-        </nav>
+      {/* 快捷入口：可拖拽排序（拖把手），顺序跨设备保存，默认顺序兜底 */}
+      <div className="mb-6">
+        <QuickLinks adminPath={adminPath} initialOrder={quickOrder} />
       </div>
     </main>
   );
