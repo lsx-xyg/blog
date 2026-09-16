@@ -288,10 +288,12 @@ function StepEditor({
             <div className="sm:col-span-2">
               <label className={`${labelClass} inline-flex items-center gap-1`}>
                 高亮元素（target）
-                <HelpCircle
-                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                <span
+                  className="inline-flex shrink-0 cursor-help"
                   title="引导指向哪个元素。填该元素上的 data-guide 值（如 reveal-view）；下方下拉是已埋点锚点，可直接选。"
-                />
+                >
+                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                </span>
               </label>
               <input
                 list="guide-anchor-options"
@@ -342,10 +344,12 @@ function StepEditor({
             <div className="sm:col-span-2">
               <label className={`${labelClass} inline-flex items-center gap-1`}>
                 下一步跳转页面（nextRoute，可选）
-                <HelpCircle
-                  className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                <span
+                  className="inline-flex shrink-0 cursor-help"
                   title="点击「下一步」后跳转到的后台相对路径（如 /account），用于跨页引导。留空则在当前页高亮下一个元素。"
-                />
+                >
+                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
+                </span>
               </label>
               <input
                 value={s.nextRoute}
