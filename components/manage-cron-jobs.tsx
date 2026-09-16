@@ -68,6 +68,11 @@ type FormState = {
     months: string;
     wdays: string;
   };
+  auth: {
+    enable: boolean;
+    user: string;
+    password: string;
+  };
 };
 
 const DEFAULT_FORM: FormState = {
@@ -87,6 +92,11 @@ const DEFAULT_FORM: FormState = {
     mdays: "-1",
     months: "-1",
     wdays: "-1",
+  },
+  auth: {
+    enable: false,
+    user: "",
+    password: "",
   },
 };
 
@@ -144,6 +154,11 @@ function jobToForm(job: CronJob): FormState {
       months: formatScheduleArray(job.schedule?.months),
       wdays: formatScheduleArray(job.schedule?.wdays),
     },
+    auth: {
+      enable: false,
+      user: "",
+      password: "",
+    },
   };
 }
 
@@ -173,6 +188,15 @@ function formToConfig(form: FormState): CronJobConfig {
   }
   if (Object.keys(headers).length > 0 || form.body) {
     config.extendedData = { headers, body: form.body };
+  }
+
+  // HTTP 基本认证（未启用则不传）
+  if (form.auth.enable) {
+    config.auth = {
+      enable: true,
+      user: form.auth.user,
+      password: form.auth.password,
+    };
   }
 
   return config;
@@ -301,6 +325,16 @@ export function ManageCronJobs() {
               value: value as string,
             })),
             body: detailed.extendedData?.body || "",
+          }));
+        }
+        if (detailed?.auth) {
+          setForm((prev) => ({
+            ...prev,
+            auth: {
+              enable: detailed.auth.enable ?? false,
+              user: detailed.auth.user || "",
+              password: detailed.auth.password || "",
+            },
           }));
         }
       }
@@ -869,6 +903,52 @@ export function ManageCronJobs() {
                         className="h-24 w-full rounded-lg border border-input bg-background px-3 py-2 font-mono text-xs"
                         placeholder='{"key": "value"}'
                       />
+                    </div>
+
+                    {/* HTTP 基本认证 */}
+                    <div className="rounded-lg border border-border p-3">
+                      <label className="flex items-center gap-2 text-sm font-medium">
+                        <input
+                          type="checkbox"
+                          checked={form.auth.enable}
+                          onChange={(e) =>
+                            setForm({ ...form, auth: { ...form.auth, enable: e.target.checked } })
+                          }
+                          className="h-4 w-4 rounded border-input"
+                        />
+                        HTTP 基本认证
+                      </label>
+                      {form.auth.enable && (
+                        <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <div>
+                            <label className="mb-1 block text-xs text-muted-foreground">用户名</label>
+                            <input
+                              type="text"
+                              value={form.auth.user}
+                              onChange={(e) =>
+                                setForm({ ...form, auth: { ...form.auth, user: e.target.value } })
+                              }
+                              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                              placeholder="Basic Auth 用户名"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-1 block text-xs text-muted-foreground">密码</label>
+                            <input
+                              type="password"
+                              value={form.auth.password}
+                              onChange={(e) =>
+                                setForm({ ...form, auth: { ...form.auth, password: e.target.value } })
+                              }
+                              className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                              placeholder="Basic Auth 密码"
+                            />
+                          </div>
+                        </div>
+                      )}
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        启用后请求会携带 Authorization: Basic 头。密码仅保存于 cron-job.org，用于执行时认证。
+                      </p>
                     </div>
                   </div>
                 )}

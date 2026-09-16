@@ -102,6 +102,21 @@ export type CronJobConfig = {
   redirectSuccess?: boolean;
   /** 所在文件夹 ID，默认 0（根目录） */
   folderId?: number;
+  /** HTTP 基本认证（JobAuth，官方文档） */
+  auth?: {
+    enable: boolean;
+    user: string;
+    password: string;
+  };
+  /** 通知设置（JobNotificationSettings，官方文档） */
+  notification?: {
+    onFailure: boolean;
+    onFailureCount: number;
+    onSuccess: boolean;
+    onDisable: boolean;
+    onSslCertExpiry: boolean;
+    onSslCertExpirySeconds: number;
+  };
 };
 /** 执行历史列表项（ExecutionInfo，官方文档） */
 

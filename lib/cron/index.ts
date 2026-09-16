@@ -77,6 +77,8 @@ export async function createCronJob(config: CronJobConfig): Promise<number> {
       requestTimeout: config.requestTimeout ?? -1,
       redirectSuccess: config.redirectSuccess ?? false,
       folderId: config.folderId ?? 0,
+      auth: config.auth,
+      notification: config.notification,
     },
   });
   return result.jobId;
