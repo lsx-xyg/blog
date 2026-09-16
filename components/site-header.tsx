@@ -75,8 +75,15 @@ export function SiteHeader({
 
   return (
     <header
-      className={`sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 transition-all duration-500 ease-in-out will-change-transform ${
-        hidden ? "-translate-y-full opacity-0 shadow-none" : "translate-y-0 opacity-100 shadow-sm"
+      // 隐藏/显示动画用内联 style 控制 transform/opacity/transition，确保浏览器一定过渡
+      style={{
+        transition: "transform 0.5s ease-in-out, opacity 0.5s ease-in-out",
+        transform: hidden ? "translateY(-100%)" : "translateY(0)",
+        opacity: hidden ? 0 : 1,
+        willChange: "transform",
+      }}
+      className={`sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${
+        hidden ? "shadow-none" : "shadow-sm"
       }`}
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
