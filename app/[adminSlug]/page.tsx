@@ -16,25 +16,24 @@ import { SignOutButton } from "@/components/sign-out-button";
 import { SetupWizard } from "@/components/setup-wizard";
 import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
 import DashboardCards from "@/components/admin/dashboard-cards";
+import QuickLinks from "@/components/admin/quick-links";
 import { getSetting } from "@/lib/settings/store";
-import { normalizeCardOrder, DASHBOARD_ORDER_KEY } from "@/lib/admin/dashboard-order";
+import {
+  normalizeCardOrder,
+  normalizeQuickOrder,
+  DASHBOARD_ORDER_KEY,
+  QUICK_ORDER_KEY,
+} from "@/lib/admin/dashboard-order";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
   FileText,
   Eye,
-  Tag,
   Image as ImageIcon,
-  Link2,
   Clock,
   Calendar,
   TrendingUp,
   FileEdit,
-  Settings,
-  Timer,
-  DatabaseBackup,
-  UserRound,
-  Route,
   ChevronRight,
 } from "lucide-react";
 
@@ -121,6 +120,10 @@ export default async function AdminRootPage({
   // 读取用户自定义卡片顺序（未自定义返回 null → 前端使用默认顺序）
   const savedCardOrder = await getSetting<string[]>(DASHBOARD_ORDER_KEY);
   const cardOrder = savedCardOrder ? normalizeCardOrder(savedCardOrder) : null;
+
+  // 读取快捷入口自定义顺序
+  const savedQuickOrder = await getSetting<string[]>(QUICK_ORDER_KEY);
+  const quickOrder = savedQuickOrder ? normalizeQuickOrder(savedQuickOrder) : null;
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8 animate-page-enter">
@@ -241,137 +244,9 @@ export default async function AdminRootPage({
         </Card>
       </div>
 
-      {/* 快捷入口 */}
-      <div>
-        <h2 className="mb-3 text-base font-semibold">快捷入口</h2>
-        <nav className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <Link
-            href={`/${adminPath}/posts`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-primary/10 p-2">
-                <FileText className="h-4 w-4 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">文章管理</p>
-                <p className="text-xs text-fg-muted">创建 / 编辑 / 发布</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href={`/${adminPath}/media`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-pink-500/10 p-2">
-                <ImageIcon className="h-4 w-4 text-pink-600 dark:text-pink-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">媒体库</p>
-                <p className="text-xs text-fg-muted">图片管理 / 清理</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href={`/${adminPath}/tags`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-orange-500/10 p-2">
-                <Tag className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">标签管理</p>
-                <p className="text-xs text-fg-muted">查看 / 删除 / 统计</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href={`/${adminPath}/friend-links`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-cyan-500/10 p-2">
-                <Link2 className="h-4 w-4 text-cyan-600 dark:text-cyan-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">友链管理</p>
-                <p className="text-xs text-fg-muted">添加 / 编辑 / 删除</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href={`/${adminPath}/settings`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-gray-500/10 p-2">
-                <Settings className="h-4 w-4 text-gray-600 dark:text-gray-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">站点设置</p>
-                <p className="text-xs text-fg-muted">站名 / SEO / 存储 / 评论</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href={`/${adminPath}/cron`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-blue-500/10 p-2">
-                <Timer className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">定时任务</p>
-                <p className="text-xs text-fg-muted">启动 / 停止 / 手动触发</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href={`/${adminPath}/backup`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-green-500/10 p-2">
-                <DatabaseBackup className="h-4 w-4 text-green-600 dark:text-green-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">备份管理</p>
-                <p className="text-xs text-fg-muted">创建 / 下载 / 恢复</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href={`/${adminPath}/account`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-violet-500/10 p-2">
-                <UserRound className="h-4 w-4 text-violet-600 dark:text-violet-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">账号设置</p>
-                <p className="text-xs text-fg-muted">修改密码 / 关联 GitHub</p>
-              </div>
-            </div>
-          </Link>
-          <Link
-            href={`/${adminPath}/guides`}
-            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
-          >
-            <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-orange-500/10 p-2">
-                <Route className="h-4 w-4 text-orange-600 dark:text-orange-400" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold">引导管理</p>
-                <p className="text-xs text-fg-muted">新手引导配置</p>
-              </div>
-            </div>
-          </Link>
-        </nav>
+      {/* 快捷入口：可拖拽排序，顺序跨设备保存（默认顺序兜底） */}
+      <div className="mb-6">
+        <QuickLinks adminPath={adminPath} initialOrder={quickOrder} />
       </div>
     </main>
   );

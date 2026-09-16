@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_DASHBOARD_ORDER,
+  DEFAULT_QUICK_ORDER,
   normalizeCardOrder,
+  normalizeQuickOrder,
 } from "./dashboard-order";
 
 describe("normalizeCardOrder", () => {
@@ -54,5 +56,21 @@ describe("normalizeCardOrder", () => {
 
   it("空数组 → 默认顺序", () => {
     expect(normalizeCardOrder([])).toEqual(DEFAULT_DASHBOARD_ORDER);
+  });
+});
+
+describe("normalizeQuickOrder", () => {
+  it("null / 非数组 → 返回快捷入口默认顺序", () => {
+    expect(normalizeQuickOrder(null)).toEqual(DEFAULT_QUICK_ORDER);
+    expect(normalizeQuickOrder(42)).toEqual(DEFAULT_QUICK_ORDER);
+  });
+
+  it("自定义顺序保留，未知 key 过滤并补全缺失", () => {
+    const custom = ["backup", "cron", "account"];
+    const result = normalizeQuickOrder(custom);
+    expect(result.slice(0, 3)).toEqual(["backup", "cron", "account"]);
+    expect(result).toHaveLength(DEFAULT_QUICK_ORDER.length);
+    expect(new Set(result).size).toBe(result.length);
+    expect(result).toEqual(expect.arrayContaining(DEFAULT_QUICK_ORDER));
   });
 });
