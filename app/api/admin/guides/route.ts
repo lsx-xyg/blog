@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth/auth";
 import { isAdminUser } from "@/lib/shared/utils";
 import { db } from "@/db";
 import { guiders } from "@/db/schema";
-import { GuideStatus } from "@/lib/types/guides";
+import { GuideStatus, isValidTargetCondition } from "@/lib/types/guides";
 import type { GuideStep, GuideTargetCondition } from "@/lib/types/guides";
 
 /**
@@ -102,9 +102,15 @@ export async function POST(request: Request) {
       ? Math.trunc(body.priority)
       : 0;
   const targetCondition =
-    body.targetCondition && typeof body.targetCondition === "object"
-      ? (body.targetCondition as GuideTargetCondition)
+    body.targetCondition !== undefined && body.targetCondition !== null
+      ? body.targetCondition
       : null;
+  if (targetCondition !== null && !isValidTargetCondition(targetCondition)) {
+    return NextResponse.json(
+      { error: "targetCondition 结构非法（需 {logic, conditions[]}）" },
+      { status: 400 }
+    );
+  }
 
   // 唯一键冲突检查
   const existing = await db
@@ -126,7 +132,7 @@ export async function POST(request: Request) {
       page: page.trim(),
       steps: steps as GuideStep[],
       status,
-      targetCondition,
+      targetCondition: targetCondition as GuideTargetCondition | null,
       priority,
     })
     .returning();

@@ -46,7 +46,13 @@ const run = async () => {
       title: "敏感信息查看：设置密码",
       page: "/settings",
       status: GuideStatus.PUBLISHED,
-      targetCondition: { event: "reveal-click", page: "/settings" },
+      targetCondition: {
+        logic: "and",
+        conditions: [
+          { field: "event_click", op: "eq", value: "reveal-view" },
+          { field: "page", op: "eq", value: "/settings" },
+        ],
+      },
       priority: 10,
       steps,
     };

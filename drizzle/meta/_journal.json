@@ -71,6 +71,13 @@
       "when": 1789515259891,
       "tag": "0009_grey_kate_bishop",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789517351718,
+      "tag": "0010_user_events_and_condition_migration",
+      "breakpoints": true
     }
   ]
 }

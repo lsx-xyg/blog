@@ -9,7 +9,11 @@ import {
 } from "onborda";
 import { GuideCard } from "./guide-card";
 import type { Guide, GuideProgress } from "@/lib/types/guides";
-import { GuideProgressStatus } from "@/lib/types/guides";
+import { GuideProgressStatus, normalizeTargetCondition } from "@/lib/types/guides";
+import {
+  evaluateTargetCondition,
+  needsServerData,
+} from "@/lib/guides/conditions";
 
 /** onborda Tour 结构（index.d.ts 未导出，按 types 目录定义） */
 interface Tour {
@@ -112,21 +116,31 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
 
   // 2. 监听触发事件
   useEffect(() => {
-    const handler = (e: Event) => {
+    const handler = async (e: Event) => {
       const detail = (e as CustomEvent).detail ?? {};
       const eventName = detail.event as string | undefined;
+      const target = detail.target as string | undefined;
       const page = (detail.page as string) ?? "";
       const element = detail.element as HTMLElement | null;
-      if (!eventName) return;
+      if (!eventName || !target) return;
 
-      // 匹配 published + 事件 + 页面，按优先级排序取第一个
-      const guide = guides
-        .filter((g) => g.targetCondition?.event === eventName)
+      // 匹配 published 引导：本地先按 event_click + page 条件粗筛
+      const candidates = guides
         .filter((g) => {
-          const gp = g.targetCondition?.page;
-          return !gp || page === gp || page.startsWith(gp);
+          const tc = normalizeTargetCondition(g.targetCondition);
+          if (!tc) return false;
+          // 本地可判条件（event_click / page）先过一遍；服务端条件不影响粗筛
+          const local = tc.conditions.filter(
+            (c) => c.field === "event_click" || c.field === "page"
+          );
+          if (local.length === 0) return false;
+          return evaluateTargetCondition(
+            { logic: tc.logic, conditions: local },
+            { event: eventName, target, page }
+          );
         })
-        .sort((a, b) => a.priority - b.priority)[0];
+        .sort((a, b) => a.priority - b.priority);
+      const guide = candidates[0];
       if (!guide) return;
 
       // 已完成/已跳过的引导不再触发
@@ -137,6 +151,27 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
           progress.status === GuideProgressStatus.SKIPPED)
       ) {
         return;
+      }
+
+      // 含服务端条件（click_count / user_age_days）→ 调 evaluate API 精筛
+      const tc = normalizeTargetCondition(guide.targetCondition);
+      if (needsServerData(tc)) {
+        try {
+          const res = await fetch("/api/admin/guides/evaluate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              guideKey: guide.guideKey,
+              event: eventName,
+              target,
+              page,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.matched) return;
+        } catch {
+          return; // 精筛失败不强行触发
+        }
       }
 
       // 构造 onborda tour steps（DB 步骤 → onborda Step）

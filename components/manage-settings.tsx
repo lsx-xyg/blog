@@ -162,7 +162,8 @@ export function ManageSettings() {
             window.dispatchEvent(
               new CustomEvent("guide:trigger", {
                 detail: {
-                  event: "reveal-click",
+                  event: "event_click",
+                  target: "reveal-view",
                   page: "/settings",
                   element: e.currentTarget as HTMLElement,
                 },

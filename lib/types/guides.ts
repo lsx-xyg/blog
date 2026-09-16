@@ -37,12 +37,98 @@ export interface GuideStep {
   nextRoute?: string;
 }
 
-/** 触发条件（target_condition JSONB），行为 + 页面组合 */
+/** 条件运算符 */
+export const GuideConditionOp = {
+  EQ: "eq",
+  GTE: "gte",
+  LTE: "lte",
+  EXISTS: "exists",
+} as const;
+export type GuideConditionOp =
+  (typeof GuideConditionOp)[keyof typeof GuideConditionOp];
+export const GUIDE_CONDITION_OPS = Object.values(
+  GuideConditionOp
+) as GuideConditionOp[];
+
+/**
+ * 触发条件表达式（target_condition JSONB）
+ *
+ * 通用条件表达式：{logic, conditions[]}，conditions 每项为一条原子条件。
+ * 示例：
+ * {logic:"and", conditions:[
+ *   {field:"event_click", op:"eq", value:"reveal-view"},
+ *   {field:"page", op:"eq", value:"/settings"},
+ *   {field:"click_count.reveal-view", op:"gte", value:1},
+ *   {field:"user_age_days", op:"gte", value:3},
+ * ]}
+ *
+ * 字段约定（field 与埋点/data-guide 用同一标识，见 lib/guide-events.ts）：
+ * - event_click：用户点击了某锚点元素（value = data-guide 锚点值），实时行为触发
+ * - page：适用页面（value = 后台相对路径前缀，如 /settings）
+ * - click_count.<target>：用户点击某锚点的累计次数（服务端 user_events 统计）
+ * - user_age_days：用户注册天数（服务端 users.created_at 计算）
+ */
+export interface GuideCondition {
+  /** 条件字段（event_click / page / click_count.<target> / user_age_days） */
+  field: string;
+  op: GuideConditionOp;
+  /** 比较值：字符串锚点名或数值 */
+  value?: string | number;
+}
+
 export interface GuideTargetCondition {
-  /** 触发事件名（如 reveal-click），由前端 GuideManager 派发 */
-  event?: string;
-  /** 页面路径前缀（如 /settings），匹配则触发 */
-  page?: string;
+  /** 条件组合逻辑：全部满足（and）或任一满足（or） */
+  logic: "and" | "or";
+  conditions: GuideCondition[];
+}
+
+/** v1 旧格式 {event, page} → 新表达式（数据迁移/读取兼容） */
+export function normalizeTargetCondition(
+  raw: GuideTargetCondition | null | undefined
+): GuideTargetCondition | null {
+  if (!raw) return null;
+  // 新格式
+  if (Array.isArray((raw as { conditions?: unknown }).conditions)) {
+    return raw as GuideTargetCondition;
+  }
+  // 旧格式 {event, page}
+  const legacy = raw as { event?: string; page?: string };
+  const conditions: GuideCondition[] = [];
+  if (legacy.event) {
+    conditions.push({ field: "event_click", op: GuideConditionOp.EQ, value: legacy.event });
+  }
+  if (legacy.page) {
+    conditions.push({ field: "page", op: GuideConditionOp.EQ, value: legacy.page });
+  }
+  return conditions.length > 0 ? { logic: "and", conditions } : null;
+}
+
+/** target_condition 结构校验（服务端 API 用） */
+export function isValidTargetCondition(value: unknown): value is GuideTargetCondition {
+  if (!value || typeof value !== "object") return false;
+  const v = value as Record<string, unknown>;
+  if (v.logic !== "and" && v.logic !== "or") return false;
+  if (!Array.isArray(v.conditions) || v.conditions.length === 0) return false;
+  return v.conditions.every((c) => {
+    if (!c || typeof c !== "object") return false;
+    const cond = c as Record<string, unknown>;
+    if (typeof cond.field !== "string" || !cond.field) return false;
+    // click_count 需带锚点名
+    if (cond.field.startsWith("click_count.") && cond.field.length <= "click_count.".length) {
+      return false;
+    }
+    if (cond.field === "click_count.") return false;
+    if (typeof cond.op !== "string") return false;
+    if (!Object.values(GuideConditionOp).includes(cond.op as GuideConditionOp)) return false;
+    // 非 exists 条件需有 value
+    if (
+      cond.op !== GuideConditionOp.EXISTS &&
+      (cond.value === undefined || cond.value === null || cond.value === "")
+    ) {
+      return false;
+    }
+    return true;
+  });
 }
 
 /** 引导配置（guiders 表记录） */

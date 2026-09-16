@@ -318,6 +318,26 @@ export const userGuideProgress = pgTable(
   ]
 );
 
+/* ---------- user_events 用户行为事件表（引导 click_count 条件统计） ---------- */
+
+export const userEvents = pgTable(
+  "user_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    /** 事件类型（当前固定 event_click） */
+    event: text("event").notNull(),
+    /** 锚点值（data-guide，如 reveal-view），与 event_click 条件 value 同一标识 */
+    target: text("target").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("user_events_user_target_idx").on(t.userId, t.event, t.target),
+  ]
+);
+
 /* ---------- 类型导出（M2+ 使用） ---------- */
 export type Post = typeof posts.$inferSelect;
 export type NewPost = typeof posts.$inferInsert;
@@ -332,3 +352,5 @@ export type NewBackupAuditLog = typeof backupAuditLogs.$inferInsert;
 export type User = typeof users.$inferSelect;
 export type Guider = typeof guiders.$inferSelect;
 export type UserGuideProgress = typeof userGuideProgress.$inferSelect;
+export type UserEvent = typeof userEvents.$inferSelect;
+export type NewUserEvent = typeof userEvents.$inferInsert;

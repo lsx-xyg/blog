@@ -10,15 +10,26 @@ import {
   Loader2,
   X,
 } from "lucide-react";
-import type { Guide } from "@/lib/types/guides";
-import { GuideStatus, GUIDE_STATUS_VALUES } from "@/lib/types/guides";
+import type {
+  Guide,
+  GuideCondition,
+  GuideTargetCondition,
+} from "@/lib/types/guides";
+import {
+  GuideStatus,
+  GuideConditionOp,
+  GUIDE_STATUS_VALUES,
+  GUIDE_CONDITION_OPS,
+  normalizeTargetCondition,
+} from "@/lib/types/guides";
+import { GUIDE_EVENT_ANCHORS } from "@/lib/guide-events";
 
 /**
  * 引导管理组件（guiders 表 CRUD）
  *
- * - 列表：标题 / guideKey / 页面 / 状态 / 优先级 / 步骤数 / 操作
- * - 新建 / 编辑表单（steps 使用 JSON 编辑器 + 校验）
- * - 状态切换：发布（published）/ 归档（archived）
+ * - 列表：标题 / guideKey / 页面 / 触发条件 / 状态 / 优先级 / 步骤数 / 操作
+ * - 新建 / 编辑表单：steps 用 JSON 编辑器；触发条件用结构化行式表单
+ * - 触发条件：{logic, conditions[]}，event_click 的 value 从埋点注册表下拉
  */
 
 const inputClass =
@@ -37,6 +48,155 @@ const STATUS_LABEL: Record<GuideStatus, string> = {
   archived: "已归档",
 };
 
+/** 条件字段下拉选项 */
+const FIELD_OPTIONS = [
+  { value: "event_click", label: "event_click（点击锚点元素）" },
+  { value: "page", label: "page（适用页面）" },
+  { value: "click_count", label: "click_count.（点击累计次数）" },
+  { value: "user_age_days", label: "user_age_days（注册天数）" },
+];
+
+const OP_LABEL: Record<GuideConditionOp, string> = {
+  eq: "等于 (eq)",
+  gte: "大于等于 (gte)",
+  lte: "小于等于 (lte)",
+  exists: "存在 (exists)",
+};
+
+/** 条件编辑行 */
+function ConditionRow({
+  cond,
+  onChange,
+  onRemove,
+}: {
+  cond: GuideCondition;
+  onChange: (next: GuideCondition) => void;
+  onRemove: () => void;
+}) {
+  const isClickCount = cond.field.startsWith("click_count.");
+  const field = isClickCount ? "click_count" : cond.field;
+  const clickAnchor = isClickCount
+    ? cond.field.slice("click_count.".length)
+    : "";
+
+  const setField = (next: string) => {
+    if (next === "click_count") {
+      onChange({
+        ...cond,
+        field: clickAnchor ? `click_count.${clickAnchor}` : "click_count.",
+        op: cond.op ?? GuideConditionOp.GTE,
+        value: cond.value ?? 1,
+      });
+    } else {
+      onChange({
+        ...cond,
+        field: next,
+        op:
+          next === "user_age_days"
+            ? GuideConditionOp.GTE
+            : GuideConditionOp.EQ,
+        value:
+          next === "event_click"
+            ? GUIDE_EVENT_ANCHORS[0]?.target ?? ""
+            : next === "user_age_days"
+              ? 3
+              : cond.value ?? "",
+      });
+    }
+  };
+
+  const setClickAnchor = (anchor: string) => {
+    onChange({
+      ...cond,
+      field: `click_count.${anchor}`,
+      value: cond.value ?? 1,
+    });
+  };
+
+  return (
+    <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 p-2">
+      <select
+        value={field}
+        onChange={(e) => setField(e.target.value)}
+        className={`${inputClass} w-52`}
+      >
+        {FIELD_OPTIONS.map((f) => (
+          <option key={f.value} value={f.value}>
+            {f.label}
+          </option>
+        ))}
+      </select>
+
+      {isClickCount && (
+        <input
+          value={clickAnchor}
+          onChange={(e) => setClickAnchor(e.target.value.trim())}
+          className={`${inputClass} flex-1 font-mono text-xs`}
+          placeholder="锚点名（data-guide，如 reveal-view）"
+        />
+      )}
+
+      <select
+        value={cond.op}
+        onChange={(e) =>
+          onChange({ ...cond, op: e.target.value as GuideConditionOp })
+        }
+        className={`${inputClass} w-36`}
+      >
+        {GUIDE_CONDITION_OPS.map((op) => (
+          <option key={op} value={op}>
+            {OP_LABEL[op]}
+          </option>
+        ))}
+      </select>
+
+      {cond.op !== GuideConditionOp.EXISTS &&
+        (field === "event_click" ? (
+          <select
+            value={typeof cond.value === "string" ? cond.value : ""}
+            onChange={(e) => onChange({ ...cond, value: e.target.value })}
+            className={`${inputClass} flex-1`}
+          >
+            {GUIDE_EVENT_ANCHORS.map((a) => (
+              <option key={a.target} value={a.target}>
+                {a.label}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type={
+              field === "user_age_days" || field === "click_count"
+                ? "number"
+                : "text"
+            }
+            value={cond.value ?? ""}
+            onChange={(e) =>
+              onChange({
+                ...cond,
+                value:
+                  field === "user_age_days" || field === "click_count"
+                    ? Number(e.target.value)
+                    : e.target.value,
+              })
+            }
+            className={`${inputClass} flex-1`}
+            placeholder={field === "page" ? "/settings" : "数值"}
+          />
+        ))}
+
+      <button
+        type="button"
+        onClick={onRemove}
+        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+        title="删除条件"
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
 interface FormState {
   id?: string;
   guideKey: string;
@@ -44,8 +204,8 @@ interface FormState {
   page: string;
   priority: number;
   status: GuideStatus;
-  event: string;
-  conditionPage: string;
+  logic: "and" | "or";
+  conditions: GuideCondition[];
   stepsJson: string;
 }
 
@@ -55,8 +215,15 @@ const EMPTY_FORM: FormState = {
   page: "",
   priority: 0,
   status: GuideStatus.DRAFT,
-  event: "",
-  conditionPage: "",
+  logic: "and",
+  conditions: [
+    {
+      field: "event_click",
+      op: GuideConditionOp.EQ,
+      value: GUIDE_EVENT_ANCHORS[0]?.target ?? "",
+    },
+    { field: "page", op: GuideConditionOp.EQ, value: "/settings" },
+  ],
   stepsJson: JSON.stringify(
     [
       {
@@ -106,6 +273,7 @@ export function ManageGuides() {
   };
 
   const openEdit = (g: Guide) => {
+    const tc = normalizeTargetCondition(g.targetCondition);
     setForm({
       id: g.id,
       guideKey: g.guideKey,
@@ -113,17 +281,35 @@ export function ManageGuides() {
       page: g.page,
       priority: g.priority,
       status: g.status,
-      event: g.targetCondition?.event ?? "",
-      conditionPage: g.targetCondition?.page ?? "",
+      logic: tc?.logic ?? "and",
+      conditions: tc?.conditions ?? [],
       stepsJson: JSON.stringify(g.steps, null, 2),
     });
     setError("");
     setEditing(true);
   };
 
+  /** 条件行有效性（click_count 需有锚点；非 exists 需有 value） */
+  const conditionValid = (c: GuideCondition): boolean => {
+    if (!c.field) return false;
+    if (
+      c.field.startsWith("click_count.") &&
+      c.field.length <= "click_count.".length
+    ) {
+      return false;
+    }
+    if (c.field === "click_count.") return false;
+    if (
+      c.op !== GuideConditionOp.EXISTS &&
+      (c.value === undefined || c.value === null || c.value === "")
+    ) {
+      return false;
+    }
+    return true;
+  };
+
   const handleSave = async () => {
     setError("");
-    // 校验
     if (!form.guideKey.trim() || !form.title.trim() || !form.page.trim()) {
       setError("guideKey / title / page 必填");
       return;
@@ -150,9 +336,26 @@ export function ManageGuides() {
         return;
       }
     }
+    if (
+      form.conditions.length === 0 ||
+      !form.conditions.every(conditionValid)
+    ) {
+      setError(
+        "触发条件至少一条，且 click_count 需填锚点名、非 exists 条件需填 value"
+      );
+      return;
+    }
 
     setSaving(true);
     try {
+      const targetCondition: GuideTargetCondition = {
+        logic: form.logic,
+        conditions: form.conditions.map((c) => ({
+          field: c.field,
+          op: c.op,
+          value: c.value,
+        })),
+      };
       const payload = {
         guideKey: form.guideKey.trim(),
         title: form.title.trim(),
@@ -160,13 +363,7 @@ export function ManageGuides() {
         priority: Number(form.priority) || 0,
         status: form.status,
         steps,
-        targetCondition:
-          form.event.trim() || form.conditionPage.trim()
-            ? {
-                event: form.event.trim() || undefined,
-                page: form.conditionPage.trim() || undefined,
-              }
-            : null,
+        targetCondition,
       };
       const url = form.id
         ? `/api/admin/guides/${form.id}`
@@ -244,6 +441,7 @@ export function ManageGuides() {
                   <th className="pb-2 pr-4 font-medium">标题</th>
                   <th className="pb-2 pr-4 font-medium">guideKey</th>
                   <th className="pb-2 pr-4 font-medium">页面</th>
+                  <th className="pb-2 pr-4 font-medium">触发条件</th>
                   <th className="pb-2 pr-4 font-medium">优先级</th>
                   <th className="pb-2 pr-4 font-medium">步骤</th>
                   <th className="pb-2 pr-4 font-medium">状态</th>
@@ -251,91 +449,107 @@ export function ManageGuides() {
                 </tr>
               </thead>
               <tbody>
-                {guides.map((g) => (
-                  <tr key={g.id} className="border-b border-border/50 last:border-0">
-                    <td className="py-2.5 pr-4 font-medium text-foreground">
-                      {g.title}
-                    </td>
-                    <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground">
-                      {g.guideKey}
-                    </td>
-                    <td className="py-2.5 pr-4 text-muted-foreground">
-                      {g.page}
-                    </td>
-                    <td className="py-2.5 pr-4 text-muted-foreground">
-                      {g.priority}
-                    </td>
-                    <td className="py-2.5 pr-4 text-muted-foreground">
-                      {g.steps.length} 步
-                    </td>
-                    <td className="py-2.5 pr-4">
-                      <span
-                        className={`inline-block rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[g.status]}`}
-                      >
-                        {STATUS_LABEL[g.status]}
-                      </span>
-                    </td>
-                    <td className="py-2.5">
-                      <div className="flex items-center justify-end gap-1">
-                        {g.status !== GuideStatus.PUBLISHED && (
-                          <button
-                            type="button"
-                            onClick={() => toggleStatus(g, GuideStatus.PUBLISHED)}
-                            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-green-600"
-                            title="发布"
-                          >
-                            <Rocket className="h-4 w-4" />
-                          </button>
-                        )}
-                        {g.status !== GuideStatus.ARCHIVED && (
-                          <button
-                            type="button"
-                            onClick={() => toggleStatus(g, GuideStatus.ARCHIVED)}
-                            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-yellow-600"
-                            title="归档"
-                          >
-                            <Archive className="h-4 w-4" />
-                          </button>
-                        )}
-                        <button
-                          type="button"
-                          onClick={() => openEdit(g)}
-                          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                          title="编辑"
+                {guides.map((g) => {
+                  const tc = normalizeTargetCondition(g.targetCondition);
+                  const condSummary = tc
+                    ? tc.conditions.map((c) => c.field).join(" · ")
+                    : "—";
+                  return (
+                    <tr
+                      key={g.id}
+                      className="border-b border-border/50 last:border-0"
+                    >
+                      <td className="py-2.5 pr-4 font-medium text-foreground">
+                        {g.title}
+                      </td>
+                      <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground">
+                        {g.guideKey}
+                      </td>
+                      <td className="py-2.5 pr-4 text-muted-foreground">
+                        {g.page}
+                      </td>
+                      <td className="py-2.5 pr-4 text-muted-foreground">
+                        <span className="font-mono text-xs">{condSummary}</span>
+                      </td>
+                      <td className="py-2.5 pr-4 text-muted-foreground">
+                        {g.priority}
+                      </td>
+                      <td className="py-2.5 pr-4 text-muted-foreground">
+                        {g.steps.length} 步
+                      </td>
+                      <td className="py-2.5 pr-4">
+                        <span
+                          className={`inline-block rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[g.status]}`}
                         >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                        {confirmDelete === g.id ? (
-                          <span className="flex items-center gap-1">
+                          {STATUS_LABEL[g.status]}
+                        </span>
+                      </td>
+                      <td className="py-2.5">
+                        <div className="flex items-center justify-end gap-1">
+                          {g.status !== GuideStatus.PUBLISHED && (
                             <button
                               type="button"
-                              onClick={() => handleDelete(g.id)}
-                              className="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-500/10"
+                              onClick={() =>
+                                toggleStatus(g, GuideStatus.PUBLISHED)
+                              }
+                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-green-600"
+                              title="发布"
                             >
-                              确认
+                              <Rocket className="h-4 w-4" />
                             </button>
+                          )}
+                          {g.status !== GuideStatus.ARCHIVED && (
                             <button
                               type="button"
-                              onClick={() => setConfirmDelete(null)}
-                              className="rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:bg-muted"
+                              onClick={() =>
+                                toggleStatus(g, GuideStatus.ARCHIVED)
+                              }
+                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-yellow-600"
+                              title="归档"
                             >
-                              取消
+                              <Archive className="h-4 w-4" />
                             </button>
-                          </span>
-                        ) : (
+                          )}
                           <button
                             type="button"
-                            onClick={() => setConfirmDelete(g.id)}
-                            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
-                            title="删除"
+                            onClick={() => openEdit(g)}
+                            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            title="编辑"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Pencil className="h-4 w-4" />
                           </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                          {confirmDelete === g.id ? (
+                            <span className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleDelete(g.id)}
+                                className="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-500/10"
+                              >
+                                确认
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setConfirmDelete(null)}
+                                className="rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:bg-muted"
+                              >
+                                取消
+                              </button>
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setConfirmDelete(g.id)}
+                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+                              title="删除"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -423,30 +637,75 @@ export function ManageGuides() {
                   ))}
                 </select>
               </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className={labelClass}>触发事件</label>
-                  <input
-                    value={form.event}
+            </div>
+
+            {/* 触发条件：结构化行式表单 */}
+            <div className="mt-4">
+              <div className="mb-2 flex items-center justify-between">
+                <label className={labelClass}>触发条件（target_condition）</label>
+                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                  <span>满足逻辑：</span>
+                  <select
+                    value={form.logic}
                     onChange={(e) =>
-                      setForm({ ...form, event: e.target.value })
+                      setForm({
+                        ...form,
+                        logic: e.target.value as "and" | "or",
+                      })
                     }
-                    className={inputClass}
-                    placeholder="reveal-click"
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>触发页面</label>
-                  <input
-                    value={form.conditionPage}
-                    onChange={(e) =>
-                      setForm({ ...form, conditionPage: e.target.value })
+                    className="rounded-md border border-input bg-background px-2 py-1 text-xs"
+                  >
+                    <option value="and">全部满足 (and)</option>
+                    <option value="or">任一满足 (or)</option>
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setForm({
+                        ...form,
+                        conditions: [
+                          ...form.conditions,
+                          {
+                            field: "event_click",
+                            op: GuideConditionOp.EQ,
+                            value: GUIDE_EVENT_ANCHORS[0]?.target ?? "",
+                          },
+                        ],
+                      })
                     }
-                    className={inputClass}
-                    placeholder="/settings"
-                  />
+                    className="ml-2 inline-flex items-center gap-1 rounded-md px-2 py-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    添加条件
+                  </button>
                 </div>
               </div>
+              <div className="space-y-2">
+                {form.conditions.map((c, i) => (
+                  <ConditionRow
+                    key={i}
+                    cond={c}
+                    onChange={(next) =>
+                      setForm({
+                        ...form,
+                        conditions: form.conditions.map((x, j) =>
+                          j === i ? next : x
+                        ),
+                      })
+                    }
+                    onRemove={() =>
+                      setForm({
+                        ...form,
+                        conditions: form.conditions.filter((_, j) => j !== i),
+                      })
+                    }
+                  />
+                ))}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                event_click 的 value 与 data-guide 锚点、埋点上报用同一标识；
+                click_count 条件需 user_events 表有该锚点点击记录。
+              </p>
             </div>
 
             <div className="mt-4">
@@ -456,7 +715,7 @@ export function ManageGuides() {
               <textarea
                 value={form.stepsJson}
                 onChange={(e) => setForm({ ...form, stepsJson: e.target.value })}
-                rows={12}
+                rows={10}
                 className={`${inputClass} font-mono text-xs`}
               />
             </div>

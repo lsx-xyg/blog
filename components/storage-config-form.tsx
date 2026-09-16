@@ -84,7 +84,8 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
             window.dispatchEvent(
               new CustomEvent("guide:trigger", {
                 detail: {
-                  event: "reveal-click",
+                  event: "event_click",
+                  target: "reveal-view",
                   page: "/settings",
                   element: e.currentTarget as HTMLElement,
                 },

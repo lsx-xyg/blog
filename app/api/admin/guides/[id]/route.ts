@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth/auth";
 import { isAdminUser } from "@/lib/shared/utils";
 import { db } from "@/db";
 import { guiders } from "@/db/schema";
-import { GuideStatus } from "@/lib/types/guides";
+import { GuideStatus, isValidTargetCondition } from "@/lib/types/guides";
 import type { GuideStep, GuideTargetCondition } from "@/lib/types/guides";
 
 /**
@@ -121,10 +121,15 @@ export async function PUT(request: Request, context: RouteContext) {
     patch.priority = Math.trunc(body.priority);
   }
   if (body.targetCondition !== undefined) {
-    patch.targetCondition =
-      body.targetCondition && typeof body.targetCondition === "object"
-        ? (body.targetCondition as GuideTargetCondition)
-        : null;
+    const tc =
+      body.targetCondition !== null ? body.targetCondition : null;
+    if (tc !== null && !isValidTargetCondition(tc)) {
+      return NextResponse.json(
+        { error: "targetCondition 结构非法（需 {logic, conditions[]}）" },
+        { status: 400 }
+      );
+    }
+    patch.targetCondition = tc as GuideTargetCondition | null;
   }
 
   const [updated] = await db
