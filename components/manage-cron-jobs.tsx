@@ -413,7 +413,7 @@ export function ManageCronJobs() {
             }`}
           >
             <RefreshCw className={`h-4 w-4 ${loadingStatus ? "animate-spin" : ""}`} />
-            {status ? "刷新状态" : "加载状态"}
+            <span className="hidden sm:inline">{status ? "刷新状态" : "加载状态"}</span>
           </button>
         </div>
 
@@ -581,7 +581,7 @@ export function ManageCronJobs() {
                   className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <RefreshCw className={`h-4 w-4 ${loadingJobs ? "animate-spin" : ""}`} />
-                  加载任务列表
+                  <span className="hidden sm:inline">加载任务列表</span>
                 </button>
               ) : (
                 <button
@@ -591,7 +591,7 @@ export function ManageCronJobs() {
                   className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <RefreshCw className={`h-4 w-4 ${loadingJobs ? "animate-spin" : ""}`} />
-                  刷新
+                  <span className="hidden sm:inline">刷新</span>
                 </button>
               )}
             </div>
