@@ -45,11 +45,15 @@ type CronStatus = {
   cronSecretConfigured: boolean;
   cronJobApiKeyConfigured: boolean;
   siteUrl: string;
-  job: {
+  systemJobs: Array<{
+    key: string;
+    name: string;
+    description: string;
+    supportsRun: boolean;
     enabled: boolean;
     jobId?: number;
-    nextRun?: number;
-  };
+    nextRun?: number | null;
+  }>;
   endpoints: {
     publishScheduled: string;
   };
@@ -642,74 +646,77 @@ export function ManageCronJobs() {
         </div>
       )}
 
-      {/* 全局定时发布快速操作 */}
-      {status && (
-        <div className="mb-8 rounded-xl border border-border bg-card p-6">
-          <h2 className="mb-4 text-lg font-semibold">全局定时发布</h2>
-          <div className="mb-4 flex flex-wrap items-center gap-4 text-sm">
-            <span className="flex items-center gap-2">
-              {status.job.enabled ? (
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              ) : (
-                <AlertCircle className="h-4 w-4 text-yellow-600" />
-              )}
-              <span>{status.job.enabled ? "运行中" : "未运行"}</span>
-            </span>
-            {status.job.nextRun && (
-              <span className="text-muted-foreground">
-                下次执行：{new Date(status.job.nextRun * 1000).toLocaleString("zh-CN")}
+      {/* 系统定时发布快速操作 */}
+      {status && (() => {
+        const sysJob = status.systemJobs?.find((j) => j.key === "publish_scheduled") || null;
+        return (
+          <div className="mb-8 rounded-xl border border-border bg-card p-6">
+            <h2 className="mb-4 text-lg font-semibold">系统定时发布</h2>
+            <div className="mb-4 flex flex-wrap items-center gap-4 text-sm">
+              <span className="flex items-center gap-2">
+                {sysJob?.enabled ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <AlertCircle className="h-4 w-4 text-yellow-600" />
+                )}
+                <span>{sysJob?.enabled ? "运行中" : "未运行"}</span>
               </span>
-            )}
-            {status.job.jobId && (
-              <span className="text-muted-foreground">任务 ID：{status.job.jobId}</span>
+              {sysJob?.nextRun ? (
+                <span className="text-muted-foreground">
+                  下次执行：{new Date(sysJob.nextRun * 1000).toLocaleString("zh-CN")}
+                </span>
+              ) : null}
+              {sysJob?.jobId ? (
+                <span className="text-muted-foreground">任务 ID：{sysJob.jobId}</span>
+              ) : null}
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => executeAction("start")}
+                disabled={action !== null || sysJob?.enabled || !status.cronJobApiKeyConfigured}
+                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {action === "start" ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                启动定时发布
+              </button>
+              <button
+                type="button"
+                onClick={() => executeAction("stop")}
+                disabled={action !== null || !sysJob?.enabled}
+                className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {action === "stop" ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
+                停止定时发布
+              </button>
+              <button
+                type="button"
+                onClick={() => executeAction("run")}
+                disabled={action !== null || !status.cronSecretConfigured}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {action === "run" ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                手动触发一次
+              </button>
+              <button
+                type="button"
+                onClick={refreshAll}
+                disabled={refreshing}
+                className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+                刷新全部
+              </button>
+            </div>
+            {!status.cronJobApiKeyConfigured && (
+              <p className="mt-3 flex items-start gap-2 text-xs text-yellow-600">
+                <AlertCircle className="mt-0.5 h-3 w-3 flex-shrink-0" />
+                <span>CRON_JOB_API_KEY 未配置，请在「设置 → 定时任务」中配置后才能管理定时任务。</span>
+              </p>
             )}
           </div>
-          <div className="flex flex-wrap gap-3">
-            <button
-              type="button"
-              onClick={() => executeAction("start")}
-              disabled={action !== null || status.job.enabled || !status.cronJobApiKeyConfigured}
-              className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {action === "start" ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-              启动定时发布
-            </button>
-            <button
-              type="button"
-              onClick={() => executeAction("stop")}
-              disabled={action !== null || !status.job.enabled}
-              className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {action === "stop" ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
-              停止定时发布
-            </button>
-            <button
-              type="button"
-              onClick={() => executeAction("run")}
-              disabled={action !== null || !status.cronSecretConfigured}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              {action === "run" ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              手动触发一次
-            </button>
-            <button
-              type="button"
-              onClick={refreshAll}
-              disabled={refreshing}
-              className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-              刷新全部
-            </button>
-          </div>
-          {!status.cronJobApiKeyConfigured && (
-            <p className="mt-3 flex items-start gap-2 text-xs text-yellow-600">
-              <AlertCircle className="mt-0.5 h-3 w-3 flex-shrink-0" />
-              <span>CRON_JOB_API_KEY 未配置，请在「设置 → 定时任务」中配置后才能管理定时任务。</span>
-            </p>
-          )}
-        </div>
-      )}
+        );
+      })()}
 
       {/* 任务区：文件夹侧边栏 + 任务列表 */}
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
