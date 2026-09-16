@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trash2, Tag, FileText, Image, RefreshCw, AlertTriangle } from "lucide-react";
+import { Trash2, Tag, Plus, Pencil, RefreshCw, AlertTriangle, X, FileText, Image } from "lucide-react";
+import { AdminModal } from "@/components/admin/modal";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { AdminSearchInput } from "@/components/admin/search-input";
 import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
@@ -52,6 +53,54 @@ export function ManageTags() {
   useEffect(() => {
     loadTags();
   }, []);
+
+  // 新建 / 编辑弹窗状态
+  const [editingTag, setEditingTag] = useState<{ id: string | null; name: string } | null>(null);
+  const [tagName, setTagName] = useState("");
+  const [tagSaving, setTagSaving] = useState(false);
+  const [tagError, setTagError] = useState("");
+
+  const openCreate = () => {
+    setEditingTag({ id: null, name: "" });
+    setTagName("");
+    setTagError("");
+  };
+
+  const openEdit = (tag: TagWithCount) => {
+    setEditingTag({ id: tag.id, name: tag.name });
+    setTagName(tag.name);
+    setTagError("");
+  };
+
+  const saveTag = async () => {
+    const name = tagName.trim();
+    if (!name) {
+      setTagError("标签名称不能为空");
+      return;
+    }
+    setTagSaving(true);
+    setTagError("");
+    try {
+      const editingId = editingTag?.id ?? null;
+      const res = await fetch(editingId ? `/api/admin/tags/${editingId}` : "/api/admin/tags", {
+        method: editingId ? "PATCH" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setEditingTag(null);
+        await loadTags();
+      } else {
+        setTagError(data.error || "保存失败");
+      }
+    } catch (e) {
+      console.error("保存标签失败：", e);
+      setTagError("保存失败，请重试");
+    } finally {
+      setTagSaving(false);
+    }
+  };
 
   // 删除标签（确认对话框受控状态）
   const [confirmState, setConfirmState] = useState<{
@@ -105,14 +154,24 @@ export function ManageTags() {
         title="标签管理"
         description={`共 ${tags.length} 个标签 · ${totalPosts} 次文章引用 · ${totalMedia} 次图片引用`}
         actions={
-          <button
-            type="button"
-            onClick={loadTags}
-            className="flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            <span className="hidden sm:inline">刷新</span>
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={openCreate}
+              className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">新建标签</span>
+            </button>
+            <button
+              type="button"
+              onClick={loadTags}
+              className="flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">刷新</span>
+            </button>
+          </>
         }
       />
 
@@ -181,19 +240,29 @@ export function ManageTags() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        type="button"
-                        onClick={() => deleteTag(tag.id, tag.name)}
-                        disabled={deletingId === tag.id}
-                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600 disabled:opacity-50"
-                        title="删除"
-                      >
-                        {deletingId === tag.id ? (
-                          <RefreshCw className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="h-4 w-4" />
-                        )}
-                      </button>
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => openEdit(tag)}
+                          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          title="编辑"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteTag(tag.id, tag.name)}
+                          disabled={deletingId === tag.id}
+                          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600 disabled:opacity-50"
+                          title="删除"
+                        >
+                          {deletingId === tag.id ? (
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -233,6 +302,14 @@ export function ManageTags() {
                   </div>
                   <button
                     type="button"
+                    onClick={() => openEdit(tag)}
+                    className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    title="编辑"
+                  >
+                    <Pencil className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => deleteTag(tag.id, tag.name)}
                     disabled={deletingId === tag.id}
                     className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600 disabled:opacity-50"
@@ -260,6 +337,56 @@ export function ManageTags() {
             <p className="mt-1">删除标签只会解除标签与文章/图片的关联，<strong>不会删除文章和图片本身</strong>。如果标签被大量使用，建议谨慎操作。</p>
           </div>
         </div>
+      )}
+
+      {/* 新建 / 编辑标签弹窗 */}
+      {editingTag && (
+        <AdminModal
+          open
+          title={editingTag.id ? "编辑标签" : "新建标签"}
+          onClose={() => setEditingTag(null)}
+          maxWidth="md"
+          closeOnBackdrop={!tagSaving}
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={() => setEditingTag(null)}
+                disabled={tagSaving}
+                className="rounded-lg border border-input px-4 py-2 text-sm hover:bg-accent transition-colors disabled:opacity-50"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={saveTag}
+                disabled={tagSaving}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {tagSaving ? "保存中…" : "保存"}
+              </button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1.5">标签名称 *</label>
+              <input
+                type="text"
+                value={tagName}
+                onChange={(e) => setTagName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && saveTag()}
+                placeholder="如：前端开发"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+                autoFocus
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                slug 会根据名称自动生成（冲突时自动加后缀），文章/图片引用标签名称，重命名后引用自动跟随。
+              </p>
+            </div>
+            {tagError && <p className="text-sm text-destructive">{tagError}</p>}
+          </div>
+        </AdminModal>
       )}
 
       {/* 删除确认 */}

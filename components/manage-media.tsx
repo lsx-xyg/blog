@@ -63,6 +63,8 @@ export function ManageMedia() {
   const [total, setTotal] = useState(0);
   const [pageSize] = useState(20);
   const [uploadType, setUploadType] = useState<MediaType>(MediaType.ARTICLE);
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [showUnusedCleanup, setShowUnusedCleanup] = useState(false);
   const [unusedItems, setUnusedItems] = useState<MediaItem[]>([]);
   const [unusedLoading, setUnusedLoading] = useState(false);
@@ -124,12 +126,23 @@ export function ManageMedia() {
   }, [page, typeFilter, search]);
 
   // 处理文件上传
-  const handleFileUpload = async (files: FileList | null) => {
+  /** 选择文件后暂存（弹窗内确认再上传） */
+  const pickFiles = (files: FileList | null) => {
     if (!files || files.length === 0) return;
+    setUploadFiles((prev) => [...prev, ...Array.from(files)]);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removePickedFile = (index: number) => {
+    setUploadFiles((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleFileUpload = async () => {
+    if (uploadFiles.length === 0) return;
 
     setUploading(true);
     try {
-      for (const file of Array.from(files)) {
+      for (const file of uploadFiles) {
         const formData = new FormData();
         formData.append("file", file);
         formData.append("type", uploadType);
@@ -145,12 +158,13 @@ export function ManageMedia() {
         }
       }
       await loadItems();
+      setUploadFiles([]);
+      setUploadOpen(false);
     } catch (e) {
       console.error("上传失败：", e);
       alert("上传失败，请重试");
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
@@ -340,16 +354,6 @@ export function ManageMedia() {
         }
         actions={
           <>
-          {/* 刷新按钮 */}
-          <button
-            type="button"
-            onClick={loadItems}
-            className="flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors"
-            title="刷新列表"
-          >
-            <RefreshCw className="h-4 w-4" />
-            <span className="hidden sm:inline">刷新</span>
-          </button>
           {/* 未使用图片清理 */}
           <button
             type="button"
@@ -360,36 +364,26 @@ export function ManageMedia() {
             className="flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors"
           >
             <AlertTriangle className="h-4 w-4" />
-            清理未使用图片
+            <span className="hidden sm:inline">清理未使用</span>
           </button>
-
-          {/* 上传类型选择 */}
-          <select
-            value={uploadType}
-            onChange={(e) => setUploadType(e.target.value as MediaType)}
-            className="rounded-lg border border-input bg-background px-3 py-2 text-sm"
-          >
-            <option value={MediaType.ARTICLE}>{MEDIA_TYPE_LABELS[MediaType.ARTICLE]}</option>
-            <option value={MediaType.GALLERY}>{MEDIA_TYPE_LABELS[MediaType.GALLERY]}</option>
-          </select>
-
-          {/* 上传按钮 */}
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            onChange={(e) => handleFileUpload(e.target.files)}
-          />
+          {/* 上传图片（弹窗内先选类型再选文件） */}
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={uploading}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
+            onClick={() => setUploadOpen(true)}
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
           >
             <Upload className="h-4 w-4" />
-            {uploading ? "上传中…" : "上传图片"}
+            <span className="hidden sm:inline">上传图片</span>
+          </button>
+          {/* 刷新按钮 */}
+          <button
+            type="button"
+            onClick={loadItems}
+            className="flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors"
+            title="刷新列表"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span className="hidden sm:inline">刷新</span>
           </button>
           </>
         }
@@ -456,55 +450,27 @@ export function ManageMedia() {
         </div>
       </div>
 
-      {/* 工具行：筛选 + 搜索（统一位置） */}
+      {/* 工具行：搜索 + 筛选（搜索在前、筛选在后） */}
       <div className="mb-4 flex flex-wrap items-center gap-3">
-        {/* 类型筛选 */}
-        <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
-          <div className="flex rounded-lg border border-border overflow-hidden">
-            <button
-              type="button"
-              onClick={() => { setTypeFilter("ALL"); setPage(1); }}
-              className={`px-3 py-1.5 text-sm transition-all duration-200 transform ${
-                typeFilter === "ALL"
-                  ? "bg-primary text-primary-foreground scale-105"
-                  : "hover:bg-accent hover:scale-102"
-              }`}
-            >
-              全部
-            </button>
-            <button
-              type="button"
-              onClick={() => { setTypeFilter(MediaType.ARTICLE); setPage(1); }}
-              className={`px-3 py-1.5 text-sm transition-all duration-200 transform ${
-                typeFilter === MediaType.ARTICLE
-                  ? "bg-primary text-primary-foreground scale-105"
-                  : "hover:bg-accent hover:scale-102"
-              }`}
-            >
-              {MEDIA_TYPE_LABELS[MediaType.ARTICLE]}
-            </button>
-            <button
-              type="button"
-              onClick={() => { setTypeFilter(MediaType.GALLERY); setPage(1); }}
-              className={`px-3 py-1.5 text-sm transition-all duration-200 transform ${
-                typeFilter === MediaType.GALLERY
-                  ? "bg-primary text-primary-foreground scale-105"
-                  : "hover:bg-accent hover:scale-102"
-              }`}
-            >
-              {MEDIA_TYPE_LABELS[MediaType.GALLERY]}
-            </button>
-          </div>
-        </div>
-
-        {/* 搜索 */}
         <AdminSearchInput
           value={search}
           onChange={(v) => { setSearch(v); setPage(1); }}
           placeholder="搜索图片标题或 URL…"
-          className="ml-auto w-full max-w-md"
+          className="w-full max-w-md"
         />
+        {/* 类型筛选（下拉框统一） */}
+        <div className="ml-auto flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <select
+            value={typeFilter}
+            onChange={(e) => { setTypeFilter(e.target.value as MediaType | "ALL"); setPage(1); }}
+            className="rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="ALL">全部图片</option>
+            <option value={MediaType.ARTICLE}>{MEDIA_TYPE_LABELS[MediaType.ARTICLE]}</option>
+            <option value={MediaType.GALLERY}>{MEDIA_TYPE_LABELS[MediaType.GALLERY]}</option>
+          </select>
+        </div>
       </div>
 
       {/* 媒体网格（key 变化时触发切换动画） */}
@@ -751,6 +717,111 @@ export function ManageMedia() {
             onClick={(e) => e.stopPropagation()}
           />
         </div>
+      )}
+
+      {/* 上传图片弹窗：先选类型，再选文件 */}
+      {uploadOpen && (
+        <AdminModal
+          open
+          title="上传图片"
+          onClose={() => { if (!uploading) { setUploadOpen(false); setUploadFiles([]); } }}
+          maxWidth="md"
+          closeOnBackdrop={!uploading}
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={() => { setUploadOpen(false); setUploadFiles([]); }}
+                disabled={uploading}
+                className="rounded-lg border border-input px-4 py-2 text-sm hover:bg-accent transition-colors disabled:opacity-50"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                onClick={handleFileUpload}
+                disabled={uploading || uploadFiles.length === 0}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {uploading ? `上传中（${uploadFiles.length} 张）…` : `开始上传（${uploadFiles.length} 张）`}
+              </button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            {/* 上传类型选择（单选切换） */}
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">上传到</label>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setUploadType(MediaType.ARTICLE)}
+                  className={`rounded-lg border px-3 py-2.5 text-sm transition-all ${
+                    uploadType === MediaType.ARTICLE
+                      ? "border-primary bg-primary/5 font-medium text-primary"
+                      : "border-input hover:bg-accent"
+                  }`}
+                >
+                  {MEDIA_TYPE_LABELS[MediaType.ARTICLE]}
+                  <span className="mt-0.5 block text-xs text-muted-foreground">用作文章配图</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUploadType(MediaType.GALLERY)}
+                  className={`rounded-lg border px-3 py-2.5 text-sm transition-all ${
+                    uploadType === MediaType.GALLERY
+                      ? "border-primary bg-primary/5 font-medium text-primary"
+                      : "border-input hover:bg-accent"
+                  }`}
+                >
+                  {MEDIA_TYPE_LABELS[MediaType.GALLERY]}
+                  <span className="mt-0.5 block text-xs text-muted-foreground">加入相册</span>
+                </button>
+              </div>
+            </div>
+
+            {/* 选择文件 */}
+            <div>
+              <label className="mb-1.5 block text-sm font-medium">选择图片</label>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => pickFiles(e.target.files)}
+              />
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploading}
+                className="w-full rounded-lg border border-dashed border-border bg-muted/30 px-4 py-6 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
+              >
+                点击选择图片（可多选）
+              </button>
+              {uploadFiles.length > 0 && (
+                <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto rounded-lg border border-border p-2">
+                  {uploadFiles.map((file, index) => (
+                    <li key={`${file.name}-${index}`} className="flex items-center gap-2 text-xs">
+                      <ImageIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                      <span className="truncate flex-1">{file.name}</span>
+                      <span className="shrink-0 text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</span>
+                      <button
+                        type="button"
+                        onClick={() => removePickedFile(index)}
+                        disabled={uploading}
+                        className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive"
+                        aria-label="移除"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </AdminModal>
       )}
 
       {/* 删除确认 */}

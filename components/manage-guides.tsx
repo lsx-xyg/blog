@@ -638,20 +638,20 @@ export function ManageGuides() {
           <>
             <button
               type="button"
+              onClick={openCreate}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">新建引导</span>
+            </button>
+            <button
+              type="button"
               onClick={loadGuides}
               className="inline-flex items-center gap-1.5 rounded-lg border border-input px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent"
               title="刷新列表"
             >
               <RefreshCw className="h-4 w-4" />
               <span className="hidden sm:inline">刷新</span>
-            </button>
-            <button
-              type="button"
-              onClick={openCreate}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              <Plus className="h-4 w-4" />
-              新建引导
             </button>
           </>
         }

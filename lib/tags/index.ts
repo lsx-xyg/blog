@@ -15,33 +15,50 @@ export async function getTagByName(name: string) {
   return rows[0] ?? null;
 }
 
-/** 创建标签（slug 由 name 自动生成，冲突加后缀） */
-export async function createTag(name: string) {
-  // 生成 slug：小写 + 连字符
-  let slug = name
+/** 由名称生成 slug（小写 + 连字符 + 去非法字符） */
+export function generateSlug(name: string): string {
+  return name
     .toLowerCase()
     .replace(/\s+/g, "-")
     .replace(/[^\w\u4e00-\u9fa5-]/g, "");
+}
 
-  // 检查 slug 冲突，冲突加后缀
+/** 生成不冲突的 slug（冲突时追加 -1、-2…后缀，排除指定 id） */
+async function uniqueSlug(base: string, excludeId?: string) {
+  let slug = base;
   let suffix = 1;
-  const baseSlug = slug;
   while (true) {
     const existing = await db
       .select()
       .from(tags)
       .where(eq(tags.slug, slug))
       .limit(1);
-    if (existing.length === 0) break;
-    slug = `${baseSlug}-${suffix}`;
+    if (existing.length === 0 || (excludeId && existing[0].id === excludeId)) break;
+    slug = `${base}-${suffix}`;
     suffix++;
   }
+  return slug;
+}
 
+/** 创建标签（slug 由 name 自动生成，冲突加后缀） */
+export async function createTag(name: string) {
+  const slug = await uniqueSlug(generateSlug(name));
   const rows = await db
     .insert(tags)
     .values({ name, slug })
     .returning();
   return rows[0];
+}
+
+/** 更新标签名称（slug 跟随重新生成，冲突加后缀） */
+export async function updateTag(id: string, name: string) {
+  const slug = await uniqueSlug(generateSlug(name), id);
+  const rows = await db
+    .update(tags)
+    .set({ name, slug })
+    .where(eq(tags.id, id))
+    .returning();
+  return rows[0] ?? null;
 }
 
 /**
