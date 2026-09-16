@@ -12,7 +12,8 @@
     "db:test": "tsx scripts/test-db.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
-    "db:migrate:debug": "tsx scripts/migrate.ts"
+    "db:migrate:debug": "tsx scripts/migrate.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",
@@ -50,7 +51,8 @@
     "shadcn": "^4.21.0",
     "tailwindcss": "^4.0.0",
     "tsx": "^4.23.13",
-    "typescript": "^5.7.0"
+    "typescript": "^5.7.0",
+    "vitest": "^5.0.1"
   },
   "optionalDependencies": {
     "lightningcss-android-arm64": "1.32.0",
