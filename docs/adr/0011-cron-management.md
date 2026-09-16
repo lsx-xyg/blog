@@ -19,6 +19,11 @@ cron-job.org 免费版每日仅 100 次 API 请求，后台定时任务管理页
 - **命名**：「全局定时任务发布」→「系统定时任务」，区块改为预设任务列表（名称/描述/状态/启停/手动触发/删除）；任务列表中对系统任务打「系统」徽章，两者不视为重复（配置视图 vs 完整视图）
 - **总览接口** `GET /api/admin/cron` 改为一次 `listCronJobs` 匹配全部预设，返回 `systemJobs` 状态数组（key/name/description/supportsRun/enabled/jobId/nextRun）
 - **cron 管理能力**（#19-#23）：执行历史弹窗（按需加载列表与详情）、响应查看弹窗（JSON 格式化/100k 截断/敏感提醒）、任务表单通知设置分区、HTTP 基本认证子分区
+- **执行历史字段对齐 cron-job.org 官方结构**（2026-09-16 修复，提交 `65eb12a`）：
+  - 列表项字段：`jobLogId / jobId / identifier(字符串) / date(实际执行) / datePlanned / jitter / url / duration / status / statusText / httpStatus / headers / body / stats / sslCertExpiry`；官方列表**没有** `id / execution` 字段，曾误映射导致时间显示缺失、展开判断全等（所有 `item.id=undefined`）
+  - **状态展示以 `statusText` 文本为准**（OK / REQUEST_FAILED / NO_RESPONSE / TIMEOUT / SSL_CERT_INVALID / REQUEST_TOO_LARGE / INTERNAL_ERROR / FAILING_SINCE），不依赖数字枚举——实测 `status=1` 可配 `statusText="OK"` 且 `httpStatus=200`，数字语义与旧文档不符
+  - 详情接口返回 **`jobHistoryDetails`**（对象）；请求标识符为字符串 identifier（如 `8440447-16-8-204`），**禁止 `parseInt`**（曾导致 404）；展开状态用 `jobLogId` 唯一标识
+  - `stats` 为**微秒**（nameLookup/connect/appConnect/preTransfer/startTransfer/total），展示前转毫秒；`headers`/`body` 为原始文本（false 表示未保存）
 - **文档**：使用说明并入本文档附录 A（原 docs/cron-management.md 优化合并）
 
 ## Consequences
@@ -59,10 +64,10 @@ cron-job.org 免费版每日仅 100 次 API 请求，后台定时任务管理页
 ## A.3 页面操作
 
 - **总览页**：状态概览 4 卡（平台/CRON_SECRET/CRON_JOB_API_KEY/系统任务运行数）→ 「系统定时任务」列表（每行：状态点、名称、描述、下次执行、任务 ID、启停/手动触发/删除）
-- **任务管理页**：单列表布局。系统任务见「系统定时任务」区（启停/手动触发/历史/删除），「我的定时任务」列表仅显示用户自建任务（行内：执行历史/启用禁用/编辑/删除）
+- **任务管理页**：单列表布局。系统任务见「系统定时任务」区（启停/手动触发/编辑/历史/删除，编辑从详情接口完整回填表单），「我的定时任务」列表仅显示用户自建任务（行内：执行历史/启用禁用/编辑/删除）
 - **任务表单**：基本信息（标题/URL/方法/超时/启用/保存响应/3xx）→ 调度配置 → 通知设置（折叠）→ 高级配置（请求头/请求体/HTTP 基本认证，折叠）
-- **执行历史**：状态徽章（OK/请求失败/无响应/超时/SSL 无效等 8 种）、时间、时长、URL；单条详情含 HTTP 状态码、计划/实际执行、抖动、有效 URL、性能统计（DNS/连接/SSL/首字节/总时长）
-- **响应查看**：saveResponses 开启且有数据时显示；响应头格式化 + 响应体 JSON 美化/原样，超 100,000 字符截断，含敏感信息提醒
+- **执行历史**：状态徽章按官方 `statusText` 展示（OK 绿 / TIMEOUT、REQUEST_TOO_LARGE 黄 / 其余红），OK 时附 HTTP 状态码；行内显示实际执行时间（`date`）、时长、请求 URL；单条详情含状态、实际/计划执行、抖动、执行时长、请求 URL、性能统计（DNS 查询/连接/TLS 握手/首字节/总时长，`stats` 微秒换算）、响应查看
+- **响应查看**：saveResponses 开启且有数据时显示；响应头原始文本按行解析 + 响应体 JSON 美化/原样，超 100,000 字符截断，含敏感信息提醒
 
 ## A.4 系统任务预设扩展
 
