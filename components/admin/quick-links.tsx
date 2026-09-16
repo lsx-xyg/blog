@@ -4,7 +4,7 @@
  * 管理首页快捷入口：dnd-kit 拖拽排序（桌面即时拖拽 + 移动端长按 500ms）
  * 顺序持久化到后端 settings（跨设备、跨会话生效）
  */
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   DndContext,
@@ -74,7 +74,15 @@ function makeDefs(adminPath: string): Record<string, QuickLinkDef> {
   };
 }
 
-function SortableLink({ def, adminPath }: { def: QuickLinkDef; adminPath: string }) {
+function SortableLink({
+  def,
+  adminPath,
+  dragEndedAtRef,
+}: {
+  def: QuickLinkDef;
+  adminPath: string;
+  dragEndedAtRef: React.RefObject<number>;
+}) {
   const {
     attributes,
     listeners,
@@ -83,21 +91,28 @@ function SortableLink({ def, adminPath }: { def: QuickLinkDef; adminPath: string
     transition,
     isDragging,
   } = useSortable({ id: def.key });
-  // 拖拽结束会派发 click，标记时间戳避免误跳转
-  const dragEndedAt = useRef(0);
 
   const Icon = def.icon;
 
+  // 持有 DOM：激活拖拽时禁滚动（避免拖动时页面跟着滚），拖完恢复 → 长按等待期页面滚动正常
+  const elRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (elRef.current) elRef.current.style.touchAction = isDragging ? "none" : "";
+  }, [isDragging]);
+  const mergedRef = (el: HTMLAnchorElement | null) => {
+    elRef.current = el;
+    setNodeRef(el);
+  };
+
   return (
     <Link
-      ref={setNodeRef}
+      ref={mergedRef}
       href={def.href}
       onClick={(e) => {
-        if (Date.now() - dragEndedAt.current < 500) {
+        // 拖拽结束会派发 click：拖拽刚结束（800ms 内）或仍在拖拽中 → 阻止跳转
+        if (Date.now() - (dragEndedAtRef.current ?? 0) < 800 || isDragging) {
           e.preventDefault();
-          return;
         }
-        if (isDragging) e.preventDefault();
       }}
       style={{
         transform: CSS.Transform.toString(transform),
@@ -143,6 +158,8 @@ export default function QuickLinks({
   );
   const [saving, setSaving] = useState(false);
   const defs = makeDefs(adminPath);
+  // 拖拽结束时间戳：click 守卫（dnd-kit 拖拽结束会派发 click）
+  const dragEndedAtRef = useRef(0);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -183,9 +200,12 @@ export default function QuickLinks({
     const newIndex = order.indexOf(String(over.id));
     if (oldIndex < 0 || newIndex < 0) return;
     const next = arrayMove(order, oldIndex, newIndex);
+    dragEndedAtRef.current = Date.now();
     setOrder(next);
     void persistOrder(next);
   };
+
+
 
   return (
     <div>
@@ -198,7 +218,9 @@ export default function QuickLinks({
           <nav className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {order.map((key) => {
               const def = defs[key];
-              return def ? <SortableLink key={key} def={def} adminPath={adminPath} /> : null;
+              return def ? (
+                <SortableLink key={key} def={def} adminPath={adminPath} dragEndedAtRef={dragEndedAtRef} />
+              ) : null;
             })}
           </nav>
         </SortableContext>

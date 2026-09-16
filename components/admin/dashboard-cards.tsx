@@ -4,7 +4,7 @@
  * 管理首页统计卡片：dnd-kit 拖拽排序（桌面即时拖拽 + 移动端长按 300ms）
  * 顺序持久化到后端 settings（跨设备、跨会话生效）
  */
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -94,14 +94,22 @@ function SortableCard({ def }: { def: CardDef }) {
 
   const Icon = def.icon;
 
+  // 持有 DOM：激活拖拽时禁滚动（避免拖动时页面跟着滚），拖完恢复 → 长按等待期页面滚动正常
+  const elRef = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    if (elRef.current) elRef.current.style.touchAction = isDragging ? "none" : "";
+  }, [isDragging]);
+  const mergedRef = (el: HTMLDivElement | null) => {
+    elRef.current = el;
+    setNodeRef(el);
+  };
+
   return (
     <Card
-      ref={setNodeRef}
+      ref={mergedRef}
       style={{
         transform: CSS.Transform.toString(transform),
         transition,
-        // 注意：不能设 touch-action: none——长按等待期需要让浏览器正常滚动页面，
-        // 否则上下滑动会一直被当成拖拽手势（dnd-kit delay 模式下激活后自动接管滚动）
       }}
       // 阻止长按弹出系统右键菜单（移动端拖拽手势会误触）
       onContextMenu={(e) => e.preventDefault()}
