@@ -6,7 +6,6 @@ import {
   Trash2,
   Search,
   Image as ImageIcon,
-  Filter,
   RefreshCw,
   AlertTriangle,
   Edit3,
@@ -456,15 +455,14 @@ export function ManageMedia() {
           value={search}
           onChange={(v) => { setSearch(v); setPage(1); }}
           placeholder="搜索图片标题或 URL…"
-          className="w-full max-w-md"
+          className="flex-1 min-w-[140px] max-w-md"
         />
         {/* 类型筛选（下拉框统一） */}
         <div className="ml-auto flex items-center gap-2">
-          <Filter className="h-4 w-4 text-muted-foreground" />
           <select
             value={typeFilter}
             onChange={(e) => { setTypeFilter(e.target.value as MediaType | "ALL"); setPage(1); }}
-            className="rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="shrink-0 rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
           >
             <option value="ALL">全部图片</option>
             <option value={MediaType.ARTICLE}>{MEDIA_TYPE_LABELS[MediaType.ARTICLE]}</option>

@@ -26,6 +26,7 @@ import { useRouter } from "next/navigation";
 import {
   FileText,
   Trash2,
+  Pencil,
   CheckSquare,
   Square,
   RefreshCw,
@@ -276,12 +277,12 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
             value={search}
             onChange={setSearch}
             placeholder="搜索文章..."
-            className="w-full max-w-md"
+            className="flex-1 min-w-[140px] max-w-md"
           />
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as "all" | PostStatus)}
-            className="ml-auto rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="ml-auto shrink-0 rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
           >
             <option value="all">全部状态</option>
             <option value={PostStatus.PUBLISHED}>已发布</option>
@@ -450,21 +451,25 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
                         {p.viewCount} 阅
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <div className="inline-flex items-center gap-3">
+                        <div className="inline-flex items-center gap-1">
                           <button
+                            type="button"
                             onClick={() => {
                               triggerNavigationStart();
                               router.push(`/${adminPath}/posts/${p.id}/edit`);
                             }}
-                            className="text-primary hover:underline text-sm"
+                            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            title="编辑"
                           >
-                            编辑
+                            <Pencil className="h-4 w-4" />
                           </button>
                           <button
+                            type="button"
                             onClick={() => remove(p)}
-                            className="text-red-500 hover:underline text-sm"
+                            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+                            title="删除"
                           >
-                            删除
+                            <Trash2 className="h-4 w-4" />
                           </button>
                         </div>
                       </td>
@@ -484,74 +489,84 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
                   <li
                     key={p.id}
                     style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
-                    className={`animate-fade-in-up flex items-center gap-3 px-4 py-3 text-base transition-colors ${
+                    className={`animate-fade-in-up px-4 py-3 transition-colors ${
                       selectedIds.has(p.id) ? "bg-primary/5" : "hover:bg-muted/30"
                     }`}
                   >
-                    <button
-                      type="button"
-                      onClick={() => toggleSelect(p.id)}
-                      className="shrink-0 text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                      {selectedIds.has(p.id) ? (
-                        <CheckSquare className="h-4 w-4 text-primary" />
-                      ) : (
-                        <Square className="h-4 w-4" />
-                      )}
-                    </button>
-                    <span
-                      className={`w-16 shrink-0 text-center font-mono text-xs ${
-                        p.status === PostStatus.PUBLISHED
-                          ? "text-green-600"
-                          : p.status === PostStatus.SCHEDULED
-                            ? "text-amber-600"
-                            : "text-fg-faint"
-                      }`}
-                    >
-                      {p.status === PostStatus.PUBLISHED
-                        ? "已发布"
-                        : p.status === PostStatus.SCHEDULED
-                          ? "定时"
-                          : "草稿"}
-                    </span>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate">{p.title}</p>
-                      {Array.isArray(p.tags) && p.tags.length > 0 && (
-                        <div className="mt-1 flex flex-wrap items-center gap-1">
-                          {p.tags.slice(0, 3).map((t) => (
-                            <span
-                              key={t}
-                              className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
-                            >
-                              {t}
-                            </span>
-                          ))}
-                          {p.tags.length > 3 && (
-                            <span className="text-[11px] text-fg-faint">
-                              +{p.tags.length - 3}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                    <span className="shrink-0 font-mono text-xs text-fg-faint">
-                      {p.viewCount} 阅
-                    </span>
-                    <div className="flex shrink-0 items-center gap-2">
+                    {/* 数据区 */}
+                    <div className="flex items-start gap-3">
                       <button
+                        type="button"
+                        onClick={() => toggleSelect(p.id)}
+                        className="mt-0.5 shrink-0 text-muted-foreground hover:text-foreground transition-colors"
+                      >
+                        {selectedIds.has(p.id) ? (
+                          <CheckSquare className="h-4 w-4 text-primary" />
+                        ) : (
+                          <Square className="h-4 w-4" />
+                        )}
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`shrink-0 font-mono text-xs ${
+                              p.status === PostStatus.PUBLISHED
+                                ? "text-green-600"
+                                : p.status === PostStatus.SCHEDULED
+                                  ? "text-amber-600"
+                                  : "text-fg-faint"
+                            }`}
+                          >
+                            {p.status === PostStatus.PUBLISHED
+                              ? "已发布"
+                              : p.status === PostStatus.SCHEDULED
+                                ? "定时"
+                                : "草稿"}
+                          </span>
+                          <p className="truncate text-base">{p.title}</p>
+                        </div>
+                        <p className="mt-0.5 truncate font-mono text-xs text-fg-faint">
+                          /posts/{p.slug ?? p.id} · {p.viewCount} 阅
+                        </p>
+                        {Array.isArray(p.tags) && p.tags.length > 0 && (
+                          <div className="mt-1.5 flex flex-wrap items-center gap-1">
+                            {p.tags.slice(0, 3).map((t) => (
+                              <span
+                                key={t}
+                                className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                              >
+                                {t}
+                              </span>
+                            ))}
+                            {p.tags.length > 3 && (
+                              <span className="text-[11px] text-fg-faint">
+                                +{p.tags.length - 3}
+                              </span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    {/* 操作区：放数据下方 */}
+                    <div className="mt-2 flex items-center justify-end gap-1 border-t border-border/50 pt-2">
+                      <button
+                        type="button"
                         onClick={() => {
                           triggerNavigationStart();
                           router.push(`/${adminPath}/posts/${p.id}/edit`);
                         }}
-                        className="text-primary hover:underline text-sm"
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        title="编辑"
                       >
-                        编辑
+                        <Pencil className="h-4 w-4" />
                       </button>
                       <button
+                        type="button"
                         onClick={() => remove(p)}
-                        className="text-red-500 hover:underline text-sm"
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+                        title="删除"
                       >
-                        删除
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </li>

@@ -278,6 +278,7 @@ export function ManageTags() {
                 className="rounded-xl border border-border bg-surface p-4 animate-fade-in-up"
                 style={{ animationDelay: `${index * 30}ms` }}
               >
+                {/* 数据区 */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -300,10 +301,13 @@ export function ManageTags() {
                       </span>
                     </div>
                   </div>
+                </div>
+                {/* 操作区：放数据下方 */}
+                <div className="mt-3 flex items-center justify-end gap-1 border-t border-border/50 pt-2">
                   <button
                     type="button"
                     onClick={() => openEdit(tag)}
-                    className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                     title="编辑"
                   >
                     <Pencil className="h-4 w-4" />
@@ -312,7 +316,7 @@ export function ManageTags() {
                     type="button"
                     onClick={() => deleteTag(tag.id, tag.name)}
                     disabled={deletingId === tag.id}
-                    className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600 disabled:opacity-50"
+                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600 disabled:opacity-50"
                     title="删除"
                   >
                     {deletingId === tag.id ? (
