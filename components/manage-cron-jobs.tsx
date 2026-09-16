@@ -33,6 +33,8 @@ import {
 } from "lucide-react";
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { AdminPageHeader } from "@/components/admin/page-header";
+import { AdminEmptyState } from "@/components/admin/status";
 import { CronDeployPlatform } from "@/lib/types/settings";
 import { type CronJob, type CronJobConfig, type CronJobSchedule } from "@/lib/types/cron";
 import {
@@ -363,24 +365,33 @@ export function ManageCronJobs() {
 
   return (
     <div className="animate-page-enter">
-      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold md:text-2xl">定时任务管理</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            系统任务与我的任务分区管理，支持高级配置（参照官方界面）
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={refreshAll}
-          disabled={refreshing}
-          title="一次性触发所有 API 全量刷新（免费配额有限，按需使用）"
-          className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-          刷新全部
-        </button>
-      </header>
+      <AdminPageHeader
+        title="定时任务管理"
+        description="系统任务与我的任务分区管理，支持高级配置（参照官方界面）"
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={openCreateForm}
+              disabled={!status?.cronJobApiKeyConfigured}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">创建任务</span>
+            </button>
+            <button
+              type="button"
+              onClick={refreshAll}
+              disabled={refreshing}
+              title="一次性触发所有 API 全量刷新（免费配额有限，按需使用）"
+              className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">刷新全部</span>
+            </button>
+          </>
+        }
+      />
 
       {/* 区域一：系统定时任务（预设驱动，站点功能依赖） */}
       <section className="mb-8 rounded-xl border border-border bg-card">
@@ -439,11 +450,14 @@ export function ManageCronJobs() {
             </div>
 
             {status.systemJobs.length === 0 ? (
-              <div className="p-10 text-center text-sm text-muted-foreground">
-                {status.platform === CronDeployPlatform.VERCEL && !status.cronJobApiKeyConfigured
-                  ? "CRON_JOB_API_KEY 未配置，无法加载系统任务状态。请在「设置 → 定时任务」中配置。"
+              <AdminEmptyState
+                title={status.platform === CronDeployPlatform.VERCEL && !status.cronJobApiKeyConfigured
+                  ? "无法加载系统任务状态"
                   : "暂无系统任务"}
-              </div>
+                description={status.platform === CronDeployPlatform.VERCEL && !status.cronJobApiKeyConfigured
+                  ? "CRON_JOB_API_KEY 未配置，请在「设置 → 定时任务」中配置。"
+                  : undefined}
+              />
             ) : (
               <div className="divide-y divide-border">
                 {status.systemJobs.map((job) => (
@@ -580,26 +594,19 @@ export function ManageCronJobs() {
                   刷新
                 </button>
               )}
-              <button
-                type="button"
-                onClick={openCreateForm}
-                disabled={!status?.cronJobApiKeyConfigured}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <Plus className="h-4 w-4" />
-                创建任务
-              </button>
             </div>
           </div>
 
           {jobs === null ? (
-            <div className="p-12 text-center text-sm text-muted-foreground">
-              任务列表尚未加载，点击上方「加载任务列表」按需加载
-            </div>
+            <AdminEmptyState
+              title="任务列表尚未加载"
+              description="点击上方「加载任务列表」按需加载"
+            />
           ) : visibleJobs.length === 0 ? (
-            <div className="p-12 text-center text-sm text-muted-foreground">
-              {jobs.length === 0 ? "暂无定时任务，点击「创建任务」开始" : "暂无任务"}
-            </div>
+            <AdminEmptyState
+              title={jobs.length === 0 ? "暂无定时任务" : "暂无任务"}
+              description={jobs.length === 0 ? "点击右上角「创建任务」开始" : undefined}
+            />
           ) : (
           <div className="divide-y divide-border">
             {visibleJobs.map((job, index) => (

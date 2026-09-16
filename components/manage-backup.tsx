@@ -13,9 +13,12 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { Download, Trash2, RefreshCw } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/page-header";
+import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { useToast } from "@/components/toast";
 
 interface BackupRecord {
@@ -186,34 +189,48 @@ export function ManageBackup() {
 
   return (
     <div className="space-y-6 animate-page-enter">
-      {/* 页面标题 */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold md:text-2xl">备份管理</h1>
-          <p className="text-muted-foreground mt-1 text-sm">管理数据库备份，支持手动创建、下载、删除和恢复</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={handleCreate} disabled={creating} size="sm">
-            {creating ? "创建中..." : "创建备份"}
-          </Button>
-          <div className="relative">
-            <input
-              ref={setRestoreInputRef}
-              type="file"
-              accept=".json"
-              onChange={handleRestore}
-              disabled={restoring}
-              className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
-            />
-            <Button variant="outline" disabled={restoring} size="sm">
-              {restoring ? "恢复中..." : "恢复备份"}
-            </Button>
-          </div>
-          <Button variant="ghost" onClick={loadBackups} disabled={loading} size="sm">
-            刷新
-          </Button>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="备份管理"
+        description="管理数据库备份，支持手动创建、下载、删除和恢复"
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={handleCreate}
+              disabled={creating}
+              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+            >
+              {creating ? "创建中…" : "创建备份"}
+            </button>
+            <div className="relative">
+              <input
+                ref={setRestoreInputRef}
+                type="file"
+                accept=".json"
+                onChange={handleRestore}
+                disabled={restoring}
+                className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
+              />
+              <button
+                type="button"
+                disabled={restoring}
+                className="flex items-center gap-2 rounded-lg border border-input px-4 py-2 text-sm hover:bg-accent transition-colors disabled:opacity-50"
+              >
+                {restoring ? "恢复中…" : "恢复备份"}
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={loadBackups}
+              disabled={loading}
+              className="flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">刷新</span>
+            </button>
+          </>
+        }
+      />
 
       {/* 说明卡片 */}
       <Card>
@@ -234,11 +251,12 @@ export function ManageBackup() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-8 text-muted-foreground">加载中...</div>
+            <AdminLoadingState />
           ) : backups.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              暂无备份，点击"创建备份"开始
-            </div>
+            <AdminEmptyState
+              title="暂无备份"
+              description="点击右上角「创建备份」开始"
+            />
           ) : (
             <div className="space-y-3">
               {backups.map((backup) => (
@@ -257,19 +275,28 @@ export function ManageBackup() {
                       {formatSize(backup.size)} · {formatDate(backup.createdAt)}
                     </div>
                   </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button variant="ghost" size="sm" onClick={() => handleDownload(backup.id)}>
-                      下载
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(backup.id)}
+                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      title="下载"
+                    >
+                      <Download className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleDelete(backup.id)}
                       disabled={deletingId === backup.id}
+                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600 disabled:opacity-50"
+                      title="删除"
                     >
-                      {deletingId === backup.id ? "删除中..." : "删除"}
-                    </Button>
+                      {deletingId === backup.id ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
+                    </button>
                   </div>
                 </div>
               ))}
@@ -283,11 +310,9 @@ export function ManageBackup() {
         open={deleteConfirmOpen}
         title="确认删除备份"
         description="确定要删除这个备份吗？此操作不可恢复，删除后无法找回备份文件。"
-        confirmText="删除"
-        cancelText="取消"
-        variant="destructive"
+        confirmLabel="删除"
         onConfirm={confirmDelete}
-        onCancel={() => {
+        onClose={() => {
           setPendingDeleteId(null);
           setDeleteConfirmOpen(false);
         }}
@@ -298,11 +323,9 @@ export function ManageBackup() {
         open={restoreConfirmOpen}
         title="确认恢复备份"
         description={`确定要恢复备份 "${pendingRestoreFile?.name || ""}" 吗？这会清空当前所有数据并替换为备份数据，此操作不可恢复！建议先创建一个当前数据的备份。`}
-        confirmText="恢复"
-        cancelText="取消"
-        variant="destructive"
+        confirmLabel="恢复"
         onConfirm={confirmRestore}
-        onCancel={cancelRestore}
+        onClose={cancelRestore}
       />
     </div>
   );

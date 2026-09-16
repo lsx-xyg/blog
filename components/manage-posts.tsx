@@ -405,12 +405,12 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span
-                          className={`inline-flex items-center gap-1 font-mono text-xs ${
+                          className={`inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium leading-none ${
                             p.status === PostStatus.PUBLISHED
-                              ? "text-green-600"
+                              ? "bg-green-500/10 text-green-600 dark:text-green-400"
                               : p.status === PostStatus.SCHEDULED
-                                ? "text-amber-600"
-                                : "text-fg-faint"
+                                ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                : "bg-muted text-muted-foreground"
                           }`}
                         >
                           {p.status === PostStatus.PUBLISHED
@@ -509,12 +509,12 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`shrink-0 font-mono text-xs ${
+                            className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium leading-none ${
                               p.status === PostStatus.PUBLISHED
-                                ? "text-green-600"
+                                ? "bg-green-500/10 text-green-600 dark:text-green-400"
                                 : p.status === PostStatus.SCHEDULED
-                                  ? "text-amber-600"
-                                  : "text-fg-faint"
+                                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                  : "bg-muted text-muted-foreground"
                             }`}
                           >
                             {p.status === PostStatus.PUBLISHED
