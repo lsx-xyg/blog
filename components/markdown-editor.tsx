@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Editor } from "@bytemd/react";
 import gfm from "@bytemd/plugin-gfm";
 import type { BytemdPlugin } from "bytemd";
@@ -210,6 +210,7 @@ export function MarkdownEditor({
   const [highlighter, setHighlighter] = useState<HighlighterCore | null>(null);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
   const [editorMode, setEditorMode] = useState<"split" | "tab">("split");
+  const wrapperRef = useRef<HTMLDivElement>(null);
   // 主题状态
   const [themeMode, setThemeMode] = useState<ThemeMode>("system");
   const [effectiveTheme, setEffectiveTheme] = useState<"light" | "dark" | "warm">("dark");
@@ -339,11 +340,24 @@ export function MarkdownEditor({
     return results;
   };
 
-  // 从媒体库选择图片后，在内容末尾追加 Markdown 图片语法
-  // TODO: 后续优化为在光标位置插入（需要 ByteMD 编辑器实例 API）
+  // 从媒体库选择图片：优先在光标位置插入，编辑器实例不可用时兜底追加到末尾
   const handleMediaSelect = (url: string, alt?: string) => {
-    const markdown = `\n\n![${alt || "图片"}](${url})\n`;
-    onChange(value ? `${value}${markdown}` : markdown);
+    const markdown = `![${alt || "图片"}](${url})`;
+    // ByteMD 底层是 CodeMirror 5，实例挂在 .CodeMirror 元素上（bytemd 内部同款遍历方式）
+    const cmEl = wrapperRef.current?.querySelector<HTMLElement>(".CodeMirror") as
+      | (HTMLElement & { CodeMirror?: { replaceSelection: (t: string) => void; focus: () => void } })
+      | null
+      | undefined;
+    const editor = cmEl?.CodeMirror;
+    if (editor) {
+      // 有选区则替换选区，无选区在光标处插入；CodeMirror 自动派发 change → onChange
+      editor.replaceSelection(markdown);
+      editor.focus();
+      return;
+    }
+    // 兜底：无编辑器实例（如预览/仅预览模式）→ 追加到末尾
+    const sep = value && !value.endsWith("\n") ? "\n\n" : "\n";
+    onChange(value ? `${value}${sep}${markdown}\n` : markdown);
   };
 
   // 构建插件列表（highlighter 就绪后才添加 Shiki 插件）
@@ -363,7 +377,7 @@ export function MarkdownEditor({
   }
 
   return (
-    <div className="bytemd-editor-wrapper overflow-hidden rounded-lg border border-border bg-background">
+    <div className="bytemd-editor-wrapper overflow-hidden rounded-lg border border-border bg-background" ref={wrapperRef}>
       {/* 自定义工具栏：图片库按钮 + 模式切换 */}
       <div className="flex items-center gap-1 border-b border-border bg-muted/30 px-2 py-1">
         <button
