@@ -23,7 +23,7 @@ function makeJob(overrides: Partial<CronJob> = {}): CronJob {
   return {
     jobId: 1,
     enabled: true,
-    title: "[系统] 定时发布扫描（每分钟）",
+    title: "[blog:publish_scheduled] 定时发布扫描（每分钟）",
     saveResponses: false,
     url: "https://example.com/api/cron/publish-scheduled",
     lastStatus: 1,
@@ -84,19 +84,28 @@ describe("createSystemJob", () => {
 });
 
 describe("findSystemJob", () => {
-  it("按预设名匹配任务", async () => {
+  it("按 [blog:key] 精确匹配任务", async () => {
     mockListCronJobs.mockResolvedValue([
-      makeJob({ jobId: 10, title: "博客定时发布扫描（每分钟）" }),
+      makeJob({ jobId: 10, title: "[blog:publish_scheduled] 定时发布扫描（每分钟）" }),
       makeJob({ jobId: 11, title: "普通任务" }),
     ]);
     const job = await findSystemJob("publish_scheduled");
     expect(job?.jobId).toBe(10);
   });
 
-  it("缺省 key 时回退旧标题「定时发布扫描」匹配", async () => {
-    mockListCronJobs.mockResolvedValue([makeJob({ jobId: 5, title: "博客定时发布扫描（每分钟）" })]);
+  it("缺省 key 时按 [blog:publish_scheduled] 匹配", async () => {
+    mockListCronJobs.mockResolvedValue([
+      makeJob({ jobId: 5, title: "[blog:publish_scheduled] 定时发布扫描（每分钟）" }),
+    ]);
     const job = await findSystemJob();
     expect(job?.jobId).toBe(5);
+  });
+
+  it("旧标题（无 [blog:key]）不匹配", async () => {
+    mockListCronJobs.mockResolvedValue([
+      makeJob({ jobId: 12, title: "博客定时发布扫描（每分钟）" }),
+    ]);
+    await expect(findSystemJob("publish_scheduled")).resolves.toBeNull();
   });
 
   it("无匹配返回 null", async () => {
@@ -117,7 +126,7 @@ describe("listSystemJobsStatus", () => {
         jobId: 3,
         enabled: true,
         nextExecution: 1700000700,
-        title: "博客定时发布扫描（每分钟）",
+        title: "[blog:publish_scheduled] 定时发布扫描（每分钟）",
       }),
     ]);
     const status = await listSystemJobsStatus();
