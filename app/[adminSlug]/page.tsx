@@ -15,6 +15,9 @@ import { AdminLogin } from "@/components/admin-login";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SetupWizard } from "@/components/setup-wizard";
 import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
+import DashboardCards from "@/components/admin/dashboard-cards";
+import { getSetting } from "@/lib/settings/store";
+import { normalizeCardOrder, DASHBOARD_ORDER_KEY } from "@/lib/admin/dashboard-order";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -115,6 +118,10 @@ export default async function AdminRootPage({
     totalViews: totalViews[0]?.sum ?? 0,
   };
 
+  // 读取用户自定义卡片顺序（未自定义返回 null → 前端使用默认顺序）
+  const savedCardOrder = await getSetting<string[]>(DASHBOARD_ORDER_KEY);
+  const cardOrder = savedCardOrder ? normalizeCardOrder(savedCardOrder) : null;
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8 animate-page-enter">
       {/* 面包屑导航：后台首页不显示当前页面，避免重复 */}
@@ -131,127 +138,9 @@ export default async function AdminRootPage({
         <SignOutButton />
       </header>
 
-      {/* 统计卡片行 */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4">
-        {/* 文章总数 */}
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">文章总数</p>
-                <p className="mt-1 text-2xl font-bold">{stats.totalPosts}</p>
-              </div>
-              <div className="rounded-lg bg-primary/10 p-2">
-                <FileText className="h-5 w-5 text-primary" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 已发布 */}
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">已发布</p>
-                <p className="mt-1 text-2xl font-bold text-green-600 dark:text-green-400">{stats.publishedPosts}</p>
-              </div>
-              <div className="rounded-lg bg-green-500/10 p-2">
-                <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 草稿 */}
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">草稿</p>
-                <p className="mt-1 text-2xl font-bold text-yellow-600 dark:text-yellow-400">{stats.draftPosts}</p>
-              </div>
-              <div className="rounded-lg bg-yellow-500/10 p-2">
-                <FileEdit className="h-5 w-5 text-yellow-600 dark:text-yellow-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 定时发布 */}
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">定时发布</p>
-                <p className="mt-1 text-2xl font-bold text-blue-600 dark:text-blue-400">{stats.scheduledPosts}</p>
-              </div>
-              <div className="rounded-lg bg-blue-500/10 p-2">
-                <Clock className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 总访问量 */}
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">总访问量</p>
-                <p className="mt-1 text-2xl font-bold">{stats.totalViews.toLocaleString()}</p>
-              </div>
-              <div className="rounded-lg bg-purple-500/10 p-2">
-                <Eye className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 标签总数 */}
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">标签总数</p>
-                <p className="mt-1 text-2xl font-bold">{stats.totalTags}</p>
-              </div>
-              <div className="rounded-lg bg-orange-500/10 p-2">
-                <Tag className="h-5 w-5 text-orange-600 dark:text-orange-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 媒体总数 */}
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">媒体总数</p>
-                <p className="mt-1 text-2xl font-bold">{stats.totalMedia}</p>
-              </div>
-              <div className="rounded-lg bg-pink-500/10 p-2">
-                <ImageIcon className="h-5 w-5 text-pink-600 dark:text-pink-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* 友链总数 */}
-        <Card className="transition-all hover:shadow-md">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-xs text-muted-foreground">友链总数</p>
-                <p className="mt-1 text-2xl font-bold">{stats.totalFriendLinks}</p>
-              </div>
-              <div className="rounded-lg bg-cyan-500/10 p-2">
-                <Link2 className="h-5 w-5 text-cyan-600 dark:text-cyan-400" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* 统计卡片行：可拖拽排序，顺序跨设备保存（默认顺序兜底） */}
+      <div className="mb-6">
+        <DashboardCards stats={stats} initialOrder={cardOrder} />
       </div>
 
       {/* 最近活动区域 */}
