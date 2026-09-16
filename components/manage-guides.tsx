@@ -11,11 +11,13 @@ import {
   X,
   RotateCcw,
   Check,
+  HelpCircle,
 } from "lucide-react";
 import type {
   Guide,
   GuideCondition,
   GuideTargetCondition,
+  GuideStep,
 } from "@/lib/types/guides";
 import {
   GuideStatus,
@@ -30,13 +32,14 @@ import { GUIDE_EVENT_ANCHORS } from "@/lib/guide-events";
  * 引导管理组件（guiders 表 CRUD）
  *
  * - 列表：标题 / guideKey / 页面 / 触发条件 / 状态 / 优先级 / 步骤数 / 操作
- * - 新建 / 编辑表单：steps 用 JSON 编辑器；触发条件用结构化行式表单
- * - 触发条件：{logic, conditions[]}，event_click 的 value 从埋点注册表下拉
+ * - 新建 / 编辑表单：触发条件用结构化行式表单；steps 用步骤卡片编辑器（自动生成 JSON）
+ * - 进度重置：每行可重置当前登录账号的引导进度（跳过/完成清空后可重新触发）
  */
 
 const inputClass =
   "w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all";
-const labelClass = "block text-sm font-medium mb-1.5";
+const labelClass = "block text-sm font-medium text-foreground";
+const helpClass = "mt-1 text-xs text-muted-foreground leading-relaxed";
 
 const STATUS_STYLE: Record<GuideStatus, string> = {
   draft: "bg-muted text-muted-foreground",
@@ -52,11 +55,21 @@ const STATUS_LABEL: Record<GuideStatus, string> = {
 
 /** 条件字段下拉选项 */
 const FIELD_OPTIONS = [
-  { value: "event_click", label: "event_click（点击锚点元素）" },
+  { value: "event_click", label: "event_click（用户点击了元素）" },
   { value: "page", label: "page（适用页面）" },
-  { value: "click_count", label: "click_count.（点击累计次数）" },
+  { value: "click_count", label: "click_count.（点击次数）" },
   { value: "user_age_days", label: "user_age_days（注册天数）" },
 ];
+
+const FIELD_HELP: Record<string, string> = {
+  event_click:
+    "用户点击了某个元素就触发。value 选「点击的锚点」（即该元素上的 data-guide 标记，与前端埋点用同一标识）。",
+  page: "只在指定后台页面触发。value 填后台相对路径，如 /settings、/account。",
+  click_count:
+    "点击累计次数达到才触发（需先在用户行为表有点击记录）。在中间框填锚点名，右边填次数。",
+  user_age_days:
+    "账号注册满多少天才触发。value 填天数（如 3 = 注册满 3 天）。",
+};
 
 const OP_LABEL: Record<GuideConditionOp, string> = {
   eq: "等于 (eq)",
@@ -64,6 +77,13 @@ const OP_LABEL: Record<GuideConditionOp, string> = {
   lte: "小于等于 (lte)",
   exists: "存在 (exists)",
 };
+
+const PLACEMENT_OPTIONS = [
+  { value: "bottom", label: "下方" },
+  { value: "top", label: "上方" },
+  { value: "left", label: "左侧" },
+  { value: "right", label: "右侧" },
+];
 
 /** 条件编辑行 */
 function ConditionRow({
@@ -116,88 +136,267 @@ function ConditionRow({
   };
 
   return (
-    <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-muted/30 p-2">
-      <select
-        value={field}
-        onChange={(e) => setField(e.target.value)}
-        className={`${inputClass} w-52`}
-      >
-        {FIELD_OPTIONS.map((f) => (
-          <option key={f.value} value={f.value}>
-            {f.label}
-          </option>
-        ))}
-      </select>
+    <div className="space-y-1.5 rounded-lg border border-border/60 bg-muted/30 p-2.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <select
+          value={field}
+          onChange={(e) => setField(e.target.value)}
+          className={`${inputClass} w-52`}
+        >
+          {FIELD_OPTIONS.map((f) => (
+            <option key={f.value} value={f.value}>
+              {f.label}
+            </option>
+          ))}
+        </select>
 
-      {isClickCount && (
-        <input
-          value={clickAnchor}
-          onChange={(e) => setClickAnchor(e.target.value.trim())}
-          className={`${inputClass} flex-1 font-mono text-xs`}
-          placeholder="锚点名（data-guide，如 reveal-view）"
-        />
-      )}
-
-      <select
-        value={cond.op}
-        onChange={(e) =>
-          onChange({ ...cond, op: e.target.value as GuideConditionOp })
-        }
-        className={`${inputClass} w-36`}
-      >
-        {GUIDE_CONDITION_OPS.map((op) => (
-          <option key={op} value={op}>
-            {OP_LABEL[op]}
-          </option>
-        ))}
-      </select>
-
-      {cond.op !== GuideConditionOp.EXISTS &&
-        (field === "event_click" ? (
-          <select
-            value={typeof cond.value === "string" ? cond.value : ""}
-            onChange={(e) => onChange({ ...cond, value: e.target.value })}
-            className={`${inputClass} flex-1`}
-          >
-            {GUIDE_EVENT_ANCHORS.map((a) => (
-              <option key={a.target} value={a.target}>
-                {a.label}
-              </option>
-            ))}
-          </select>
-        ) : (
+        {isClickCount && (
           <input
-            type={
-              field === "user_age_days" || field === "click_count"
-                ? "number"
-                : "text"
-            }
-            value={cond.value ?? ""}
-            onChange={(e) =>
-              onChange({
-                ...cond,
-                value:
-                  field === "user_age_days" || field === "click_count"
-                    ? Number(e.target.value)
-                    : e.target.value,
-              })
-            }
-            className={`${inputClass} flex-1`}
-            placeholder={field === "page" ? "/settings" : "数值"}
+            value={clickAnchor}
+            onChange={(e) => setClickAnchor(e.target.value.trim())}
+            className={`${inputClass} min-w-[160px] flex-1 font-mono text-xs`}
+            placeholder="锚点名（如 reveal-view）"
           />
-        ))}
+        )}
+
+        <select
+          value={cond.op}
+          onChange={(e) =>
+            onChange({ ...cond, op: e.target.value as GuideConditionOp })
+          }
+          className={`${inputClass} w-36`}
+        >
+          {GUIDE_CONDITION_OPS.map((op) => (
+            <option key={op} value={op}>
+              {OP_LABEL[op]}
+            </option>
+          ))}
+        </select>
+
+        {cond.op !== GuideConditionOp.EXISTS &&
+          (field === "event_click" ? (
+            <select
+              value={typeof cond.value === "string" ? cond.value : ""}
+              onChange={(e) => onChange({ ...cond, value: e.target.value })}
+              className={`${inputClass} min-w-[200px] flex-1`}
+            >
+              {GUIDE_EVENT_ANCHORS.map((a) => (
+                <option key={a.target} value={a.target}>
+                  {a.label}（{a.target}）
+                </option>
+              ))}
+            </select>
+          ) : (
+            <input
+              type={
+                field === "user_age_days" || field === "click_count"
+                  ? "number"
+                  : "text"
+              }
+              value={cond.value ?? ""}
+              onChange={(e) =>
+                onChange({
+                  ...cond,
+                  value:
+                    field === "user_age_days" || field === "click_count"
+                      ? Number(e.target.value)
+                      : e.target.value,
+                })
+              }
+              className={`${inputClass} min-w-[140px] flex-1`}
+              placeholder={
+                field === "page"
+                  ? "如 /settings"
+                  : field === "click_count"
+                    ? "次数，如 1"
+                    : "天数，如 3"
+              }
+            />
+          ))}
+
+        <button
+          type="button"
+          onClick={onRemove}
+          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+          title="删除条件"
+        >
+          <Trash2 className="h-4 w-4" />
+        </button>
+      </div>
+      {FIELD_HELP[field] && (
+        <p className="px-1 text-xs text-muted-foreground/90 leading-relaxed">
+          {FIELD_HELP[field]}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** 步骤编辑卡片（结构化编辑，保存时自动组装 JSON） */
+function StepEditor({
+  steps,
+  onChange,
+}: {
+  steps: StepForm[];
+  onChange: (next: StepForm[]) => void;
+}) {
+  const setStep = (i: number, patch: Partial<StepForm>) => {
+    onChange(steps.map((s, j) => (j === i ? { ...s, ...patch } : s)));
+  };
+
+  const addStep = () => {
+    onChange([
+      ...steps,
+      {
+        id: `step_${steps.length + 1}`,
+        target: "",
+        title: "",
+        content: "",
+        placement: "bottom",
+        nextRoute: "",
+      },
+    ]);
+  };
+
+  const removeStep = (i: number) => {
+    onChange(
+      steps
+        .filter((_, j) => j !== i)
+        .map((s, j) => ({ ...s, id: `step_${j + 1}` }))
+    );
+  };
+
+  return (
+    <div className="space-y-3">
+      {steps.map((s, i) => (
+        <div key={i} className="rounded-lg border border-border/60 bg-muted/30 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-xs font-medium text-muted-foreground">
+              步骤 {i + 1}
+            </span>
+            <button
+              type="button"
+              onClick={() => removeStep(i)}
+              className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+              title="删除该步骤"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className={labelClass}>
+                高亮元素（target）
+                <HelpCircle className="ml-1 inline h-3 w-3 text-muted-foreground" />
+              </label>
+              <input
+                list="guide-anchor-options"
+                value={s.target}
+                onChange={(e) => setStep(i, { target: e.target.value })}
+                className={`${inputClass} font-mono text-xs`}
+                placeholder="data-guide 锚点名，如 reveal-view"
+              />
+              <p className={helpClass}>
+                引导要指向哪个元素。填该元素上的 data-guide
+                标记值；下方下拉是已埋点锚点，可直接选。
+              </p>
+            </div>
+            <div>
+              <label className={labelClass}>标题（title）</label>
+              <input
+                value={s.title}
+                onChange={(e) => setStep(i, { title: e.target.value })}
+                className={inputClass}
+                placeholder="引导卡片的标题，如：需要先设置密码"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>卡片位置（placement）</label>
+              <select
+                value={s.placement}
+                onChange={(e) => setStep(i, { placement: e.target.value })}
+                className={inputClass}
+              >
+                {PLACEMENT_OPTIONS.map((p) => (
+                  <option key={p.value} value={p.value}>
+                    {p.label}
+                  </option>
+                ))}
+              </select>
+              <p className={helpClass}>引导卡片出现在高亮元素的上/下/左/右。</p>
+            </div>
+            <div className="sm:col-span-2">
+              <label className={labelClass}>说明文字（content）</label>
+              <textarea
+                value={s.content}
+                onChange={(e) => setStep(i, { content: e.target.value })}
+                rows={2}
+                className={inputClass}
+                placeholder="告诉用户这一步要做什么"
+              />
+            </div>
+            <div className="sm:col-span-2">
+              <label className={labelClass}>
+                下一步跳转页面（nextRoute，可选）
+                <HelpCircle className="ml-1 inline h-3 w-3 text-muted-foreground" />
+              </label>
+              <input
+                value={s.nextRoute}
+                onChange={(e) => setStep(i, { nextRoute: e.target.value })}
+                className={`${inputClass} font-mono text-xs`}
+                placeholder="后台相对路径，如 /account"
+              />
+              <p className={helpClass}>
+                点击「下一步」后跳转到另一个后台页面继续引导（用于跨页引导，如
+                设置页 → 账号设置）。不填则下一步只在当前页高亮下一个元素。
+              </p>
+            </div>
+          </div>
+        </div>
+      ))}
 
       <button
         type="button"
-        onClick={onRemove}
-        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
-        title="删除条件"
+        onClick={addStep}
+        className="inline-flex items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-fg-faint hover:text-foreground"
       >
-        <Trash2 className="h-4 w-4" />
+        <Plus className="h-4 w-4" />
+        添加步骤
       </button>
     </div>
   );
 }
+
+/** 步骤表单（编辑时使用，保存时映射为 GuideStep[]） */
+interface StepForm {
+  id: string;
+  target: string;
+  title: string;
+  content: string;
+  placement: string;
+  nextRoute: string;
+}
+
+const emptyStepForm = (): StepForm => ({
+  id: "step_1",
+  target: "",
+  title: "",
+  content: "",
+  placement: "bottom",
+  nextRoute: "",
+});
+
+/** GuideStep[] → StepForm[]（兼容手写 JSON 缺字段） */
+const toStepForms = (steps: GuideStep[]): StepForm[] =>
+  steps.map((s, i) => ({
+    id: s.id || `step_${i + 1}`,
+    target: s.target ?? "",
+    title: s.title ?? "",
+    content: s.content ?? "",
+    placement: s.placement ?? "bottom",
+    nextRoute: s.nextRoute ?? "",
+  }));
 
 interface FormState {
   id?: string;
@@ -208,7 +407,7 @@ interface FormState {
   status: GuideStatus;
   logic: "and" | "or";
   conditions: GuideCondition[];
-  stepsJson: string;
+  steps: StepForm[];
 }
 
 const EMPTY_FORM: FormState = {
@@ -226,19 +425,7 @@ const EMPTY_FORM: FormState = {
     },
     { field: "page", op: GuideConditionOp.EQ, value: "/settings" },
   ],
-  stepsJson: JSON.stringify(
-    [
-      {
-        id: "step_1",
-        target: "example-anchor",
-        title: "第一步",
-        content: "说明文字（支持纯文本）",
-        placement: "bottom",
-      },
-    ],
-    null,
-    2
-  ),
+  steps: [emptyStepForm()],
 };
 
 export function ManageGuides() {
@@ -287,7 +474,7 @@ export function ManageGuides() {
       status: g.status,
       logic: tc?.logic ?? "and",
       conditions: tc?.conditions ?? [],
-      stepsJson: JSON.stringify(g.steps, null, 2),
+      steps: toStepForms(g.steps),
     });
     setError("");
     setEditing(true);
@@ -315,30 +502,24 @@ export function ManageGuides() {
   const handleSave = async () => {
     setError("");
     if (!form.guideKey.trim() || !form.title.trim() || !form.page.trim()) {
-      setError("guideKey / title / page 必填");
+      setError("请填写标题、guideKey、页面（必填项）");
       return;
     }
-    let steps: unknown;
-    try {
-      steps = JSON.parse(form.stepsJson);
-    } catch {
-      setError("steps JSON 格式错误");
-      return;
-    }
-    if (!Array.isArray(steps) || steps.length === 0) {
-      setError("steps 必须是非空数组");
-      return;
-    }
-    for (const s of steps as Array<Record<string, unknown>>) {
-      if (
-        typeof s.id !== "string" ||
-        typeof s.target !== "string" ||
-        typeof s.title !== "string" ||
-        typeof s.content !== "string"
-      ) {
-        setError("steps 每项需包含 id / target / title / content 字符串字段");
+    // steps 校验（结构化表单 → GuideStep[]）
+    const steps: GuideStep[] = [];
+    for (const [i, s] of form.steps.entries()) {
+      if (!s.target.trim() || !s.title.trim() || !s.content.trim()) {
+        setError(`步骤 ${i + 1} 未填写完整：高亮元素 / 标题 / 说明文字必填`);
         return;
       }
+      steps.push({
+        id: s.id.trim() || `step_${i + 1}`,
+        target: s.target.trim(),
+        title: s.title.trim(),
+        content: s.content.trim(),
+        placement: (s.placement as GuideStep["placement"]) || "bottom",
+        nextRoute: s.nextRoute.trim() || undefined,
+      });
     }
     if (
       form.conditions.length === 0 ||
@@ -408,7 +589,7 @@ export function ManageGuides() {
     }
   };
 
-  /** 重置当前用户某引导的进度（清空 skipped/completed，可重新触发） */
+  /** 重置当前账号（登录用户自己）某引导的进度 */
   const handleResetProgress = async (guideKey: string) => {
     const res = await fetch(
       `/api/admin/guides/progress?guideKey=${encodeURIComponent(guideKey)}`,
@@ -428,7 +609,8 @@ export function ManageGuides() {
           <div>
             <h2 className="text-lg font-semibold">引导列表</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              配置存于 guiders 表，页面通过 data-guide 锚点声明定位目标。
+              页面通过 data-guide 锚点声明定位目标；「重置」只清空当前登录账号的
+              引导进度（跳过/完成状态移除后，该引导可重新触发）。
             </p>
           </div>
           <button
@@ -571,7 +753,7 @@ export function ManageGuides() {
                               type="button"
                               onClick={() => handleResetProgress(g.guideKey)}
                               className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                              title="重置我的进度（可重新触发）"
+                              title="重置当前账号进度（跳过/完成后可重新触发）"
                             >
                               <RotateCcw className="h-4 w-4" />
                             </button>
@@ -594,7 +776,7 @@ export function ManageGuides() {
             className="absolute inset-0 bg-black/50 backdrop-blur-sm"
             onClick={() => setEditing(false)}
           />
-          <div className="relative max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border border-border bg-background p-6 shadow-2xl">
+          <div className="relative max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-border bg-background p-6 shadow-2xl">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-semibold">
                 {form.id ? "编辑引导" : "新建引导"}
@@ -609,6 +791,7 @@ export function ManageGuides() {
               </button>
             </div>
 
+            {/* 基本信息 */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label className={labelClass}>标题</label>
@@ -618,31 +801,38 @@ export function ManageGuides() {
                   className={inputClass}
                   placeholder="如：设置密码引导"
                 />
+                <p className={helpClass}>引导的名称，仅在管理页展示。</p>
               </div>
               <div>
-                <label className={labelClass}>
-                  guideKey（带版本号，如 reveal_password_setup_v1）
-                </label>
+                <label className={labelClass}>guideKey</label>
                 <input
                   value={form.guideKey}
                   onChange={(e) =>
                     setForm({ ...form, guideKey: e.target.value })
                   }
                   className={`${inputClass} font-mono`}
-                  placeholder="reveal_password_setup_v1"
+                  placeholder="如 reveal_password_setup_v1"
                 />
+                <p className={helpClass}>
+                  引导的唯一标识（带版本号）。改版时换新 key（如
+                  _v2），已看过旧版的用户会自动重新触发。
+                </p>
               </div>
               <div>
-                <label className={labelClass}>页面（相对后台路径）</label>
+                <label className={labelClass}>页面</label>
                 <input
                   value={form.page}
                   onChange={(e) => setForm({ ...form, page: e.target.value })}
-                  className={inputClass}
+                  className={`${inputClass} font-mono`}
                   placeholder="/settings"
                 />
+                <p className={helpClass}>
+                  后台相对路径。你的后台地址是 /&lt;adminSlug&gt;/settings，
+                  这里就填 /settings（不含 adminSlug 前缀）。
+                </p>
               </div>
               <div>
-                <label className={labelClass}>优先级（小者先触发）</label>
+                <label className={labelClass}>优先级</label>
                 <input
                   type="number"
                   value={form.priority}
@@ -651,6 +841,9 @@ export function ManageGuides() {
                   }
                   className={inputClass}
                 />
+                <p className={helpClass}>
+                  同页面有多个引导可触发时，数字小的先显示。
+                </p>
               </div>
               <div>
                 <label className={labelClass}>状态</label>
@@ -667,13 +860,18 @@ export function ManageGuides() {
                     </option>
                   ))}
                 </select>
+                <p className={helpClass}>
+                  草稿不触发；发布后按触发条件生效；归档停用。
+                </p>
               </div>
             </div>
 
-            {/* 触发条件：结构化行式表单 */}
-            <div className="mt-4">
+            {/* 触发条件 */}
+            <div className="mt-5">
               <div className="mb-2 flex items-center justify-between">
-                <label className={labelClass}>触发条件（target_condition）</label>
+                <label className={labelClass}>
+                  触发条件（什么时候弹这个引导）
+                </label>
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <span>满足逻辑：</span>
                   <select
@@ -733,21 +931,27 @@ export function ManageGuides() {
                   />
                 ))}
               </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                event_click 的 value 与 data-guide 锚点、埋点上报用同一标识；
-                click_count 条件需 user_events 表有该锚点点击记录。
+              <p className="mt-2 text-xs text-muted-foreground">
+                每个条件三列：条件字段 → 比较方式 → 值。全部满足（and）指每个条件都成立才触发；
+                任一满足（or）指满足其中一个就触发。
               </p>
             </div>
 
-            <div className="mt-4">
+            {/* 引导步骤 */}
+            <div className="mt-5">
               <label className={labelClass}>
-                steps（JSON，每项：id / target(data-guide 锚点名) / title / content / placement? / nextRoute?）
+                引导步骤（按顺序弹出的引导卡片）
               </label>
-              <textarea
-                value={form.stepsJson}
-                onChange={(e) => setForm({ ...form, stepsJson: e.target.value })}
-                rows={10}
-                className={`${inputClass} font-mono text-xs`}
+              <datalist id="guide-anchor-options">
+                {GUIDE_EVENT_ANCHORS.map((a) => (
+                  <option key={a.target} value={a.target}>
+                    {a.label}
+                  </option>
+                ))}
+              </datalist>
+              <StepEditor
+                steps={form.steps}
+                onChange={(steps) => setForm({ ...form, steps })}
               />
             </div>
 
