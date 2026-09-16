@@ -17,6 +17,8 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
+  Eye,
+  ShieldAlert,
 } from "lucide-react";
 import { useToast } from "@/components/toast";
 import {
@@ -63,6 +65,42 @@ function formatTime(unixSeconds: number): string {
   return new Date(unixSeconds * 1000).toLocaleString("zh-CN");
 }
 
+/** 格式化响应体：JSON 美化，其余按原样；超长截断 */
+function formatBody(body: string | { type: string; content: string } | undefined): {
+  text: string;
+  truncated: boolean;
+} {
+  if (!body) return { text: "", truncated: false };
+  let raw = typeof body === "string" ? body : body.content || "";
+  if (typeof body === "object" && body.type === "json") {
+    try {
+      raw = JSON.stringify(JSON.parse(raw), null, 2);
+    } catch {
+      // 解析失败按原样展示
+    }
+  }
+  const MAX = 100_000;
+  const truncated = raw.length > MAX;
+  return { text: truncated ? raw.slice(0, MAX) : raw, truncated };
+}
+
+function formatHeaders(
+  headers: Record<string, string> | string | undefined,
+): Array<[string, string]> | null {
+  if (!headers) return null;
+  if (typeof headers === "string") {
+    // 原始字符串形式（少见），按行拆分
+    return headers
+      .split("\n")
+      .filter((l) => l.includes(":"))
+      .map((line) => {
+        const idx = line.indexOf(":");
+        return [line.slice(0, idx).trim(), line.slice(idx + 1).trim()];
+      });
+  }
+  return Object.entries(headers);
+}
+
 type Props = {
   jobId: number;
   jobTitle: string;
@@ -78,6 +116,7 @@ export function CronJobHistoryDialog({ jobId, jobTitle, open, onClose }: Props) 
   const [detailLoading, setDetailLoading] = useState(false);
   const [activeId, setActiveId] = useState<number | null>(null);
   const [showTimes, setShowTimes] = useState(true);
+  const [showResponse, setShowResponse] = useState(false);
 
   // 打开弹窗时加载历史列表（仅 1 次 API）
   useEffect(() => {
@@ -259,6 +298,18 @@ export function CronJobHistoryDialog({ jobId, jobTitle, open, onClose }: Props) 
                               )}
                             </div>
                           )}
+
+                          {/* 响应查看（任务开启 saveResponses 且有响应数据时） */}
+                          {detail.saveResponses && (detail.body || detail.headers) && (
+                            <button
+                              type="button"
+                              onClick={() => setShowResponse(true)}
+                              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
+                            >
+                              <Eye className="h-4 w-4" />
+                              查看响应
+                            </button>
+                          )}
                         </div>
                       ) : null}
                     </div>
@@ -269,6 +320,68 @@ export function CronJobHistoryDialog({ jobId, jobTitle, open, onClose }: Props) 
           )}
         </div>
       </div>
+
+      {/* 响应查看弹窗 */}
+      {showResponse && detail && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 p-4">
+          <div className="flex max-h-[85vh] w-full max-w-4xl flex-col rounded-xl bg-background shadow-2xl">
+            <div className="flex items-center justify-between border-b border-border p-4">
+              <h3 className="text-lg font-semibold">响应详情</h3>
+              <button
+                type="button"
+                onClick={() => setShowResponse(false)}
+                className="rounded-md p-1 hover:bg-accent"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4">
+              <div className="mb-4 flex items-start gap-2 rounded-lg border border-yellow-300/50 bg-yellow-50 p-3 text-xs text-yellow-800">
+                <ShieldAlert className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                <span>
+                  响应内容可能包含敏感信息（如 API Key、Token）。请勿将截图或内容分享给他人。
+                </span>
+              </div>
+
+              {/* 响应头 */}
+              {detail.headers && (
+                <div className="mb-4">
+                  <h4 className="mb-2 text-sm font-medium">响应头</h4>
+                  <div className="rounded-lg border border-border bg-muted/30 p-3 font-mono text-xs">
+                    {formatHeaders(detail.headers.response)?.length ? (
+                      <div className="space-y-1">
+                        {formatHeaders(detail.headers.response)!.map(([k, v]) => (
+                          <div key={k} className="flex gap-2">
+                            <span className="flex-shrink-0 font-semibold">{k}:</span>
+                            <span className="break-all text-muted-foreground">{v}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground">无响应头</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* 响应体 */}
+              {detail.body && (
+                <div>
+                  <h4 className="mb-2 text-sm font-medium">响应体</h4>
+                  {formatBody(detail.body).truncated && (
+                    <p className="mb-2 text-xs text-yellow-600">
+                      响应体过大，仅展示前 100,000 字符
+                    </p>
+                  )}
+                  <pre className="max-h-[50vh] overflow-auto rounded-lg border border-border bg-muted/30 p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap break-all">
+                    {formatBody(detail.body).text || "（空响应体）"}
+                  </pre>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

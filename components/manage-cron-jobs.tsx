@@ -703,6 +703,10 @@ export function ManageCronJobs() {
                   3xx 视为成功
                 </label>
               </div>
+              <p className="text-xs text-muted-foreground">
+                开启「保存响应」后，执行历史中将保存并展示本次请求的响应头和响应体，便于排查问题。
+                注意：响应内容可能包含敏感信息（如 API Key），请勿外泄。
+              </p>
 
               {/* 调度配置 */}
               <div className="rounded-lg border border-border p-4">
