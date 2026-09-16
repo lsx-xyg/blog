@@ -406,7 +406,7 @@ export function ManageCronJobs() {
             type="button"
             onClick={loadStatus}
             disabled={loadingStatus}
-            className={`inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
+            className={`ml-auto inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
               status
                 ? "border border-input bg-background hover:bg-accent"
                 : "bg-primary text-primary-foreground hover:bg-primary/90"
@@ -572,7 +572,7 @@ export function ManageCronJobs() {
               <h2 className="text-lg font-semibold">我的定时任务</h2>
               <p className="mt-0.5 text-xs text-muted-foreground">用户自建任务（系统任务见上方区域，不在此重复展示）</p>
             </div>
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="ml-auto flex flex-wrap items-center gap-2">
               {jobs === null ? (
                 <button
                   type="button"

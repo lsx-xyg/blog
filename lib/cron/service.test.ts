@@ -121,7 +121,8 @@ describe("listSystemJobsStatus", () => {
       }),
     ]);
     const status = await listSystemJobsStatus();
-    expect(status).toHaveLength(1);
+    // 预设数组新增后（publish_scheduled + backup），按预设顺序返回全部
+    expect(status).toHaveLength(2);
     expect(status[0]).toMatchObject({
       key: "publish_scheduled",
       name: "定时发布扫描",
@@ -129,6 +130,14 @@ describe("listSystemJobsStatus", () => {
       enabled: true,
       jobId: 3,
       nextRun: 1700000700,
+    });
+    expect(status[1]).toMatchObject({
+      key: "backup",
+      name: "自动备份",
+      supportsRun: true,
+      enabled: false,
+      jobId: undefined,
+      nextRun: null,
     });
   });
 

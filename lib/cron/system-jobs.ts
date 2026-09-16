@@ -50,6 +50,32 @@ export const SYSTEM_JOB_PRESETS: SystemJobPreset[] = [
       },
     }),
   },
+  {
+    key: "backup",
+    name: "自动备份",
+    description: "每天凌晨 03:00 自动备份全部业务数据，上传到配置的存储驱动",
+    supportsRun: true,
+    createConfig: ({ siteUrl, cronSecret }) => ({
+      title: "[系统] 自动备份（每天 03:00）",
+      url: `${siteUrl}/api/cron/backup`,
+      enabled: true,
+      saveResponses: false,
+      requestMethod: RequestMethod.GET,
+      requestTimeout: 60,
+      extendedData: {
+        headers: { "X-Cron-Secret": cronSecret },
+      },
+      schedule: {
+        timezone: "Asia/Shanghai",
+        expiresAt: 0,
+        hours: [3],
+        mdays: [-1],
+        minutes: [0],
+        months: [-1],
+        wdays: [-1],
+      },
+    }),
+  },
 ];
 
 /** 判断任务是否属于系统任务（title 带 [系统] 前缀，或名称匹配预设） */

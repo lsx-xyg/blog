@@ -52,6 +52,19 @@ describe("SYSTEM_JOB_PRESETS", () => {
     expect(cfg.extendedData?.headers).toEqual({ "X-Cron-Secret": "sec" });
     expect(cfg.schedule?.minutes).toEqual([-1]);
   });
+  it("backup 预设生成标准配置（每天 03:00 + X-Cron-Secret）", () => {
+    const preset = getSystemJobPreset("backup");
+    expect(preset).not.toBeNull();
+    const cfg = preset!.createConfig({
+      siteUrl: "https://blog.example.com",
+      cronSecret: "sec",
+    });
+    expect(cfg.title).toBe("[系统] 自动备份（每天 03:00）");
+    expect(cfg.url).toBe("https://blog.example.com/api/cron/backup");
+    expect(cfg.extendedData?.headers).toEqual({ "X-Cron-Secret": "sec" });
+    expect(cfg.schedule?.hours).toEqual([3]);
+    expect(cfg.schedule?.minutes).toEqual([0]);
+  });
   it("未知 key 返回 null", () => {
     expect(getSystemJobPreset("nope")).toBeNull();
   });
