@@ -13,7 +13,7 @@
  *
  * 参照 cron-job.org 官方界面设计
  */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   Plus,
   Pencil,
@@ -28,10 +28,12 @@ import {
   X,
   ChevronDown,
   ChevronUp,
+  History as HistoryIcon,
 } from "lucide-react";
 import { useToast } from "@/components/toast";
 import { CronDeployPlatform } from "@/lib/types/settings";
 import { RequestMethod, type CronJob, type CronJobConfig, type CronJobSchedule } from "@/lib/types/cron";
+import { CronJobHistoryDialog } from "@/components/cron-job-history";
 
 type CronStatus = {
   platform: CronDeployPlatform;
@@ -178,19 +180,55 @@ function formToConfig(form: FormState): CronJobConfig {
 
 export function ManageCronJobs() {
   const { showToast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [loadingStatus, setLoadingStatus] = useState(false);
+  const [loadingJobs, setLoadingJobs] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [status, setStatus] = useState<CronStatus | null>(null);
-  const [jobs, setJobs] = useState<CronJob[]>([]);
+  const [jobs, setJobs] = useState<CronJob[] | null>(null);
   const [action, setAction] = useState<"start" | "stop" | "run" | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingJobId, setEditingJobId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
   const [saving, setSaving] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [historyJob, setHistoryJob] = useState<CronJob | null>(null);
 
-  // 加载状态和任务列表
-  const loadData = async () => {
-    setLoading(true);
+  // 页面打开不自动请求（免费版 cron-job.org API 每日配额有限），各按钮独立触发对应 API
+  const loadStatus = async () => {
+    setLoadingStatus(true);
+    try {
+      const res = await fetch("/api/admin/cron");
+      if (res.ok) {
+        const data = await res.json();
+        setStatus(data);
+      }
+    } catch (e) {
+      console.error("加载状态失败：", e);
+      showToast("加载状态失败", "error");
+    } finally {
+      setLoadingStatus(false);
+    }
+  };
+
+  const loadJobs = async () => {
+    setLoadingJobs(true);
+    try {
+      const res = await fetch("/api/admin/cron/jobs");
+      if (res.ok) {
+        const data = await res.json();
+        setJobs(data.jobs || []);
+      }
+    } catch (e) {
+      console.error("加载任务列表失败：", e);
+      showToast("加载任务列表失败", "error");
+    } finally {
+      setLoadingJobs(false);
+    }
+  };
+
+  // 刷新全部：一次性触发所有 API（明确需要全量刷新时使用）
+  const refreshAll = async () => {
+    setRefreshing(true);
     try {
       const [statusRes, jobsRes] = await Promise.all([
         fetch("/api/admin/cron"),
@@ -207,18 +245,14 @@ export function ManageCronJobs() {
         setJobs(data.jobs || []);
       }
     } catch (e) {
-      console.error("加载数据失败：", e);
-      showToast("加载数据失败", "error");
+      console.error("刷新失败：", e);
+      showToast("刷新失败", "error");
     } finally {
-      setLoading(false);
+      setRefreshing(false);
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
-
-  // 执行全局操作
+  // 执行全局操作（成功后只刷新状态，1 个 API）
   const executeAction = async (type: "start" | "stop" | "run") => {
     setAction(type);
     try {
@@ -226,7 +260,7 @@ export function ManageCronJobs() {
       const data = await res.json();
       if (res.ok) {
         showToast(data.message || "操作成功", "success");
-        setTimeout(() => loadData(), 500);
+        setTimeout(() => loadStatus(), 500);
       } else {
         showToast(data.error || "操作失败", "error");
       }
@@ -299,7 +333,7 @@ export function ManageCronJobs() {
       if (res.ok) {
         showToast(editingJobId ? "任务更新成功" : "任务创建成功", "success");
         setShowForm(false);
-        setTimeout(() => loadData(), 500);
+        setTimeout(() => loadJobs(), 500);
       } else {
         const data = await res.json();
         showToast(data.error || "保存失败", "error");
@@ -320,7 +354,7 @@ export function ManageCronJobs() {
       const res = await fetch(`/api/admin/cron/jobs/${jobId}`, { method: "DELETE" });
       if (res.ok) {
         showToast("任务删除成功", "success");
-        setTimeout(() => loadData(), 500);
+        setTimeout(() => loadJobs(), 500);
       } else {
         showToast("删除失败", "error");
       }
@@ -340,7 +374,7 @@ export function ManageCronJobs() {
       });
       if (res.ok) {
         showToast(job.enabled ? "任务已禁用" : "任务已启用", "success");
-        setTimeout(() => loadData(), 500);
+        setTimeout(() => loadJobs(), 500);
       } else {
         showToast("操作失败", "error");
       }
@@ -349,14 +383,6 @@ export function ManageCronJobs() {
       showToast("操作失败，请重试", "error");
     }
   };
-
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="py-12 text-center text-sm text-muted-foreground animate-pulse">加载中…</div>
-      </div>
-    );
-  }
 
   const methodLabel = (method: number) =>
     REQUEST_METHODS.find((m) => m.value === method)?.label || `UNKNOWN(${method})`;
@@ -369,6 +395,46 @@ export function ManageCronJobs() {
           管理 cron-job.org 定时任务，支持高级配置（参照官方界面）
         </p>
       </header>
+
+      {/* 加载控制条（页面打开不自动请求，免费版 cron-job.org API 每日配额有限） */}
+      {(!status || jobs === null) && (
+        <div className="mb-8 rounded-xl border border-border bg-card p-6 text-center">
+          <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground/50" />
+          <p className="mt-3 text-sm font-medium">数据尚未加载</p>
+          <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground">
+            免费版 cron-job.org API 每日配额有限（100 次），页面打开不会自动请求。按需加载或一键刷新全部。
+          </p>
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-3">
+            <button
+              type="button"
+              onClick={loadStatus}
+              disabled={loadingStatus}
+              className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${loadingStatus ? "animate-spin" : ""}`} />
+              加载状态
+            </button>
+            <button
+              type="button"
+              onClick={loadJobs}
+              disabled={loadingJobs}
+              className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${loadingJobs ? "animate-spin" : ""}`} />
+              加载任务列表
+            </button>
+            <button
+              type="button"
+              onClick={refreshAll}
+              disabled={refreshing}
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+              刷新全部
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 全局定时发布快速操作 */}
       {status && (
@@ -422,11 +488,12 @@ export function ManageCronJobs() {
             </button>
             <button
               type="button"
-              onClick={loadData}
-              className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium transition hover:bg-accent"
+              onClick={refreshAll}
+              disabled={refreshing}
+              className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <RefreshCw className="h-4 w-4" />
-              刷新
+              <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
+              刷新全部
             </button>
           </div>
           {!status.cronJobApiKeyConfigured && (
@@ -453,7 +520,11 @@ export function ManageCronJobs() {
           </button>
         </div>
 
-        {jobs.length === 0 ? (
+        {jobs === null ? (
+          <div className="p-12 text-center text-sm text-muted-foreground">
+            任务列表尚未加载，点击上方「加载任务列表」或「刷新全部」
+          </div>
+        ) : jobs.length === 0 ? (
           <div className="p-12 text-center text-sm text-muted-foreground">
             暂无定时任务，点击「创建任务」开始
           </div>
@@ -493,6 +564,14 @@ export function ManageCronJobs() {
                     </div>
                   </div>
                   <div className="flex flex-shrink-0 items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setHistoryJob(job)}
+                      title="执行历史"
+                      className="rounded-lg p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                    >
+                      <HistoryIcon className="h-4 w-4" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => toggleJob(job)}
@@ -812,6 +891,15 @@ export function ManageCronJobs() {
             </div>
           </div>
         </div>
+      )}
+      {/* 执行历史弹窗 */}
+      {historyJob && (
+        <CronJobHistoryDialog
+          jobId={historyJob.jobId}
+          jobTitle={historyJob.title || "(无标题)"}
+          open={historyJob !== null}
+          onClose={() => setHistoryJob(null)}
+        />
       )}
     </div>
   );

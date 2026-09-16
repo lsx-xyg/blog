@@ -11,7 +11,7 @@
  *
  * 注意：这是独立的管理页面，不放在站点设置里
  */
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Play, Square, RefreshCw, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { useToast } from "@/components/toast";
 import { CronDeployPlatform } from "@/lib/types/settings";
@@ -35,11 +35,11 @@ type ActionType = "start" | "stop" | "run" | null;
 
 export function ManageCron() {
   const { showToast } = useToast();
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<CronStatus | null>(null);
   const [action, setAction] = useState<ActionType>(null);
 
-  // 加载状态
+  // 手动加载状态（页面打开不自动请求：免费版 cron-job.org API 每日配额有限）
   const loadStatus = async () => {
     setLoading(true);
     try {
@@ -55,10 +55,6 @@ export function ManageCron() {
       setLoading(false);
     }
   };
-
-  useEffect(() => {
-    loadStatus();
-  }, []);
 
   // 执行操作
   const executeAction = async (type: ActionType) => {
@@ -94,8 +90,30 @@ export function ManageCron() {
 
   if (!status) {
     return (
-      <div className="container mx-auto px-4 py-12">
-        <div className="py-12 text-center text-sm text-muted-foreground">无法获取定时任务状态</div>
+      <div className="container mx-auto px-4 py-8 animate-page-enter">
+        <header className="mb-8">
+          <p className="font-mono text-xs text-muted-foreground">后台管理</p>
+          <h1 className="mt-1 text-2xl font-semibold">定时任务管理</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            管理文章定时发布任务，支持 VERCEL（cron-job.org）和 SERVER（node-cron）两种模式
+          </p>
+        </header>
+        <div className="rounded-xl border border-border bg-card p-10 text-center">
+          <Clock className="mx-auto h-10 w-10 text-muted-foreground/50" />
+          <p className="mt-4 text-base font-medium">尚未加载定时任务状态</p>
+          <p className="mx-auto mt-2 max-w-md text-xs text-muted-foreground">
+            免费版 cron-job.org API 每日配额有限（100 次），页面打开不会自动请求。点击下方按钮按需加载。
+          </p>
+          <button
+            type="button"
+            onClick={loadStatus}
+            disabled={loading}
+            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            加载状态
+          </button>
+        </div>
       </div>
     );
   }

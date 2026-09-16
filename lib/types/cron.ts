@@ -103,3 +103,74 @@ export type CronJobConfig = {
   /** 所在文件夹 ID，默认 0（根目录） */
   folderId?: number;
 };
+/** 执行历史列表项（ExecutionInfo，官方文档） */
+
+export type CronJobHistoryItem = {
+  jobId: number;
+  /** 状态码：0=OK，其他见 CronJobExecutionStatus */
+  status: number;
+  /** 执行时长（毫秒） */
+  duration: number;
+  /** 执行时间（Unix 秒） */
+  execution: number;
+  url: string;
+  /** HTTP 方法（0-8，同 RequestMethod） */
+  method: number;
+  /** 执行详情标识符 */
+  id: number;
+};
+/** 单次执行详情（ExecutionDetails，官方文档） */
+
+export type CronJobExecutionDetail = {
+  jobId: number;
+  jobTitle: string;
+  url: string;
+  id: number;
+  execution: number;
+  plannedExecution: number;
+  executionJitter: number;
+  duration: number;
+  status: number;
+  requestTimeout: number;
+  requestMethod: number;
+  redirectSuccess: boolean;
+  sslCertExpiry: number;
+  effectiveURL: string;
+  schedule?: CronJobSchedule;
+  /** 性能统计（毫秒） */
+  times?: {
+    dnsLookup: number;
+    connection: number;
+    tlsHandshake: number;
+    firstByte: number;
+    total: number;
+  };
+  httpStatusCode: number;
+  headers?: {
+    response: Record<string, string> | string;
+  };
+  body?: string | { type: string; content: string };
+  saveResponses: boolean;
+};
+/** 执行状态码（官方文档） */
+
+export const CronJobExecutionStatus = {
+  OK: 0,
+  /** HTTP 错误 */
+  REQUEST_FAILED: 1,
+  /** 无响应 */
+  NO_RESPONSE: 2,
+  /** 请求超时 */
+  TIMEOUT: 3,
+  /** SSL 证书无效 */
+  SSL_CERT_INVALID: 4,
+  /** 请求体过大 */
+  REQUEST_TOO_LARGE: 5,
+  /** 内部错误 */
+  INTERNAL_ERROR: 6,
+  /** 持续失败 */
+  FAILING_SINCE: 7,
+} as const;
+
+export type CronJobExecutionStatus =
+  (typeof CronJobExecutionStatus)[keyof typeof CronJobExecutionStatus];

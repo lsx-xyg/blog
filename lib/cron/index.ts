@@ -19,7 +19,14 @@
  */
 
 import { getCronJobApiKey } from "@/lib/settings";
-import { CronJobConfig, RequestMethod, CronJob, CronJobDetailed } from "@/lib/types/cron";
+import {
+  CronJobConfig,
+  RequestMethod,
+  CronJob,
+  CronJobDetailed,
+  CronJobHistoryItem,
+  CronJobExecutionDetail,
+} from "@/lib/types/cron";
 
 const CRON_JOB_API_BASE = "https://api.cron-job.org";
 
@@ -116,6 +123,34 @@ export async function updateCronJob(
   delta: Partial<CronJobConfig>,
 ): Promise<void> {
   await apiRequest("PATCH", `/jobs/${jobId}`, { job: delta });
+}
+
+/**
+ * 获取任务执行历史列表
+ * @param jobId 任务 ID
+ */
+export async function getJobHistory(jobId: number): Promise<CronJobHistoryItem[]> {
+  const result = await apiRequest<{ history: CronJobHistoryItem[] }>(
+    "GET",
+    `/jobs/${jobId}/history`,
+  );
+  return result.history || [];
+}
+
+/**
+ * 获取单次执行详情（含响应头、响应体、性能统计）
+ * @param jobId 任务 ID
+ * @param identifier 执行标识符（history 列表项的 id）
+ */
+export async function getJobHistoryDetail(
+  jobId: number,
+  identifier: number,
+): Promise<CronJobExecutionDetail> {
+  const result = await apiRequest<{ executionDetails: CronJobExecutionDetail }>(
+    "GET",
+    `/jobs/${jobId}/history/${identifier}`,
+  );
+  return result.executionDetails;
 }
 
 /**
