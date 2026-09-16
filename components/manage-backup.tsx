@@ -13,11 +13,9 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Trash2, RefreshCw } from "lucide-react";
+import { Download, Trash2, RefreshCw, Plus, Upload } from "lucide-react";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { useToast } from "@/components/toast";
 
@@ -200,7 +198,8 @@ export function ManageBackup() {
               disabled={creating}
               className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
             >
-              {creating ? "创建中…" : "创建备份"}
+              <Plus className="h-4 w-4" />
+              <span className="hidden sm:inline">{creating ? "创建中…" : "创建备份"}</span>
             </button>
             <div className="relative">
               <input
@@ -216,7 +215,8 @@ export function ManageBackup() {
                 disabled={restoring}
                 className="flex items-center gap-2 rounded-lg border border-input px-4 py-2 text-sm hover:bg-accent transition-colors disabled:opacity-50"
               >
-                {restoring ? "恢复中…" : "恢复备份"}
+                <Upload className="h-4 w-4" />
+                <span className="hidden sm:inline">{restoring ? "恢复中…" : "恢复备份"}</span>
               </button>
             </div>
             <button
@@ -232,50 +232,116 @@ export function ManageBackup() {
         }
       />
 
-      {/* 说明卡片 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">备份说明</CardTitle>
-          <CardDescription>
-            备份包含所有业务数据（文章、标签、媒体、设置、友链、用户等），以 JSON 格式存储。
-            定时备份由 cron-job.org 或 node-cron 触发，自动上传到配置的存储驱动。
-          </CardDescription>
-        </CardHeader>
-      </Card>
-
-      {/* 备份列表 */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">备份列表</CardTitle>
-          <CardDescription>共 {backups.length} 个备份</CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <AdminLoadingState />
-          ) : backups.length === 0 ? (
-            <AdminEmptyState
-              title="暂无备份"
-              description="点击右上角「创建备份」开始"
-            />
-          ) : (
-            <div className="space-y-3">
-              {backups.map((backup) => (
+      {/* 备份列表：桌面表格 + 移动卡片 */}
+      <div className="overflow-hidden rounded-xl border border-border bg-surface">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3">
+          <h2 className="text-sm font-semibold">备份列表</h2>
+          <span className="text-xs text-muted-foreground">共 {backups.length} 个备份</span>
+        </div>
+        {loading ? (
+          <AdminLoadingState />
+        ) : backups.length === 0 ? (
+          <AdminEmptyState
+            title="暂无备份"
+            description="点击右上角「创建备份」开始"
+          />
+        ) : (
+          <>
+            {/* 桌面表格 */}
+            <div className="hidden md:block">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">备份文件</th>
+                    <th className="w-20 px-4 py-3 text-left text-sm font-medium text-muted-foreground">类型</th>
+                    <th className="w-24 px-4 py-3 text-right text-sm font-medium text-muted-foreground">大小</th>
+                    <th className="w-44 px-4 py-3 text-left text-sm font-medium text-muted-foreground">创建时间</th>
+                    <th className="w-24 px-4 py-3 text-right text-sm font-medium text-muted-foreground">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {backups.map((backup) => (
+                    <tr key={backup.id} className="transition-colors hover:bg-muted/30">
+                      <td className="px-4 py-3">
+                        <span className="block max-w-[320px] truncate font-medium text-sm">
+                          {backup.fileKey.split("/").pop()}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium leading-none ${
+                            backup.triggeredBy === "AUTO"
+                              ? "bg-muted text-muted-foreground"
+                              : "bg-primary/10 text-primary"
+                          }`}
+                        >
+                          {backup.triggeredBy === "AUTO" ? "自动" : "手动"}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 text-right font-mono text-xs text-fg-faint">
+                        {formatSize(backup.size)}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-muted-foreground">
+                        {formatDate(backup.createdAt)}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        <div className="inline-flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(backup.id)}
+                            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                            title="下载"
+                          >
+                            <Download className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleDelete(backup.id)}
+                            disabled={deletingId === backup.id}
+                            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600 disabled:opacity-50"
+                            title="删除"
+                          >
+                            {deletingId === backup.id ? (
+                              <RefreshCw className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            {/* 移动卡片 */}
+            <div className="md:hidden divide-y divide-border">
+              {backups.map((backup, i) => (
                 <div
                   key={backup.id}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                  style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
+                  className="animate-fade-in-up px-4 py-3 transition-colors hover:bg-muted/30"
                 >
-                  <div className="space-y-1 min-w-0 flex-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-sm truncate">{backup.fileKey.split("/").pop()}</span>
-                      <Badge variant={backup.triggeredBy === "AUTO" ? "secondary" : "default"} className="text-xs">
-                        {backup.triggeredBy === "AUTO" ? "自动" : "手动"}
-                      </Badge>
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      {formatSize(backup.size)} · {formatDate(backup.createdAt)}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="truncate text-sm font-medium">{backup.fileKey.split("/").pop()}</span>
+                        <span
+                          className={`inline-flex shrink-0 items-center self-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium leading-none ${
+                            backup.triggeredBy === "AUTO"
+                              ? "bg-muted text-muted-foreground"
+                              : "bg-primary/10 text-primary"
+                          }`}
+                        >
+                          {backup.triggeredBy === "AUTO" ? "自动" : "手动"}
+                        </span>
+                      </div>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        {formatSize(backup.size)} · {formatDate(backup.createdAt)}
+                      </p>
                     </div>
                   </div>
-                  <div className="flex shrink-0 items-center gap-1">
+                  <div className="mt-2 flex items-center justify-end gap-1 border-t border-border/50 pt-2">
                     <button
                       type="button"
                       onClick={() => handleDownload(backup.id)}
@@ -301,9 +367,9 @@ export function ManageBackup() {
                 </div>
               ))}
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </>
+        )}
+      </div>
 
       {/* 删除确认对话框 */}
       <ConfirmDialog

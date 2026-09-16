@@ -373,7 +373,7 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
                         )}
                       </button>
                     </th>
-                    <th className="w-20 px-4 py-3 text-center text-sm font-medium text-muted-foreground">状态</th>
+                    <th className="w-24 px-4 py-3 text-center text-sm font-medium text-muted-foreground">状态</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">标题</th>
                     <th className="w-48 px-4 py-3 text-left text-sm font-medium text-muted-foreground">标签</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">Slug</th>
@@ -405,7 +405,7 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
                       </td>
                       <td className="px-4 py-3 text-center">
                         <span
-                          className={`inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-medium leading-none ${
+                          className={`inline-flex items-center justify-center whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium leading-none ${
                             p.status === PostStatus.PUBLISHED
                               ? "bg-green-500/10 text-green-600 dark:text-green-400"
                               : p.status === PostStatus.SCHEDULED
@@ -509,7 +509,7 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
                           <span
-                            className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium leading-none ${
+                            className={`inline-flex shrink-0 items-center self-center whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-medium leading-none ${
                               p.status === PostStatus.PUBLISHED
                                 ? "bg-green-500/10 text-green-600 dark:text-green-400"
                                 : p.status === PostStatus.SCHEDULED
