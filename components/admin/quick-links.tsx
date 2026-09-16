@@ -8,7 +8,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import {
   DndContext,
-  closestCenter,
+  rectIntersection,
   PointerSensor,
   TouchSensor,
   useSensor,
@@ -211,7 +211,7 @@ export default function QuickLinks({
     <div>
       <DndContext
         sensors={sensors}
-        collisionDetection={closestCenter}
+        collisionDetection={rectIntersection}
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={order} strategy={rectSortingStrategy}>
