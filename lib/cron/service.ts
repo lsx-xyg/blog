@@ -48,9 +48,18 @@ export async function findSystemJob(
   if (presetKey) {
     const preset = getSystemJobPreset(presetKey);
     if (!preset) return null;
-    return jobs.find((j) => j.title.includes(preset.name)) || null;
+    // 优先按标题中的 [系统:key] 精确匹配（唯一对应），旧标题按名称兜底
+    return (
+      jobs.find((j) => j.title.includes(`[系统:${presetKey}]`)) ||
+      jobs.find((j) => j.title.includes(preset.name)) ||
+      null
+    );
   }
-  return jobs.find((j) => j.title.includes("定时发布扫描")) || null;
+  return (
+    jobs.find((j) => j.title.includes("[系统:publish_scheduled]")) ||
+    jobs.find((j) => j.title.includes("定时发布扫描")) ||
+    null
+  );
 }
 
 /** 兼容入口：查找定时发布扫描任务 */
@@ -72,7 +81,10 @@ export async function listSystemJobsStatus(): Promise<
 > {
   const jobs = await listCronJobs();
   return SYSTEM_JOB_PRESETS.map((preset) => {
-    const job = jobs.find((j) => j.title.includes(preset.name)) || null;
+    const job =
+      jobs.find((j) => j.title.includes(`[系统:${preset.key}]`)) ||
+      jobs.find((j) => j.title.includes(preset.name)) ||
+      null;
     return {
       key: preset.key,
       name: preset.name,

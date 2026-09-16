@@ -62,7 +62,7 @@ describe("createSystemJob", () => {
     expect(id).toBe(42);
     expect(mockCreateCronJob).toHaveBeenCalledTimes(1);
     const cfg = mockCreateCronJob.mock.calls[0][0];
-    expect(cfg.title).toBe("[系统] 定时发布扫描（每分钟）");
+    expect(cfg.title).toBe("[系统:publish_scheduled] 定时发布扫描（每分钟）");
     expect(cfg.url).toBe("https://blog.example.com/api/cron/publish-scheduled");
     expect(cfg.extendedData?.headers).toEqual({ "X-Cron-Secret": "sec" });
   });

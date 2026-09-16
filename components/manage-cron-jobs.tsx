@@ -76,7 +76,7 @@ export function ManageCronJobs() {
   const [refreshing, setRefreshing] = useState(false);
   const [status, setStatus] = useState<CronStatus | null>(null);
   const [jobs, setJobs] = useState<CronJob[] | null>(null);
-  const [action, setAction] = useState<"start" | "stop" | "run" | null>(null);
+  const [action, setAction] = useState<{ key: string; type: "start" | "stop" | "run" } | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingJobId, setEditingJobId] = useState<number | null>(null);
   const [form, setForm] = useState<FormState>(DEFAULT_FORM);
@@ -147,7 +147,7 @@ export function ManageCronJobs() {
 
   // 执行全局操作（成功后只刷新状态，1 个 API）
   const executeAction = async (type: "start" | "stop" | "run", jobKey?: string) => {
-    setAction(type);
+    setAction(jobKey ? { key: jobKey, type } : null);
     try {
       const res = await fetch(`/api/admin/cron/${type}`, {
         method: "POST",
@@ -505,7 +505,7 @@ export function ManageCronJobs() {
                           disabled={action !== null}
                           className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-medium transition hover:bg-accent disabled:opacity-50"
                         >
-                          {action === "stop" ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
+                          {action?.key === job.key && action?.type === "stop" ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
                           停止
                         </button>
                       ) : (
@@ -515,7 +515,7 @@ export function ManageCronJobs() {
                           disabled={action !== null || !status.cronJobApiKeyConfigured}
                           className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                         >
-                          {action === "start" ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
+                          {action?.key === job.key && action?.type === "start" ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
                           启动
                         </button>
                       )}
@@ -526,7 +526,7 @@ export function ManageCronJobs() {
                           disabled={action !== null}
                           className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
                         >
-                          {action === "run" ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                          {action?.key === job.key && action?.type === "run" ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                           手动触发
                         </button>
                       )}
