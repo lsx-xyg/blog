@@ -342,6 +342,20 @@ export function ManageCronJobs() {
       job.title.includes("[blog:") ||
       SYSTEM_ROUTE_FRAGMENTS.some((f) => job.url.includes(f)));
 
+  // 系统标签多色：按预设名 hash 稳定取色（同一预设恒定同色，不随渲染闪变）
+  const SYSTEM_TAG_COLORS = [
+    "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+    "bg-violet-500/10 text-violet-600 dark:text-violet-400",
+    "bg-teal-500/10 text-teal-600 dark:text-teal-400",
+    "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+    "bg-pink-500/10 text-pink-600 dark:text-pink-400",
+  ];
+  const systemTagColor = (name: string) => {
+    let h = 0;
+    for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
+    return SYSTEM_TAG_COLORS[h % SYSTEM_TAG_COLORS.length];
+  };
+
   return (
     <div className="animate-page-enter">
       <AdminPageHeader
@@ -431,7 +445,7 @@ export function ManageCronJobs() {
                                     ? `${urlPreset.name}（预设驱动）`
                                     : "URL 命中系统接口，但标题未按 [blog:key] 规范。可在操作中重新「启动」自动修复标题。"
                                 }
-                                className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${systemTagColor(urlPreset.name)}`}
                               >
                                 {urlPreset.name}
                               </span>
@@ -581,7 +595,7 @@ export function ManageCronJobs() {
                                   ? `${urlPreset.name}（预设驱动）`
                                   : "URL 命中系统接口，但标题未按 [blog:key] 规范。可重新「启动」自动修复标题。"
                               }
-                              className="inline-flex shrink-0 items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                              className={`inline-flex shrink-0 items-center rounded-full px-2 py-0.5 text-[11px] font-medium ${systemTagColor(urlPreset.name)}`}
                             >
                               {urlPreset.name}
                             </span>
