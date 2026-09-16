@@ -45,7 +45,7 @@ import {
   formatScheduleArray,
 } from "@/lib/cron/form";
 import { CronJobHistoryDialog } from "@/components/cron-job-history";
-import { matchSystemJob } from "@/lib/cron/system-jobs";
+import { matchPresetByUrl, matchSystemJob } from "@/lib/cron/system-jobs";
 
 type CronStatus = {
   platform: CronDeployPlatform;
@@ -373,22 +373,11 @@ export function ManageCronJobs() {
 
       {/* 任务列表：桌面表格 + 移动卡片（一次加载全部，系统任务带标签） */}
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
-          <div>
-            <h2 className="text-sm font-semibold">定时任务</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
-              {jobs === null ? "未加载" : `共 ${jobs.length} 个任务`} · 系统任务按预设（[blog:key]）识别并管理
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={loadJobs}
-            disabled={loadingJobs}
-            className="ml-auto inline-flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium transition hover:bg-accent disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${loadingJobs ? "animate-spin" : ""}`} />
-            <span className="hidden sm:inline">{jobs === null ? "加载任务列表" : "刷新"}</span>
-          </button>
+        <div className="border-b border-border px-4 py-3">
+          <h2 className="text-sm font-semibold">定时任务</h2>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {jobs === null ? "未加载，点击右上角「刷新」加载" : `共 ${jobs.length} 个任务`} · 系统任务带预设标签
+          </p>
         </div>
 
         {loadingJobs ? (
@@ -396,7 +385,7 @@ export function ManageCronJobs() {
         ) : jobs === null ? (
           <AdminEmptyState
             title="任务列表尚未加载"
-            description="免费版 cron-job.org API 每日配额有限（100 次），点击右上角「加载任务列表」按需加载"
+            description="免费版 cron-job.org API 每日配额有限（100 次），点击右上角「刷新」按需加载"
           />
         ) : jobs.length === 0 ? (
           <AdminEmptyState
@@ -420,7 +409,8 @@ export function ManageCronJobs() {
                 <tbody className="divide-y divide-border">
                   {jobs.map((job) => {
                     const preset = matchSystemJob(job);
-                    const orphan = !preset && isOrphanSystemJob(job);
+                    const urlPreset = preset ?? matchPresetByUrl(job);
+                    const orphan = !urlPreset && isOrphanSystemJob(job);
                     return (
                       <tr key={job.jobId} className="transition-colors hover:bg-muted/30">
                         <td className="px-4 py-3">
@@ -434,9 +424,16 @@ export function ManageCronJobs() {
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="max-w-[280px] truncate text-sm font-medium">{job.title || "(无标题)"}</span>
-                            {preset ? (
-                              <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                                {preset.name}
+                            {urlPreset ? (
+                              <span
+                                title={
+                                  preset
+                                    ? `${urlPreset.name}（预设驱动）`
+                                    : "URL 命中系统接口，但标题未按 [blog:key] 规范。可在操作中重新「启动」自动修复标题。"
+                                }
+                                className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                              >
+                                {urlPreset.name}
                               </span>
                             ) : orphan ? (
                               <span
@@ -460,17 +457,17 @@ export function ManageCronJobs() {
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="inline-flex items-center gap-1">
-                            {preset ? (
+                            {urlPreset ? (
                               <>
                                 {job.enabled ? (
                                   <button
                                     type="button"
-                                    onClick={() => executeAction("stop", preset.key)}
+                                    onClick={() => executeAction("stop", urlPreset.key)}
                                     disabled={action !== null}
                                     className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
                                     title="停止（禁用，保留历史）"
                                   >
-                                    {action?.key === preset.key && action?.type === "stop" ? (
+                                    {action?.key === urlPreset.key && action?.type === "stop" ? (
                                       <RefreshCw className="h-4 w-4 animate-spin" />
                                     ) : (
                                       <Square className="h-4 w-4" />
@@ -479,27 +476,27 @@ export function ManageCronJobs() {
                                 ) : (
                                   <button
                                     type="button"
-                                    onClick={() => executeAction("start", preset.key)}
+                                    onClick={() => executeAction("start", urlPreset.key)}
                                     disabled={action !== null}
                                     className="rounded-md p-1.5 text-green-600 transition-colors hover:bg-green-500/10 disabled:opacity-50"
                                     title="启动（按预设创建/启用）"
                                   >
-                                    {action?.key === preset.key && action?.type === "start" ? (
+                                    {action?.key === urlPreset.key && action?.type === "start" ? (
                                       <RefreshCw className="h-4 w-4 animate-spin" />
                                     ) : (
                                       <Play className="h-4 w-4" />
                                     )}
                                   </button>
                                 )}
-                                {preset.supportsRun && (
+                                {urlPreset.supportsRun && (
                                   <button
                                     type="button"
-                                    onClick={() => executeAction("run", preset.key)}
+                                    onClick={() => executeAction("run", urlPreset.key)}
                                     disabled={action !== null}
                                     className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-primary disabled:opacity-50"
                                     title="手动触发"
                                   >
-                                    {action?.key === preset.key && action?.type === "run" ? (
+                                    {action?.key === urlPreset.key && action?.type === "run" ? (
                                       <RefreshCw className="h-4 w-4 animate-spin" />
                                     ) : (
                                       <RefreshCw className="h-4 w-4" />
@@ -519,7 +516,7 @@ export function ManageCronJobs() {
                             )}
                             <button
                               type="button"
-                              onClick={() => openEditForm(preset ? ({ jobId: job.jobId, title: job.title, enabled: job.enabled } as CronJob) : job)}
+                              onClick={() => openEditForm(urlPreset ? ({ jobId: job.jobId, title: job.title, enabled: job.enabled } as CronJob) : job)}
                               className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                               title="编辑"
                             >
@@ -536,12 +533,12 @@ export function ManageCronJobs() {
                             <button
                               type="button"
                               onClick={() =>
-                                preset
-                                  ? deleteSystemJob(job.jobId, job.title || preset.name)
+                                urlPreset
+                                  ? deleteSystemJob(job.jobId, job.title || urlPreset.name)
                                   : deleteJob(job.jobId)
                               }
                               className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
-                              title={preset ? "彻底删除（保留请用停止）" : "删除"}
+                              title={urlPreset ? "彻底删除（保留请用停止）" : "删除"}
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -558,7 +555,8 @@ export function ManageCronJobs() {
             <div className="md:hidden divide-y divide-border">
               {jobs.map((job, index) => {
                 const preset = matchSystemJob(job);
-                const orphan = !preset && isOrphanSystemJob(job);
+                const urlPreset = preset ?? matchPresetByUrl(job);
+                const orphan = !urlPreset && isOrphanSystemJob(job);
                 return (
                   <div
                     key={job.jobId}
@@ -576,9 +574,16 @@ export function ManageCronJobs() {
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2">
                           <h3 className="min-w-0 truncate text-sm font-medium">{job.title || "(无标题)"}</h3>
-                          {preset ? (
-                            <span className="inline-flex shrink-0 items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
-                              {preset.name}
+                          {urlPreset ? (
+                            <span
+                              title={
+                                preset
+                                  ? `${urlPreset.name}（预设驱动）`
+                                  : "URL 命中系统接口，但标题未按 [blog:key] 规范。可重新「启动」自动修复标题。"
+                              }
+                              className="inline-flex shrink-0 items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                            >
+                              {urlPreset.name}
                             </span>
                           ) : orphan ? (
                             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
@@ -602,17 +607,17 @@ export function ManageCronJobs() {
                     </div>
                     {/* 操作区：放数据下方 */}
                     <div className="mt-2 flex items-center justify-end gap-1 border-t border-border/50 pt-2">
-                      {preset ? (
+                      {urlPreset ? (
                         <>
                           {job.enabled ? (
                             <button
                               type="button"
-                              onClick={() => executeAction("stop", preset.key)}
+                              onClick={() => executeAction("stop", urlPreset.key)}
                               disabled={action !== null}
                               className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
                               title="停止（禁用，保留历史）"
                             >
-                              {action?.key === preset.key && action?.type === "stop" ? (
+                              {action?.key === urlPreset.key && action?.type === "stop" ? (
                                 <RefreshCw className="h-4 w-4 animate-spin" />
                               ) : (
                                 <Square className="h-4 w-4" />
@@ -621,27 +626,27 @@ export function ManageCronJobs() {
                           ) : (
                             <button
                               type="button"
-                              onClick={() => executeAction("start", preset.key)}
+                              onClick={() => executeAction("start", urlPreset.key)}
                               disabled={action !== null}
                               className="rounded-md p-1.5 text-green-600 transition-colors hover:bg-green-500/10 disabled:opacity-50"
                               title="启动（按预设创建/启用）"
                             >
-                              {action?.key === preset.key && action?.type === "start" ? (
+                              {action?.key === urlPreset.key && action?.type === "start" ? (
                                 <RefreshCw className="h-4 w-4 animate-spin" />
                               ) : (
                                 <Play className="h-4 w-4" />
                               )}
                             </button>
                           )}
-                          {preset.supportsRun && (
+                          {urlPreset.supportsRun && (
                             <button
                               type="button"
-                              onClick={() => executeAction("run", preset.key)}
+                              onClick={() => executeAction("run", urlPreset.key)}
                               disabled={action !== null}
                               className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-primary disabled:opacity-50"
                               title="手动触发"
                             >
-                              {action?.key === preset.key && action?.type === "run" ? (
+                              {action?.key === urlPreset.key && action?.type === "run" ? (
                                 <RefreshCw className="h-4 w-4 animate-spin" />
                               ) : (
                                 <RefreshCw className="h-4 w-4" />
@@ -661,7 +666,7 @@ export function ManageCronJobs() {
                       )}
                       <button
                         type="button"
-                        onClick={() => openEditForm(preset ? ({ jobId: job.jobId, title: job.title, enabled: job.enabled } as CronJob) : job)}
+                        onClick={() => openEditForm(urlPreset ? ({ jobId: job.jobId, title: job.title, enabled: job.enabled } as CronJob) : job)}
                         className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                         title="编辑"
                       >
@@ -678,12 +683,12 @@ export function ManageCronJobs() {
                       <button
                         type="button"
                         onClick={() =>
-                          preset
-                            ? deleteSystemJob(job.jobId, job.title || preset.name)
+                          urlPreset
+                            ? deleteSystemJob(job.jobId, job.title || urlPreset.name)
                             : deleteJob(job.jobId)
                         }
                         className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
-                        title={preset ? "彻底删除（保留请用停止）" : "删除"}
+                        title={urlPreset ? "彻底删除（保留请用停止）" : "删除"}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>

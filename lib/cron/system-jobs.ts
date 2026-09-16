@@ -105,6 +105,17 @@ export function matchSystemJob(job: CronJob): SystemJobPreset | null {
   return key ? getSystemJobPreset(key) : null;
 }
 
+/** 按任务 URL 推断对应预设（标题失联时兜底识别，仅用于展示/修复，不参与唯一匹配） */
+export function matchPresetByUrl(job: CronJob): SystemJobPreset | null {
+  return (
+    SYSTEM_JOB_PRESETS.find((p) => {
+      const cfg = p.createConfig({ siteUrl: "https://placeholder.invalid", cronSecret: "" });
+      const route = cfg.url.split("/api/cron/")[1];
+      return route ? job.url.includes(`/api/cron/${route}`) : false;
+    }) || null
+  );
+}
+
 /** 按 key 取预设 */
 export function getSystemJobPreset(key: string): SystemJobPreset | null {
   return SYSTEM_JOB_PRESETS.find((p) => p.key === key) || null;
