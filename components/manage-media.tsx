@@ -18,6 +18,8 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminModal } from "@/components/admin/modal";
 import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
 import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
+import { AdminPageHeader } from "@/components/admin/page-header";
+import { AdminSearchInput } from "@/components/admin/search-input";
 import { Switch } from "@/components/ui/switch";
 import { TagInput } from "@/components/tag-input";
 import { StorageDriverType } from "@/lib/types/storage";
@@ -329,15 +331,15 @@ export function ManageMedia() {
 
   return (
     <div className="animate-page-enter">
-      {/* 标题和操作 */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-semibold md:text-2xl">媒体库</h1>
+      <AdminPageHeader
+        title="媒体库"
+        titleExtra={
           <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
             {currentDriver === StorageDriverType.LOCAL ? "本地存储" : currentDriver === StorageDriverType.GITHUB ? "GitHub 图床" : "S3 存储"}
           </span>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+        }
+        actions={
+          <>
           {/* 未使用图片清理 */}
           <button
             type="button"
@@ -379,8 +381,9 @@ export function ManageMedia() {
             <Upload className="h-4 w-4" />
             {uploading ? "上传中…" : "上传图片"}
           </button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* 未使用图片清理面板（动画展开/收起） */}
       <div
@@ -486,16 +489,12 @@ export function ManageMedia() {
         </div>
 
         {/* 搜索 */}
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground transition-transform duration-200 focus-within:scale-110" />
-          <input
-            type="text"
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            placeholder="搜索图片标题或 URL…"
-            className="w-full rounded-lg border border-input bg-background py-2 pl-9 pr-3 text-sm transition-all duration-200 focus:border-primary focus:ring-2 focus:ring-primary/20"
-          />
-        </div>
+        <AdminSearchInput
+          value={search}
+          onChange={(v) => { setSearch(v); setPage(1); }}
+          placeholder="搜索图片标题或 URL…"
+          className="flex-1 min-w-[200px]"
+        />
       </div>
 
       {/* 媒体网格（key 变化时触发切换动画） */}

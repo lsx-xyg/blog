@@ -20,10 +20,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminLoadingState } from "@/components/admin/status";
+import { AdminPageHeader } from "@/components/admin/page-header";
+import { AdminSearchInput } from "@/components/admin/search-input";
 import { useRouter } from "next/navigation";
 import {
   FileText,
-  Search,
   Trash2,
   CheckSquare,
   Square,
@@ -230,27 +231,11 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
 
   return (
     <div className="animate-page-enter">
-      <header className="mb-6">
-        <h1 className="text-xl font-semibold md:text-2xl">文章管理</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          创建、编辑、发布和管理你的博客文章
-        </p>
-      </header>
-
-      {error && (
-        <p className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600">
-          {error}
-        </p>
-      )}
-
-      <section>
-        {/* 标题和搜索筛选 */}
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-base font-semibold text-fg-muted">
-            全部文章（{filteredPosts.length}/{posts.length}）
-          </h2>
-          {/* 搜索筛选区域：所有按钮在一行展示，移动端自适应宽度 */}
-          <div className="flex items-center gap-2 min-w-0">
+      <AdminPageHeader
+        title="文章管理"
+        description={`全部文章（${filteredPosts.length}/${posts.length}）`}
+        actions={
+          <>
             {/* 新建文章按钮 */}
             <button
               type="button"
@@ -264,16 +249,12 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
               <span className="hidden sm:inline">新建文章</span>
             </button>
             {/* 搜索框 */}
-            <div className="relative shrink-0">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="搜索文章..."
-                className="w-32 rounded-lg border border-input bg-background py-1.5 pl-9 pr-3 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 sm:w-48"
-              />
-            </div>
+            <AdminSearchInput
+              value={search}
+              onChange={setSearch}
+              placeholder="搜索文章..."
+              className="shrink-0 w-32 sm:w-48"
+            />
             {/* 状态筛选 */}
             <select
               value={statusFilter}
@@ -295,9 +276,17 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
             >
               <RefreshCw className={`h-4 w-4 ${listLoading ? "animate-spin" : ""}`} />
             </button>
-          </div>
-        </div>
+          </>
+        }
+      />
 
+      {error && (
+        <p className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600">
+          {error}
+        </p>
+      )}
+
+      <section>
         {/* 批量操作工具栏（当有选中文章时显示） */}
         {selectedIds.size > 0 && (
           <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 animate-fade-in-up">

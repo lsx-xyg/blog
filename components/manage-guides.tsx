@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Plus,
   Pencil,
@@ -29,6 +29,8 @@ import {
 import { GUIDE_EVENT_ANCHORS } from "@/lib/guide-events";
 import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
 import { AdminModal } from "@/components/admin/modal";
+import { AdminPageHeader } from "@/components/admin/page-header";
+import { AdminSearchInput } from "@/components/admin/search-input";
 
 /**
  * 引导管理组件（guiders 表 CRUD）
@@ -443,6 +445,19 @@ const EMPTY_FORM: FormState = {
 export function ManageGuides() {
   const [guides, setGuides] = useState<Guide[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+
+  // 搜索过滤（标题 / guideKey / 页面）
+  const filteredGuides = useMemo(() => {
+    if (!search) return guides;
+    const kw = search.toLowerCase();
+    return guides.filter(
+      (g) =>
+        g.title.toLowerCase().includes(kw) ||
+        g.guideKey.toLowerCase().includes(kw) ||
+        (g.page || "").toLowerCase().includes(kw),
+    );
+  }, [guides, search]);
   const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -615,16 +630,10 @@ export function ManageGuides() {
 
   return (
     <div className="space-y-6">
-      {/* 列表 */}
-      <div className="rounded-xl border border-border bg-card p-6">
-        <div className="mb-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">引导列表</h2>
-            <p className="mt-1 text-sm text-muted-foreground">
-              页面通过 data-guide 锚点声明定位目标；「重置」只清空当前登录账号的
-              引导进度（跳过/完成状态移除后，该引导可重新触发）。
-            </p>
-          </div>
+      <AdminPageHeader
+        title="引导管理"
+        description="页面通过 data-guide 锚点声明定位目标；「重置」只清空当前登录账号的引导进度（跳过/完成状态移除后，该引导可重新触发）。"
+        actions={
           <button
             type="button"
             onClick={openCreate}
@@ -633,14 +642,25 @@ export function ManageGuides() {
             <Plus className="h-4 w-4" />
             新建引导
           </button>
-        </div>
+        }
+      />
+
+      {/* 列表 */}
+      <div className="rounded-xl border border-border bg-card p-6">
+        {/* 搜索 */}
+        <AdminSearchInput
+          value={search}
+          onChange={setSearch}
+          placeholder="搜索标题、guideKey 或页面…"
+          className="mb-4 max-w-md"
+        />
 
         {loading ? (
           <AdminLoadingState />
-        ) : guides.length === 0 ? (
+        ) : filteredGuides.length === 0 ? (
           <AdminEmptyState
-            title="暂无引导配置"
-            description="点击右上角「新建引导」创建"
+            title={search ? "没有找到匹配的引导" : "暂无引导配置"}
+            description={search ? undefined : "点击右上角「新建引导」创建"}
           />
         ) : (
           <div className="overflow-x-auto">
@@ -658,7 +678,7 @@ export function ManageGuides() {
                 </tr>
               </thead>
               <tbody>
-                {guides.map((g) => {
+                {filteredGuides.map((g) => {
                   const tc = normalizeTargetCondition(g.targetCondition);
                   const condSummary = tc
                     ? tc.conditions.map((c) => c.field).join(" · ")

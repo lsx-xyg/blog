@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Plus, Trash2, Edit3, Link2, RefreshCw, X } from "lucide-react";
 import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
 
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminModal } from "@/components/admin/modal";
+import { AdminPageHeader } from "@/components/admin/page-header";
+import { AdminSearchInput } from "@/components/admin/search-input";
 
 type FriendLink = {
   id: string;
@@ -42,6 +44,19 @@ export function ManageFriendLinks() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [search, setSearch] = useState("");
+
+  // 搜索过滤（名称/链接/描述）
+  const filteredLinks = useMemo(() => {
+    if (!search) return links;
+    const kw = search.toLowerCase();
+    return links.filter(
+      (l) =>
+        l.name.toLowerCase().includes(kw) ||
+        l.url.toLowerCase().includes(kw) ||
+        (l.description || "").toLowerCase().includes(kw),
+    );
+  }, [links, search]);
 
   // 加载友链列表
   const loadLinks = async () => {
@@ -172,40 +187,47 @@ export function ManageFriendLinks() {
 
   return (
     <div className="animate-page-enter">
-      {/* 标题和操作 */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold md:text-2xl">友链管理</h1>
-          <p className="mt-1 text-sm text-muted-foreground">共 {links.length} 个友链</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={loadLinks}
-            className="flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-            刷新
-          </button>
-          <button
-            type="button"
-            onClick={openCreate}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-          >
-            <Plus className="h-4 w-4" />
-            添加友链
-          </button>
-        </div>
-      </div>
+      <AdminPageHeader
+        title="友链管理"
+        description={`共 ${links.length} 个友链`}
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={loadLinks}
+              className="flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors"
+            >
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+              刷新
+            </button>
+            <button
+              type="button"
+              onClick={openCreate}
+              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+            >
+              <Plus className="h-4 w-4" />
+              添加友链
+            </button>
+          </>
+        }
+      />
+
+      {/* 搜索 */}
+      <AdminSearchInput
+        value={search}
+        onChange={setSearch}
+        placeholder="搜索友链名称、链接或描述…"
+        className="mb-4 max-w-md"
+      />
 
       {/* 友链列表 */}
       {loading ? (
         <AdminLoadingState />
-      ) : links.length === 0 ? (
+      ) : filteredLinks.length === 0 ? (
         <AdminEmptyState
           icon={<Link2 className="h-12 w-12" />}
-          title="还没有友链"
-          description="点击右上角添加"
+          title={search ? "没有找到匹配的友链" : "还没有友链"}
+          description={search ? undefined : "点击右上角添加"}
         />
       ) : (
         <div className="overflow-hidden rounded-xl border border-border">
@@ -220,7 +242,7 @@ export function ManageFriendLinks() {
               </tr>
             </thead>
             <tbody>
-              {links.map((link, index) => (
+              {filteredLinks.map((link, index) => (
                 <tr
                   key={link.id}
                   className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors animate-fade-in-up"

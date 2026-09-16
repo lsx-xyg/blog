@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trash2, Search, Tag, FileText, Image, RefreshCw, AlertTriangle } from "lucide-react";
+import { Trash2, Tag, FileText, Image, RefreshCw, AlertTriangle } from "lucide-react";
+import { AdminPageHeader } from "@/components/admin/page-header";
+import { AdminSearchInput } from "@/components/admin/search-input";
 import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
 
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
@@ -99,15 +101,10 @@ export function ManageTags() {
 
   return (
     <div className="animate-page-enter">
-      {/* 标题和操作 */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold md:text-2xl">标签管理</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            共 {tags.length} 个标签 · {totalPosts} 次文章引用 · {totalMedia} 次图片引用
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
+      <AdminPageHeader
+        title="标签管理"
+        description={`共 ${tags.length} 个标签 · ${totalPosts} 次文章引用 · ${totalMedia} 次图片引用`}
+        actions={
           <button
             type="button"
             onClick={loadTags}
@@ -116,20 +113,16 @@ export function ManageTags() {
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             <span className="hidden sm:inline">刷新</span>
           </button>
-        </div>
-      </div>
+        }
+      />
 
       {/* 搜索 */}
-      <div className="mb-6 relative max-w-md">
-        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="搜索标签..."
-          className="w-full rounded-lg border border-input bg-background py-2 pl-9 pr-3 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-        />
-      </div>
+      <AdminSearchInput
+        value={search}
+        onChange={setSearch}
+        placeholder="搜索标签..."
+        className="mb-6 max-w-md"
+      />
 
       {/* 标签列表 */}
       {loading ? (
