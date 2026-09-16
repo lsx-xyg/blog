@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import { Save, RefreshCw, Globe, Link2, FileText, Settings as SettingsIcon, Eye, EyeOff, Check, Copy } from "lucide-react";
+import { Save, RefreshCw, Globe, Link2, FileText, Settings as SettingsIcon, Eye, EyeOff, Check, Copy, ShieldCheck, AlertTriangle, Loader2 } from "lucide-react";
 import { useToast } from "@/components/toast";
 import type { 
   CronSettings, 
@@ -242,7 +242,47 @@ export function ManageSettings() {
 
   useEffect(() => {
     loadSettings();
+    checkEncryption(true);
   }, []);
+
+  /** 加密状态：ENCRYPTION_KEY 是否配置 / 是否有效（能解出库中密文） */
+  const [encryption, setEncryption] = useState<{
+    configured: boolean;
+    valid: boolean | null;
+    sampleKey: string | null;
+    hasSample: boolean;
+  } | null>(null);
+  const [checkingEncryption, setCheckingEncryption] = useState(false);
+
+  const checkEncryption = async (silent = false) => {
+    setCheckingEncryption(true);
+    try {
+      const res = await fetch("/api/admin/security/encryption-status");
+      if (res.ok) {
+        const data = await res.json();
+        setEncryption(data);
+        if (!silent) {
+          if (!data.configured) {
+            showToast("未配置 ENCRYPTION_KEY", "error");
+          } else if (data.valid === false) {
+            showToast("密钥无效：库中密文无法用当前密钥解密", "error");
+          } else if (data.valid === true) {
+            showToast("密钥有效，解密验证通过", "success");
+          } else {
+            showToast("密钥已配置（库中暂无敏感数据可验证）", "success");
+          }
+        }
+      } else {
+        const data = await res.json().catch(() => ({}));
+        showToast(data.error || "检测加密状态失败", "error");
+      }
+    } catch (e) {
+      console.error("检测加密状态失败：", e);
+      if (!silent) showToast("检测加密状态失败，请重试", "error");
+    } finally {
+      setCheckingEncryption(false);
+    }
+  };
 
   // 保存设置
   const saveSettings = async () => {
@@ -745,6 +785,93 @@ export function ManageSettings() {
                       环境变量 ADMIN_PATH 优先级高于此设置，如需使用此设置请先移除环境变量。
                     </p>
                   </div>
+                </div>
+
+                {/* 安全与加密：ENCRYPTION_KEY 状态检测 */}
+                <div className="mt-6 border-t border-border pt-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="flex items-center gap-1.5 text-sm font-medium">
+                        <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                        加密密钥（ENCRYPTION_KEY）
+                      </h3>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        主密钥：加密数据库敏感配置、accounts 敏感字段与备份文件（AES-256-GCM）
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => checkEncryption()}
+                      disabled={checkingEncryption}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-background px-3 py-1.5 text-xs font-medium transition hover:bg-accent disabled:opacity-50"
+                    >
+                      {checkingEncryption ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-3.5 w-3.5" />
+                      )}
+                      测试解密
+                    </button>
+                  </div>
+
+                  {encryption && (
+                    <div className="mt-3 space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`inline-flex h-2 w-2 rounded-full ${
+                            encryption.configured ? "bg-green-500" : "bg-red-500"
+                          }`}
+                        />
+                        <span className="text-xs text-muted-foreground">
+                          环境变量状态：
+                          <span className={encryption.configured ? "font-medium text-green-600" : "font-medium text-red-500"}>
+                            {encryption.configured ? "已配置" : "未配置"}
+                          </span>
+                        </span>
+                      </div>
+
+                      {encryption.configured && (
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`inline-flex h-2 w-2 rounded-full ${
+                              encryption.valid === true
+                                ? "bg-green-500"
+                                : encryption.valid === false
+                                  ? "bg-red-500"
+                                  : "bg-gray-400"
+                            }`}
+                          />
+                          <span className="text-xs text-muted-foreground">
+                            密钥有效性：
+                            {encryption.valid === true ? (
+                              <span className="font-medium text-green-600">有效（已成功解密库中密文）</span>
+                            ) : encryption.valid === false ? (
+                              <span className="font-medium text-red-500">无效（库中密文无法解密，密钥可能不匹配）</span>
+                            ) : (
+                              <span className="font-medium text-gray-400">暂无数据可验证（库中尚无敏感配置）</span>
+                            )}
+                          </span>
+                        </div>
+                      )}
+
+                      {encryption.sampleKey && (
+                        <p className="text-xs text-gray-500">验证样本：{encryption.sampleKey}</p>
+                      )}
+
+                      {!encryption.configured && (
+                        <div className="mt-2 rounded-lg border border-red-500/30 bg-red-500/5 p-3">
+                          <p className="text-xs leading-relaxed text-red-700 dark:text-red-400">
+                            <AlertTriangle className="mr-1 inline h-3.5 w-3.5" />
+                            ENCRYPTION_KEY 未配置：数据库敏感配置将明文存储、备份文件不加密。请到部署平台（如
+                            Vercel）的环境变量中设置（32 字节随机值 Base64）。生成命令：
+                            <code className="mt-1 block rounded bg-background px-2 py-1 font-mono text-xs">
+                              node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
+                            </code>
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
