@@ -14,6 +14,7 @@ import {
   X,
   ZoomIn,
 } from "lucide-react";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
 import { Switch } from "@/components/ui/switch";
 import { TagInput } from "@/components/tag-input";
@@ -149,10 +150,26 @@ export function ManageMedia() {
     }
   };
 
+  // 删除确认对话框受控状态
+  const [confirmState, setConfirmState] = useState<{
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+  } | null>(null);
+
   // 删除
   const deleteItem = async (id: string) => {
-    if (!confirm("确定删除这张图片吗？存储中的文件也会被删除。")) return;
+    setConfirmState({
+      title: "删除这张图片",
+      description: "存储中的文件也会被删除。",
+      onConfirm: async () => {
+        setConfirmState(null);
+        await doDeleteItem(id);
+      },
+    });
+  };
 
+  const doDeleteItem = async (id: string) => {
     try {
       await fetch(`/api/admin/media/${id}`, {
         method: "DELETE",
@@ -274,8 +291,17 @@ export function ManageMedia() {
 
   // 批量删除未使用图片
   const cleanupUnusedMedia = async () => {
-    if (!confirm(`确定删除 ${unusedItems.length} 张未使用的图片吗？此操作不可恢复。`)) return;
+    setConfirmState({
+      title: `删除 ${unusedItems.length} 张未使用的图片`,
+      description: "此操作不可恢复。",
+      onConfirm: async () => {
+        setConfirmState(null);
+        await doCleanupUnusedMedia();
+      },
+    });
+  };
 
+  const doCleanupUnusedMedia = async () => {
     try {
       await fetch("/api/admin/media/unused", {
         method: "DELETE",
@@ -725,6 +751,16 @@ export function ManageMedia() {
           />
         </div>
       )}
+
+      {/* 删除确认 */}
+      <ConfirmDialog
+        open={!!confirmState}
+        title={confirmState?.title ?? ""}
+        description={confirmState?.description}
+        confirmLabel="删除"
+        onConfirm={confirmState?.onConfirm ?? (() => {})}
+        onClose={() => setConfirmState(null)}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Plus, Trash2, Edit3, Link2, RefreshCw, X } from "lucide-react";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 
 type FriendLink = {
   id: string;
@@ -128,9 +129,24 @@ export function ManageFriendLinks() {
     }
   };
 
-  // 删除友链
+  // 删除友链（确认对话框受控状态）
+  const [confirmState, setConfirmState] = useState<{
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+  } | null>(null);
+
   const deleteLink = async (id: string, name: string) => {
-    if (!confirm(`确定删除友链「${name}」吗？`)) return;
+    setConfirmState({
+      title: `删除友链「${name}」`,
+      onConfirm: async () => {
+        setConfirmState(null);
+        await doDeleteLink(id);
+      },
+    });
+  };
+
+  const doDeleteLink = async (id: string) => {
 
     try {
       const res = await fetch(`/api/admin/friend-links/${id}`, {
@@ -380,6 +396,16 @@ export function ManageFriendLinks() {
           </div>
         </div>
       )}
+
+      {/* 删除确认 */}
+      <ConfirmDialog
+        open={!!confirmState}
+        title={confirmState?.title ?? ""}
+        description={confirmState?.description}
+        confirmLabel="删除"
+        onConfirm={confirmState?.onConfirm ?? (() => {})}
+        onClose={() => setConfirmState(null)}
+      />
     </div>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Trash2, Search, Tag, FileText, Image, RefreshCw, AlertTriangle } from "lucide-react";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 
 type TagWithCount = {
   id: string;
@@ -48,12 +49,25 @@ export function ManageTags() {
     loadTags();
   }, []);
 
-  // 删除标签
-  const deleteTag = async (id: string, name: string) => {
-    if (!confirm(`确定删除标签「${name}」吗？\n\n关联的文章和图片标签会自动解除关联，但不会删除文章和图片本身。`)) {
-      return;
-    }
+  // 删除标签（确认对话框受控状态）
+  const [confirmState, setConfirmState] = useState<{
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+  } | null>(null);
 
+  const deleteTag = async (id: string, name: string) => {
+    setConfirmState({
+      title: `删除标签「${name}」`,
+      description: "关联的文章和图片标签会自动解除关联，但不会删除文章和图片本身。",
+      onConfirm: async () => {
+        setConfirmState(null);
+        await doDeleteTag(id);
+      },
+    });
+  };
+
+  const doDeleteTag = async (id: string) => {
     setDeletingId(id);
     try {
       const res = await fetch(`/api/admin/tags/${id}`, {
@@ -253,6 +267,16 @@ export function ManageTags() {
           </div>
         </div>
       )}
+
+      {/* 删除确认 */}
+      <ConfirmDialog
+        open={!!confirmState}
+        title={confirmState?.title ?? ""}
+        description={confirmState?.description}
+        confirmLabel="删除"
+        onConfirm={confirmState?.onConfirm ?? (() => {})}
+        onClose={() => setConfirmState(null)}
+      />
     </div>
   );
 }

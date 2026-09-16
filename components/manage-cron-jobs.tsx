@@ -32,6 +32,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useToast } from "@/components/toast";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { CronDeployPlatform } from "@/lib/types/settings";
 import { type CronJob, type CronJobConfig, type CronJobSchedule } from "@/lib/types/cron";
 import {
@@ -273,10 +274,25 @@ export function ManageCronJobs() {
     }
   };
 
+  // 删除确认对话框受控状态
+  const [confirmState, setConfirmState] = useState<{
+    title: string;
+    description?: string;
+    onConfirm: () => void;
+  } | null>(null);
+
   // 删除任务
   const deleteJob = async (jobId: number) => {
-    if (!confirm("确定要删除这个定时任务吗？")) return;
+    setConfirmState({
+      title: "删除这个定时任务",
+      onConfirm: async () => {
+        setConfirmState(null);
+        await doDeleteJob(jobId);
+      },
+    });
+  };
 
+  const doDeleteJob = async (jobId: number) => {
     try {
       const res = await fetch(`/api/admin/cron/jobs/${jobId}`, { method: "DELETE" });
       if (res.ok) {
@@ -293,8 +309,17 @@ export function ManageCronJobs() {
 
   // 删除系统任务（系统任务区入口，删除后刷新状态）
   const deleteSystemJob = async (jobId: number, name: string) => {
-    if (!confirm(`确定彻底删除系统任务「${name}」吗？删除后执行历史将丢失。`)) return;
+    setConfirmState({
+      title: `彻底删除系统任务「${name}」`,
+      description: "删除后执行历史将丢失。",
+      onConfirm: async () => {
+        setConfirmState(null);
+        await doDeleteSystemJob(jobId);
+      },
+    });
+  };
 
+  const doDeleteSystemJob = async (jobId: number) => {
     try {
       const res = await fetch(`/api/admin/cron/jobs/${jobId}`, { method: "DELETE" });
       if (res.ok) {
@@ -1157,6 +1182,15 @@ export function ManageCronJobs() {
         />
       )}
 
+      {/* 删除确认 */}
+      <ConfirmDialog
+        open={!!confirmState}
+        title={confirmState?.title ?? ""}
+        description={confirmState?.description}
+        confirmLabel="删除"
+        onConfirm={confirmState?.onConfirm ?? (() => {})}
+        onClose={() => setConfirmState(null)}
+      />
     </div>
   );
 }

@@ -18,6 +18,7 @@
  * - 移动端搜索、状态筛选、刷新按钮放在同一行，节省空间
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { useRouter } from "next/navigation";
 import {
   FileText,
@@ -85,14 +86,29 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
     load();
   }, [load]);
 
+  // 危险操作确认对话框受控状态
+  const [confirmState, setConfirmState] = useState<{
+    title: string;
+    description?: string;
+    confirmLabel?: string;
+    danger?: boolean;
+    onConfirm: () => void;
+  } | null>(null);
+
   const remove = async (p: PostRow) => {
-    if (!confirm(`确定删除「${p.title}」？关联标签将一并清理。`)) return;
-    const r = await fetch(`/api/admin/posts/${p.id}`, { method: "DELETE" });
-    if (r.ok) {
-      await load();
-    } else {
-      setError("删除失败");
-    }
+    setConfirmState({
+      title: `删除「${p.title}」`,
+      description: "关联标签将一并清理。",
+      onConfirm: async () => {
+        setConfirmState(null);
+        const r = await fetch(`/api/admin/posts/${p.id}`, { method: "DELETE" });
+        if (r.ok) {
+          await load();
+        } else {
+          setError("删除失败");
+        }
+      },
+    });
   };
 
   // 过滤后的文章列表（搜索 + 状态筛选）
@@ -138,8 +154,17 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
   // 批量删除
   const batchDelete = async () => {
     if (selectedIds.size === 0) return;
-    if (!confirm(`确定删除选中的 ${selectedIds.size} 篇文章？关联标签将一并清理。`)) return;
+    setConfirmState({
+      title: `删除选中的 ${selectedIds.size} 篇文章`,
+      description: "关联标签将一并清理。",
+      onConfirm: async () => {
+        setConfirmState(null);
+        await doBatchDelete();
+      },
+    });
+  };
 
+  const doBatchDelete = async () => {
     setBatchLoading(true);
     setError("");
     try {
@@ -165,8 +190,19 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
   const batchUpdateStatus = async (status: PostStatus) => {
     if (selectedIds.size === 0) return;
     const statusLabel = status === PostStatus.PUBLISHED ? "已发布" : status === PostStatus.SCHEDULED ? "定时" : "草稿";
-    if (!confirm(`确定将选中的 ${selectedIds.size} 篇文章状态修改为「${statusLabel}」？`)) return;
+    setConfirmState({
+      title: `将选中的 ${selectedIds.size} 篇文章状态修改为「${statusLabel}」`,
+      danger: false,
+      confirmLabel: "修改状态",
+      onConfirm: async () => {
+        setConfirmState(null);
+        await doBatchUpdateStatus(status);
+      },
+    });
+  };
 
+  const doBatchUpdateStatus = async (status: PostStatus) => {
+    const statusLabel = status === PostStatus.PUBLISHED ? "已发布" : status === PostStatus.SCHEDULED ? "定时" : "草稿";
     setBatchLoading(true);
     setError("");
     try {
@@ -580,6 +616,17 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
           </>
         )}
       </section>
+
+      {/* 危险操作确认 */}
+      <ConfirmDialog
+        open={!!confirmState}
+        title={confirmState?.title ?? ""}
+        description={confirmState?.description}
+        confirmLabel={confirmState?.confirmLabel}
+        danger={confirmState?.danger}
+        onConfirm={confirmState?.onConfirm ?? (() => {})}
+        onClose={() => setConfirmState(null)}
+      />
     </div>
   );
 }
