@@ -148,7 +148,8 @@ export default function QuickLinks({
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(TouchSensor, {
       activationConstraint: {
-        delay: 500,
+        // 长按 700ms 才进入拖拽，避免下滑页面时误触发
+        delay: 700,
         tolerance: 8,
       },
     }),
@@ -209,7 +210,7 @@ export default function QuickLinks({
             保存中…
           </span>
         ) : (
-          "桌面：拖拽调整顺序 · 移动端：长按 0.5s 拖动 · 顺序跨设备保存"
+          "桌面：拖拽调整顺序 · 移动端：长按 0.7s 拖动 · 顺序跨设备保存"
         )}
       </p>
     </div>

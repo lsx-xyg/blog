@@ -44,15 +44,22 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) =
   }, [toast.id, onRemove]);
 
   const icons = {
-    success: <CheckCircle className="h-5 w-5 text-green-500" />,
+    success: <CheckCircle className="h-5 w-5 text-white" />,
     error: <XCircle className="h-5 w-5 text-red-500" />,
     info: <Info className="h-5 w-5 text-blue-500" />,
   };
 
   const bgColors = {
-    success: "bg-green-50 border-green-200 dark:bg-green-950/50 dark:border-green-800",
+    // 成功：实心深绿底 + 白字，保证高对比可读
+    success: "bg-green-600 border-green-700 shadow-green-600/30",
     error: "bg-red-50 border-red-200 dark:bg-red-950/50 dark:border-red-800",
     info: "bg-blue-50 border-blue-200 dark:bg-blue-950/50 dark:border-blue-800",
+  };
+
+  const textColors = {
+    success: "text-white",
+    error: "text-foreground",
+    info: "text-foreground",
   };
 
   return (
@@ -63,14 +70,14 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) =
       role="alert"
     >
       {icons[toast.type]}
-      <span className="text-sm font-medium text-foreground">{toast.message}</span>
+      <span className={`text-sm font-medium ${textColors[toast.type]}`}>{toast.message}</span>
       <button
         type="button"
         onClick={() => {
           setVisible(false);
           setTimeout(() => onRemove(toast.id), 300);
         }}
-        className="ml-2 text-muted-foreground hover:text-foreground transition-colors"
+        className={`ml-2 transition-colors ${toast.type === "success" ? "text-green-100 hover:text-white" : "text-muted-foreground hover:text-foreground"}`}
         aria-label="关闭"
       >
         <X className="h-4 w-4" />
