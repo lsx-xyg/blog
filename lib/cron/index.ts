@@ -26,6 +26,7 @@ import {
   CronJobDetailed,
   CronJobHistoryItem,
   CronJobExecutionDetail,
+  CronFolder,
 } from "@/lib/types/cron";
 
 const CRON_JOB_API_BASE = "https://api.cron-job.org";
@@ -153,6 +154,44 @@ export async function getJobHistoryDetail(
     `/jobs/${jobId}/history/${identifier}`,
   );
   return result.executionDetails;
+}
+
+/**
+ * 列出所有文件夹
+ */
+export async function listCronFolders(): Promise<CronFolder[]> {
+  const result = await apiRequest<{ folders: CronFolder[] }>("GET", "/folders");
+  return result.folders || [];
+}
+
+/**
+ * 创建文件夹
+ * @param name 文件夹名称
+ * @returns 文件夹 ID
+ */
+export async function createCronFolder(name: string): Promise<number> {
+  const result = await apiRequest<{ folderId: number }>("PUT", "/folders", {
+    name,
+    enabled: true,
+  });
+  return result.folderId;
+}
+
+/**
+ * 更新文件夹（重命名 / 启用禁用）
+ */
+export async function updateCronFolder(
+  folderId: number,
+  delta: { name?: string; enabled?: boolean },
+): Promise<void> {
+  await apiRequest("PATCH", `/folders/${folderId}`, delta);
+}
+
+/**
+ * 删除文件夹（文件夹内任务将移到根目录）
+ */
+export async function deleteCronFolder(folderId: number): Promise<void> {
+  await apiRequest("DELETE", `/folders/${folderId}`);
 }
 
 /**

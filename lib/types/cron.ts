@@ -189,3 +189,12 @@ export const CronJobExecutionStatus = {
 
 export type CronJobExecutionStatus =
   (typeof CronJobExecutionStatus)[keyof typeof CronJobExecutionStatus];
+/** 文件夹（Folder，官方文档） */
+
+export type CronFolder = {
+  folderId: number;
+  name: string;
+  enabled: boolean;
+  /** 文件夹内任务数（列表接口返回） */
+  jobCount?: number;
+};
