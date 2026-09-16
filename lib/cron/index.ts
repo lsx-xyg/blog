@@ -28,6 +28,7 @@ import {
   CronJobExecutionDetail,
   CronFolder,
 } from "@/lib/types/cron";
+import { SYSTEM_JOB_PRESETS, getSystemJobPreset } from "@/lib/cron/system-jobs";
 
 const CRON_JOB_API_BASE = "https://api.cron-job.org";
 
@@ -195,45 +196,76 @@ export async function deleteCronFolder(folderId: number): Promise<void> {
 }
 
 /**
- * 创建全局定时发布任务（方案 A：每分钟扫描一次）
+ * 创建系统定时任务（方案 A：按预设创建）
  *
- * @param siteUrl 站点 URL（如 https://blog.example.com）
- * @param cronSecret CRON_SECRET（用于接口鉴权）
+ * @param presetKey 预设键（SYSTEM_JOB_PRESETS）
+ * @param ctx { siteUrl, cronSecret } 预设所需的站点上下文
  * @returns 任务 ID
  */
+export async function createSystemJob(
+  presetKey: string,
+  ctx: { siteUrl: string; cronSecret: string },
+): Promise<number> {
+  const preset = getSystemJobPreset(presetKey);
+  if (!preset) {
+    throw new Error(`未知的系统定时任务预设: ${presetKey}`);
+  }
+  return createCronJob(preset.createConfig(ctx));
+}
+
+/** 兼容入口：创建定时发布扫描任务（旧调用方） */
 export async function createGlobalPublishJob(
   siteUrl: string,
   cronSecret: string,
 ): Promise<number> {
-  return createCronJob({
-    title: "博客定时发布扫描（每分钟）",
-    url: `${siteUrl}/api/cron/publish-scheduled`,
-    enabled: true,
-    saveResponses: false,
-    requestMethod: RequestMethod.GET,
-    requestTimeout: 30,
-    extendedData: {
-      headers: {
-        "X-Cron-Secret": cronSecret,   // ← secret 放 header
-      },
-    },
-    schedule: {
-      timezone: "Asia/Shanghai",
-      expiresAt: 0,
-      hours: [-1],
-      mdays: [-1],
-      minutes: [-1], // 每分钟
-      months: [-1],
-      wdays: [-1],
-    },
-  });
+  return createSystemJob("publish_scheduled", { siteUrl, cronSecret });
 }
 
 /**
- * 查找全局定时发布任务
+ * 查找系统任务对应的 cron-job.org 任务
+ * @param presetKey 预设键；缺省取第一个预设（兼容旧的全局发布查找）
  * @returns 任务详情，如果不存在返回 null
  */
-export async function findGlobalPublishJob(): Promise<CronJob | null> {
+export async function findSystemJob(
+  presetKey?: string,
+): Promise<CronJob | null> {
   const jobs = await listCronJobs();
+  if (presetKey) {
+    const preset = getSystemJobPreset(presetKey);
+    if (!preset) return null;
+    return jobs.find((j) => j.title.includes(preset.name)) || null;
+  }
   return jobs.find((j) => j.title.includes("定时发布扫描")) || null;
+}
+
+/** 兼容入口：查找定时发布扫描任务 */
+export async function findGlobalPublishJob(): Promise<CronJob | null> {
+  return findSystemJob("publish_scheduled");
+}
+
+/** 列出所有系统任务（含状态），供总览一次查询 */
+export async function listSystemJobsStatus(): Promise<
+  Array<{
+    key: string;
+    name: string;
+    description: string;
+    supportsRun: boolean;
+    enabled: boolean;
+    jobId?: number;
+    nextRun?: number | null;
+  }>
+> {
+  const jobs = await listCronJobs();
+  return SYSTEM_JOB_PRESETS.map((preset) => {
+    const job = jobs.find((j) => j.title.includes(preset.name)) || null;
+    return {
+      key: preset.key,
+      name: preset.name,
+      description: preset.description,
+      supportsRun: !!preset.supportsRun,
+      enabled: job?.enabled ?? false,
+      jobId: job?.jobId,
+      nextRun: job?.nextExecution ?? null,
+    };
+  });
 }

@@ -38,6 +38,7 @@ import { useToast } from "@/components/toast";
 import { CronDeployPlatform } from "@/lib/types/settings";
 import { RequestMethod, type CronJob, type CronJobConfig, type CronJobSchedule, type CronFolder } from "@/lib/types/cron";
 import { CronJobHistoryDialog } from "@/components/cron-job-history";
+import { isSystemJob } from "@/lib/cron/system-jobs";
 
 type CronStatus = {
   platform: CronDeployPlatform;
@@ -823,6 +824,11 @@ export function ManageCronJobs() {
                         }`}
                       />
                       <h3 className="truncate font-medium">{job.title || "(无标题)"}</h3>
+                      {isSystemJob(job) && (
+                        <span className="flex-shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                          系统
+                        </span>
+                      )}
                       <span className="rounded bg-muted px-2 py-0.5 font-mono text-xs">
                         {methodLabel(job.requestMethod)}
                       </span>

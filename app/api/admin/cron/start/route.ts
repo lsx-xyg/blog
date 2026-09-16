@@ -1,17 +1,30 @@
 /**
- * POST /api/admin/cron/start - 创建全局定时发布任务（cron-job.org）
+ * POST /api/admin/cron/start - 启动系统定时任务（预设驱动）
+ * 已存在 → 更新为启用（PATCH enabled=true，保留任务与执行历史）
+ * 不存在 → 按预设创建
  */
 import { NextResponse } from "next/server";
 import { requireAdmin, adminDenied } from "@/lib/auth/auth-guard";
-import { createGlobalPublishJob, findGlobalPublishJob } from "@/lib/cron";
+import { createSystemJob, findSystemJob, updateCronJob } from "@/lib/cron";
 import { getDeployPlatform } from "@/lib/settings";
 import { getCronSettings, getSiteSettings } from "@/lib/settings/index";
 import { CronDeployPlatform } from "@/lib/types/settings";
+import { getSystemJobPreset } from "@/lib/cron/system-jobs";
 
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
   if (!(await requireAdmin(req))) return adminDenied();
+
+  const body = (await req.json().catch(() => ({}))) as { key?: string };
+  const presetKey = body.key || "publish_scheduled";
+  const preset = getSystemJobPreset(presetKey);
+  if (!preset) {
+    return NextResponse.json(
+      { error: `未知的系统定时任务预设: ${presetKey}` },
+      { status: 400 },
+    );
+  }
 
   const [platform, cronConfig, siteSettings] = await Promise.all([
     getDeployPlatform(),
@@ -37,26 +50,32 @@ export async function POST(req: Request) {
     }
 
     try {
-      // 先检查是否已存在
-      const existing = await findGlobalPublishJob();
+      // 先检查是否已存在：存在则启用（不删除、保留历史），不存在则创建
+      const existing = await findSystemJob(presetKey);
       if (existing) {
+        if (!existing.enabled) {
+          await updateCronJob(existing.jobId, { enabled: true });
+        }
         return NextResponse.json({
           success: true,
-          message: "定时任务已存在",
+          message: existing.enabled ? "定时任务已在运行" : "定时任务已启用",
           jobId: existing.jobId,
         });
       }
 
-      const jobId = await createGlobalPublishJob(siteUrl, cronConfig.secret);
+      const jobId = await createSystemJob(presetKey, {
+        siteUrl,
+        cronSecret: cronConfig.secret,
+      });
       return NextResponse.json({
         success: true,
-        message: "定时任务已创建（每分钟执行一次）",
+        message: `${preset.name}已创建并启动`,
         jobId,
       });
     } catch (error) {
-      console.error("创建 cron-job.org 任务失败：", error);
+      console.error("启动系统定时任务失败：", error);
       return NextResponse.json(
-        { error: "创建定时任务失败", detail: String(error) },
+        { error: "启动定时任务失败", detail: String(error) },
         { status: 500 },
       );
     }

@@ -231,7 +231,7 @@ interface StorageDriver {
 | 进度管理 | 完成（completed）永久抑制；跳过（skipped）7 天冷却期后可重新触发；管理页可手动重置当前账号进度 |
 | 管理页 | `/[adminSlug]/guides`：CRUD + 发布/归档 + 步骤卡片编辑器（自动组装 JSON）+ 触发条件行式表单 + 重置进度 |
 
-> **实施记录（2026-09-16）**：三表 + 迁移 0009（guiders / user_guide_progress）/ 0010（user_events + 存量 target_condition 归一化）；API：`GET/POST /api/admin/guides`、`PUT/DELETE /api/admin/guides/[id]`、`GET/POST/DELETE /api/admin/guides/progress`、`POST /api/admin/guides/track`、`POST /api/admin/guides/evaluate`；seed：`scripts/seed-guides.ts`（reveal_password_setup_v1）。完整使用说明见 `docs/adr/0002-onborda-guide-system.md` 附录 A。
+> **实施记录（2026-09-16）**：三表 + 迁移 0009（guiders / user_guide_progress）/ 0010（user_events + 存量 target_condition 归一化）；API：`GET/POST /api/admin/guides`、`PUT/DELETE /api/admin/guides/[id]`、`GET/POST/DELETE /api/admin/guides/progress`、`POST /api/admin/guides/track`、`POST /api/admin/guides/evaluate`；seed：`scripts/seed-guides.ts`（reveal_password_setup_v1）。完整使用说明见 `docs/adr/0010-onborda-guide-system.md` 附录 A。
 
 ### 8.2 敏感信息查看（Sensitive Setting Reveal，#18，2026-09-16 实施 ✅）
 
