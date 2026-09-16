@@ -100,8 +100,6 @@ export type CronJobConfig = {
   requestTimeout?: number;
   /** 是否将 3xx 视为成功，默认 false */
   redirectSuccess?: boolean;
-  /** 所在文件夹 ID，默认 0（根目录） */
-  folderId?: number;
   /** HTTP 基本认证（JobAuth，官方文档） */
   auth?: {
     enable: boolean;
@@ -189,12 +187,3 @@ export const CronJobExecutionStatus = {
 
 export type CronJobExecutionStatus =
   (typeof CronJobExecutionStatus)[keyof typeof CronJobExecutionStatus];
-/** 文件夹（Folder，官方文档） */
-
-export type CronFolder = {
-  folderId: number;
-  name: string;
-  enabled: boolean;
-  /** 文件夹内任务数（列表接口返回） */
-  jobCount?: number;
-};

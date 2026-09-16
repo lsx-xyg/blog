@@ -29,14 +29,11 @@ import {
   ChevronDown,
   ChevronUp,
   History as HistoryIcon,
-  Folder as FolderIcon,
-  FolderPlus,
-  Settings2,
   Loader2,
 } from "lucide-react";
 import { useToast } from "@/components/toast";
 import { CronDeployPlatform } from "@/lib/types/settings";
-import { RequestMethod, type CronJob, type CronJobConfig, type CronJobSchedule, type CronFolder } from "@/lib/types/cron";
+import { RequestMethod, type CronJob, type CronJobConfig, type CronJobSchedule } from "@/lib/types/cron";
 import { CronJobHistoryDialog } from "@/components/cron-job-history";
 import { isSystemJob } from "@/lib/cron/system-jobs";
 
@@ -90,7 +87,6 @@ type FormState = {
     onSslCertExpiry: boolean;
     onSslCertExpirySeconds: number;
   };
-  folderId: number;
 };
 
 const DEFAULT_FORM: FormState = {
@@ -124,7 +120,6 @@ const DEFAULT_FORM: FormState = {
     onSslCertExpiry: false,
     onSslCertExpirySeconds: 604800,
   },
-  folderId: 0,
 };
 
 const REQUEST_METHODS = [
@@ -194,7 +189,6 @@ function jobToForm(job: CronJob): FormState {
       onSslCertExpiry: false,
       onSslCertExpirySeconds: 604800,
     },
-    folderId: job.folderId ?? 0,
   };
 }
 
@@ -245,9 +239,6 @@ function formToConfig(form: FormState): CronJobConfig {
     onSslCertExpirySeconds: form.notification.onSslCertExpirySeconds,
   };
 
-  // 所在文件夹
-  config.folderId = form.folderId ?? 0;
-
   return config;
 }
 
@@ -266,13 +257,6 @@ export function ManageCronJobs() {
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [historyJob, setHistoryJob] = useState<CronJob | null>(null);
-  const [folders, setFolders] = useState<CronFolder[] | null>(null);
-  const [loadingFolders, setLoadingFolders] = useState(false);
-  const [folderFilter, setFolderFilter] = useState<number | null>(null);
-  const [showFolderManager, setShowFolderManager] = useState(false);
-  const [folderName, setFolderName] = useState("");
-  const [editingFolder, setEditingFolder] = useState<CronFolder | null>(null);
-  const [folderSaving, setFolderSaving] = useState(false);
 
   // 页面打开不自动请求（免费版 cron-job.org API 每日配额有限），各按钮独立触发对应 API
   const loadStatus = async () => {
@@ -307,30 +291,13 @@ export function ManageCronJobs() {
     }
   };
 
-  const loadFolders = async () => {
-    setLoadingFolders(true);
-    try {
-      const res = await fetch("/api/admin/cron/folders");
-      if (res.ok) {
-        const data = await res.json();
-        setFolders(data.folders || []);
-      }
-    } catch (e) {
-      console.error("加载文件夹失败：", e);
-      showToast("加载文件夹失败", "error");
-    } finally {
-      setLoadingFolders(false);
-    }
-  };
-
   // 刷新全部：一次性触发所有 API（明确需要全量刷新时使用）
   const refreshAll = async () => {
     setRefreshing(true);
     try {
-      const [statusRes, jobsRes, foldersRes] = await Promise.all([
+      const [statusRes, jobsRes] = await Promise.all([
         fetch("/api/admin/cron"),
         fetch("/api/admin/cron/jobs"),
-        fetch("/api/admin/cron/folders"),
       ]);
 
       if (statusRes.ok) {
@@ -343,10 +310,6 @@ export function ManageCronJobs() {
         setJobs(data.jobs || []);
       }
 
-      if (foldersRes.ok) {
-        const data = await foldersRes.json();
-        setFolders(data.folders || []);
-      }
     } catch (e) {
       console.error("刷新失败：", e);
       showToast("刷新失败", "error");
@@ -529,84 +492,11 @@ export function ManageCronJobs() {
     }
   };
 
-  // 打开文件夹管理（未加载时先加载）
-  const openFolderManager = async () => {
-    setShowFolderManager(true);
-    if (folders === null && !loadingFolders) {
-      await loadFolders();
-    }
-  };
-
-  // 保存文件夹（创建 / 重命名）
-  const saveFolder = async () => {
-    if (!folderName.trim()) {
-      showToast("文件夹名称不能为空", "error");
-      return;
-    }
-    setFolderSaving(true);
-    try {
-      const res = editingFolder
-        ? await fetch(`/api/admin/cron/folders/${editingFolder.folderId}`, {
-            method: "PATCH",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: folderName.trim() }),
-          })
-        : await fetch("/api/admin/cron/folders", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name: folderName.trim() }),
-          });
-
-      if (res.ok) {
-        showToast(editingFolder ? "文件夹已重命名" : "文件夹已创建", "success");
-        setFolderName("");
-        setEditingFolder(null);
-        await loadFolders();
-      } else {
-        const data = await res.json();
-        showToast(data.error || "保存文件夹失败", "error");
-      }
-    } catch (e) {
-      console.error("保存文件夹失败：", e);
-      showToast("保存文件夹失败，请重试", "error");
-    } finally {
-      setFolderSaving(false);
-    }
-  };
-
-  // 删除文件夹（任务移到根目录）
-  const deleteFolder = async (folder: CronFolder) => {
-    if (!confirm(`确定删除文件夹「${folder.name}」吗？文件夹内的任务将移到根目录。`)) return;
-    try {
-      const res = await fetch(`/api/admin/cron/folders/${folder.folderId}`, {
-        method: "DELETE",
-      });
-      if (res.ok) {
-        showToast("文件夹已删除", "success");
-        if (folderFilter === folder.folderId) setFolderFilter(null);
-        await loadFolders();
-        await loadJobs();
-      } else {
-        const data = await res.json();
-        showToast(data.error || "删除文件夹失败", "error");
-      }
-    } catch (e) {
-      console.error("删除文件夹失败：", e);
-      showToast("删除文件夹失败，请重试", "error");
-    }
-  };
-
   const methodLabel = (method: number) =>
     REQUEST_METHODS.find((m) => m.value === method)?.label || `UNKNOWN(${method})`;
 
-  // 按文件夹筛选任务（folderFilter: null=全部, 0=未分类, >0=具体文件夹）
   // 系统任务在「系统定时任务」区统一管理，此处过滤掉避免重复
-  const visibleJobs =
-    jobs === null
-      ? []
-      : (folderFilter === null ? jobs : jobs.filter((j) => (j.folderId ?? 0) === folderFilter)).filter(
-          (j) => !isSystemJob(j),
-        );
+  const visibleJobs = jobs === null ? [] : jobs.filter((j) => !isSystemJob(j));
 
   return (
     <div className="animate-page-enter">
@@ -788,83 +678,8 @@ export function ManageCronJobs() {
         )}
       </section>
 
-      {/* 任务区：文件夹侧边栏 + 任务列表 */}
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-        {/* 文件夹侧边栏 */}
-        <aside className="w-full flex-shrink-0 rounded-xl border border-border bg-card lg:w-52">
-          <div className="flex items-center justify-between border-b border-border p-3">
-            <h2 className="text-sm font-semibold">文件夹</h2>
-            <button
-              type="button"
-              onClick={openFolderManager}
-              title="管理文件夹"
-              className="rounded-md p-1 text-muted-foreground transition hover:bg-accent hover:text-foreground"
-            >
-              <Settings2 className="h-4 w-4" />
-            </button>
-          </div>
-          <div className="p-2">
-            {folders === null ? (
-              <button
-                type="button"
-                onClick={loadFolders}
-                disabled={loadingFolders}
-                className="flex w-full items-center justify-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-xs font-medium transition hover:bg-accent disabled:opacity-50"
-              >
-                <RefreshCw className={`h-3 w-3 ${loadingFolders ? "animate-spin" : ""}`} />
-                {loadingFolders ? "加载中…" : "加载文件夹"}
-              </button>
-            ) : (
-              <div className="space-y-0.5">
-                <button
-                  type="button"
-                  onClick={() => setFolderFilter(null)}
-                  className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm transition ${
-                    folderFilter === null ? "bg-primary/10 font-medium text-primary" : "hover:bg-accent"
-                  }`}
-                >
-                  <span className="flex items-center gap-1.5">
-                    <FolderIcon className="h-3.5 w-3.5" />
-                    全部任务
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {jobs === null ? 0 : jobs.filter((j) => !isSystemJob(j)).length}
-                  </span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFolderFilter(0)}
-                  className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm transition ${
-                    folderFilter === 0 ? "bg-primary/10 font-medium text-primary" : "hover:bg-accent"
-                  }`}
-                >
-                  <span>未分类</span>
-                  <span className="text-xs text-muted-foreground">
-                    {jobs?.filter((j) => (j.folderId ?? 0) === 0).length ?? 0}
-                  </span>
-                </button>
-                {folders.map((folder) => (
-                  <button
-                    key={folder.folderId}
-                    type="button"
-                    onClick={() => setFolderFilter(folder.folderId)}
-                    className={`flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-sm transition ${
-                      folderFilter === folder.folderId
-                        ? "bg-primary/10 font-medium text-primary"
-                        : "hover:bg-accent"
-                    }`}
-                  >
-                    <span className="truncate">{folder.name}</span>
-                    <span className="text-xs text-muted-foreground">{folder.jobCount ?? 0}</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </aside>
-
-        {/* 任务列表 */}
-        <div className="flex-1 rounded-xl border border-border bg-card">
+      {/* 任务列表 */}
+      <div className="rounded-xl border border-border bg-card">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
             <div>
               <h2 className="text-lg font-semibold">我的定时任务</h2>
@@ -910,7 +725,7 @@ export function ManageCronJobs() {
             </div>
           ) : visibleJobs.length === 0 ? (
             <div className="p-12 text-center text-sm text-muted-foreground">
-              {jobs.length === 0 ? "暂无定时任务，点击「创建任务」开始" : "该文件夹下暂无任务"}
+              {jobs.length === 0 ? "暂无定时任务，点击「创建任务」开始" : "暂无任务"}
             </div>
           ) : (
           <div className="divide-y divide-border">
@@ -987,7 +802,6 @@ export function ManageCronJobs() {
           </div>
           )}
         </div>
-      </div>
 
       {/* 配置说明（折叠） */}
       <details className="group mt-8 rounded-xl border border-border bg-card p-4">
@@ -1016,8 +830,8 @@ export function ManageCronJobs() {
           <div>
             <h3 className="font-medium">配额说明</h3>
             <p className="mt-2 text-muted-foreground">
-              免费版 cron-job.org API 每日 100 次。页面打开零请求；「加载状态 / 加载任务列表 / 加载文件夹」各消耗 1 次；
-              「刷新全部」一次消耗 3 次，请按需使用。
+              免费版 cron-job.org API 每日 100 次。页面打开零请求；「加载状态 / 加载任务列表」各消耗 1 次；
+              「刷新全部」一次消耗 2 次，请按需使用。
             </p>
           </div>
         </div>
@@ -1093,26 +907,6 @@ export function ManageCronJobs() {
                 </div>
               </div>
 
-              <div>
-                <label className="mb-1 block text-sm font-medium">所在文件夹</label>
-                <select
-                  value={form.folderId}
-                  onChange={(e) => setForm({ ...form, folderId: parseInt(e.target.value, 10) || 0 })}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                >
-                  <option value={0}>未分类（根目录）</option>
-                  {(folders ?? []).map((folder) => (
-                    <option key={folder.folderId} value={folder.folderId}>
-                      {folder.name}
-                    </option>
-                  ))}
-                </select>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {folders === null
-                    ? "文件夹列表未加载，创建后可在文件夹管理中归类。"
-                    : "将任务归入文件夹，便于按文件夹筛选管理。"}
-                </p>
-              </div>
 
               <div className="flex items-center gap-6">
                 <label className="flex items-center gap-2 text-sm">
@@ -1515,111 +1309,6 @@ export function ManageCronJobs() {
         />
       )}
 
-      {/* 文件夹管理弹窗 */}
-      {showFolderManager && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-xl bg-background p-6 shadow-2xl">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-xl font-semibold">文件夹管理</h2>
-              <button
-                type="button"
-                onClick={() => setShowFolderManager(false)}
-                className="rounded-lg p-2 text-muted-foreground transition hover:bg-accent"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-
-            {/* 新建/重命名表单 */}
-            <div className="mb-4 rounded-lg border border-border p-3">
-              <label className="mb-1 block text-sm font-medium">
-                {editingFolder ? "重命名文件夹" : "新建文件夹"}
-              </label>
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  type="text"
-                  value={folderName}
-                  onChange={(e) => setFolderName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && saveFolder()}
-                  className="min-w-0 flex-1 rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                  placeholder="文件夹名称"
-                />
-                <button
-                  type="button"
-                  onClick={saveFolder}
-                  disabled={folderSaving}
-                  className="inline-flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
-                >
-                  {folderSaving ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : editingFolder ? (
-                    <Pencil className="h-4 w-4" />
-                  ) : (
-                    <FolderPlus className="h-4 w-4" />
-                  )}
-                  {editingFolder ? "保存" : "创建"}
-                </button>
-              </div>
-              {editingFolder && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setEditingFolder(null);
-                    setFolderName("");
-                  }}
-                  className="mt-2 text-xs text-muted-foreground hover:underline"
-                >
-                  取消编辑
-                </button>
-              )}
-            </div>
-
-            {/* 文件夹列表 */}
-            {folders === null ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">加载中…</div>
-            ) : folders.length === 0 ? (
-              <div className="py-8 text-center text-sm text-muted-foreground">
-                暂无文件夹，全部任务位于「未分类」
-              </div>
-            ) : (
-              <div className="divide-y divide-border">
-                {folders.map((folder) => (
-                  <div key={folder.folderId} className="flex items-center justify-between py-2">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium">{folder.name}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {folder.jobCount ?? 0} 个任务
-                        {!folder.enabled && "（已禁用）"}
-                      </p>
-                    </div>
-                    <div className="flex flex-shrink-0 items-center gap-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setEditingFolder(folder);
-                          setFolderName(folder.name);
-                        }}
-                        title="重命名"
-                        className="rounded-lg p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => deleteFolder(folder)}
-                        title="删除"
-                        className="rounded-lg p-2 text-muted-foreground transition hover:bg-red-50 hover:text-red-600"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
