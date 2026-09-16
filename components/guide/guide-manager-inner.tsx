@@ -13,6 +13,7 @@ import {
   GuideProgressStatus,
   GUIDE_SKIP_COOLDOWN_DAYS,
   normalizeTargetCondition,
+  type GuideStep,
 } from "@/lib/types/guides";
 import {
   evaluateTargetCondition,
@@ -23,6 +24,66 @@ import {
 interface Tour {
   tour: string;
   steps: Step[];
+}
+
+/* ---------- 多级定位：data-guide → 动态选择器（拾取生成） ---------- */
+
+/** 步骤候选选择器（按优先级）：data-guide 埋点优先，selector 兜底 */
+function resolveStepSelectors(step: GuideStep): string[] {
+  const list: string[] = [];
+  if (step.target) list.push(`[data-guide="${step.target}"]`);
+  if (step.selector) list.push(step.selector);
+  return list;
+}
+
+/** 取第一个当前 DOM 命中的选择器；都不命中返回第一个（交给 onborda 兜底显示） */
+function pickStepSelector(step: GuideStep): string {
+  const sels = resolveStepSelectors(step);
+  if (sels.length === 0) return "";
+  for (const sel of sels) {
+    try {
+      if (document.querySelector(sel)) return sel;
+    } catch {
+      /* 非法选择器跳过 */
+    }
+  }
+  return sels[0];
+}
+
+/** 依次尝试选择器，返回第一个命中的元素；无命中返回 null */
+function queryFirst(selectors: string[]): Element | null {
+  for (const sel of selectors) {
+    try {
+      const el = document.querySelector(sel);
+      if (el) return el;
+    } catch {
+      /* 非法选择器跳过 */
+    }
+  }
+  return null;
+}
+
+/** 等待元素出现（MutationObserver + 超时，不轮询）；超时返回 null */
+function waitForElement(
+  selectors: string[],
+  timeout = 5000,
+): Promise<Element | null> {
+  const existing = queryFirst(selectors);
+  if (existing) return Promise.resolve(existing);
+  return new Promise((resolve) => {
+    const observer = new MutationObserver(() => {
+      const el = queryFirst(selectors);
+      if (el) {
+        observer.disconnect();
+        resolve(el);
+      }
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+    setTimeout(() => {
+      observer.disconnect();
+      resolve(null);
+    }, timeout);
+  });
 }
 
 /**
@@ -195,7 +256,7 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
         icon: null,
         title: s.title,
         content: s.content,
-        selector: `[data-guide="${s.target}"]`,
+        selector: pickStepSelector(s),
         side: s.placement ?? "bottom",
         showControls: false,
         nextRoute: s.nextRoute ? `/${adminPath}${s.nextRoute}` : undefined,
@@ -205,6 +266,9 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
       if (element instanceof HTMLElement && steps[0]) {
         element.setAttribute("data-guide", TEMP_ANCHOR);
         steps[0].selector = `[data-guide="${TEMP_ANCHOR}"]`;
+      } else if (steps[0] && !queryFirst(resolveStepSelectors(guide.steps[0]))) {
+        // 首步元素未渲染（懒加载/弹层）→ 等待出现再开始，避免引导落在空位上
+        await waitForElement(resolveStepSelectors(guide.steps[0]));
       }
 
       setTourSteps([{ tour: guide.guideKey, steps }]);
@@ -217,9 +281,9 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
         typeof progress.currentStep === "number" &&
         progress.currentStep > 0
       ) {
-        const target = guide.steps[progress.currentStep]?.target;
+        const step = guide.steps[progress.currentStep];
         setTimeout(() => {
-          if (target && document.querySelector(`[data-guide="${target}"]`)) {
+          if (step && queryFirst(resolveStepSelectors(step))) {
             setCurrentStep(progress.currentStep);
           }
         }, 120);

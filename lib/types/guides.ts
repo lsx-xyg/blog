@@ -31,13 +31,22 @@ export const GUIDE_SKIP_COOLDOWN_DAYS = 7;
 /** 引导步骤（steps JSONB 中的单个元素） */
 export interface GuideStep {
   id: string;
-  /** data-guide 锚点名，前端用 [data-guide="<target>"] 定位 */
+  /** data-guide 锚点名，前端用 [data-guide="<target>"] 定位（埋点优先，最稳） */
   target: string;
   title: string;
   content: string;
   placement?: "top" | "bottom" | "left" | "right";
   /** 下一步跳转路由（相对后台路径，如 /account），onborda 跨页步骤使用 */
   nextRoute?: string;
+  /** 动态选择器（拾取生成）：data-guide 未命中时的兜底定位 */
+  selector?: string;
+  /** 选择器元信息（生成来源 + 时间，供失效监控/自动修复参考） */
+  selectorMeta?: {
+    /** 生成来源：id / semantic / class / path */
+    source: "id" | "semantic" | "class" | "path";
+    /** 生成时间 ISO 字符串 */
+    generatedAt: string;
+  };
 }
 
 /** 条件运算符 */

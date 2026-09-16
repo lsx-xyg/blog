@@ -13,6 +13,7 @@ import { MobileNav } from "@/components/mobile-nav";
 import { Footer } from "@/components/footer";
 import { ToastProvider } from "@/components/toast";
 import { PageProgress } from "@/components/page-progress";
+import GuidePicker from "@/components/guide/picker-layer";
 import { getSiteSettings, getFooterSettings } from "../lib/settings";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
@@ -152,6 +153,8 @@ export default async function RootLayout({
             icp={footer.icp}
           />
           <MobileNav />
+          {/* 引导锚点拾取层：URL 带 ?guide-pick=1 时激活，任意页面可拾取 */}
+          <GuidePicker />
         </ToastProvider>
       </body>
     </html>
