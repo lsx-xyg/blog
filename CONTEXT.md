@@ -105,8 +105,16 @@ _Avoid_: 引导、教程、tour、wizard
 _Avoid_: 步骤、step、tooltip
 
 **Guide Anchor（引导锚点）**：
-页面上带 data-guide 属性的元素，引导步骤通过 `[data-guide="<target>"]` 选择器定位高亮目标。不依赖 class 和层级结构。
+页面上带 data-guide 属性的元素，引导步骤通过 `[data-guide="<target>"]` 选择器定位高亮目标。不依赖 class 和层级结构。锚点值 = 埋点上报 target = 条件配置 value，三者同一标识（注册表 GUIDE_EVENT_ANCHORS 统一维护）。
 _Avoid_: 锚点、target element、定位点
+
+**Guide Trigger Condition（引导触发条件）**：
+guiders.target_condition 中的条件表达式 `{logic: and/or, conditions: [{field, op, value}]}`，决定引导何时触发。field ∈ event_click（点击锚点）/ page（适用页面）/ click_count.<target>（点击累计次数）/ user_age_days（注册天数），op ∈ eq/gte/lte/exists。
+_Avoid_: 触发规则、condition、条件表达式
+
+**User Event（用户行为事件）**：
+用户行为埋点记录，存储在 user_events 表中（user_id / event / target / created_at），是 click_count 条件的数据源。event 当前固定为 event_click，target 与 Guide Anchor 锚点名同值。
+_Avoid_: 埋点、行为记录、event log
 
 **Guide Key（引导键）**：
 引导的唯一标识，带版本号（如 reveal_password_setup_v1）。用户进度按 guide_key 独立追踪，互不干扰；引导改版换新 key，老用户自然重新触发。

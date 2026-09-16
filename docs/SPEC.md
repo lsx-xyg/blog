@@ -219,6 +219,32 @@ interface StorageDriver {
 
 **标签录入逻辑**：combobox 打开显示已有标签 → 选择或输入新建 → 服务端按 name 精确匹配（大小写敏感）复用已有 tag_id，不存在则新建（name 原样存储 + 生成 slug）。
 
+### 8.1 引导系统（Onboarding Guide，2026-09-16 实施 ✅）
+
+| 项 | 说明 |
+|---|---|
+| 定位 | 后台可配置交互引导，帮助管理员完成特定流程（如无密码账号设置密码） |
+| 数据表 | `guiders`（引导配置）、`user_guide_progress`（用户进度）、`user_events`（行为埋点，click_count 条件数据源） |
+| 前端引擎 | onborda + GuideManager（懒加载，仅挂载 admin layout）；页面只声明 data-guide 锚点，不直接操作引导逻辑 |
+| 锚点标识 | `data-guide` 属性统一：元素定位 = 埋点上报 target = 条件配置 value，同一值（注册表 lib/guide-events.ts） |
+| 触发条件 | `target_condition` JSONB：`{logic: and/or, conditions: [{field, op, value}]}`；field ∈ `event_click` / `page` / `click_count.<target>` / `user_age_days`；op ∈ `eq` / `gte` / `lte` / `exists` |
+| 进度管理 | 完成（completed）永久抑制；跳过（skipped）7 天冷却期后可重新触发；管理页可手动重置当前账号进度 |
+| 管理页 | `/[adminSlug]/guides`：CRUD + 发布/归档 + 步骤卡片编辑器（自动组装 JSON）+ 触发条件行式表单 + 重置进度 |
+
+> **实施记录（2026-09-16）**：三表 + 迁移 0009（guiders / user_guide_progress）/ 0010（user_events + 存量 target_condition 归一化）；API：`GET/POST /api/admin/guides`、`PUT/DELETE /api/admin/guides/[id]`、`GET/POST/DELETE /api/admin/guides/progress`、`POST /api/admin/guides/track`、`POST /api/admin/guides/evaluate`；seed：`scripts/seed-guides.ts`（reveal_password_setup_v1）。完整使用说明见 `docs/guide-system.md`。
+
+### 8.2 敏感信息查看（Sensitive Setting Reveal，#18，2026-09-16 实施 ✅）
+
+| 项 | 说明 |
+|---|---|
+| 输入框显隐 | 敏感字段输入框内 👁 切换输入内容显示/隐藏（type=password 语义），不抢占空间 |
+| 查看已配置 | 「查看」按钮在 label 行（「✓ 已配置」旁），不在输入框内（防误触） |
+| 有密码账号 | 点击 → 管理员密码二次验证弹窗 → 明文展示 30 秒倒计时自动隐藏 |
+| 无密码账号 | 点击 → 触发 onborda 引导（说明 + 引导跳转设置密码页）→ 设置成功标记完成 |
+| 覆盖字段 | storage：github.token / s3.access_key / s3.secret_key；cron：secret / job_api_key |
+
+> **实施记录**：`components/secret-reveal-dialog.tsx`（验证弹窗）+ `/api/admin/account/reveal`（解密接口，AES-256-GCM）；无密码分支派发 `guide:trigger` 事件接入引导系统；设置密码成功派发 `guide:complete`。
+
 ---
 
 ## 9. 主题系统
