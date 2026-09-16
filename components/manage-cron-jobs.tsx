@@ -22,9 +22,6 @@ import {
   Square,
   RefreshCw,
   Clock,
-  CheckCircle,
-  XCircle,
-  AlertCircle,
   X,
   ChevronDown,
   ChevronUp,
@@ -35,7 +32,7 @@ import {
 import { useToast } from "@/components/toast";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminPageHeader } from "@/components/admin/page-header";
-import { AdminEmptyState } from "@/components/admin/status";
+import { AdminEmptyState, AdminLoadingState } from "@/components/admin/status";
 import { CronDeployPlatform } from "@/lib/types/settings";
 import { type CronJob, type CronJobConfig, type CronJobSchedule } from "@/lib/types/cron";
 import {
@@ -72,10 +69,7 @@ type CronStatus = {
 
 export function ManageCronJobs() {
   const { showToast } = useToast();
-  const [loadingStatus, setLoadingStatus] = useState(false);
   const [loadingJobs, setLoadingJobs] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
-  const [status, setStatus] = useState<CronStatus | null>(null);
   const [jobs, setJobs] = useState<CronJob[] | null>(null);
   const [action, setAction] = useState<{ key: string; type: "start" | "stop" | "run" } | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -87,22 +81,6 @@ export function ManageCronJobs() {
   const [historyJob, setHistoryJob] = useState<CronJob | null>(null);
 
   // 页面打开不自动请求（免费版 cron-job.org API 每日配额有限），各按钮独立触发对应 API
-  const loadStatus = async () => {
-    setLoadingStatus(true);
-    try {
-      const res = await fetch("/api/admin/cron");
-      if (res.ok) {
-        const data = await res.json();
-        setStatus(data);
-      }
-    } catch (e) {
-      console.error("加载状态失败：", e);
-      showToast("加载状态失败", "error");
-    } finally {
-      setLoadingStatus(false);
-    }
-  };
-
   const loadJobs = async () => {
     setLoadingJobs(true);
     try {
@@ -119,30 +97,20 @@ export function ManageCronJobs() {
     }
   };
 
-  // 刷新全部：一次性触发所有 API（明确需要全量刷新时使用）
+  // 刷新：一次性加载全部任务（合并后仅一个 API）
   const refreshAll = async () => {
-    setRefreshing(true);
+    setLoadingJobs(true);
     try {
-      const [statusRes, jobsRes] = await Promise.all([
-        fetch("/api/admin/cron"),
-        fetch("/api/admin/cron/jobs"),
-      ]);
-
-      if (statusRes.ok) {
-        const data = await statusRes.json();
-        setStatus(data);
-      }
-
-      if (jobsRes.ok) {
-        const data = await jobsRes.json();
+      const res = await fetch("/api/admin/cron/jobs");
+      if (res.ok) {
+        const data = await res.json();
         setJobs(data.jobs || []);
       }
-
     } catch (e) {
       console.error("刷新失败：", e);
       showToast("刷新失败", "error");
     } finally {
-      setRefreshing(false);
+      setLoadingJobs(false);
     }
   };
 
@@ -158,7 +126,7 @@ export function ManageCronJobs() {
       const data = await res.json();
       if (res.ok) {
         showToast(data.message || "操作成功", "success");
-        setTimeout(() => loadStatus(), 500);
+        setTimeout(() => loadJobs(), 500);
       } else {
         showToast(data.error || "操作失败", "error");
       }
@@ -331,7 +299,7 @@ export function ManageCronJobs() {
       const res = await fetch(`/api/admin/cron/jobs/${jobId}`, { method: "DELETE" });
       if (res.ok) {
         showToast("系统任务已删除", "success");
-        setTimeout(() => loadStatus(), 500);
+        setTimeout(() => loadJobs(), 500);
       } else {
         const data = await res.json().catch(() => ({}));
         showToast(data.error || "删除失败", "error");
@@ -366,25 +334,25 @@ export function ManageCronJobs() {
     REQUEST_METHODS.find((m) => m.value === method)?.label || `UNKNOWN(${method})`;
 
   // 系统任务在「系统定时任务」区统一管理，此处过滤掉避免重复
-  // 我的任务区：保留普通任务 + 失联系统任务（标题/URL 命中系统特征但匹配不到预设，避免「消失」）
+  // 孤儿系统任务：标题/URL 命中系统特征但匹配不到预设（标题被改动等）
   const SYSTEM_ROUTE_FRAGMENTS = ["/api/cron/backup", "/api/cron/publish-scheduled"];
-  const visibleJobs =
-    jobs === null
-      ? []
-      : jobs.filter((j) => !matchSystemJob(j));
+  const isOrphanSystemJob = (job: CronJob) =>
+    !matchSystemJob(job) &&
+    (job.title.includes("[系统") ||
+      job.title.includes("[blog:") ||
+      SYSTEM_ROUTE_FRAGMENTS.some((f) => job.url.includes(f)));
 
   return (
     <div className="animate-page-enter">
       <AdminPageHeader
         title="定时任务管理"
-        description="系统任务与我的任务分区管理，支持高级配置（参照官方界面）"
+        description="系统任务（[blog:key] 预设驱动）与自建任务统一列表管理，一次加载全部"
         actions={
           <>
             <button
               type="button"
               onClick={openCreateForm}
-              disabled={!status?.cronJobApiKeyConfigured}
-              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
             >
               <Plus className="h-4 w-4" />
               <span className="hidden sm:inline">创建任务</span>
@@ -392,322 +360,341 @@ export function ManageCronJobs() {
             <button
               type="button"
               onClick={refreshAll}
-              disabled={refreshing}
-              title="一次性触发所有 API 全量刷新（免费配额有限，按需使用）"
+              disabled={loadingJobs}
+              title="加载 / 刷新全部任务（免费配额有限，按需使用）"
               className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <RefreshCw className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">刷新全部</span>
+              <RefreshCw className={`h-4 w-4 ${loadingJobs ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">刷新</span>
             </button>
           </>
         }
       />
 
-      {/* 区域一：系统定时任务（预设驱动，站点功能依赖） */}
-      <section className="mb-8 rounded-xl border border-border bg-card">
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
+      {/* 任务列表：桌面表格 + 移动卡片（一次加载全部，系统任务带标签） */}
+      <div className="overflow-hidden rounded-xl border border-border bg-surface">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-4 py-3">
           <div>
-            <h2 className="text-lg font-semibold">系统定时任务</h2>
+            <h2 className="text-sm font-semibold">定时任务</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              站点功能依赖的任务，由预设配置驱动创建。停止只是禁用（保留任务与历史），删除才是彻底移除。
+              {jobs === null ? "未加载" : `共 ${jobs.length} 个任务`} · 系统任务按预设（[blog:key]）识别并管理
             </p>
           </div>
           <button
             type="button"
-            onClick={loadStatus}
-            disabled={loadingStatus}
-            className={`ml-auto inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50 ${
-              status
-                ? "border border-input bg-background hover:bg-accent"
-                : "bg-primary text-primary-foreground hover:bg-primary/90"
-            }`}
+            onClick={loadJobs}
+            disabled={loadingJobs}
+            className="ml-auto inline-flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium transition hover:bg-accent disabled:opacity-50"
           >
-            <RefreshCw className={`h-4 w-4 ${loadingStatus ? "animate-spin" : ""}`} />
-            <span className="hidden sm:inline">{status ? "刷新状态" : "加载状态"}</span>
+            <RefreshCw className={`h-4 w-4 ${loadingJobs ? "animate-spin" : ""}`} />
+            <span className="hidden sm:inline">{jobs === null ? "加载任务列表" : "刷新"}</span>
           </button>
         </div>
 
-        {status === null ? (
-          <div className="p-10 text-center">
-            <AlertCircle className="mx-auto h-8 w-8 text-muted-foreground/50" />
-            <p className="mt-3 text-sm font-medium">系统任务状态尚未加载</p>
-            <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground">
-              免费版 cron-job.org API 每日配额有限（100 次），点击上方「加载状态」按需加载。
-            </p>
-          </div>
+        {loadingJobs ? (
+          <AdminLoadingState />
+        ) : jobs === null ? (
+          <AdminEmptyState
+            title="任务列表尚未加载"
+            description="免费版 cron-job.org API 每日配额有限（100 次），点击右上角「加载任务列表」按需加载"
+          />
+        ) : jobs.length === 0 ? (
+          <AdminEmptyState
+            title="暂无定时任务"
+            description="点击右上角「创建任务」开始"
+          />
         ) : (
           <>
-            {/* 配置状态条 */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 border-b border-border bg-muted/30 px-4 py-3 text-xs">
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                <Clock className="h-3.5 w-3.5" />
-                平台：<span className="font-medium">{status.platform}</span>
-              </span>
-              <span className={`flex items-center gap-1.5 ${status.cronSecretConfigured ? "text-green-600" : "text-red-600"}`}>
-                {status.cronSecretConfigured ? <CheckCircle className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
-                CRON_SECRET {status.cronSecretConfigured ? "已配置" : "未配置"}
-              </span>
-              <span className={`flex items-center gap-1.5 ${status.cronJobApiKeyConfigured ? "text-green-600" : "text-red-600"}`}>
-                {status.cronJobApiKeyConfigured ? <CheckCircle className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
-                CRON_JOB_API_KEY {status.cronJobApiKeyConfigured ? "已配置" : "未配置"}
-              </span>
-              <span className="flex items-center gap-1.5 text-muted-foreground">
-                运行中：
-                <span className="font-medium">
-                  {status.systemJobs.filter((j) => j.enabled).length} / {status.systemJobs.length}
-                </span>
-              </span>
+            {/* 桌面表格 */}
+            <div className="hidden md:block">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-border bg-muted/30">
+                    <th className="w-12 px-4 py-3 text-left text-sm font-medium text-muted-foreground">状态</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">任务</th>
+                    <th className="w-20 px-4 py-3 text-left text-sm font-medium text-muted-foreground">方法</th>
+                    <th className="w-44 px-4 py-3 text-left text-sm font-medium text-muted-foreground">下次执行</th>
+                    <th className="w-48 px-4 py-3 text-right text-sm font-medium text-muted-foreground">操作</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {jobs.map((job) => {
+                    const preset = matchSystemJob(job);
+                    const orphan = !preset && isOrphanSystemJob(job);
+                    return (
+                      <tr key={job.jobId} className="transition-colors hover:bg-muted/30">
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-flex h-2 w-2 rounded-full ${
+                              job.enabled ? "bg-green-500" : "bg-gray-400"
+                            }`}
+                            title={job.enabled ? "已启用" : "已禁用"}
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className="max-w-[280px] truncate text-sm font-medium">{job.title || "(无标题)"}</span>
+                            {preset ? (
+                              <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                                {preset.name}
+                              </span>
+                            ) : orphan ? (
+                              <span
+                                title="标题或 URL 命中系统任务特征，但无法匹配任何预设。可在操作中重新「启动」自动修复。"
+                                className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400"
+                              >
+                                <AlertTriangle className="h-3 w-3" />
+                                疑似系统任务
+                              </span>
+                            ) : null}
+                          </div>
+                          <p className="mt-0.5 truncate font-mono text-xs text-fg-faint">{job.url}</p>
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                          {methodLabel(job.requestMethod)}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-muted-foreground">
+                          {job.nextExecution
+                            ? new Date(job.nextExecution * 1000).toLocaleString("zh-CN")
+                            : "无预测"}
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="inline-flex items-center gap-1">
+                            {preset ? (
+                              <>
+                                {job.enabled ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => executeAction("stop", preset.key)}
+                                    disabled={action !== null}
+                                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+                                    title="停止（禁用，保留历史）"
+                                  >
+                                    {action?.key === preset.key && action?.type === "stop" ? (
+                                      <RefreshCw className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Square className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => executeAction("start", preset.key)}
+                                    disabled={action !== null}
+                                    className="rounded-md p-1.5 text-green-600 transition-colors hover:bg-green-500/10 disabled:opacity-50"
+                                    title="启动（按预设创建/启用）"
+                                  >
+                                    {action?.key === preset.key && action?.type === "start" ? (
+                                      <RefreshCw className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Play className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                )}
+                                {preset.supportsRun && (
+                                  <button
+                                    type="button"
+                                    onClick={() => executeAction("run", preset.key)}
+                                    disabled={action !== null}
+                                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-primary disabled:opacity-50"
+                                    title="手动触发"
+                                  >
+                                    {action?.key === preset.key && action?.type === "run" ? (
+                                      <RefreshCw className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <RefreshCw className="h-4 w-4" />
+                                    )}
+                                  </button>
+                                )}
+                              </>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => toggleJob(job)}
+                                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                title={job.enabled ? "禁用" : "启用"}
+                              >
+                                {job.enabled ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              onClick={() => openEditForm(preset ? ({ jobId: job.jobId, title: job.title, enabled: job.enabled } as CronJob) : job)}
+                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                              title="编辑"
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setHistoryJob(job)}
+                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                              title="执行历史"
+                            >
+                              <HistoryIcon className="h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                preset
+                                  ? deleteSystemJob(job.jobId, job.title || preset.name)
+                                  : deleteJob(job.jobId)
+                              }
+                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+                              title={preset ? "彻底删除（保留请用停止）" : "删除"}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
 
-            {status.systemJobs.length === 0 ? (
-              <AdminEmptyState
-                title={status.platform === CronDeployPlatform.VERCEL && !status.cronJobApiKeyConfigured
-                  ? "无法加载系统任务状态"
-                  : "暂无系统任务"}
-                description={status.platform === CronDeployPlatform.VERCEL && !status.cronJobApiKeyConfigured
-                  ? "CRON_JOB_API_KEY 未配置，请在「设置 → 定时任务」中配置。"
-                  : undefined}
-              />
-            ) : (
-              <div className="divide-y divide-border">
-                {status.systemJobs.map((job) => (
+            {/* 移动卡片 */}
+            <div className="md:hidden divide-y divide-border">
+              {jobs.map((job, index) => {
+                const preset = matchSystemJob(job);
+                const orphan = !preset && isOrphanSystemJob(job);
+                return (
                   <div
-                    key={job.key}
-                    className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between"
+                    key={job.jobId}
+                    style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}
+                    className="animate-fade-in-up px-4 py-3 transition-colors hover:bg-muted/30"
                   >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-3">
-                        <span
-                          className={`inline-flex h-2 w-2 flex-shrink-0 rounded-full ${
-                            job.enabled ? "bg-green-500" : "bg-gray-400"
-                          }`}
-                        />
-                        <h3 className="font-medium">{job.name}</h3>
-                        <span
-                          className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                            job.enabled ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"
-                          }`}
-                        >
-                          {job.enabled ? <CheckCircle className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
-                          {job.enabled ? "运行中" : "未运行"}
-                        </span>
-                      </div>
-                      <p className="mt-1 text-xs text-muted-foreground">{job.description}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                        {job.nextRun ? (
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" />
-                            下次执行：{new Date(job.nextRun * 1000).toLocaleString("zh-CN")}
+                    {/* 数据区 */}
+                    <div className="flex items-start gap-3">
+                      <span
+                        className={`mt-1.5 inline-flex h-2 w-2 shrink-0 rounded-full ${
+                          job.enabled ? "bg-green-500" : "bg-gray-400"
+                        }`}
+                        title={job.enabled ? "已启用" : "已禁用"}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="min-w-0 truncate text-sm font-medium">{job.title || "(无标题)"}</h3>
+                          {preset ? (
+                            <span className="inline-flex shrink-0 items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary">
+                              {preset.name}
+                            </span>
+                          ) : orphan ? (
+                            <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                              <AlertTriangle className="h-3 w-3" />
+                              疑似系统任务
+                            </span>
+                          ) : null}
+                          <span className="shrink-0 rounded bg-muted px-2 py-0.5 font-mono text-[11px] text-muted-foreground">
+                            {methodLabel(job.requestMethod)}
                           </span>
-                        ) : null}
-                        {job.jobId ? <span>任务 ID：{job.jobId}</span> : null}
+                        </div>
+                        <p className="mt-1 truncate font-mono text-xs text-fg-faint">{job.url}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {job.nextExecution
+                            ? `下次：${new Date(job.nextExecution * 1000).toLocaleString("zh-CN")}`
+                            : "无预测"}
+                          {job.lastExecution > 0 &&
+                            ` · 上次：${new Date(job.lastExecution * 1000).toLocaleString("zh-CN")}`}
+                        </p>
                       </div>
                     </div>
-                    <div className="flex flex-shrink-0 flex-wrap items-center gap-2">
-                      {job.enabled ? (
-                        <button
-                          type="button"
-                          onClick={() => executeAction("stop", job.key)}
-                          disabled={action !== null}
-                          className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-medium transition hover:bg-accent disabled:opacity-50"
-                        >
-                          {action?.key === job.key && action?.type === "stop" ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Square className="h-4 w-4" />}
-                          停止
-                        </button>
+                    {/* 操作区：放数据下方 */}
+                    <div className="mt-2 flex items-center justify-end gap-1 border-t border-border/50 pt-2">
+                      {preset ? (
+                        <>
+                          {job.enabled ? (
+                            <button
+                              type="button"
+                              onClick={() => executeAction("stop", preset.key)}
+                              disabled={action !== null}
+                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+                              title="停止（禁用，保留历史）"
+                            >
+                              {action?.key === preset.key && action?.type === "stop" ? (
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Square className="h-4 w-4" />
+                              )}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => executeAction("start", preset.key)}
+                              disabled={action !== null}
+                              className="rounded-md p-1.5 text-green-600 transition-colors hover:bg-green-500/10 disabled:opacity-50"
+                              title="启动（按预设创建/启用）"
+                            >
+                              {action?.key === preset.key && action?.type === "start" ? (
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Play className="h-4 w-4" />
+                              )}
+                            </button>
+                          )}
+                          {preset.supportsRun && (
+                            <button
+                              type="button"
+                              onClick={() => executeAction("run", preset.key)}
+                              disabled={action !== null}
+                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-primary disabled:opacity-50"
+                              title="手动触发"
+                            >
+                              {action?.key === preset.key && action?.type === "run" ? (
+                                <RefreshCw className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <RefreshCw className="h-4 w-4" />
+                              )}
+                            </button>
+                          )}
+                        </>
                       ) : (
                         <button
                           type="button"
-                          onClick={() => executeAction("start", job.key)}
-                          disabled={action !== null || !status.cronJobApiKeyConfigured}
-                          className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                          onClick={() => toggleJob(job)}
+                          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          title={job.enabled ? "禁用" : "启用"}
                         >
-                          {action?.key === job.key && action?.type === "start" ? <RefreshCw className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}
-                          启动
+                          {job.enabled ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                         </button>
                       )}
-                      {job.supportsRun && (
-                        <button
-                          type="button"
-                          onClick={() => executeAction("run", job.key)}
-                          disabled={action !== null}
-                          className="inline-flex items-center gap-2 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
-                        >
-                          {action?.key === job.key && action?.type === "run" ? <RefreshCw className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                          手动触发
-                        </button>
-                      )}
-                      {job.jobId ? (
-                        <button
-                          type="button"
-                          onClick={() => openEditForm({ jobId: job.jobId!, title: job.name, enabled: job.enabled } as CronJob)}
-                          title="编辑"
-                          className="rounded-lg p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </button>
-                      ) : null}
-                      {job.jobId ? (
-                        <button
-                          type="button"
-                          onClick={() => setHistoryJob({ jobId: job.jobId!, title: job.name } as CronJob)}
-                          title="执行历史"
-                          className="rounded-lg p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
-                        >
-                          <HistoryIcon className="h-4 w-4" />
-                        </button>
-                      ) : null}
-                      {job.jobId ? (
-                        <button
-                          type="button"
-                          onClick={() => deleteSystemJob(job.jobId!, job.name)}
-                          title="彻底删除（保留请用停止）"
-                          className="rounded-lg p-2 text-muted-foreground transition hover:bg-red-50 hover:text-red-600"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => openEditForm(preset ? ({ jobId: job.jobId, title: job.title, enabled: job.enabled } as CronJob) : job)}
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        title="编辑"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setHistoryJob(job)}
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        title="执行历史"
+                      >
+                        <HistoryIcon className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          preset
+                            ? deleteSystemJob(job.jobId, job.title || preset.name)
+                            : deleteJob(job.jobId)
+                        }
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+                        title={preset ? "彻底删除（保留请用停止）" : "删除"}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
-                ))}
-              </div>
-            )}
+                );
+              })}
+            </div>
           </>
         )}
-      </section>
-
-      {/* 任务列表 */}
-      <div className="rounded-xl border border-border bg-card">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border p-4">
-            <div>
-              <h2 className="text-lg font-semibold">我的定时任务</h2>
-              <p className="mt-0.5 text-xs text-muted-foreground">用户自建任务（系统任务见上方区域，不在此重复展示）</p>
-            </div>
-            <div className="ml-auto flex flex-wrap items-center gap-2">
-              {jobs === null ? (
-                <button
-                  type="button"
-                  onClick={loadJobs}
-                  disabled={loadingJobs}
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <RefreshCw className={`h-4 w-4 ${loadingJobs ? "animate-spin" : ""}`} />
-                  <span className="hidden sm:inline">加载任务列表</span>
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={loadJobs}
-                  disabled={loadingJobs}
-                  className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-1.5 text-sm font-medium transition hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  <RefreshCw className={`h-4 w-4 ${loadingJobs ? "animate-spin" : ""}`} />
-                  <span className="hidden sm:inline">刷新</span>
-                </button>
-              )}
-            </div>
-          </div>
-
-          {jobs === null ? (
-            <AdminEmptyState
-              title="任务列表尚未加载"
-              description="点击上方「加载任务列表」按需加载"
-            />
-          ) : visibleJobs.length === 0 ? (
-            <AdminEmptyState
-              title={jobs.length === 0 ? "暂无定时任务" : "暂无任务"}
-              description={jobs.length === 0 ? "点击右上角「创建任务」开始" : undefined}
-            />
-          ) : (
-          <div className="divide-y divide-border">
-            {visibleJobs.map((job, index) => (
-              <div
-                key={job.jobId}
-                style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}
-                className="p-4 animate-fade-in-up"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-3">
-                      <span
-                        className={`inline-flex h-2 w-2 rounded-full ${
-                          job.enabled ? "bg-green-500" : "bg-gray-400"
-                        }`}
-                      />
-                      <h3 className="truncate font-medium">{job.title || "(无标题)"}</h3>
-                      {(() => {
-                        const orphan =
-                          !matchSystemJob(job) &&
-                          (job.title.includes("[系统") ||
-                            job.title.includes("[blog:") ||
-                            SYSTEM_ROUTE_FRAGMENTS.some((r) => job.url.includes(r)));
-                        return orphan ? (
-                          <span
-                            title="标题或 URL 命中系统任务特征，但无法匹配任何预设——可能是标题被改动（失联）或自建任务。可在系统任务区重新「启动」自动修复。"
-                            className="inline-flex shrink-0 items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-medium text-amber-600 dark:text-amber-400"
-                          >
-                            <AlertTriangle className="h-3 w-3" />
-                            疑似系统任务
-                          </span>
-                        ) : null;
-                      })()}
-                      <span className="rounded bg-muted px-2 py-0.5 font-mono text-xs">
-                        {methodLabel(job.requestMethod)}
-                      </span>
-                    </div>
-                    <p className="mt-1 truncate font-mono text-xs text-muted-foreground">{job.url}</p>
-                    <div className="mt-2 flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Clock className="h-3 w-3" />
-                        {job.nextExecution
-                          ? `下次：${new Date(job.nextExecution * 1000).toLocaleString("zh-CN")}`
-                          : "无预测"}
-                      </span>
-                      {job.lastExecution > 0 && (
-                        <span>上次：{new Date(job.lastExecution * 1000).toLocaleString("zh-CN")}</span>
-                      )}
-                      <span>ID: {job.jobId}</span>
-                    </div>
-                  </div>
-                  <div className="flex flex-shrink-0 items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setHistoryJob(job)}
-                      title="执行历史"
-                      className="rounded-lg p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
-                    >
-                      <HistoryIcon className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => toggleJob(job)}
-                      title={job.enabled ? "禁用" : "启用"}
-                      className="rounded-lg p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
-                    >
-                      {job.enabled ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => openEditForm(job)}
-                      title="编辑"
-                      className="rounded-lg p-2 text-muted-foreground transition hover:bg-accent hover:text-foreground"
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => deleteJob(job.jobId)}
-                      title="删除"
-                      className="rounded-lg p-2 text-muted-foreground transition hover:bg-red-50 hover:text-red-600"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-          )}
-        </div>
+      </div>
 
       {/* 配置说明（折叠） */}
       <details className="group mt-8 rounded-xl border border-border bg-card p-4">
@@ -721,7 +708,7 @@ export function ManageCronJobs() {
             <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
               <li>在「设置 → 定时任务」中配置 CRON_SECRET 和 CRON_JOB_API_KEY</li>
               <li>确保站点 URL 已配置（环境变量或站点设置）</li>
-              <li>在「系统定时任务」区点击「启动」，自动按预设创建 cron-job.org 任务</li>
+              <li>在任务列表的系统任务行点击「启动」，自动按预设创建 cron-job.org 任务</li>
               <li>停止只是禁用任务（保留执行历史），可随时再启动；删除才是彻底移除</li>
             </ol>
           </div>
@@ -736,8 +723,7 @@ export function ManageCronJobs() {
           <div>
             <h3 className="font-medium">配额说明</h3>
             <p className="mt-2 text-muted-foreground">
-              免费版 cron-job.org API 每日 100 次。页面打开零请求；「加载状态 / 加载任务列表」各消耗 1 次；
-              「刷新全部」一次消耗 2 次，请按需使用。
+              免费版 cron-job.org API 每日 100 次。页面打开零请求；「加载任务列表 / 刷新」消耗 1 次，请按需使用。
             </p>
           </div>
         </div>
