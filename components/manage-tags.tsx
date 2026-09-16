@@ -136,7 +136,7 @@ export function ManageTags() {
       ) : (
         <>
           {/* 桌面端：表格 */}
-          <div className="hidden md:block overflow-hidden rounded-xl border border-border">
+          <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-surface">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
@@ -185,14 +185,14 @@ export function ManageTags() {
                         type="button"
                         onClick={() => deleteTag(tag.id, tag.name)}
                         disabled={deletingId === tag.id}
-                        className="inline-flex items-center gap-1 rounded-md border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600 disabled:opacity-50"
+                        title="删除"
                       >
                         {deletingId === tag.id ? (
-                          <RefreshCw className="h-3 w-3 animate-spin" />
+                          <RefreshCw className="h-4 w-4 animate-spin" />
                         ) : (
-                          <Trash2 className="h-3 w-3" />
+                          <Trash2 className="h-4 w-4" />
                         )}
-                        删除
                       </button>
                     </td>
                   </tr>
@@ -235,14 +235,14 @@ export function ManageTags() {
                     type="button"
                     onClick={() => deleteTag(tag.id, tag.name)}
                     disabled={deletingId === tag.id}
-                    className="inline-flex shrink-0 items-center gap-1 rounded-md border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10 transition-colors disabled:opacity-50"
+                    className="shrink-0 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600 disabled:opacity-50"
+                    title="删除"
                   >
                     {deletingId === tag.id ? (
-                      <RefreshCw className="h-3 w-3 animate-spin" />
+                      <RefreshCw className="h-4 w-4 animate-spin" />
                     ) : (
-                      <Trash2 className="h-3 w-3" />
+                      <Trash2 className="h-4 w-4" />
                     )}
-                    删除
                   </button>
                 </div>
               </div>

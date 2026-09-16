@@ -248,33 +248,16 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
               <FileText className="h-4 w-4" />
               <span className="hidden sm:inline">新建文章</span>
             </button>
-            {/* 搜索框 */}
-            <AdminSearchInput
-              value={search}
-              onChange={setSearch}
-              placeholder="搜索文章..."
-              className="shrink-0 w-32 sm:w-48"
-            />
-            {/* 状态筛选 */}
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as "all" | PostStatus)}
-              className="shrink-0 rounded-lg border border-input bg-background py-1.5 px-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-            >
-              <option value="all">全部</option>
-              <option value={PostStatus.PUBLISHED}>已发布</option>
-              <option value={PostStatus.DRAFT}>草稿</option>
-              <option value={PostStatus.SCHEDULED}>定时</option>
-            </select>
             {/* 刷新按钮 */}
             <button
               type="button"
               onClick={load}
               disabled={listLoading}
-              className="flex shrink-0 items-center gap-1 rounded-lg border border-input px-2.5 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex shrink-0 items-center gap-1 rounded-lg border border-input px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               title="刷新列表"
             >
               <RefreshCw className={`h-4 w-4 ${listLoading ? "animate-spin" : ""}`} />
+              <span className="hidden sm:inline">刷新</span>
             </button>
           </>
         }
@@ -287,6 +270,26 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
       )}
 
       <section>
+        {/* 工具行：筛选 + 搜索（统一位置） */}
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as "all" | PostStatus)}
+            className="rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+          >
+            <option value="all">全部状态</option>
+            <option value={PostStatus.PUBLISHED}>已发布</option>
+            <option value={PostStatus.DRAFT}>草稿</option>
+            <option value={PostStatus.SCHEDULED}>定时</option>
+          </select>
+          <AdminSearchInput
+            value={search}
+            onChange={setSearch}
+            placeholder="搜索文章..."
+            className="ml-auto w-full max-w-md"
+          />
+        </div>
+
         {/* 批量操作工具栏（当有选中文章时显示） */}
         {selectedIds.size > 0 && (
           <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 animate-fade-in-up">

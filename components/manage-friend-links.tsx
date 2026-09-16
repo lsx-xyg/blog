@@ -198,7 +198,7 @@ export function ManageFriendLinks() {
               className="flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors"
             >
               <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              刷新
+              <span className="hidden sm:inline">刷新</span>
             </button>
             <button
               type="button"
@@ -230,7 +230,9 @@ export function ManageFriendLinks() {
           description={search ? undefined : "点击右上角添加"}
         />
       ) : (
-        <div className="overflow-hidden rounded-xl border border-border">
+        <>
+        {/* 桌面端：表格（与其他管理页统一样式） */}
+        <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-surface">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/50">
@@ -299,18 +301,18 @@ export function ManageFriendLinks() {
                       <button
                         type="button"
                         onClick={() => openEdit(link)}
-                        className="inline-flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs hover:bg-accent transition-colors"
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                        title="编辑"
                       >
-                        <Edit3 className="h-3 w-3" />
-                        编辑
+                        <Edit3 className="h-4 w-4" />
                       </button>
                       <button
                         type="button"
                         onClick={() => deleteLink(link.id, link.name)}
-                        className="inline-flex items-center gap-1 rounded-md border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+                        title="删除"
                       >
-                        <Trash2 className="h-3 w-3" />
-                        删除
+                        <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
                   </td>
@@ -319,6 +321,60 @@ export function ManageFriendLinks() {
             </tbody>
           </table>
         </div>
+        {/* 移动端：卡片列表 */}
+        <div className="md:hidden rounded-xl border border-border bg-surface divide-y divide-border">
+          {filteredLinks.map((link, index) => (
+            <div key={link.id} className="p-4 animate-fade-in-up" style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-3 min-w-0">
+                  {link.avatarUrl ? (
+                    <img src={link.avatarUrl} alt={link.name} className="h-9 w-9 shrink-0 rounded-full object-cover" />
+                  ) : (
+                    <div className="h-9 w-9 shrink-0 rounded-full bg-muted flex items-center justify-center">
+                      <Link2 className="h-4 w-4 text-muted-foreground" />
+                    </div>
+                  )}
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">{link.name}</p>
+                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="block truncate text-xs text-primary hover:underline">
+                      {link.url}
+                    </a>
+                  </div>
+                </div>
+                <span className="shrink-0 text-xs text-muted-foreground">排序 {link.sortOrder}</span>
+              </div>
+              {link.tags.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-1">
+                  {link.tags.map((tag) => (
+                    <span key={tag} className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              )}
+              {link.description && <p className="mt-2 text-xs text-muted-foreground">{link.description}</p>}
+              <div className="mt-3 flex items-center justify-end gap-1 border-t border-border/50 pt-2">
+                <button
+                  type="button"
+                  onClick={() => openEdit(link)}
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  title="编辑"
+                >
+                  <Edit3 className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => deleteLink(link.id, link.name)}
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+                  title="删除"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+        </>
       )}
 
       {/* 表单弹窗 */}

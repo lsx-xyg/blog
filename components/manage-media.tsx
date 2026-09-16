@@ -340,6 +340,16 @@ export function ManageMedia() {
         }
         actions={
           <>
+          {/* 刷新按钮 */}
+          <button
+            type="button"
+            onClick={loadItems}
+            className="flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors"
+            title="刷新列表"
+          >
+            <RefreshCw className="h-4 w-4" />
+            <span className="hidden sm:inline">刷新</span>
+          </button>
           {/* 未使用图片清理 */}
           <button
             type="button"
@@ -446,8 +456,8 @@ export function ManageMedia() {
         </div>
       </div>
 
-      {/* 筛选和搜索 */}
-      <div className="mb-6 flex flex-wrap items-center gap-4">
+      {/* 工具行：筛选 + 搜索（统一位置） */}
+      <div className="mb-4 flex flex-wrap items-center gap-3">
         {/* 类型筛选 */}
         <div className="flex items-center gap-2">
           <Filter className="h-4 w-4 text-muted-foreground" />
@@ -493,7 +503,7 @@ export function ManageMedia() {
           value={search}
           onChange={(v) => { setSearch(v); setPage(1); }}
           placeholder="搜索图片标题或 URL…"
-          className="flex-1 min-w-[200px]"
+          className="ml-auto w-full max-w-md"
         />
       </div>
 

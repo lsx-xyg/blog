@@ -9,6 +9,7 @@ import {
   Archive,
   Loader2,
   X,
+  RefreshCw,
   RotateCcw,
   Check,
   HelpCircle,
@@ -634,28 +635,37 @@ export function ManageGuides() {
         title="引导管理"
         description="页面通过 data-guide 锚点声明定位目标；「重置」只清空当前登录账号的引导进度（跳过/完成状态移除后，该引导可重新触发）。"
         actions={
-          <button
-            type="button"
-            onClick={openCreate}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            <Plus className="h-4 w-4" />
-            新建引导
-          </button>
+          <>
+            <button
+              type="button"
+              onClick={loadGuides}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-input px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent"
+              title="刷新列表"
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span className="hidden sm:inline">刷新</span>
+            </button>
+            <button
+              type="button"
+              onClick={openCreate}
+              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <Plus className="h-4 w-4" />
+              新建引导
+            </button>
+          </>
         }
       />
 
-      {/* 列表 */}
-      <div className="rounded-xl border border-border bg-card p-6">
-        {/* 搜索 */}
-        <AdminSearchInput
-          value={search}
-          onChange={setSearch}
-          placeholder="搜索标题、guideKey 或页面…"
-          className="mb-4 max-w-md"
-        />
+      {/* 工具行：搜索 */}
+      <AdminSearchInput
+        value={search}
+        onChange={setSearch}
+        placeholder="搜索标题、guideKey 或页面…"
+        className="mb-4 max-w-md"
+      />
 
-        {loading ? (
+      {loading ? (
           <AdminLoadingState />
         ) : filteredGuides.length === 0 ? (
           <AdminEmptyState
@@ -663,18 +673,20 @@ export function ManageGuides() {
             description={search ? undefined : "点击右上角「新建引导」创建"}
           />
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
+          <>
+          {/* 桌面端：表格（与其他管理页统一样式） */}
+          <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-surface">
+            <table className="w-full">
               <thead>
-                <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                  <th className="pb-2 pr-4 font-medium">标题</th>
-                  <th className="pb-2 pr-4 font-medium">guideKey</th>
-                  <th className="pb-2 pr-4 font-medium">页面</th>
-                  <th className="pb-2 pr-4 font-medium">触发条件</th>
-                  <th className="pb-2 pr-4 font-medium">优先级</th>
-                  <th className="pb-2 pr-4 font-medium">步骤</th>
-                  <th className="pb-2 pr-4 font-medium">状态</th>
-                  <th className="pb-2 font-medium text-right">操作</th>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">标题</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">guideKey</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">页面</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">触发条件</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">优先级</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">步骤</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">状态</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -688,32 +700,32 @@ export function ManageGuides() {
                       key={g.id}
                       className="border-b border-border/50 last:border-0"
                     >
-                      <td className="py-2.5 pr-4 font-medium text-foreground">
+                      <td className="px-4 py-3 font-medium text-foreground">
                         {g.title}
                       </td>
-                      <td className="py-2.5 pr-4 font-mono text-xs text-muted-foreground">
+                      <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
                         {g.guideKey}
                       </td>
-                      <td className="py-2.5 pr-4 text-muted-foreground">
+                      <td className="px-4 py-3 text-muted-foreground">
                         {g.page}
                       </td>
-                      <td className="py-2.5 pr-4 text-muted-foreground">
+                      <td className="px-4 py-3 text-muted-foreground">
                         <span className="font-mono text-xs">{condSummary}</span>
                       </td>
-                      <td className="py-2.5 pr-4 text-muted-foreground">
+                      <td className="px-4 py-3 text-muted-foreground">
                         {g.priority}
                       </td>
-                      <td className="py-2.5 pr-4 text-muted-foreground">
+                      <td className="px-4 py-3 text-muted-foreground">
                         {g.steps.length} 步
                       </td>
-                      <td className="py-2.5 pr-4">
+                      <td className="px-4 py-3">
                         <span
                           className={`inline-block rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[g.status]}`}
                         >
                           {STATUS_LABEL[g.status]}
                         </span>
                       </td>
-                      <td className="py-2.5">
+                      <td className="px-4 py-3">
                         <div className="flex items-center justify-end gap-1">
                           {g.status !== GuideStatus.PUBLISHED && (
                             <button
@@ -797,8 +809,101 @@ export function ManageGuides() {
               </tbody>
             </table>
           </div>
+          {/* 移动端：卡片列表 */}
+          <div className="md:hidden rounded-xl border border-border bg-surface divide-y divide-border">
+            {filteredGuides.map((g) => {
+              const tc = normalizeTargetCondition(g.targetCondition);
+              const condSummary = tc
+                ? tc.conditions.map((c) => c.field).join(" · ")
+                : "—";
+              return (
+                <div key={g.id} className="p-4 animate-fade-in-up">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium text-foreground">{g.title}</p>
+                      <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">{g.guideKey}</p>
+                    </div>
+                    <span
+                      className={`inline-block shrink-0 rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[g.status]}`}
+                    >
+                      {STATUS_LABEL[g.status]}
+                    </span>
+                  </div>
+                  <div className="mt-2 space-y-1 text-xs text-muted-foreground">
+                    <p>页面：{g.page || "—"} · 触发：{condSummary}</p>
+                    <p>优先级 {g.priority} · {g.steps.length} 步</p>
+                  </div>
+                  <div className="mt-3 flex items-center justify-end gap-1 border-t border-border/50 pt-2">
+                    {g.status !== GuideStatus.PUBLISHED && (
+                      <button
+                        type="button"
+                        onClick={() => toggleStatus(g, GuideStatus.PUBLISHED)}
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-green-600"
+                        title="发布"
+                      >
+                        <Rocket className="h-4 w-4" />
+                      </button>
+                    )}
+                    {g.status !== GuideStatus.ARCHIVED && (
+                      <button
+                        type="button"
+                        onClick={() => toggleStatus(g, GuideStatus.ARCHIVED)}
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-yellow-600"
+                        title="归档"
+                      >
+                        <Archive className="h-4 w-4" />
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => openEdit(g)}
+                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      title="编辑"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleResetProgress(g.guideKey)}
+                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                      title="重置当前账号进度"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </button>
+                    {confirmDelete === g.id ? (
+                      <span className="flex items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(g.id)}
+                          className="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-500/10"
+                        >
+                          确认
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setConfirmDelete(null)}
+                          className="rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:bg-muted"
+                        >
+                          取消
+                        </button>
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setConfirmDelete(g.id)}
+                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+                        title="删除"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          </>
         )}
-      </div>
 
       {/* 新建 / 编辑表单 */}
       {editing && (
