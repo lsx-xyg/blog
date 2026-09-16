@@ -31,6 +31,7 @@ import {
   Timer,
   DatabaseBackup,
   UserRound,
+  Route,
   ChevronRight,
 } from "lucide-react";
 
@@ -464,6 +465,20 @@ export default async function AdminRootPage({
               <div>
                 <p className="text-sm font-semibold">账号设置</p>
                 <p className="text-xs text-fg-muted">修改密码 / 关联 GitHub</p>
+              </div>
+            </div>
+          </Link>
+          <Link
+            href={`/${adminPath}/guides`}
+            className="rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-lg bg-orange-500/10 p-2">
+                <Route className="h-4 w-4 text-orange-600 dark:text-orange-400" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold">引导管理</p>
+                <p className="text-xs text-fg-muted">新手引导配置</p>
               </div>
             </div>
           </Link>

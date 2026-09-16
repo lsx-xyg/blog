@@ -25,6 +25,9 @@ export const GUIDE_PROGRESS_STATUS_VALUES = Object.values(
   GuideProgressStatus
 ) as GuideProgressStatus[];
 
+/** 引导跳过（skipped）后的冷却期（天），超过后允许重新触发；completed 永久抑制 */
+export const GUIDE_SKIP_COOLDOWN_DAYS = 7;
+
 /** 引导步骤（steps JSONB 中的单个元素） */
 export interface GuideStep {
   id: string;

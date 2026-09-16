@@ -9,6 +9,8 @@ import {
   Archive,
   Loader2,
   X,
+  RotateCcw,
+  Check,
 } from "lucide-react";
 import type {
   Guide,
@@ -247,6 +249,8 @@ export function ManageGuides() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [error, setError] = useState("");
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  /** 重置进度反馈：guideKey → 已重置提示（3 秒后消失） */
+  const [resetDone, setResetDone] = useState<string | null>(null);
 
   const loadGuides = useCallback(async () => {
     try {
@@ -404,6 +408,18 @@ export function ManageGuides() {
     }
   };
 
+  /** 重置当前用户某引导的进度（清空 skipped/completed，可重新触发） */
+  const handleResetProgress = async (guideKey: string) => {
+    const res = await fetch(
+      `/api/admin/guides/progress?guideKey=${encodeURIComponent(guideKey)}`,
+      { method: "DELETE" }
+    );
+    if (res.ok) {
+      setResetDone(guideKey);
+      setTimeout(() => setResetDone(null), 3000);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* 列表 */}
@@ -543,6 +559,21 @@ export function ManageGuides() {
                               title="删除"
                             >
                               <Trash2 className="h-4 w-4" />
+                            </button>
+                          )}
+                          {resetDone === g.guideKey ? (
+                            <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium text-green-600 dark:text-green-400">
+                              <Check className="h-3.5 w-3.5" />
+                              已重置
+                            </span>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleResetProgress(g.guideKey)}
+                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                              title="重置我的进度（可重新触发）"
+                            >
+                              <RotateCcw className="h-4 w-4" />
                             </button>
                           )}
                         </div>

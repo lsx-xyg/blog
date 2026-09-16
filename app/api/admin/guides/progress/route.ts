@@ -13,8 +13,9 @@ import {
 /**
  * 用户引导进度 API（user_guide_progress 表）
  *
- * GET  /api/admin/guides/progress - 当前用户全部引导进度
- * POST /api/admin/guides/progress - 上报/upsert 进度 { guideKey, status?, currentStep? }
+ * GET    /api/admin/guides/progress         - 当前用户全部引导进度
+ * POST   /api/admin/guides/progress         - 上报/upsert 进度 { guideKey, status?, currentStep? }
+ * DELETE /api/admin/guides/progress?guideKey=xxx - 重置当前用户某引导的进度（重新触发）
  */
 
 export async function GET() {
@@ -129,4 +130,30 @@ export async function POST(request: Request) {
     .returning();
 
   return NextResponse.json({ progress: updated });
+}
+
+/** 重置进度：删除当前用户指定引导的进度记录（跳过/完成状态清空后可重新触发） */
+export async function DELETE(request: Request) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session || !isAdminUser(session.user)) {
+    return NextResponse.json({ error: "未授权" }, { status: 401 });
+  }
+
+  const { searchParams } = new URL(request.url);
+  const guideKey = searchParams.get("guideKey");
+  if (!guideKey || !guideKey.trim()) {
+    return NextResponse.json({ error: "guideKey 必填" }, { status: 400 });
+  }
+
+  const deleted = await db
+    .delete(userGuideProgress)
+    .where(
+      and(
+        eq(userGuideProgress.userId, session.user.id),
+        eq(userGuideProgress.guideKey, guideKey.trim())
+      )
+    )
+    .returning({ id: userGuideProgress.id });
+
+  return NextResponse.json({ reset: true, deleted: deleted.length });
 }

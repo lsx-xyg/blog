@@ -9,7 +9,11 @@ import {
 } from "onborda";
 import { GuideCard } from "./guide-card";
 import type { Guide, GuideProgress } from "@/lib/types/guides";
-import { GuideProgressStatus, normalizeTargetCondition } from "@/lib/types/guides";
+import {
+  GuideProgressStatus,
+  GUIDE_SKIP_COOLDOWN_DAYS,
+  normalizeTargetCondition,
+} from "@/lib/types/guides";
 import {
   evaluateTargetCondition,
   needsServerData,
@@ -82,6 +86,16 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
       .forEach((el) => el.removeAttribute("data-guide"));
   }, []);
 
+  /** skipped 是否已过冷却期（超过 N 天允许重新触发）；completed 永久抑制 */
+  const isSkippedExpired = (p: GuideProgress | undefined): boolean => {
+    if (!p || p.status !== GuideProgressStatus.SKIPPED || !p.updatedAt) {
+      return false;
+    }
+    const days =
+      (Date.now() - new Date(p.updatedAt).getTime()) / 86_400_000;
+    return days >= GUIDE_SKIP_COOLDOWN_DAYS;
+  };
+
   // 1. 加载引导配置与用户进度
   useEffect(() => {
     let cancelled = false;
@@ -143,12 +157,13 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
       const guide = candidates[0];
       if (!guide) return;
 
-      // 已完成/已跳过的引导不再触发
+      // 已完成永久抑制；已跳过但未过冷却期 → 不触发；过冷却期 → 允许重新触发
       const progress = progressRef.current[guide.guideKey];
       if (
         progress &&
         (progress.status === GuideProgressStatus.COMPLETED ||
-          progress.status === GuideProgressStatus.SKIPPED)
+          (progress.status === GuideProgressStatus.SKIPPED &&
+            !isSkippedExpired(progress)))
       ) {
         return;
       }
