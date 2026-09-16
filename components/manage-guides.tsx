@@ -28,6 +28,7 @@ import {
 } from "@/lib/types/guides";
 import { GUIDE_EVENT_ANCHORS } from "@/lib/guide-events";
 import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
+import { AdminModal } from "@/components/admin/modal";
 
 /**
  * 引导管理组件（guiders 表 CRUD）
@@ -781,25 +782,38 @@ export function ManageGuides() {
 
       {/* 新建 / 编辑表单 */}
       {editing && (
-        <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
-            onClick={() => setEditing(false)}
-          />
-          <div className="relative max-h-[92vh] w-full max-w-3xl overflow-y-auto rounded-2xl border border-border bg-background p-6 shadow-2xl">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold">
-                {form.id ? "编辑引导" : "新建引导"}
-              </h3>
+        <AdminModal
+          open
+          title={form.id ? "编辑引导" : "新建引导"}
+          onClose={() => setEditing(false)}
+          maxWidth="3xl"
+          footer={
+            <>
               <button
                 type="button"
                 onClick={() => setEditing(false)}
-                className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
-                aria-label="关闭"
+                className="rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted"
               >
-                <X className="h-4 w-4" />
+                取消
               </button>
-            </div>
+              <button
+                type="button"
+                onClick={handleSave}
+                disabled={saving}
+                className="inline-flex items-center rounded-lg bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    保存中…
+                  </>
+                ) : (
+                  "保存"
+                )}
+              </button>
+            </>
+          }
+        >
 
             {/* 基本信息 */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -967,32 +981,7 @@ export function ManageGuides() {
 
             {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
 
-            <div className="mt-5 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setEditing(false)}
-                className="rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted"
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                onClick={handleSave}
-                disabled={saving}
-                className="inline-flex items-center rounded-lg bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-              >
-                {saving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    保存中…
-                  </>
-                ) : (
-                  "保存"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
+        </AdminModal>
       )}
     </div>
   );

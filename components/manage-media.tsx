@@ -15,6 +15,7 @@ import {
   ZoomIn,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { AdminModal } from "@/components/admin/modal";
 import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
 import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
 import { Switch } from "@/components/ui/switch";
@@ -621,23 +622,33 @@ export function ManageMedia() {
 
       {/* 编辑弹窗 */}
       {editingItem && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4" onClick={() => !editSaving && setEditingItem(null)}>
-          <div
-            className="w-full max-w-md rounded-xl bg-background p-6 shadow-2xl animate-fade-in-up"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-semibold">编辑相册图片</h3>
+        <AdminModal
+          open={!!editingItem}
+          title="编辑相册图片"
+          onClose={() => !editSaving && setEditingItem(null)}
+          closeDisabled={editSaving}
+          maxWidth="md"
+          footer={
+            <>
               <button
                 type="button"
                 onClick={() => setEditingItem(null)}
-                className="rounded-md p-1 hover:bg-accent transition-colors"
                 disabled={editSaving}
+                className="rounded-lg border border-input px-4 py-2 text-sm hover:bg-accent transition-colors disabled:opacity-50"
               >
-                <X className="h-5 w-5" />
+                取消
               </button>
-            </div>
-
+              <button
+                type="button"
+                onClick={saveEdit}
+                disabled={editSaving}
+                className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {editSaving ? "保存中…" : "保存"}
+              </button>
+            </>
+          }
+        >
             <div className="space-y-4">
                 {/* 预览图 */}
                 <div className="aspect-video overflow-hidden rounded-lg bg-muted">
@@ -699,28 +710,8 @@ export function ManageMedia() {
                   </div>
                 )}
 
-                {/* 保存按钮 */}
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setEditingItem(null)}
-                    disabled={editSaving}
-                    className="rounded-lg border border-input px-4 py-2 text-sm hover:bg-accent transition-colors disabled:opacity-50"
-                  >
-                    取消
-                  </button>
-                  <button
-                    type="button"
-                    onClick={saveEdit}
-                    disabled={editSaving}
-                    className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-                  >
-                    {editSaving ? "保存中…" : "保存"}
-                  </button>
-                </div>
-              </div>
-          </div>
-        </div>
+            </div>
+        </AdminModal>
       )}
 
       {/* 灯箱（图片放大查看） */}

@@ -5,6 +5,7 @@ import { Plus, Trash2, Edit3, Link2, RefreshCw, X } from "lucide-react";
 import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
 
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { AdminModal } from "@/components/admin/modal";
 
 type FriendLink = {
   id: string;
@@ -300,22 +301,32 @@ export function ManageFriendLinks() {
 
       {/* 表单弹窗 */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-lg rounded-xl border border-border bg-background p-6 animate-fade-in-up">
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold">
-                {editingId ? "编辑友链" : "添加友链"}
-              </h2>
+        <AdminModal
+          open
+          title={editingId ? "编辑友链" : "添加友链"}
+          onClose={() => setShowModal(false)}
+          closeOnBackdrop={false}
+          footer={
+            <>
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="rounded-md p-1 hover:bg-accent transition-colors"
+                className="rounded-lg border border-input px-4 py-2 text-sm hover:bg-accent transition-colors"
               >
-                <X className="h-5 w-5" />
+                取消
               </button>
-            </div>
-
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2">
+              <button
+                type="button"
+                onClick={saveLink}
+                disabled={saving}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+              >
+                {saving ? "保存中…" : "保存"}
+              </button>
+            </>
+          }
+        >
+            <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className={labelClass}>名称 *</label>
@@ -378,26 +389,7 @@ export function ManageFriendLinks() {
                 />
               </div>
             </div>
-
-            <div className="mt-6 flex justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                className="rounded-lg border border-input px-4 py-2 text-sm hover:bg-accent transition-colors"
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                onClick={saveLink}
-                disabled={saving}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
-                {saving ? "保存中…" : "保存"}
-              </button>
-            </div>
-          </div>
-        </div>
+        </AdminModal>
       )}
 
       {/* 删除确认 */}
