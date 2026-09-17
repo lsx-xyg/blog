@@ -45,7 +45,11 @@ import {
   formatScheduleArray,
 } from "@/lib/cron/form";
 import { CronJobHistoryDialog } from "@/components/cron-job-history";
-import { matchPresetByUrl, matchSystemJob } from "@/lib/cron/system-jobs";
+import {
+  classifyJob,
+  systemTagColor,
+  methodLabel,
+} from "@/lib/cron/jobs";
 
 type CronStatus = {
   platform: CronDeployPlatform;
@@ -330,32 +334,6 @@ export function ManageCronJobs() {
     }
   };
 
-  const methodLabel = (method: number) =>
-    REQUEST_METHODS.find((m) => m.value === method)?.label || `UNKNOWN(${method})`;
-
-  // 系统任务在「系统定时任务」区统一管理，此处过滤掉避免重复
-  // 孤儿系统任务：标题/URL 命中系统特征但匹配不到预设（标题被改动等）
-  const SYSTEM_ROUTE_FRAGMENTS = ["/api/cron/backup", "/api/cron/publish-scheduled"];
-  const isOrphanSystemJob = (job: CronJob) =>
-    !matchSystemJob(job) &&
-    (job.title.includes("[系统") ||
-      job.title.includes("[blog:") ||
-      SYSTEM_ROUTE_FRAGMENTS.some((f) => job.url.includes(f)));
-
-  // 系统标签多色：按预设名 hash 稳定取色（同一预设恒定同色，不随渲染闪变）
-  const SYSTEM_TAG_COLORS = [
-    "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-    "bg-violet-500/10 text-violet-600 dark:text-violet-400",
-    "bg-teal-500/10 text-teal-600 dark:text-teal-400",
-    "bg-orange-500/10 text-orange-600 dark:text-orange-400",
-    "bg-pink-500/10 text-pink-600 dark:text-pink-400",
-  ];
-  const systemTagColor = (name: string) => {
-    let h = 0;
-    for (const c of name) h = (h * 31 + c.charCodeAt(0)) >>> 0;
-    return SYSTEM_TAG_COLORS[h % SYSTEM_TAG_COLORS.length];
-  };
-
   return (
     <div className="animate-page-enter">
       <AdminPageHeader
@@ -422,9 +400,7 @@ export function ManageCronJobs() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {jobs.map((job) => {
-                    const preset = matchSystemJob(job);
-                    const urlPreset = preset ?? matchPresetByUrl(job);
-                    const orphan = !urlPreset && isOrphanSystemJob(job);
+                    const { preset, urlPreset, orphan } = classifyJob(job);
                     return (
                       <tr key={job.jobId} className="transition-colors hover:bg-muted/30">
                         <td className="px-4 py-3">
@@ -577,9 +553,7 @@ export function ManageCronJobs() {
             {/* 移动卡片 */}
             <div className="md:hidden divide-y divide-border">
               {jobs.map((job, index) => {
-                const preset = matchSystemJob(job);
-                const urlPreset = preset ?? matchPresetByUrl(job);
-                const orphan = !urlPreset && isOrphanSystemJob(job);
+                const { preset, urlPreset, orphan } = classifyJob(job);
                 return (
                   <div
                     key={job.jobId}
