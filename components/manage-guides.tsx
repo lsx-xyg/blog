@@ -169,10 +169,14 @@ export function ManageGuides({
       }
       search={{ value: search, onChange: setSearch, placeholder: "搜索标题、guideKey 或页面…" }}
       loading={loading}
-      empty={{
-        title: search ? "没有找到匹配的引导" : "暂无引导配置",
-        description: search ? undefined : "点击右上角「新建引导」创建",
-      }}
+      empty={
+        filteredGuides.length === 0 ? {
+
+          title: search ? "没有找到匹配的引导" : "暂无引导配置",
+          description: search ? undefined : "点击右上角「新建引导」创建",
+      
+        } : null
+      }
     >
       <>
           {/* 桌面端：表格（与其他管理页统一样式） */}

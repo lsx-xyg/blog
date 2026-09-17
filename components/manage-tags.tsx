@@ -159,11 +159,15 @@ export function ManageTags() {
       }
       search={{ value: search, onChange: setSearch, placeholder: "搜索标签..." }}
       loading={loading}
-      empty={{
-        icon: <Tag className="h-12 w-12" />,
-        title: search ? "没有找到匹配的标签" : "还没有标签",
-        description: search ? undefined : "发布文章或上传图片时会自动创建",
-      }}
+      empty={
+        filteredTags.length === 0 ? {
+
+          icon: <Tag className="h-12 w-12" />,
+          title: search ? "没有找到匹配的标签" : "还没有标签",
+          description: search ? undefined : "发布文章或上传图片时会自动创建",
+      
+        } : null
+      }
     >
       <>
           {/* 桌面端：表格 */}

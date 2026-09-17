@@ -215,7 +215,11 @@ export function ManageBackup() {
         </>
       }
       loading={loading}
-      empty={{ title: "暂无备份", description: "点击右上角「创建备份」开始" }}
+      empty={
+        backups.length === 0 ? {
+          title: "暂无备份", description: "点击右上角「创建备份」开始"
+        } : null
+      }
     >
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">

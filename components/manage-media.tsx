@@ -359,11 +359,15 @@ export function ManageMedia() {
         </div>
       }
       loading={loading}
-      empty={{
-        icon: <ImageIcon className="h-12 w-12" />,
-        title: "还没有图片",
-        description: "点击上方按钮上传第一张吧",
-      }}
+      empty={
+        items.length === 0 ? {
+
+          icon: <ImageIcon className="h-12 w-12" />,
+          title: "还没有图片",
+          description: "点击上方按钮上传第一张吧",
+      
+        } : null
+      }
     >
 
       {/* 未使用图片清理面板（动画展开/收起） */}

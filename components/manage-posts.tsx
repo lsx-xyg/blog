@@ -262,21 +262,25 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
         </select>
       }
       loading={listLoading}
-      empty={{
-        icon: <FileText className="h-12 w-12 text-muted-foreground/50" />,
-        title:
-          posts.length === 0
-            ? "还没有文章"
-            : search || statusFilter !== "all"
-              ? "没有找到匹配的文章"
-              : "还没有文章",
-        description:
-          posts.length === 0
-            ? "点击右上角创建你的第一篇文章"
-            : search || statusFilter !== "all"
-              ? "试试调整搜索关键词或筛选条件"
-              : undefined,
-      }}
+      empty={
+        filteredPosts.length === 0
+          ? {
+              icon: <FileText className="h-12 w-12 text-muted-foreground/50" />,
+              title:
+                posts.length === 0
+                  ? "还没有文章"
+                  : search || statusFilter !== "all"
+                    ? "没有找到匹配的文章"
+                    : "还没有文章",
+              description:
+                posts.length === 0
+                  ? "点击右上角创建你的第一篇文章"
+                  : search || statusFilter !== "all"
+                    ? "试试调整搜索关键词或筛选条件"
+                    : undefined,
+            }
+          : null
+      }
     >
       <>
         {/* 批量操作工具栏（当有选中文章时显示） */}

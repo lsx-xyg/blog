@@ -196,11 +196,15 @@ export function ManageFriendLinks() {
       }
       search={{ value: search, onChange: setSearch, placeholder: "搜索友链名称、链接或描述…" }}
       loading={loading}
-      empty={{
-        icon: <Link2 className="h-12 w-12" />,
-        title: search ? "没有找到匹配的友链" : "还没有友链",
-        description: search ? undefined : "点击右上角添加",
-      }}
+      empty={
+        filteredLinks.length === 0 ? {
+
+          icon: <Link2 className="h-12 w-12" />,
+          title: search ? "没有找到匹配的友链" : "还没有友链",
+          description: search ? undefined : "点击右上角添加",
+      
+        } : null
+      }
     >
       <>
         {/* 桌面端：表格（与其他管理页统一样式） */}

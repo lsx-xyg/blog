@@ -586,6 +586,7 @@ export function ManageCronJobs() {
       </details>
 
       {/* 创建/编辑表单弹窗 */}
+      {showForm && (
       <CronJobFormDialog
         form={form}
         setForm={setForm}
@@ -596,6 +597,7 @@ export function ManageCronJobs() {
         onClose={closeForm}
         onSave={saveJob}
       />
+      )}
       {/* 执行历史弹窗 */}
       {historyJob && (
         <CronJobHistoryDialog
