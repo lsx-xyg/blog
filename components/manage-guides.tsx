@@ -21,13 +21,15 @@ import {
   GUIDE_STATUS_VALUES,
   normalizeTargetCondition,
 } from "@/lib/types/guides";
-import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
+
 import { AdminModal } from "@/components/admin/modal";
-import { AdminPageHeader } from "@/components/admin/page-header";
+
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { AdminListPage } from "@/components/admin/list-page";
+import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
 import { useToast } from "@/components/toast";
 import { GuideMissesPanel } from "@/components/guide/misses-panel";
-import { AdminSearchInput } from "@/components/admin/search-input";
+
 import { StepEditor } from "@/components/guide/step-editor";
 import { ConditionSection } from "@/components/guide/condition-editor";
 import { useGuideForm } from "@/components/guide/use-guide-form";
@@ -155,50 +157,24 @@ export function ManageGuides({
   };
 
   return (
-    <div className="space-y-6">
-      <AdminPageHeader
-        title="引导管理"
-        description="页面通过 data-guide 锚点声明定位目标；「重置」只清空当前登录账号的引导进度（跳过/完成状态移除后，该引导可重新触发）。"
-        actions={
-          <>
-            <button
-              type="button"
-              onClick={openCreate}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">新建引导</span>
-            </button>
-            <button
-              type="button"
-              onClick={loadGuides}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-input px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent"
-              title="刷新列表"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">刷新</span>
-            </button>
-          </>
-        }
-      />
-
-      {/* 工具行：搜索 */}
-      <AdminSearchInput
-        value={search}
-        onChange={setSearch}
-        placeholder="搜索标题、guideKey 或页面…"
-        className="mb-4 max-w-md"
-      />
-
-      {loading ? (
-          <AdminLoadingState />
-        ) : filteredGuides.length === 0 ? (
-          <AdminEmptyState
-            title={search ? "没有找到匹配的引导" : "暂无引导配置"}
-            description={search ? undefined : "点击右上角「新建引导」创建"}
-          />
-        ) : (
-          <>
+    <>
+    <AdminListPage
+      title="引导管理"
+      description="页面通过 data-guide 锚点声明定位目标；「重置」只清空当前登录账号的引导进度（跳过/完成状态移除后，该引导可重新触发）。"
+      actions={
+        <>
+          <CreateButton onClick={openCreate} label="新建引导" />
+          <RefreshButton onClick={loadGuides} loading={loading} />
+        </>
+      }
+      search={{ value: search, onChange: setSearch, placeholder: "搜索标题、guideKey 或页面…" }}
+      loading={loading}
+      empty={{
+        title: search ? "没有找到匹配的引导" : "暂无引导配置",
+        description: search ? undefined : "点击右上角「新建引导」创建",
+      }}
+    >
+      <>
           {/* 桌面端：表格（与其他管理页统一样式） */}
           <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-surface">
             <table className="w-full">
@@ -390,8 +366,8 @@ export function ManageGuides({
               );
             })}
           </div>
-          </>
-        )}
+      </>
+    </AdminListPage>
 
       {/* 新建 / 编辑表单 */}
       {editing && (
@@ -566,6 +542,6 @@ export function ManageGuides({
         }}
         onClose={() => setConfirmDelete(null)}
       />
-    </div>
+    </>
   );
 }

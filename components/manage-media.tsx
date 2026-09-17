@@ -15,10 +15,9 @@ import {
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminModal } from "@/components/admin/modal";
-import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
 import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
-import { AdminPageHeader } from "@/components/admin/page-header";
-import { AdminSearchInput } from "@/components/admin/search-input";
+import { AdminListPage } from "@/components/admin/list-page";
+import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
 import { Switch } from "@/components/ui/switch";
 import { TagInput } from "@/components/tag-input";
 import { StorageDriverType } from "@/lib/types/storage";
@@ -343,50 +342,62 @@ export function ManageMedia() {
   };
 
   return (
-    <div className="animate-page-enter">
-      <AdminPageHeader
-        title="媒体库"
-        titleExtra={
-          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-            {currentDriver === StorageDriverType.LOCAL ? "本地存储" : currentDriver === StorageDriverType.GITHUB ? "GitHub 图床" : "S3 存储"}
-          </span>
-        }
-        actions={
-          <>
-          {/* 未使用图片清理 */}
+    <>
+    <AdminListPage
+      title="媒体库"
+      titleExtra={
+        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+          {currentDriver === StorageDriverType.LOCAL ? "本地存储" : currentDriver === StorageDriverType.GITHUB ? "GitHub 图床" : "S3 存储"}
+        </span>
+      }
+      actions={
+        <>
           <button
             type="button"
             onClick={() => {
               setShowUnusedCleanup(!showUnusedCleanup);
               if (!showUnusedCleanup) loadUnusedMedia();
             }}
-            className="flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
           >
             <AlertTriangle className="h-4 w-4" />
             <span className="hidden sm:inline">清理未使用</span>
           </button>
-          {/* 上传图片（弹窗内先选类型再选文件） */}
-          <button
-            type="button"
-            onClick={() => setUploadOpen(true)}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
+          <CreateButton onClick={() => setUploadOpen(true)} label="上传图片" icon={Upload} />
+          <RefreshButton onClick={loadItems} />
+        </>
+      }
+      search={{
+        value: search,
+        onChange: (v) => {
+          setSearch(v);
+          setPage(1);
+        },
+        placeholder: "搜索图片标题或 URL…",
+      }}
+      filters={
+        <div className="ml-auto flex items-center gap-2">
+          <select
+            value={typeFilter}
+            onChange={(e) => {
+              setTypeFilter(e.target.value as MediaType | "ALL");
+              setPage(1);
+            }}
+            className="shrink-0 rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
           >
-            <Upload className="h-4 w-4" />
-            <span className="hidden sm:inline">上传图片</span>
-          </button>
-          {/* 刷新按钮 */}
-          <button
-            type="button"
-            onClick={loadItems}
-            className="flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors"
-            title="刷新列表"
-          >
-            <RefreshCw className="h-4 w-4" />
-            <span className="hidden sm:inline">刷新</span>
-          </button>
-          </>
-        }
-      />
+            <option value="ALL">全部图片</option>
+            <option value={MediaType.ARTICLE}>{MEDIA_TYPE_LABELS[MediaType.ARTICLE]}</option>
+            <option value={MediaType.GALLERY}>{MEDIA_TYPE_LABELS[MediaType.GALLERY]}</option>
+          </select>
+        </div>
+      }
+      loading={loading}
+      empty={{
+        icon: <ImageIcon className="h-12 w-12" />,
+        title: "还没有图片",
+        description: "点击上方按钮上传第一张吧",
+      }}
+    >
 
       {/* 未使用图片清理面板（动画展开/收起） */}
       <div
@@ -449,45 +460,11 @@ export function ManageMedia() {
         </div>
       </div>
 
-      {/* 工具行：搜索 + 筛选（搜索在前、筛选在后） */}
-      <div className="mb-4 flex flex-wrap items-center gap-3">
-        <AdminSearchInput
-          value={search}
-          onChange={(v) => { setSearch(v); setPage(1); }}
-          placeholder="搜索图片标题或 URL…"
-          className="flex-1 min-w-[140px] max-w-md"
-        />
-        {/* 类型筛选（下拉框统一） */}
-        <div className="ml-auto flex items-center gap-2">
-          <select
-            value={typeFilter}
-            onChange={(e) => { setTypeFilter(e.target.value as MediaType | "ALL"); setPage(1); }}
-            className="shrink-0 rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="ALL">全部图片</option>
-            <option value={MediaType.ARTICLE}>{MEDIA_TYPE_LABELS[MediaType.ARTICLE]}</option>
-            <option value={MediaType.GALLERY}>{MEDIA_TYPE_LABELS[MediaType.GALLERY]}</option>
-          </select>
-        </div>
-      </div>
-
       {/* 媒体网格（key 变化时触发切换动画） */}
-      {loading ? (
-        <AdminLoadingState variant="grid" />
-      ) : items.length === 0 ? (
-        <div key={`empty-${typeFilter}-${search}`}>
-          <AdminEmptyState
-            icon={<ImageIcon className="h-12 w-12" />}
-            title="还没有图片"
-            description="点击上方按钮上传第一张吧"
-          />
-        </div>
-      ) : (
-        <>
-          <div
-            key={`grid-${typeFilter}-${search}-${page}`}
-            className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 animate-fade-in-up"
-          >
+      <div
+        key={`grid-${typeFilter}-${search}-${page}`}
+        className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 animate-fade-in-up"
+      >
             {items.map((item, index) => (
               <div
                 key={item.id}
@@ -589,9 +566,8 @@ export function ManageMedia() {
                 下一页
               </button>
             </div>
-          )}
-        </>
       )}
+    </AdminListPage>
 
       {/* 编辑弹窗 */}
       {editingItem && (
@@ -831,6 +807,6 @@ export function ManageMedia() {
         onConfirm={confirmState?.onConfirm ?? (() => {})}
         onClose={() => setConfirmState(null)}
       />
-    </div>
+    </>
   );
 }

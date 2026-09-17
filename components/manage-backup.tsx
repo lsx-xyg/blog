@@ -13,9 +13,9 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Download, Trash2, RefreshCw, Plus, Upload } from "lucide-react";
-import { AdminPageHeader } from "@/components/admin/page-header";
-import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
+import { Download, Trash2, RefreshCw, Upload } from "lucide-react";
+import { AdminListPage } from "@/components/admin/list-page";
+import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { useToast } from "@/components/toast";
 
@@ -186,67 +186,42 @@ export function ManageBackup() {
   }, [loadBackups]);
 
   return (
-    <div className="space-y-6 animate-page-enter">
-      <AdminPageHeader
-        title="备份管理"
-        description="管理数据库备份，支持手动创建、下载、删除和恢复"
-        actions={
-          <>
+    <>
+    <AdminListPage
+      title="备份管理"
+      description="管理数据库备份，支持手动创建、下载、删除和恢复"
+      actions={
+        <>
+          <CreateButton onClick={handleCreate} label={creating ? "创建中…" : "创建备份"} disabled={creating} />
+          <div className="relative">
+            <input
+              ref={setRestoreInputRef}
+              type="file"
+              accept=".json"
+              onChange={handleRestore}
+              disabled={restoring}
+              className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
+            />
             <button
               type="button"
-              onClick={handleCreate}
-              disabled={creating}
-              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+              disabled={restoring}
+              className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-4 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50"
             >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">{creating ? "创建中…" : "创建备份"}</span>
+              <Upload className="h-4 w-4" />
+              <span className="hidden sm:inline">{restoring ? "恢复中…" : "恢复备份"}</span>
             </button>
-            <div className="relative">
-              <input
-                ref={setRestoreInputRef}
-                type="file"
-                accept=".json"
-                onChange={handleRestore}
-                disabled={restoring}
-                className="absolute inset-0 opacity-0 cursor-pointer disabled:cursor-not-allowed"
-              />
-              <button
-                type="button"
-                disabled={restoring}
-                className="flex items-center gap-2 rounded-lg border border-input px-4 py-2 text-sm hover:bg-accent transition-colors disabled:opacity-50"
-              >
-                <Upload className="h-4 w-4" />
-                <span className="hidden sm:inline">{restoring ? "恢复中…" : "恢复备份"}</span>
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={loadBackups}
-              disabled={loading}
-              className="flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors disabled:opacity-50"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">刷新</span>
-            </button>
-          </>
-        }
-      />
-
-      {/* 备份列表：桌面表格 + 移动卡片 */}
+          </div>
+          <RefreshButton onClick={loadBackups} loading={loading} />
+        </>
+      }
+      loading={loading}
+      empty={{ title: "暂无备份", description: "点击右上角「创建备份」开始" }}
+    >
       <div className="overflow-hidden rounded-xl border border-border bg-surface">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <h2 className="text-sm font-semibold">备份列表</h2>
           <span className="text-xs text-muted-foreground">共 {backups.length} 个备份</span>
         </div>
-        {loading ? (
-          <AdminLoadingState />
-        ) : backups.length === 0 ? (
-          <AdminEmptyState
-            title="暂无备份"
-            description="点击右上角「创建备份」开始"
-          />
-        ) : (
-          <>
             {/* 桌面表格 */}
             <div className="hidden md:block">
               <table className="w-full">
@@ -367,9 +342,8 @@ export function ManageBackup() {
                 </div>
               ))}
             </div>
-          </>
-        )}
       </div>
+    </AdminListPage>
 
       {/* 删除确认对话框 */}
       <ConfirmDialog
@@ -393,6 +367,6 @@ export function ManageBackup() {
         onConfirm={confirmRestore}
         onClose={cancelRestore}
       />
-    </div>
+    </>
   );
 }

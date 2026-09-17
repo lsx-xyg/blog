@@ -1,12 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Trash2, Tag, Plus, Pencil, RefreshCw, AlertTriangle, X, FileText, Image } from "lucide-react";
+import { Trash2, Tag, Pencil, AlertTriangle, X, FileText, Image, RefreshCw } from "lucide-react";
 import { AdminModal } from "@/components/admin/modal";
-import { AdminPageHeader } from "@/components/admin/page-header";
-import { AdminSearchInput } from "@/components/admin/search-input";
-import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
-
+import { AdminListPage } from "@/components/admin/list-page";
+import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 
 type TagWithCount = {
@@ -149,51 +147,25 @@ export function ManageTags() {
   const totalMedia = tags.reduce((sum, t) => sum + t.mediaCount, 0);
 
   return (
-    <div className="animate-page-enter">
-      <AdminPageHeader
-        title="标签管理"
-        description={`共 ${tags.length} 个标签 · ${totalPosts} 次文章引用 · ${totalMedia} 次图片引用`}
-        actions={
-          <>
-            <button
-              type="button"
-              onClick={openCreate}
-              className="flex items-center gap-2 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">新建标签</span>
-            </button>
-            <button
-              type="button"
-              onClick={loadTags}
-              className="flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">刷新</span>
-            </button>
-          </>
-        }
-      />
-
-      {/* 搜索 */}
-      <AdminSearchInput
-        value={search}
-        onChange={setSearch}
-        placeholder="搜索标签..."
-        className="mb-4 max-w-md"
-      />
-
-      {/* 标签列表 */}
-      {loading ? (
-        <AdminLoadingState />
-      ) : filteredTags.length === 0 ? (
-        <AdminEmptyState
-          icon={<Tag className="h-12 w-12" />}
-          title={search ? "没有找到匹配的标签" : "还没有标签"}
-          description={search ? undefined : "发布文章或上传图片时会自动创建"}
-        />
-      ) : (
+    <>
+    <AdminListPage
+      title="标签管理"
+      description={`共 ${tags.length} 个标签 · ${totalPosts} 次文章引用 · ${totalMedia} 次图片引用`}
+      actions={
         <>
+          <CreateButton onClick={openCreate} label="新建标签" />
+          <RefreshButton onClick={loadTags} loading={loading} />
+        </>
+      }
+      search={{ value: search, onChange: setSearch, placeholder: "搜索标签..." }}
+      loading={loading}
+      empty={{
+        icon: <Tag className="h-12 w-12" />,
+        title: search ? "没有找到匹配的标签" : "还没有标签",
+        description: search ? undefined : "发布文章或上传图片时会自动创建",
+      }}
+    >
+      <>
           {/* 桌面端：表格 */}
           <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-surface">
             <table className="w-full">
@@ -329,8 +301,8 @@ export function ManageTags() {
               </div>
             ))}
           </div>
-        </>
-      )}
+      </>
+    </AdminListPage>
 
       {/* 提示 */}
       {tags.length > 0 && (
@@ -402,6 +374,6 @@ export function ManageTags() {
         onConfirm={confirmState?.onConfirm ?? (() => {})}
         onClose={() => setConfirmState(null)}
       />
-    </div>
+    </>
   );
 }

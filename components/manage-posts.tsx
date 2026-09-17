@@ -19,9 +19,8 @@
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
-import { AdminLoadingState } from "@/components/admin/status";
-import { AdminPageHeader } from "@/components/admin/page-header";
-import { AdminSearchInput } from "@/components/admin/search-input";
+import { AdminListPage } from "@/components/admin/list-page";
+import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
 import { useRouter } from "next/navigation";
 import {
   FileText,
@@ -231,66 +230,55 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
   };
 
   return (
-    <div className="animate-page-enter">
-      <AdminPageHeader
-        title="文章管理"
-        description={`全部文章（${filteredPosts.length}/${posts.length}）`}
-        actions={
-          <>
-            {/* 新建文章按钮 */}
-            <button
-              type="button"
-              onClick={() => {
-                triggerNavigationStart();
-                router.push(`/${adminPath}/posts/new`);
-              }}
-              className="flex shrink-0 items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              <FileText className="h-4 w-4" />
-              <span className="hidden sm:inline">新建文章</span>
-            </button>
-            {/* 刷新按钮 */}
-            <button
-              type="button"
-              onClick={load}
-              disabled={listLoading}
-              className="flex shrink-0 items-center gap-1 rounded-lg border border-input px-3 py-1.5 text-sm hover:bg-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              title="刷新列表"
-            >
-              <RefreshCw className={`h-4 w-4 ${listLoading ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">刷新</span>
-            </button>
-          </>
-        }
-      />
-
-      {error && (
-        <p className="mb-4 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-600">
-          {error}
-        </p>
-      )}
-
-      <section>
-        {/* 工具行：搜索 + 筛选（搜索在前、筛选在后） */}
-        <div className="mb-4 flex flex-wrap items-center gap-3">
-          <AdminSearchInput
-            value={search}
-            onChange={setSearch}
-            placeholder="搜索文章..."
-            className="flex-1 min-w-[140px] max-w-md"
+    <>
+    <AdminListPage
+      title="文章管理"
+      description={`全部文章（${filteredPosts.length}/${posts.length}）`}
+      actions={
+        <>
+          <CreateButton
+            onClick={() => {
+              triggerNavigationStart();
+              router.push(`/${adminPath}/posts/new`);
+            }}
+            label="新建文章"
+            icon={FileText}
           />
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as "all" | PostStatus)}
-            className="ml-auto shrink-0 rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="all">全部状态</option>
-            <option value={PostStatus.PUBLISHED}>已发布</option>
-            <option value={PostStatus.DRAFT}>草稿</option>
-            <option value={PostStatus.SCHEDULED}>定时</option>
-          </select>
-        </div>
-
+          <RefreshButton onClick={load} loading={listLoading} />
+        </>
+      }
+      error={error}
+      search={{ value: search, onChange: setSearch, placeholder: "搜索文章..." }}
+      filters={
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value as "all" | PostStatus)}
+          className="ml-auto shrink-0 rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+        >
+          <option value="all">全部状态</option>
+          <option value={PostStatus.PUBLISHED}>已发布</option>
+          <option value={PostStatus.DRAFT}>草稿</option>
+          <option value={PostStatus.SCHEDULED}>定时</option>
+        </select>
+      }
+      loading={listLoading}
+      empty={{
+        icon: <FileText className="h-12 w-12 text-muted-foreground/50" />,
+        title:
+          posts.length === 0
+            ? "还没有文章"
+            : search || statusFilter !== "all"
+              ? "没有找到匹配的文章"
+              : "还没有文章",
+        description:
+          posts.length === 0
+            ? "点击右上角创建你的第一篇文章"
+            : search || statusFilter !== "all"
+              ? "试试调整搜索关键词或筛选条件"
+              : undefined,
+      }}
+    >
+      <>
         {/* 批量操作工具栏（当有选中文章时显示） */}
         {selectedIds.size > 0 && (
           <div className="mb-3 flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 p-3 animate-fade-in-up">
@@ -338,23 +326,7 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
           </div>
         )}
 
-        {/* 文章列表加载中：显示骨架屏 */}
-        {listLoading ? (
-          <AdminLoadingState />
-        ) : filteredPosts.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border p-12 text-center">
-            <FileText className="mx-auto h-12 w-12 text-muted-foreground/50" />
-            <p className="mt-4 text-sm text-muted-foreground">
-              {posts.length === 0
-                ? "还没有文章，点击上方创建你的第一篇文章"
-                : search || statusFilter !== "all"
-                ? "没有找到匹配的文章，试试调整搜索关键词或筛选条件"
-                : "还没有文章"}
-            </p>
-          </div>
-        ) : (
-          <>
-            {/* 桌面端：表格（与其他管理页统一样式，列天然对齐） */}
+        {/* 桌面端：表格（与其他管理页统一样式，列天然对齐） */}
             <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-surface">
               <table className="w-full">
                 <thead>
@@ -573,9 +545,8 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
                 ))}
               </ul>
             </div>
-          </>
-        )}
-      </section>
+      </>
+    </AdminListPage>
 
       {/* 危险操作确认 */}
       <ConfirmDialog
@@ -587,6 +558,6 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
         onConfirm={confirmState?.onConfirm ?? (() => {})}
         onClose={() => setConfirmState(null)}
       />
-    </div>
+    </>
   );
 }

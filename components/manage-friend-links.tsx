@@ -1,13 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Trash2, Edit3, Link2, RefreshCw, X } from "lucide-react";
-import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
-
+import { Trash2, Edit3, Link2, X } from "lucide-react";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminModal } from "@/components/admin/modal";
-import { AdminPageHeader } from "@/components/admin/page-header";
-import { AdminSearchInput } from "@/components/admin/search-input";
+import { AdminListPage } from "@/components/admin/list-page";
+import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
 
 type FriendLink = {
   id: string;
@@ -186,51 +184,25 @@ export function ManageFriendLinks() {
   const labelClass = "block text-sm font-medium mb-1.5";
 
   return (
-    <div className="animate-page-enter">
-      <AdminPageHeader
-        title="友链管理"
-        description={`共 ${links.length} 个友链`}
-        actions={
-          <>
-            <button
-              type="button"
-              onClick={openCreate}
-              className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors"
-            >
-              <Plus className="h-4 w-4" />
-              <span className="hidden sm:inline">添加友链</span>
-            </button>
-            <button
-              type="button"
-              onClick={loadLinks}
-              className="flex items-center gap-2 rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors"
-            >
-              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
-              <span className="hidden sm:inline">刷新</span>
-            </button>
-          </>
-        }
-      />
-
-      {/* 搜索 */}
-      <AdminSearchInput
-        value={search}
-        onChange={setSearch}
-        placeholder="搜索友链名称、链接或描述…"
-        className="mb-4 max-w-md"
-      />
-
-      {/* 友链列表 */}
-      {loading ? (
-        <AdminLoadingState />
-      ) : filteredLinks.length === 0 ? (
-        <AdminEmptyState
-          icon={<Link2 className="h-12 w-12" />}
-          title={search ? "没有找到匹配的友链" : "还没有友链"}
-          description={search ? undefined : "点击右上角添加"}
-        />
-      ) : (
+    <>
+    <AdminListPage
+      title="友链管理"
+      description={`共 ${links.length} 个友链`}
+      actions={
         <>
+          <CreateButton onClick={openCreate} label="添加友链" />
+          <RefreshButton onClick={loadLinks} loading={loading} />
+        </>
+      }
+      search={{ value: search, onChange: setSearch, placeholder: "搜索友链名称、链接或描述…" }}
+      loading={loading}
+      empty={{
+        icon: <Link2 className="h-12 w-12" />,
+        title: search ? "没有找到匹配的友链" : "还没有友链",
+        description: search ? undefined : "点击右上角添加",
+      }}
+    >
+      <>
         {/* 桌面端：表格（与其他管理页统一样式） */}
         <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-surface">
           <table className="w-full">
@@ -374,8 +346,8 @@ export function ManageFriendLinks() {
             </div>
           ))}
         </div>
-        </>
-      )}
+      </>
+    </AdminListPage>
 
       {/* 表单弹窗 */}
       {showModal && (
@@ -479,6 +451,6 @@ export function ManageFriendLinks() {
         onConfirm={confirmState?.onConfirm ?? (() => {})}
         onClose={() => setConfirmState(null)}
       />
-    </div>
+    </>
   );
 }
