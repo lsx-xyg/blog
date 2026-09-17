@@ -17,6 +17,8 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminModal } from "@/components/admin/modal";
 import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
 import { AdminListPage } from "@/components/admin/list-page";
+import { useMediaUpload } from "@/components/media/use-media-upload";
+import { UploadDialog } from "@/components/media/upload-dialog";
 import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
 import { Switch } from "@/components/ui/switch";
 import { TagInput } from "@/components/tag-input";
@@ -54,19 +56,15 @@ type MediaItem = {
 export function ManageMedia() {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [uploading, setUploading] = useState(false);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState<MediaType | "ALL">("ALL");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [pageSize] = useState(20);
-  const [uploadType, setUploadType] = useState<MediaType>(MediaType.ARTICLE);
   const [uploadOpen, setUploadOpen] = useState(false);
-  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [showUnusedCleanup, setShowUnusedCleanup] = useState(false);
   const [unusedItems, setUnusedItems] = useState<MediaItem[]>([]);
   const [unusedLoading, setUnusedLoading] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 编辑弹窗状态
   const [editingItem, setEditingItem] = useState<MediaItem | null>(null);
@@ -122,49 +120,6 @@ export function ManageMedia() {
   useEffect(() => {
     loadItems();
   }, [page, typeFilter, search]);
-
-  // 处理文件上传
-  /** 选择文件后暂存（弹窗内确认再上传） */
-  const pickFiles = (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    setUploadFiles((prev) => [...prev, ...Array.from(files)]);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-  };
-
-  const removePickedFile = (index: number) => {
-    setUploadFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
-  const handleFileUpload = async () => {
-    if (uploadFiles.length === 0) return;
-
-    setUploading(true);
-    try {
-      for (const file of uploadFiles) {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("type", uploadType);
-
-        const res = await fetch("/api/admin/media", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (!res.ok) {
-          const error = await res.json();
-          alert(`上传失败：${error.error || "未知错误"}`);
-        }
-      }
-      await loadItems();
-      setUploadFiles([]);
-      setUploadOpen(false);
-    } catch (e) {
-      console.error("上传失败：", e);
-      alert("上传失败，请重试");
-    } finally {
-      setUploading(false);
-    }
-  };
 
   // 删除确认对话框受控状态
   const [confirmState, setConfirmState] = useState<{
@@ -341,6 +296,18 @@ export function ManageMedia() {
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const {
+    uploading,
+    uploadType,
+    setUploadType,
+    uploadFiles,
+    openUpload,
+    closeUpload,
+    pickFiles,
+    removePickedFile,
+    handleFileUpload,
+  } = useMediaUpload({ onUploaded: loadItems });
+
   return (
     <>
     <AdminListPage
@@ -363,7 +330,7 @@ export function ManageMedia() {
             <AlertTriangle className="h-4 w-4" />
             <span className="hidden sm:inline">清理未使用</span>
           </button>
-          <CreateButton onClick={() => setUploadOpen(true)} label="上传图片" icon={Upload} />
+          <CreateButton onClick={openUpload} label="上传图片" icon={Upload} />
           <RefreshButton onClick={loadItems} />
         </>
       }
@@ -693,111 +660,17 @@ export function ManageMedia() {
         </div>
       )}
 
-      {/* 上传图片弹窗：先选类型，再选文件 */}
-      {uploadOpen && (
-        <AdminModal
-          open
-          title="上传图片"
-          onClose={() => { if (!uploading) { setUploadOpen(false); setUploadFiles([]); } }}
-          maxWidth="md"
-          closeOnBackdrop={!uploading}
-          footer={
-            <>
-              <button
-                type="button"
-                onClick={() => { setUploadOpen(false); setUploadFiles([]); }}
-                disabled={uploading}
-                className="rounded-lg border border-input px-4 py-2 text-sm hover:bg-accent transition-colors disabled:opacity-50"
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                onClick={handleFileUpload}
-                disabled={uploading || uploadFiles.length === 0}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-              >
-                {uploading ? `上传中（${uploadFiles.length} 张）…` : `开始上传（${uploadFiles.length} 张）`}
-              </button>
-            </>
-          }
-        >
-          <div className="space-y-4">
-            {/* 上传类型选择（单选切换） */}
-            <div>
-              <label className="mb-1.5 block text-sm font-medium">上传到</label>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setUploadType(MediaType.ARTICLE)}
-                  className={`rounded-lg border px-3 py-2.5 text-sm transition-all ${
-                    uploadType === MediaType.ARTICLE
-                      ? "border-primary bg-primary/5 font-medium text-primary"
-                      : "border-input hover:bg-accent"
-                  }`}
-                >
-                  {MEDIA_TYPE_LABELS[MediaType.ARTICLE]}
-                  <span className="mt-0.5 block text-xs text-muted-foreground">用作文章配图</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setUploadType(MediaType.GALLERY)}
-                  className={`rounded-lg border px-3 py-2.5 text-sm transition-all ${
-                    uploadType === MediaType.GALLERY
-                      ? "border-primary bg-primary/5 font-medium text-primary"
-                      : "border-input hover:bg-accent"
-                  }`}
-                >
-                  {MEDIA_TYPE_LABELS[MediaType.GALLERY]}
-                  <span className="mt-0.5 block text-xs text-muted-foreground">加入相册</span>
-                </button>
-              </div>
-            </div>
-
-            {/* 选择文件 */}
-            <div>
-              <label className="mb-1.5 block text-sm font-medium">选择图片</label>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => pickFiles(e.target.files)}
-              />
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                className="w-full rounded-lg border border-dashed border-border bg-muted/30 px-4 py-6 text-sm text-muted-foreground transition-colors hover:border-primary hover:text-primary disabled:opacity-50"
-              >
-                点击选择图片（可多选）
-              </button>
-              {uploadFiles.length > 0 && (
-                <ul className="mt-2 max-h-40 space-y-1 overflow-y-auto rounded-lg border border-border p-2">
-                  {uploadFiles.map((file, index) => (
-                    <li key={`${file.name}-${index}`} className="flex items-center gap-2 text-xs">
-                      <ImageIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      <span className="truncate flex-1">{file.name}</span>
-                      <span className="shrink-0 text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</span>
-                      <button
-                        type="button"
-                        onClick={() => removePickedFile(index)}
-                        disabled={uploading}
-                        className="shrink-0 rounded p-0.5 text-muted-foreground hover:text-destructive"
-                        aria-label="移除"
-                      >
-                        <X className="h-3.5 w-3.5" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        </AdminModal>
-      )}
-
+      <UploadDialog
+        open={uploadOpen}
+        uploading={uploading}
+        uploadType={uploadType}
+        onUploadTypeChange={setUploadType}
+        uploadFiles={uploadFiles}
+        onPick={pickFiles}
+        onRemove={removePickedFile}
+        onClose={closeUpload}
+        onUpload={handleFileUpload}
+      />
       {/* 删除确认 */}
       <ConfirmDialog
         open={!!confirmState}

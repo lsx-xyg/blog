@@ -9,6 +9,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
+import { uploadMediaFile } from "@/lib/media/upload";
 
 type MediaItem = {
   id: string;
@@ -82,29 +83,21 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
     }
   }, [open, activeTab, page, typeFilter, search]);
 
-  // 处理文件上传
+  // 处理文件上传（复用 lib/media/upload.ts 共享执行）
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
     setUploading(true);
     try {
       for (const file of Array.from(files)) {
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("type", MediaType.ARTICLE); // 从编辑器上传默认是文章图片
-
-        const res = await fetch("/api/admin/media", {
-          method: "POST",
-          body: formData,
-        });
-
-        if (res.ok) {
-          const mediaRecord = await res.json();
+        const r = await uploadMediaFile(file, MediaType.ARTICLE); // 从编辑器上传默认是文章图片
+        if (r.ok) {
           // 上传成功后自动选择
-          onSelect(mediaRecord.url, mediaRecord.title || file.name);
+          onSelect(r.url, file.name);
           onClose();
           return;
         }
+        alert(`上传失败：${r.error}`);
       }
     } catch (e) {
       console.error("上传失败：", e);
