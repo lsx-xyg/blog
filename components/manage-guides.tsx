@@ -36,6 +36,7 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { ADMIN_PAGES } from "@/lib/shared/admin-pages";
 import { buildGuidePickUrl } from "@/lib/shared/guide-pick-url";
 import { useToast } from "@/components/toast";
+import { useRouter } from "next/navigation";
 import { AdminSearchInput } from "@/components/admin/search-input";
 
 /**
@@ -615,6 +616,7 @@ export function ManageGuides({
   pages: { path: string; label: string }[];
 }) {
   const { showToast } = useToast();
+  const router = useRouter();
   const [guides, setGuides] = useState<Guide[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -670,7 +672,7 @@ export function ManageGuides({
       return;
     }
     showToast("已保存，正在跳转目标页面拾取…", "success");
-    window.location.assign(pickUrl);
+    router.push(pickUrl);
   };
 
   const openCreate = () => {
