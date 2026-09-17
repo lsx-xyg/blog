@@ -113,9 +113,13 @@ function adminPageFromPathname(pathname: string): string {
   return `/${parts.slice(1).join("/")}`;
 }
 
-/** 触发条件值是否像 CSS selector（#id / .class / [attr]）而非 data-guide 锚点名 */
-function isSelectorLike(value: string): boolean {
-  return /^[#.\[]/.test(value) || /[\s>+]/.test(value);
+/** 安全 closest：非法选择器（如裸锚点名当作 tag）静默返回 null */
+function safeClosest(el: Element, selector: string): Element | null {
+  try {
+    return el.closest(selector);
+  } catch {
+    return null;
+  }
 }
 
 export function GuideManagerInner({ children }: { children: React.ReactNode }) {
@@ -347,9 +351,21 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
       .filter((g) => {
         const tc = normalizeTargetCondition(g.targetCondition);
         const conditions = tc?.conditions ?? [];
-        // 行为触发（event_click）引导不自动弹出，等待用户点击
-        if (conditions.some((c) => c.field === "event_click")) return false;
-        // 页面匹配：guide.page 字段 或 targetCondition 的 page 条件
+        const hasEventClick = conditions.some(
+          (c) => c.field === "event_click"
+        );
+        // and 逻辑含 event_click：必须点击才触发，不自动弹出
+        if (hasEventClick && tc?.logic !== "or") return false;
+        if (hasEventClick && tc) {
+          // or 逻辑：去掉 event_click 后用剩余条件评估（任一满足即自动触发）
+          const local = conditions.filter((c) => c.field !== "event_click");
+          if (local.length === 0) return false;
+          return evaluateTargetCondition(
+            { logic: tc.logic, conditions: local },
+            { page }
+          );
+        }
+        // 无 event_click：页面匹配（guide.page 字段 或 page 条件）
         const tcPages = conditions
           .filter((c) => c.field === "page")
           .map((c) => String(c.value))
@@ -385,9 +401,10 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
           if (!c.field.startsWith("event_click")) continue;
           const v = String(c.value ?? "");
           if (!v) continue;
-          const matched = isSelectorLike(v)
-            ? el.closest(v) !== null
-            : el.closest(`[data-guide="${v}"]`) !== null;
+          // 两种都试：data-guide 锚点名（埋点）与任意 CSS 选择器（拾取生成）
+          const matched =
+            safeClosest(el, `[data-guide="${v}"]`) !== null ||
+            safeClosest(el, v) !== null;
           if (matched) {
             window.dispatchEvent(
               new CustomEvent("guide:trigger", {
