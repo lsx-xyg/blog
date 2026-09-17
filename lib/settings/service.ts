@@ -96,10 +96,6 @@ export async function getSettingsBundle() {
       getCronSettings(),
     ]);
 
-  // TEMP-DEBUG：评论开关定位（验证后删除）
-  const dbgEnabledRaw = await getSetting<string>("giscus.enabled");
-  console.error("[dbg-bundle]", JSON.stringify({ dbgEnabledRaw, dbgType: typeof dbgEnabledRaw }));
-
   return {
     site,
     social,
@@ -108,7 +104,7 @@ export async function getSettingsBundle() {
     adminPath: adminPath ?? "",
     storage: toStorageForClient(storage),
     privateStorage: toPrivateStorageForClient(privateStorage),
-    giscus: { ...giscus, _dbgEnabledRaw: dbgEnabledRaw, _dbgEnabledType: typeof dbgEnabledRaw },
+    giscus,
     cron: toCronForClient(cron),
   };
 }

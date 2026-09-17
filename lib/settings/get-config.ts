@@ -30,23 +30,24 @@ export async function getConfig<K extends RegistryKey>(
 ): Promise<(typeof registry)[K]["default"]> {
   const def: ConfigDef<any> = registry[name]; 
 
-  const dbVal = await getSetting<string>(def.key);
+  const dbVal = await getSetting<string | boolean | number>(def.key);
 
-  let dbResolved: string | null = dbVal;
-  if (def.secret && dbVal) {
+  let dbResolved: string | boolean | number | null = dbVal;
+  if (def.secret && typeof dbVal === "string" && dbVal) {
     const { decryptIfAvailable } = await import("@/lib/shared/crypto");
     dbResolved = decryptIfAvailable(dbVal);
   }
 
   const envVal = def.env ? process.env[def.env] : undefined;
 
-  const raw = envVal || dbResolved || def.default;
-
-  // TEMP-DEBUG：评论开关定位（验证后删除）
-  if (name === "giscus.enabled") {
-    const out = def.transform ? def.transform(String(raw)) : raw;
-    console.error("[dbg-enabled]", JSON.stringify({ dbVal, dbType: typeof dbVal, envVal, raw, rawType: typeof raw, hasTransform: !!def.transform, out, outType: typeof out }));
-  }
+  // 合并：env > DB > default。
+  // 注意 DB 值可能是 JSONB 反序列化出的布尔 false / 0 / 空串等 falsy 值，
+  // 必须用 null 判断而不能用 || 兜底，否则 falsy 配置会静默落回默认值。
+  const raw =
+    envVal ??
+    (dbResolved !== null && dbResolved !== undefined
+      ? dbResolved
+      : def.default);
 
   return def.transform ? def.transform(String(raw)) : raw;
 }
