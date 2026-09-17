@@ -143,8 +143,8 @@ export default async function PostPage({
               <div className="mdx-content">{renderMdx(post.content)}</div>
               <CodeCopy />
 
-              {/* giscus 评论（延迟加载，不影响首屏渲染） */}
-              <CommentsLazy config={giscusConfig} />
+              {/* giscus 评论（延迟加载，不影响首屏渲染；后台评论开关关闭时不渲染） */}
+              {giscusConfig.enabled && <CommentsLazy config={giscusConfig} />}
             </article>
           </div>
         </div>

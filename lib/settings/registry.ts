@@ -159,6 +159,11 @@ export const registry = {
         env: "NEXT_PUBLIC_GISCUS_CATEGORY_ID",
         default: "",
     },
+    "giscus.enabled": {
+        key: "giscus.enabled",
+        default: true,
+        transform: (v) => v === "true" || v === "1",
+    },
     "cron.deployPlatform": {
         key: "cron.deploy_platform",
         env: "DEPLOY_PLATFORM",

@@ -127,6 +127,17 @@ describe("buildSettingsOps 三分支规则", () => {
     expect(ops.update).toContainEqual({ key: "cron.deploy_platform", value: "SERVER" });
   });
 
+  it("giscus.enabled：布尔转字符串存储，undefined 跳过", () => {
+    const ops = buildSettingsOps({
+      giscus: { repo: "lsx-xyg/blog", enabled: false },
+    });
+    expect(ops.update).toContainEqual({ key: "giscus.enabled", value: "false" });
+    expect(ops.update).toContainEqual({ key: "giscus.repo", value: "lsx-xyg/blog" });
+    const ops2 = buildSettingsOps({ giscus: { enabled: true } });
+    expect(ops2.update).toContainEqual({ key: "giscus.enabled", value: "true" });
+    expect(buildSettingsOps({ giscus: {} }).update.some((u) => u.key === "giscus.enabled")).toBe(false);
+  });
+
   it("aboutContent 单独透出", () => {
     const ops = buildSettingsOps({ aboutContent: "## 关于我" });
     expect(ops.aboutContent).toBe("## 关于我");

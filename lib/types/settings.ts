@@ -37,6 +37,8 @@ export type GiscusSettings = {
     repoId: string;
     category: string;
     categoryId: string;
+    /** 评论开关：false 时文章页不渲染评论区 */
+    enabled: boolean;
 };
 /** 定时任务配置类型 */
 

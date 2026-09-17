@@ -106,6 +106,7 @@ export function ManageSettings() {
     repoId: "",
     category: "Announcements",
     categoryId: "",
+    enabled: true,
   });
 
   const [cron, setCron] = useState<CronSettings>({
@@ -531,6 +532,15 @@ export function ManageSettings() {
                 环境变量优先级更高（设置了 NEXT_PUBLIC_GISCUS_* 则后台配置不生效）。
               </p>
               <div className="space-y-4">
+                <label className="flex items-center gap-2 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    checked={giscus.enabled}
+                    onChange={(e) => setGiscus({ ...giscus, enabled: e.target.checked })}
+                    className="accent-primary h-4 w-4"
+                  />
+                  启用评论（关闭后文章页不显示评论区）
+                </label>
                 <div>
                   <label className={labelClass}>仓库（owner/repo）</label>
                   <input

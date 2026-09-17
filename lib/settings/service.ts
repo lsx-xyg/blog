@@ -257,11 +257,14 @@ export function buildSettingsOps(
 
   const giscus = body.giscus as Record<string, unknown> | undefined;
   if (giscus) {
-    const { repo, repoId, category, categoryId } = giscus as Record<string, unknown>;
+    const { repo, repoId, category, categoryId, enabled } = giscus as Record<string, unknown>;
     if (repo !== undefined) addSetting("giscus.repo", repo);
     if (repoId !== undefined) addSetting("giscus.repo_id", repoId);
     if (category !== undefined) addSetting("giscus.category", category);
     if (categoryId !== undefined) addSetting("giscus.category_id", categoryId);
+    if (enabled !== undefined) {
+      addSetting("giscus.enabled", enabled ? "true" : "false");
+    }
   }
 
   const cron = body.cron as Record<string, unknown> | undefined;

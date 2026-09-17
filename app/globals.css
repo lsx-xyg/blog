@@ -598,13 +598,26 @@ body {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.bytemd-preview .markdown-body ul,
-.bytemd-preview .markdown-body ol {
+.bytemd-preview .markdown-body ul {
+  list-style-type: disc;
+  list-style-position: outside;
   margin: 1rem 0;
   padding-left: 1.6rem;
 }
+.bytemd-preview .markdown-body ol {
+  list-style-type: decimal;
+  list-style-position: outside;
+  margin: 1rem 0;
+  padding-left: 1.6rem;
+}
+.bytemd-preview .markdown-body ul ul {
+  list-style-type: circle;
+}
+.bytemd-preview .markdown-body ol ol {
+  list-style-type: lower-alpha;
+}
 .bytemd-preview .markdown-body li { margin: 0.35rem 0; }
-.bytemd-preview .markdown-body li::marker { color: var(--fg-muted); }
+.bytemd-preview .markdown-body li::marker { color: var(--fg-muted); font-weight: 600; }
 .bytemd-preview .markdown-body blockquote {
   margin: 1.25rem 0;
   border-left: 3px solid var(--border);
