@@ -391,7 +391,7 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
           if (matched) {
             window.dispatchEvent(
               new CustomEvent("guide:trigger", {
-                detail: { event: "click", target: v, page },
+                detail: { event: "event_click", target: v, page },
               })
             );
             return; // 一次点击只触发一个引导

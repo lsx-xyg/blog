@@ -929,7 +929,7 @@ export function ManageGuides({
                       <td className="px-4 py-3 text-muted-foreground">
                         {g.page}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
+                      <td className="max-w-[160px] truncate px-4 py-3 text-muted-foreground">
                         <span className="font-mono text-xs">{condSummary}</span>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">
