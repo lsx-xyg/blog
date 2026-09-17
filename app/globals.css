@@ -365,13 +365,27 @@ body {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-.mdx-content ul,
-.mdx-content ol {
+/* Tailwind v4 preflight 会重置 list-style: none，这里显式恢复列表符号 */
+.mdx-content ul {
+  list-style-type: disc;
+  list-style-position: outside;
   margin: 1rem 0;
   padding-left: 1.6rem;
 }
+.mdx-content ol {
+  list-style-type: decimal;
+  list-style-position: outside;
+  margin: 1rem 0;
+  padding-left: 1.6rem;
+}
+.mdx-content ul ul {
+  list-style-type: circle;
+}
+.mdx-content ol ol {
+  list-style-type: lower-alpha;
+}
 .mdx-content li { margin: 0.35rem 0; }
-.mdx-content li::marker { color: var(--fg-muted); }
+.mdx-content li::marker { color: var(--fg-muted); font-weight: 600; }
 
 .mdx-content blockquote {
   margin: 1.25rem 0;
