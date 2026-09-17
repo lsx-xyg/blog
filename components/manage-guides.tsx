@@ -32,6 +32,7 @@ import { GUIDE_EVENT_ANCHORS } from "@/lib/guide-events";
 import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
 import { AdminModal } from "@/components/admin/modal";
 import { AdminPageHeader } from "@/components/admin/page-header";
+import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminSearchInput } from "@/components/admin/search-input";
 
 /**
@@ -245,6 +246,7 @@ function StepEditor({
   guideId,
   page,
   adminPath,
+  pages,
 }: {
   steps: StepForm[];
   onChange: (next: StepForm[]) => void;
@@ -253,6 +255,8 @@ function StepEditor({
   /** 引导适用页面（相对后台路径，如 /settings） */
   page: string;
   adminPath: string;
+  /** 后台页面列表（nextRoute 下拉选择） */
+  pages: { path: string; label: string }[];
 }) {
   const setStep = (i: number, patch: Partial<StepForm>) => {
     onChange(steps.map((s, j) => (j === i ? { ...s, ...patch } : s)));
@@ -401,15 +405,32 @@ function StepEditor({
                   <HelpCircle className="h-3.5 w-3.5 text-muted-foreground" />
                 </span>
               </label>
-              <input
-                value={s.nextRoute}
-                onChange={(e) => setStep(i, { nextRoute: e.target.value })}
-                className={`${inputClass} font-mono text-xs`}
-                placeholder="后台相对路径，如 /account"
-              />
+              <select
+                value={
+                  s.nextRoute && pages.some((p) => p.path === s.nextRoute)
+                    ? s.nextRoute
+                    : s.nextRoute
+                      ? "__custom__"
+                      : ""
+                }
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setStep(i, { nextRoute: v === "__custom__" ? s.nextRoute : v });
+                }}
+                className={inputClass}
+              >
+                <option value="">不跳转（下一步在当前页高亮）</option>
+                {pages.map((p) => (
+                  <option key={p.path} value={p.path}>
+                    {p.path === "/" ? "/（首页）" : p.path} · {p.label}
+                  </option>
+                ))}
+                {s.nextRoute && !pages.some((p) => p.path === s.nextRoute) && (
+                  <option value="__custom__">{s.nextRoute}（手写值）</option>
+                )}
+              </select>
               <p className={helpClass}>
-                点击「下一步」后跳转到另一个后台页面继续引导（用于跨页引导，如
-                设置页 → 账号设置）。不填则下一步只在当前页高亮下一个元素。
+                点击「下一步」后跳转到的后台页面（选项由服务端扫描路由自动生成，不含 adminSlug 前缀），用于跨页引导；不选则下一步只在当前页高亮下一个元素。
               </p>
             </div>
           </div>
@@ -822,33 +843,14 @@ export function ManageGuides({
                           >
                             <Pencil className="h-4 w-4" />
                           </button>
-                          {confirmDelete === g.id ? (
-                            <span className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => handleDelete(g.id)}
-                                className="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-500/10"
-                              >
-                                确认
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setConfirmDelete(null)}
-                                className="rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:bg-muted"
-                              >
-                                取消
-                              </button>
-                            </span>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => setConfirmDelete(g.id)}
-                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
-                              title="删除"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          )}
+                          <button
+                            type="button"
+                            onClick={() => setConfirmDelete(g.id)}
+                            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+                            title="删除"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                           {resetDone === g.guideKey ? (
                             <span className="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-xs font-medium text-green-600 dark:text-green-400">
                               <Check className="h-3.5 w-3.5" />
@@ -933,33 +935,14 @@ export function ManageGuides({
                     >
                       <RotateCcw className="h-4 w-4" />
                     </button>
-                    {confirmDelete === g.id ? (
-                      <span className="flex items-center gap-1">
-                        <button
-                          type="button"
-                          onClick={() => handleDelete(g.id)}
-                          className="rounded-md px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-500/10"
-                        >
-                          确认
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setConfirmDelete(null)}
-                          className="rounded-md px-1.5 py-1 text-xs text-muted-foreground hover:bg-muted"
-                        >
-                          取消
-                        </button>
-                      </span>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => setConfirmDelete(g.id)}
-                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
-                        title="删除"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setConfirmDelete(g.id)}
+                      className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+                      title="删除"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
                   </div>
                 </div>
               );
@@ -1183,6 +1166,7 @@ export function ManageGuides({
                 guideId={form.id ?? null}
                 page={form.page}
                 adminPath={adminPath}
+                pages={pages}
               />
             </div>
 
@@ -1190,6 +1174,18 @@ export function ManageGuides({
 
         </AdminModal>
       )}
+
+      {/* 删除确认弹窗（与其他管理页规范一致） */}
+      <ConfirmDialog
+        open={confirmDelete !== null}
+        title="删除引导"
+        description="删除后该引导配置将不可恢复，但不会影响已完成的用户进度记录。确定删除吗？"
+        confirmLabel="删除"
+        onConfirm={() => {
+          if (confirmDelete) void handleDelete(confirmDelete);
+        }}
+        onClose={() => setConfirmDelete(null)}
+      />
     </div>
   );
 }

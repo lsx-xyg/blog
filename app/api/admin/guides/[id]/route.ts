@@ -90,7 +90,7 @@ export async function PUT(request: Request, context: RouteContext) {
     patch.page = body.page.trim();
   }
   if (body.steps !== undefined) {
-    if (!Array.isArray(body.steps) || body.steps.length === 0) {
+    if (!Array.isArray(body.steps)) {
       return NextResponse.json({ error: "steps 必须是数组" }, { status: 400 });
     }
     for (const step of body.steps as GuideStep[]) {

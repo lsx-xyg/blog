@@ -31,6 +31,7 @@ export default function GuidePicker() {
   const [copied, setCopied] = useState<"sel" | "json" | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [saveError, setSaveError] = useState("");
+  const [saveCreated, setSaveCreated] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
   // 回填目标：?guide-pick=1&guide_id=xxx&step_id=yyy（来自引导配置页）
   const backfill = useRef<{ guideId: string; stepId: string } | null>(null);
@@ -99,6 +100,7 @@ export default function GuidePicker() {
         text: (el.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 30),
       });
       setCopied(null);
+      setSaveCreated(false);
       // 就地保存：回填到引导步骤
       const target = backfill.current;
       if (target) {
@@ -116,6 +118,8 @@ export default function GuidePicker() {
             const data = await res.json().catch(() => ({}));
             if (!res.ok) throw new Error(data.error || "保存失败");
             setSaveState("saved");
+            // 草稿阶段步骤未持久化 → 后端自动创建占位步骤，返回 created
+            if (data.created) setSaveCreated(true);
           })
           .catch((err: unknown) => {
             console.error("回填选择器失败：", err);
@@ -204,7 +208,11 @@ export default function GuidePicker() {
                     </span>
                   )}
                   {saveState === "saved" && (
-                    <span className="text-green-600 dark:text-green-400">已保存到引导步骤 ✓ 返回配置页刷新即可看到</span>
+                    <span className="text-green-600 dark:text-green-400">
+                      {saveCreated
+                        ? "已保存 ✓（该步骤在草稿中尚未存在，已自动创建，返回配置页补全标题/内容即可发布）"
+                        : "已保存到引导步骤 ✓ 返回配置页刷新即可看到"}
+                    </span>
                   )}
                   {saveState === "error" && (
                     <span className="text-red-600 dark:text-red-400">保存失败：{saveError}（可用下方按钮复制后手动粘贴）</span>

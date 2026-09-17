@@ -38,28 +38,42 @@ export async function PATCH(request: Request, context: RouteContext) {
     const steps: GuideStep[] = guide.steps;
     const stepIndex = steps.findIndex((s) => s.id === body.stepId);
     if (stepIndex < 0) {
-      return NextResponse.json({ error: "步骤不存在" }, { status: 404 });
+      // 步骤在草稿中尚未持久化 → 自动创建占位步骤（其余字段待用户在配置页补全）
+      steps.push({
+        id: body.stepId,
+        target: "",
+        title: "",
+        content: "",
+        placement: "bottom",
+        selector: body.selector,
+        selectorMeta: body.selectorMeta ?? {
+          source: "class",
+          generatedAt: new Date().toISOString(),
+        },
+      });
+    } else {
+      steps[stepIndex] = {
+        ...steps[stepIndex],
+        selector: body.selector,
+        selectorMeta: body.selectorMeta ?? {
+          source: "class",
+          generatedAt: new Date().toISOString(),
+        },
+      };
     }
-
-    steps[stepIndex] = {
-      ...steps[stepIndex],
-      selector: body.selector,
-      selectorMeta: body.selectorMeta ?? {
-        source: "class",
-        generatedAt: new Date().toISOString(),
-      },
-    };
 
     await db
       .update(guiders)
       .set({ steps, updatedAt: new Date() })
       .where(eq(guiders.id, id));
 
+    const saved = steps[steps.length - 1];
     return NextResponse.json({
       ok: true,
+      created: stepIndex < 0,
       step: {
-        id: steps[stepIndex].id,
-        selector: steps[stepIndex].selector,
+        id: saved.id,
+        selector: saved.selector,
       },
     });
   } catch (error) {
