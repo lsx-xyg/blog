@@ -413,7 +413,7 @@ export function ManageCronJobs() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border bg-muted/30">
-                    <th className="w-12 px-4 py-3 text-left text-sm font-medium text-muted-foreground">状态</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">状态</th>
                     <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">任务</th>
                     <th className="w-20 px-4 py-3 text-left text-sm font-medium text-muted-foreground">方法</th>
                     <th className="w-44 px-4 py-3 text-left text-sm font-medium text-muted-foreground">下次执行</th>
@@ -429,11 +429,20 @@ export function ManageCronJobs() {
                       <tr key={job.jobId} className="transition-colors hover:bg-muted/30">
                         <td className="px-4 py-3">
                           <span
-                            className={`inline-flex h-2 w-2 rounded-full ${
-                              job.enabled ? "bg-green-500" : "bg-gray-400"
+                            className={`inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium leading-none ${
+                              job.enabled
+                                ? "bg-green-500/10 text-green-600 dark:text-green-400"
+                                : "bg-muted text-muted-foreground"
                             }`}
                             title={job.enabled ? "已启用" : "已禁用"}
-                          />
+                          >
+                            <span
+                              className={`h-1.5 w-1.5 rounded-full ${
+                                job.enabled ? "bg-green-500" : "bg-gray-400"
+                              }`}
+                            />
+                            {job.enabled ? "运行中" : "未运行"}
+                          </span>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap items-center gap-2">
