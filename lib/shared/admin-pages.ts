@@ -1,43 +1,32 @@
 /**
- * 后台页面列表（server-only）：扫描 app/[adminSlug] 目录生成可选项，
- * 供引导配置页「页面」下拉选择，避免手写路径。
+ * 后台页面列表（server-only）
+ *
+ * 说明：后台路由采用**静态清单**，而非运行时扫描 app/[adminSlug] 目录——
+ * Vercel 等部署环境为 Next.js standalone 输出，源码 app/ 目录不随产物分发，
+ * 运行时 readdirSync 会失败导致列表只剩首页。新增后台页面时，请同步在
+ * ADMIN_PAGES 增加一项；lib/shared/admin-pages.test.ts 会用文件系统扫描校验
+ * 清单没有遗漏（测试失败即提醒）。
  */
-import { readdirSync, existsSync } from "node:fs";
-import path from "node:path";
-
 export interface AdminPageOption {
   /** 相对后台路径，如 /settings、/（首页） */
   path: string;
   label: string;
 }
 
-const PAGE_LABELS: Record<string, string> = {
-  "": "首页（仪表盘）",
-  account: "账号设置",
-  backup: "备份管理",
-  cron: "定时任务",
-  "friend-links": "友链管理",
-  guides: "引导管理",
-  media: "媒体库",
-  posts: "文章管理",
-  settings: "站点设置",
-  tags: "标签管理",
-};
+export const ADMIN_PAGES: AdminPageOption[] = [
+  { path: "/", label: "首页（仪表盘）" },
+  { path: "/account", label: "账号设置" },
+  { path: "/backup", label: "备份管理" },
+  { path: "/cron", label: "定时任务" },
+  { path: "/friend-links", label: "友链管理" },
+  { path: "/guides", label: "引导管理" },
+  { path: "/media", label: "媒体库" },
+  { path: "/posts", label: "文章管理" },
+  { path: "/posts/new", label: "新建文章" },
+  { path: "/settings", label: "站点设置" },
+  { path: "/tags", label: "标签管理" },
+];
 
 export function getAdminPages(): AdminPageOption[] {
-  const pages: AdminPageOption[] = [{ path: "/", label: PAGE_LABELS[""] ?? "首页" }];
-  const dir = path.join(process.cwd(), "app/[adminSlug]");
-  if (!existsSync(dir)) return pages;
-
-  const entries = readdirSync(dir, { withFileTypes: true });
-  for (const entry of entries.sort((a, b) => a.name.localeCompare(b.name))) {
-    // 跳过动态段（[x]）、路由组（(x)）、非目录
-    if (!entry.isDirectory()) continue;
-    if (entry.name.startsWith("[") || entry.name.startsWith("(")) continue;
-    pages.push({
-      path: `/${entry.name}`,
-      label: PAGE_LABELS[entry.name] ?? entry.name,
-    });
-  }
-  return pages;
+  return ADMIN_PAGES;
 }
