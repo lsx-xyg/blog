@@ -5,188 +5,16 @@ import { Editor } from "@bytemd/react";
 import gfm from "@bytemd/plugin-gfm";
 import type { BytemdPlugin } from "bytemd";
 import type { HighlighterCore } from "@shikijs/core";
-import { createHighlighterCore } from "@shikijs/core";
-import { createJavaScriptRegexEngine } from "@shikijs/engine-javascript";
-import type { Root, Element } from "hast";
-import { visit } from "unist-util-visit";
 import { Image as ImageIcon, Columns2, Eye, Pencil } from "lucide-react";
 import { MediaPicker } from "@/components/media-picker";
 import "bytemd/dist/index.css";
 import { MediaType } from "@/lib/types/media";
 import { getStoredTheme, type ThemeMode } from "@/lib/shared/theme";
-import type { BytemdLocale } from "bytemd";
+import { createShikiHighlighter, createShikiRehypePlugin, getEffectiveTheme } from "@/lib/mdx/shiki";
+import { ZH_LOCALE } from "@/lib/mdx/locale";
 
 /**
- * ByteMD 中文 locale 配置
- * 将所有界面文字翻译成中文
- */
-const ZH_LOCALE: Partial<BytemdLocale> = {
-  write: "编辑",
-  preview: "预览",
-  writeOnly: "仅编辑",
-  exitWriteOnly: "退出仅编辑",
-  previewOnly: "仅预览",
-  exitPreviewOnly: "退出仅预览",
-  help: "帮助",
-  closeHelp: "关闭帮助",
-  toc: "目录",
-  closeToc: "关闭目录",
-  fullscreen: "全屏",
-  exitFullscreen: "退出全屏",
-  source: "源码",
-  cheatsheet: "Markdown 速查表",
-  shortcuts: "快捷键",
-  words: "字数",
-  lines: "行数",
-  sync: "同步滚动",
-  top: "回到顶部",
-  limited: "已达最大长度",
-  h1: "一级标题",
-  h2: "二级标题",
-  h3: "三级标题",
-  h4: "四级标题",
-  h5: "五级标题",
-  h6: "六级标题",
-  headingText: "标题文本",
-  bold: "粗体",
-  boldText: "粗体文本",
-  italic: "斜体",
-  italicText: "斜体文本",
-  quote: "引用",
-  quotedText: "引用文本",
-  link: "链接",
-  linkText: "链接文本",
-  image: "图片",
-  imageAlt: "图片描述",
-  imageTitle: "图片标题",
-  code: "行内代码",
-  codeText: "代码文本",
-  codeBlock: "代码块",
-  codeLang: "代码语言",
-  ul: "无序列表",
-  ulItem: "列表项",
-  ol: "有序列表",
-  olItem: "列表项",
-  hr: "分割线",
-};
-
-/**
- * Shiki 主题映射
- * - light: github-light
- * - dark: github-dark
- * - warm: github-dark-dimmed（护眼模式使用稍暗的主题）
- * - system: 根据系统主题自动选择
- */
-const SHIKI_THEME_MAP: Record<ThemeMode, string> = {
-  light: "github-light",
-  dark: "github-dark",
-  warm: "github-dark-dimmed",
-  system: "github-dark", // system 主题默认使用 dark，实际会根据系统主题动态切换
-};
-
-/**
- * 异步初始化 Shiki highlighter
- * 使用 JavaScript 引擎（无需 WASM），预先加载所有可能的主题，支持动态切换
- */
-async function createShikiHighlighter(): Promise<HighlighterCore> {
-  const highlighter = await createHighlighterCore({
-    engine: createJavaScriptRegexEngine(),
-    themes: [
-      import("shiki/themes/github-light.mjs"),
-      import("shiki/themes/github-dark.mjs"),
-      import("shiki/themes/github-dark-dimmed.mjs"),
-    ],
-    langs: [
-      import("shiki/langs/typescript.mjs"),
-      import("shiki/langs/javascript.mjs"),
-      import("shiki/langs/python.mjs"),
-      import("shiki/langs/bash.mjs"),
-      import("shiki/langs/json.mjs"),
-      import("shiki/langs/markdown.mjs"),
-      import("shiki/langs/html.mjs"),
-      import("shiki/langs/css.mjs"),
-      import("shiki/langs/sql.mjs"),
-      import("shiki/langs/go.mjs"),
-      import("shiki/langs/rust.mjs"),
-      import("shiki/langs/java.mjs"),
-      import("shiki/langs/yaml.mjs"),
-      import("shiki/langs/xml.mjs"),
-    ],
-  });
-  return highlighter;
-}
-
-/**
- * 创建同步的 Shiki 代码高亮 rehype 插件
- * 使用 highlighter.codeToHast 同步方法，避免异步 transformer 导致 ByteMD 预览返回 undefined
- */
-function createShikiRehypePlugin(highlighter: HighlighterCore, theme: string): BytemdPlugin {
-  return {
-    rehype: (p) =>
-      p.use(() => (tree: Root) => {
-        visit(tree, "element", (node: Element) => {
-          // 找到 <pre><code class="language-xxx">...</code></pre>
-          if (node.tagName !== "pre") return;
-          const codeEl = node.children[0];
-          if (!codeEl || codeEl.type !== "element" || codeEl.tagName !== "code") return;
-
-          // 提取语言
-          const className = (codeEl.properties?.className as string[]) || [];
-          const lang =
-            className.find((c) => c.startsWith("language-"))?.replace("language-", "") ||
-            "text";
-
-          // 提取代码文本
-          const code = codeEl.children
-            .filter((c) => c.type === "text")
-            .map((c) => (c as { value: string }).value)
-            .join("");
-
-          if (!code.trim()) return;
-
-          try {
-            // 使用同步方法 codeToHast 生成高亮后的 hast
-            const hastRoot = highlighter.codeToHast(code, {
-              lang: highlighter.getLoadedLanguages().includes(lang as any) ? lang : "text",
-              theme,
-            });
-
-            // 从 Root 中提取 pre 元素
-            const highlighted = hastRoot.children.find(
-              (c): c is Element => c.type === "element" && c.tagName === "pre",
-            );
-
-            if (highlighted) {
-              // 替换原来的 pre 元素
-              node.tagName = highlighted.tagName;
-              node.properties = highlighted.properties;
-              node.children = highlighted.children as Element["children"];
-
-              // 移除内联 style 属性，让 CSS 样式生效（与前台文章详情页保持一致）
-              if (node.properties && "style" in node.properties) {
-                delete node.properties.style;
-              }
-            }
-          } catch (err) {
-            console.error("[Shiki] 代码高亮失败:", err);
-          }
-        });
-      }),
-  };
-}
-
-/**
- * 获取当前生效的主题（解析 system 主题）
- */
-function getEffectiveTheme(mode: ThemeMode): "light" | "dark" | "warm" {
-  if (mode === "system") {
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  }
-  return mode;
-}
-
-/**
- * Markdown 编辑器组件（基于 ByteMD + Shiki）
+ * Markdown 编辑器组件（基于 ByteMD + Shiki）——C10 精简后只做装配
  *
  * 功能：
  * - 源码手写 + 左右分屏实时预览
@@ -197,6 +25,7 @@ function getEffectiveTheme(mode: ThemeMode): "light" | "dark" | "warm" {
  * - ByteMD 内置全屏模式
  * - 受控组件（value + onChange）
  *
+ * shiki 初始化/插件/主题解析在 lib/mdx/shiki.ts，中文文案在 lib/mdx/locale.ts。
  * 用法：
  * <MarkdownEditor value={content} onChange={setContent} />
  */

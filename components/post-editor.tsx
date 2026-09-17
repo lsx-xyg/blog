@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 文章编辑器组件（独立页面使用）
+ * 文章编辑器组件（独立页面使用）——C10 精简后只做 JSX 装配
  *
  * 功能：
  * - 多步骤表单（步骤1：正文编辑，步骤2：基本信息）
@@ -9,29 +9,16 @@
  * - 新建/编辑文章
  * - 保存后返回文章列表页
  *
- * 设计说明：
- * - 这个组件只负责文章编辑，不包含文章列表
- * - 文章列表在 ManagePosts 组件中，两者通过路由跳转
- * - 这样可以减少文章列表页的首屏体积，提升加载速度
- *
- * Props：
- * - postId: 文章 ID（编辑时传入，新建时为 null）
- * - initialData: 初始数据（编辑时传入，新建时为空）
- * - adminPath: 后台路径，用于返回列表页
+ * 表单状态机 / 保存编排在 components/post/use-post-form.ts，
+ * 数据模型 / payload / 校验在 lib/posts/form.ts（纯函数）。
  */
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
-import {
-  ChevronLeft,
-  ChevronRight,
-  FileText,
-  Settings,
-} from "lucide-react";
-import { PostStatus } from "@/lib/types/posts";
+import { ChevronLeft, ChevronRight, FileText, Settings } from "lucide-react";
 import { TagInput } from "@/components/tag-input";
-import { useToast } from "@/components/toast";
+import { usePostForm } from "@/components/post/use-post-form";
+import { EDITOR_STEPS, type PostFormData } from "@/lib/posts/form";
+import { PostStatus } from "@/lib/types/posts";
 
 /**
  * MarkdownEditor 动态导入（Bundle 优化）
@@ -54,35 +41,6 @@ const MarkdownEditor = dynamic(
   },
 );
 
-export type PostFormData = {
-  title: string;
-  slug: string;
-  summary: string;
-  content: string;
-  coverUrl: string;
-  status: PostStatus;
-  featured: boolean;
-  scheduledAt: string;
-  tags: string[]; // 标签名称数组
-};
-
-export const emptyForm: PostFormData = {
-  title: "",
-  slug: "",
-  summary: "",
-  content: "",
-  coverUrl: "",
-  status: PostStatus.DRAFT,
-  featured: false,
-  scheduledAt: "",
-  tags: [],
-};
-
-const STEPS = [
-  { id: 1, label: "正文编辑", icon: FileText },
-  { id: 2, label: "基本信息", icon: Settings },
-];
-
 interface PostEditorProps {
   /** 文章 ID（编辑时传入，新建时为 null） */
   postId: string | null;
@@ -93,93 +51,8 @@ interface PostEditorProps {
 }
 
 export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) {
-  const router = useRouter();
-  const { showToast } = useToast();
-  const [form, setForm] = useState<PostFormData>(initialData ?? emptyForm);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [currentStep, setCurrentStep] = useState(1);
-  // 全部已有标签（供 TagInput 下拉提示）
-  const [allTags, setAllTags] = useState<{ id: string; name: string; slug: string }[]>([]);
-
-  // 加载已有标签
-  useEffect(() => {
-    let cancelled = false;
-    fetch("/api/admin/tags")
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("加载标签失败"))))
-      .then((d) => {
-        if (!cancelled) setAllTags(d.tags || []);
-      })
-      .catch(() => {
-        /* 标签下拉提示加载失败不阻塞编辑，静默降级 */
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const set = (k: keyof PostFormData, v: string | boolean) =>
-    setForm((f) => ({ ...f, [k]: v }));
-
-  const goToStep = (step: number) => {
-    if (step >= 1 && step <= STEPS.length) {
-      setCurrentStep(step);
-    }
-  };
-
-  const save = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setError("");
-    try {
-      // 判断是新建还是编辑
-      const isNewPost = postId === null;
-
-      // 编辑时内容留空 → 不传 content，服务端保持原值
-      const payload: Record<string, unknown> = {
-        ...form,
-        scheduledAt: form.scheduledAt || null,
-      };
-      if (!isNewPost && !form.content) delete payload.content;
-
-      if (isNewPost) {
-        // 新建文章
-        const r = await fetch("/api/admin/posts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!r.ok) {
-          const data = await r.json().catch(() => null);
-          throw new Error(data?.error || `创建失败（${r.status}）`);
-        }
-      } else {
-        // 编辑文章
-        const r = await fetch(`/api/admin/posts/${postId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
-        });
-        if (!r.ok) {
-          const data = await r.json().catch(() => null);
-          throw new Error(data?.error || `保存失败（${r.status}）`);
-        }
-      }
-
-      // 保存成功后返回文章列表页
-      showToast(
-        `文章「${form.title.trim() || "未命名"}」${isNewPost ? "创建成功" : "保存成功"}`,
-        "success",
-      );
-      router.push(`/${adminPath}/posts`);
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : "操作失败";
-      setError(msg);
-      showToast(`保存失败：${msg}`, "error");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { form, setForm, set, currentStep, goToStep, save, goToList, loading, error, allTags } =
+    usePostForm({ postId, initialData, adminPath });
 
   const input =
     "rounded-lg border border-border bg-surface-strong px-3 py-2 text-base outline-none focus:border-ring";
@@ -208,8 +81,8 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
       >
         {/* 步骤条 */}
         <div className="mb-6 flex items-center">
-          {STEPS.map((step, index) => {
-            const Icon = step.icon;
+          {EDITOR_STEPS.map((step, index) => {
+            const Icon = step.id === 1 ? FileText : Settings;
             const isActive = currentStep === step.id;
             const isCompleted = currentStep > step.id;
             return (
@@ -228,7 +101,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                   <Icon className="h-4 w-4" />
                   <span>{step.label}</span>
                 </button>
-                {index < STEPS.length - 1 && (
+                {index < EDITOR_STEPS.length - 1 && (
                   <div
                     className={`mx-2 h-px w-8 ${
                       isCompleted ? "bg-primary" : "bg-border"
@@ -367,7 +240,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
             <button
               key="back-btn"
               type="button"
-              onClick={() => router.push(`/${adminPath}/posts`)}
+              onClick={goToList}
               className="rounded-lg border border-border px-4 py-2 text-base hover:bg-accent transition-colors"
             >
               返回列表
@@ -376,7 +249,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
 
           {/* 右下角：下一步（非最后一步）或 保存（最后一步） */}
           <div className="flex gap-3">
-            {currentStep < STEPS.length ? (
+            {currentStep < EDITOR_STEPS.length ? (
               <button
                 key="next-btn"
                 type="button"
