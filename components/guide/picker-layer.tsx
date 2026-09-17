@@ -14,6 +14,48 @@ type Picked = GeneratedSelector & {
   text: string;
 };
 
+/**
+ * 拾取目标提升：命中叶子元素（图标/文字/内联样式节点）时，
+ * 向上找最近的「可识别/交互」祖先（button/a/input/select/textarea/label/summary，
+ * 或含 id/aria-label/data-guide 的元素），避免生成 svg/span 这类不稳定选择器。
+ */
+function resolvePickTarget(el: Element): Element {
+  const INTERACTIVE = [
+    "button",
+    "a",
+    "input",
+    "select",
+    "textarea",
+    "label",
+    "summary",
+  ];
+  const tag = el.tagName.toLowerCase();
+  if (
+    INTERACTIVE.includes(tag) ||
+    el.id ||
+    el.getAttribute("aria-label") ||
+    el.getAttribute("data-guide")
+  ) {
+    return el;
+  }
+  let cur = el.parentElement;
+  let depth = 0;
+  while (cur && cur !== document.body && depth < 5) {
+    const t = cur.tagName.toLowerCase();
+    if (
+      INTERACTIVE.includes(t) ||
+      cur.id ||
+      cur.getAttribute("aria-label") ||
+      cur.getAttribute("data-guide")
+    ) {
+      return cur;
+    }
+    cur = cur.parentElement;
+    depth++;
+  }
+  return el;
+}
+
 function Box({ x, y, w, h }: { x: number; y: number; w: number; h: number }) {
   return (
     <div
@@ -73,8 +115,9 @@ export default function GuidePicker() {
   useEffect(() => {
     if (!active || picked) return;
     const onMove = (e: MouseEvent) => {
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (!el || el === overlayRef.current || overlayRef.current?.contains(el)) return;
+      const raw = document.elementFromPoint(e.clientX, e.clientY);
+      if (!raw || raw === overlayRef.current || overlayRef.current?.contains(raw)) return;
+      const el = resolvePickTarget(raw);
       setHoverEl(el);
       const r = el.getBoundingClientRect();
       setBox({ x: r.x, y: r.y, w: r.width, h: r.height });
@@ -90,8 +133,9 @@ export default function GuidePicker() {
       if (picked) return;
       e.preventDefault();
       e.stopPropagation();
-      const el = document.elementFromPoint(e.clientX, e.clientY);
-      if (!el || el === overlayRef.current || overlayRef.current?.contains(el)) return;
+      const raw = document.elementFromPoint(e.clientX, e.clientY);
+      if (!raw || raw === overlayRef.current || overlayRef.current?.contains(raw)) return;
+      const el = resolvePickTarget(raw);
       const g = generateSelector(el);
       if (!g) return;
       setPicked({

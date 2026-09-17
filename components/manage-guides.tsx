@@ -33,6 +33,8 @@ import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
 import { AdminModal } from "@/components/admin/modal";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { ADMIN_PAGES } from "@/lib/shared/admin-pages";
+import { useToast } from "@/components/toast";
 import { AdminSearchInput } from "@/components/admin/search-input";
 
 /**
@@ -71,7 +73,7 @@ const FIELD_OPTIONS = [
 const FIELD_HELP: Record<string, string> = {
   event_click:
     "用户点击了某个元素就触发。value 选「点击的锚点」（即该元素上的 data-guide 标记，与前端埋点用同一标识）。",
-  page: "只在指定后台页面触发。value 填后台相对路径，如 /settings、/account。",
+  page: "只在指定后台页面触发。value 从下方下拉选择（选项由系统路由自动生成）。",
   click_count:
     "点击累计次数达到才触发（需先在用户行为表有点击记录）。在中间框填锚点名，右边填次数。",
   user_age_days:
@@ -83,6 +85,22 @@ const OP_LABEL: Record<GuideConditionOp, string> = {
   gte: "大于等于 (gte)",
   lte: "小于等于 (lte)",
   exists: "存在 (exists)",
+};
+
+/** 不同字段允许的操作符（页面/点击事件只有「等于」；数字字段支持比较） */
+const OP_BY_FIELD: Record<string, GuideConditionOp[]> = {
+  event_click: [GuideConditionOp.EQ],
+  page: [GuideConditionOp.EQ],
+  user_age_days: [GuideConditionOp.EQ, GuideConditionOp.GTE, GuideConditionOp.LTE],
+  click_count: [GuideConditionOp.EQ, GuideConditionOp.GTE, GuideConditionOp.LTE],
+};
+
+/** 切换字段时的默认值（数据隔离：切字段不沿用上一字段的值） */
+const DEFAULT_VALUE_BY_FIELD: Record<string, string | number> = {
+  event_click: "",
+  page: "",
+  user_age_days: 3,
+  click_count: 1,
 };
 
 const PLACEMENT_OPTIONS = [
@@ -109,27 +127,20 @@ function ConditionRow({
     : "";
 
   const setField = (next: string) => {
+    // 数据隔离：切换字段时重置操作符与值，不沿用上一字段的数据
     if (next === "click_count") {
       onChange({
         ...cond,
-        field: clickAnchor ? `click_count.${clickAnchor}` : "click_count.",
-        op: cond.op ?? GuideConditionOp.GTE,
-        value: cond.value ?? 1,
+        field: `click_count.`,
+        op: GuideConditionOp.GTE,
+        value: 1,
       });
     } else {
       onChange({
         ...cond,
         field: next,
-        op:
-          next === "user_age_days"
-            ? GuideConditionOp.GTE
-            : GuideConditionOp.EQ,
-        value:
-          next === "event_click"
-            ? GUIDE_EVENT_ANCHORS[0]?.target ?? ""
-            : next === "user_age_days"
-              ? 3
-              : cond.value ?? "",
+        op: OP_BY_FIELD[next]?.[0] ?? GuideConditionOp.EQ,
+        value: DEFAULT_VALUE_BY_FIELD[next] ?? "",
       });
     }
   };
@@ -173,53 +184,72 @@ function ConditionRow({
           }
           className={`${inputClass} w-36`}
         >
-          {GUIDE_CONDITION_OPS.map((op) => (
+          {(OP_BY_FIELD[field] ?? [GuideConditionOp.EQ]).map((op) => (
             <option key={op} value={op}>
               {OP_LABEL[op]}
             </option>
           ))}
         </select>
 
-        {cond.op !== GuideConditionOp.EXISTS &&
-          (field === "event_click" ? (
-            <select
-              value={typeof cond.value === "string" ? cond.value : ""}
-              onChange={(e) => onChange({ ...cond, value: e.target.value })}
-              className={`${inputClass} min-w-[200px] flex-1`}
-            >
-              {GUIDE_EVENT_ANCHORS.map((a) => (
-                <option key={a.target} value={a.target}>
-                  {a.label}（{a.target}）
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              type={
-                field === "user_age_days" || field === "click_count"
-                  ? "number"
-                  : "text"
-              }
-              value={cond.value ?? ""}
-              onChange={(e) =>
-                onChange({
-                  ...cond,
-                  value:
-                    field === "user_age_days" || field === "click_count"
-                      ? Number(e.target.value)
-                      : e.target.value,
-                })
-              }
-              className={`${inputClass} min-w-[140px] flex-1`}
-              placeholder={
-                field === "page"
-                  ? "如 /settings"
-                  : field === "click_count"
-                    ? "次数，如 1"
-                    : "天数，如 3"
-              }
-            />
-          ))}
+        {field === "event_click" ? (
+          <select
+            value={typeof cond.value === "string" ? cond.value : ""}
+            onChange={(e) => onChange({ ...cond, value: e.target.value })}
+            className={`${inputClass} min-w-[200px] flex-1`}
+          >
+            {GUIDE_EVENT_ANCHORS.map((a) => (
+              <option key={a.target} value={a.target}>
+                {a.label}（{a.target}）
+              </option>
+            ))}
+          </select>
+        ) : field === "page" ? (
+          <select
+            value={
+              typeof cond.value === "string" &&
+              (ADMIN_PAGES.some((p) => p.path === cond.value) || cond.value === "")
+                ? (cond.value as string)
+                : "__custom__"
+            }
+            onChange={(e) => {
+              const v = e.target.value;
+              onChange({
+                ...cond,
+                value: v === "__custom__" ? (cond.value as string) : v,
+              });
+            }}
+            className={`${inputClass} min-w-[200px] flex-1`}
+          >
+            <option value="">请选择页面</option>
+            {ADMIN_PAGES.map((p) => (
+              <option key={p.path} value={p.path}>
+                {p.path === "/" ? "/（首页）" : p.path} · {p.label}
+              </option>
+            ))}
+            {typeof cond.value === "string" &&
+              cond.value !== "" &&
+              !ADMIN_PAGES.some((p) => p.path === cond.value) && (
+                <option value="__custom__">{cond.value}（手写值）</option>
+              )}
+          </select>
+        ) : (
+          <input
+            type="number"
+            min={0}
+            value={typeof cond.value === "number" ? cond.value : ""}
+            onChange={(e) =>
+              onChange({
+                ...cond,
+                value:
+                  e.target.value === ""
+                    ? 0
+                    : Number(e.target.value),
+              })
+            }
+            className={`${inputClass} min-w-[140px] flex-1`}
+            placeholder={field === "click_count" ? "次数，如 1" : "天数，如 3"}
+          />
+        )}
 
         <button
           type="button"
@@ -522,6 +552,7 @@ export function ManageGuides({
   /** 后台页面列表（服务端扫描生成），供「页面」下拉选择 */
   pages: { path: string; label: string }[];
 }) {
+  const { showToast } = useToast();
   const [guides, setGuides] = useState<Guide[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -676,6 +707,7 @@ export function ManageGuides({
         return;
       }
       setEditing(false);
+      setForm(EMPTY_FORM);
       await loadGuides();
     } catch {
       setError("网络错误，请稍后重试");
@@ -690,7 +722,20 @@ export function ManageGuides({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status: next }),
     });
-    if (res.ok) await loadGuides();
+    if (res.ok) {
+      showToast(
+        next === GuideStatus.PUBLISHED
+          ? "已发布"
+          : next === GuideStatus.ARCHIVED
+            ? "已归档"
+            : "已恢复为草稿",
+        "success"
+      );
+      await loadGuides();
+      return;
+    }
+    const data = await res.json().catch(() => ({}));
+    showToast(data.error || "状态切换失败", "error");
   };
 
   const handleDelete = async (id: string) => {
@@ -956,13 +1001,19 @@ export function ManageGuides({
         <AdminModal
           open
           title={form.id ? "编辑引导" : "新建引导"}
-          onClose={() => setEditing(false)}
+          onClose={() => {
+            setEditing(false);
+            setForm(EMPTY_FORM);
+          }}
           maxWidth="3xl"
           footer={
             <>
               <button
                 type="button"
-                onClick={() => setEditing(false)}
+                onClick={() => {
+                  setEditing(false);
+                  setForm(EMPTY_FORM);
+                }}
                 className="rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-muted"
               >
                 取消

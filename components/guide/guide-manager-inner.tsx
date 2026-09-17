@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import {
   OnbordaProvider,
   Onborda,
@@ -105,6 +106,13 @@ function getAdminPath() {
   return window.location.pathname.split("/")[1] || "dashboard";
 }
 
+/** 从 pathname 取后台相对页面：/dashboard/cron → /cron；/dashboard → / */
+function adminPageFromPathname(pathname: string): string {
+  const parts = pathname.split("/").filter(Boolean);
+  if (parts.length <= 1) return "/";
+  return `/${parts.slice(1).join("/")}`;
+}
+
 export function GuideManagerInner({ children }: { children: React.ReactNode }) {
   return (
     <OnbordaProvider>
@@ -189,7 +197,100 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
     };
   }, []);
 
-  // 2. 监听触发事件
+  /** 触发引导主流程：进度检查 → 服务端精筛 → 构造 steps → 开始/续接（事件与页面加载共用） */
+  const maybeStartGuide = useCallback(
+    async (
+      guide: Guide,
+      ctx: {
+        page: string;
+        element?: HTMLElement | null;
+        event?: string;
+        target?: string;
+        /** 允许续接 in_progress（页面加载场景） */
+        resumeIfInProgress?: boolean;
+      }
+    ) => {
+      // 已有引导在显示 → 不叠加
+      if (isOnbordaVisible) return;
+
+      // 已完成永久抑制；已跳过未过冷却期 → 不触发
+      const progress = progressRef.current[guide.guideKey];
+      if (
+        progress &&
+        (progress.status === GuideProgressStatus.COMPLETED ||
+          (progress.status === GuideProgressStatus.SKIPPED &&
+            !isSkippedExpired(progress)))
+      ) {
+        return;
+      }
+
+      // 含服务端条件（click_count / user_age_days）→ 调 evaluate API 精筛
+      const tc = normalizeTargetCondition(guide.targetCondition);
+      if (needsServerData(tc)) {
+        try {
+          const res = await fetch("/api/admin/guides/evaluate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              guideKey: guide.guideKey,
+              event: ctx.event ?? "",
+              target: ctx.target ?? "",
+              page: ctx.page,
+            }),
+          });
+          const data = await res.json();
+          if (!res.ok || !data.matched) return;
+        } catch {
+          return; // 精筛失败不强行触发
+        }
+      }
+
+      // 构造 onborda tour steps（DB 步骤 → onborda Step）
+      const adminPath = getAdminPath();
+      const steps: Tour["steps"] = guide.steps.map((s) => ({
+        icon: null,
+        title: s.title,
+        content: s.content,
+        selector: pickStepSelector(s),
+        side: s.placement ?? "bottom",
+        showControls: false,
+        nextRoute: s.nextRoute ? `/${adminPath}${s.nextRoute}` : undefined,
+      }));
+      if (steps.length === 0) return;
+
+      // 事件触发：第一步指向触发元素；页面加载：首步未渲染则等待出现
+      if (ctx.element instanceof HTMLElement) {
+        ctx.element.setAttribute("data-guide", TEMP_ANCHOR);
+        steps[0].selector = `[data-guide="${TEMP_ANCHOR}"]`;
+      } else if (!queryFirst(resolveStepSelectors(guide.steps[0]))) {
+        await waitForElement(resolveStepSelectors(guide.steps[0]));
+      }
+
+      setTourSteps([{ tour: guide.guideKey, steps }]);
+      startOnborda(guide.guideKey);
+      reportProgress(guide.guideKey, {
+        status: GuideProgressStatus.IN_PROGRESS,
+      });
+
+      // 续接：in_progress 且保存的步骤元素在当前页面存在 → 直接跳到该步骤
+      if (
+        ctx.resumeIfInProgress &&
+        progress?.status === GuideProgressStatus.IN_PROGRESS &&
+        typeof progress.currentStep === "number" &&
+        progress.currentStep > 0
+      ) {
+        const step = guide.steps[progress.currentStep];
+        setTimeout(() => {
+          if (step && queryFirst(resolveStepSelectors(step))) {
+            setCurrentStep(progress.currentStep);
+          }
+        }, 120);
+      }
+    },
+    [isOnbordaVisible, reportProgress, setCurrentStep, startOnborda]
+  );
+
+  // 2. 监听触发事件（行为触发：点击带 data-guide 的元素）
   useEffect(() => {
     const handler = async (e: Event) => {
       const detail = (e as CustomEvent).detail ?? {};
@@ -218,80 +319,53 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
       const guide = candidates[0];
       if (!guide) return;
 
-      // 已完成永久抑制；已跳过但未过冷却期 → 不触发；过冷却期 → 允许重新触发
-      const progress = progressRef.current[guide.guideKey];
-      if (
-        progress &&
-        (progress.status === GuideProgressStatus.COMPLETED ||
-          (progress.status === GuideProgressStatus.SKIPPED &&
-            !isSkippedExpired(progress)))
-      ) {
-        return;
-      }
-
-      // 含服务端条件（click_count / user_age_days）→ 调 evaluate API 精筛
-      const tc = normalizeTargetCondition(guide.targetCondition);
-      if (needsServerData(tc)) {
-        try {
-          const res = await fetch("/api/admin/guides/evaluate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              guideKey: guide.guideKey,
-              event: eventName,
-              target,
-              page,
-            }),
-          });
-          const data = await res.json();
-          if (!res.ok || !data.matched) return;
-        } catch {
-          return; // 精筛失败不强行触发
-        }
-      }
-
-      // 构造 onborda tour steps（DB 步骤 → onborda Step）
-      const adminPath = getAdminPath();
-      const steps: Tour["steps"] = guide.steps.map((s, i) => ({
-        icon: null,
-        title: s.title,
-        content: s.content,
-        selector: pickStepSelector(s),
-        side: s.placement ?? "bottom",
-        showControls: false,
-        nextRoute: s.nextRoute ? `/${adminPath}${s.nextRoute}` : undefined,
-      }));
-
-      // 第一步指向触发元素（用户点击的按钮），高亮更精准
-      if (element instanceof HTMLElement && steps[0]) {
-        element.setAttribute("data-guide", TEMP_ANCHOR);
-        steps[0].selector = `[data-guide="${TEMP_ANCHOR}"]`;
-      } else if (steps[0] && !queryFirst(resolveStepSelectors(guide.steps[0]))) {
-        // 首步元素未渲染（懒加载/弹层）→ 等待出现再开始，避免引导落在空位上
-        await waitForElement(resolveStepSelectors(guide.steps[0]));
-      }
-
-      setTourSteps([{ tour: guide.guideKey, steps }]);
-      startOnborda(guide.guideKey);
-      reportProgress(guide.guideKey, { status: GuideProgressStatus.IN_PROGRESS });
-
-      // 续接：in_progress 且保存的步骤元素在当前页面存在 → 直接跳到该步骤
-      if (
-        progress?.status === GuideProgressStatus.IN_PROGRESS &&
-        typeof progress.currentStep === "number" &&
-        progress.currentStep > 0
-      ) {
-        const step = guide.steps[progress.currentStep];
-        setTimeout(() => {
-          if (step && queryFirst(resolveStepSelectors(step))) {
-            setCurrentStep(progress.currentStep);
-          }
-        }, 120);
-      }
+      await maybeStartGuide(guide, {
+        page,
+        element,
+        event: eventName,
+        target,
+        resumeIfInProgress: true,
+      });
     };
     window.addEventListener("guide:trigger", handler);
     return () => window.removeEventListener("guide:trigger", handler);
-  }, [guides, startOnborda, reportProgress, setCurrentStep]);
+  }, [guides, maybeStartGuide]);
+
+  // 2b. 页面加载/路由切换自动触发（page 条件引导，无需点击）
+  const pathname = usePathname();
+  useEffect(() => {
+    if (guides.length === 0) return;
+    const page = adminPageFromPathname(pathname);
+    if (!page) return;
+
+    const candidates = guides
+      .filter((g) => {
+        const tc = normalizeTargetCondition(g.targetCondition);
+        const conditions = tc?.conditions ?? [];
+        // 行为触发（event_click）引导不自动弹出，等待用户点击
+        if (conditions.some((c) => c.field === "event_click")) return false;
+        // 页面匹配：guide.page 字段 或 targetCondition 的 page 条件
+        const tcPages = conditions
+          .filter((c) => c.field === "page")
+          .map((c) => String(c.value))
+          .filter(Boolean);
+        const pages = [g.page, ...tcPages].filter(Boolean);
+        return pages.includes(page);
+      })
+      .sort((a, b) => a.priority - b.priority);
+    if (candidates.length === 0) return;
+
+    // 续接优先：有 in_progress 引导 → 恢复现场
+    const inProgress = candidates.find(
+      (g) =>
+        progressRef.current[g.guideKey]?.status ===
+        GuideProgressStatus.IN_PROGRESS
+    );
+    void maybeStartGuide(inProgress ?? candidates[0], {
+      page,
+      resumeIfInProgress: true,
+    });
+  }, [guides, maybeStartGuide, pathname]);
 
   // 3. 步骤变化上报进度（进入/切换步骤时）
   useEffect(() => {
