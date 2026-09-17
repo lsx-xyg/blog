@@ -13,9 +13,11 @@
  * 数据模型 / payload / 校验在 lib/posts/form.ts（纯函数）。
  */
 
+import { useState } from "react";
 import dynamic from "next/dynamic";
-import { ChevronLeft, ChevronRight, FileText, Settings } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, ImagePlus, Settings, X } from "lucide-react";
 import { TagInput } from "@/components/tag-input";
+import { MediaPicker } from "@/components/media-picker";
 import { usePostForm } from "@/components/post/use-post-form";
 import { EDITOR_STEPS, type PostFormData } from "@/lib/posts/form";
 import { PostStatus } from "@/lib/types/posts";
@@ -53,6 +55,7 @@ interface PostEditorProps {
 export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) {
   const { form, setForm, set, currentStep, goToStep, save, goToList, loading, error, allTags } =
     usePostForm({ postId, initialData, adminPath });
+  const [showCoverPicker, setShowCoverPicker] = useState(false);
 
   const input =
     "rounded-lg border border-border bg-surface-strong px-3 py-2 text-base outline-none focus:border-ring";
@@ -162,13 +165,45 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className={label}>封面图 URL（可选）</label>
-                  <input
-                    className={`${input} mt-1 w-full font-mono`}
-                    value={form.coverUrl}
-                    onChange={(e) => set("coverUrl", e.target.value)}
-                    placeholder="https://…（T3 上传后可用图床 URL）"
-                  />
+                  <label className={label}>封面图（可选）</label>
+                  <div className="mt-1 flex gap-2">
+                    <input
+                      className={`${input} w-full font-mono`}
+                      value={form.coverUrl}
+                      onChange={(e) => set("coverUrl", e.target.value)}
+                      placeholder="https://… 或点击右侧从图库选择 / 上传"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCoverPicker(true)}
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-surface-strong px-3 py-2 text-sm text-fg-muted transition-colors hover:text-foreground"
+                      title="从图库选择或上传图片"
+                    >
+                      <ImagePlus className="h-4 w-4" />
+                      图库/上传
+                    </button>
+                  </div>
+                  {form.coverUrl ? (
+                    <div className="mt-2 flex items-start gap-3">
+                      <div className="relative aspect-video w-40 overflow-hidden rounded-lg border border-border">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={form.coverUrl}
+                          alt="封面预览"
+                          className="h-full w-full object-cover"
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => set("coverUrl", "")}
+                        className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-red-600"
+                        title="移除封面图"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                        移除
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
                 <div className="md:col-span-2">
                   <label className={label}>标签</label>
@@ -218,6 +253,13 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
             </div>
           )}
         </div>
+
+        {/* 封面图媒体选择器（图库选择 / 上传） */}
+        <MediaPicker
+          open={showCoverPicker}
+          onClose={() => setShowCoverPicker(false)}
+          onSelect={(url) => set("coverUrl", url)}
+        />
 
         {/* 底部按钮：上一步左下角，下一步/保存右下角 */}
         <div className="mt-6 flex items-center justify-between border-t border-border pt-4">

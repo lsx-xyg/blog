@@ -123,8 +123,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
         {/* 头部 */}
         <div className="flex items-center justify-between border-b border-border p-4">
           <h2 className="text-lg font-semibold">插入图片</h2>
-          <button
-            type="button"
+          <button type="button"
             onClick={onClose}
             className="rounded-md p-1 hover:bg-accent"
           >
@@ -134,8 +133,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
 
         {/* Tab 切换 */}
         <div className="flex border-b border-border">
-          <button
-            type="button"
+          <button type="button"
             onClick={() => setActiveTab("library")}
             className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
               activeTab === "library"
@@ -145,8 +143,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
           >
             从图库选择
           </button>
-          <button
-            type="button"
+          <button type="button"
             onClick={() => setActiveTab("upload")}
             className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
               activeTab === "upload"
@@ -171,8 +168,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
                 className="hidden"
                 onChange={(e) => handleFileUpload(e.target.files)}
               />
-              <button
-                type="button"
+              <button type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
                 className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-border px-12 py-8 hover:border-primary/50 hover:bg-accent/50 transition-colors disabled:opacity-50"
@@ -200,8 +196,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
               <div className="flex flex-wrap items-center gap-3">
                 {/* 类型筛选 */}
                 <div className="flex rounded-lg border border-border overflow-hidden">
-                  <button
-                    type="button"
+                  <button type="button"
                     onClick={() => { setTypeFilter("ALL"); setPage(1); }}
                     className={`px-3 py-1.5 text-sm transition-colors ${
                       typeFilter === "ALL"
@@ -211,8 +206,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
                   >
                     全部
                   </button>
-                  <button
-                    type="button"
+                  <button type="button"
                     onClick={() => { setTypeFilter(MediaType.ARTICLE); setPage(1); }}
                     className={`px-3 py-1.5 text-sm transition-colors ${
                       typeFilter === MediaType.ARTICLE
@@ -222,8 +216,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
                   >
                     {MEDIA_TYPE_LABELS[MediaType.ARTICLE]}
                   </button>
-                  <button
-                    type="button"
+                  <button type="button"
                     onClick={() => { setTypeFilter(MediaType.GALLERY); setPage(1); }}
                     className={`px-3 py-1.5 text-sm transition-colors ${
                       typeFilter === MediaType.GALLERY
@@ -262,9 +255,8 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
                 <>
                   <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
                     {items.map((item) => (
-                      <button
+                      <button type="button"
                         key={item.id}
-                        type="button"
                         onClick={() => handleSelect(item)}
                         className="group relative aspect-square overflow-hidden rounded-lg border border-border hover:border-primary transition-colors"
                       >
@@ -298,8 +290,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
                   {/* 分页 */}
                   {totalPages > 1 && (
                     <div className="flex items-center justify-center gap-2 pt-4">
-                      <button
-                        type="button"
+                      <button type="button"
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={page === 1}
                         className="rounded-md border border-input px-3 py-1 text-sm disabled:opacity-50 hover:bg-accent"
@@ -309,8 +300,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
                       <span className="text-sm text-muted-foreground">
                         {page} / {totalPages}
                       </span>
-                      <button
-                        type="button"
+                      <button type="button"
                         onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                         disabled={page === totalPages}
                         className="rounded-md border border-input px-3 py-1 text-sm disabled:opacity-50 hover:bg-accent"
