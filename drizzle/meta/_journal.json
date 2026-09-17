@@ -78,6 +78,13 @@
       "when": 1789517351718,
       "tag": "0010_user_events_and_condition_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789616816122,
+      "tag": "0011_awesome_the_order",
+      "breakpoints": true
     }
   ]
 }

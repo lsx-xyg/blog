@@ -37,6 +37,7 @@ import { ADMIN_PAGES } from "@/lib/shared/admin-pages";
 import { buildGuidePickUrl } from "@/lib/shared/guide-pick-url";
 import { useToast } from "@/components/toast";
 import { useRouter } from "next/navigation";
+import { GuideMissesPanel } from "@/components/guide/misses-panel";
 import { AdminSearchInput } from "@/components/admin/search-input";
 
 /**
@@ -1324,6 +1325,9 @@ export function ManageGuides({
 
         </AdminModal>
       )}
+
+      {/* 失效选择器监控（#29） */}
+      <GuideMissesPanel />
 
       {/* 删除确认弹窗（与其他管理页规范一致） */}
       <ConfirmDialog

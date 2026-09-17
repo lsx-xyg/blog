@@ -29,6 +29,43 @@ interface Tour {
 
 /* ---------- 多级定位：data-guide → 动态选择器（拾取生成） ---------- */
 
+/* ---------- 失效监控上报（#29）：定位失败记录到 guide_step_events ---------- */
+
+const MISS_THROTTLE_MS = 5 * 60 * 1000;
+const missThrottle = new Map<string, number>();
+
+/** 定位失败上报（前端节流：同 guideKey+stepId 5 分钟内不重复）。失败静默，不影响引导。 */
+async function reportMiss(
+  guideKey: string,
+  step: GuideStep,
+  page: string
+): Promise<void> {
+  const sels = resolveStepSelectors(step);
+  if (sels.length === 0) return;
+  const key = `${guideKey}:${step.id}`;
+  const last = missThrottle.get(key) ?? 0;
+  if (Date.now() - last < MISS_THROTTLE_MS) return;
+  missThrottle.set(key, Date.now());
+  const source = step.selector
+    ? (step.selectorMeta?.source ?? "unknown")
+    : "data-guide";
+  try {
+    await fetch("/api/admin/guides/report-miss", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        guideKey,
+        stepId: step.id,
+        selector: sels[0],
+        source,
+        page,
+      }),
+    });
+  } catch {
+    /* 上报失败不影响引导触发 */
+  }
+}
+
 /** 步骤候选选择器（按优先级）：data-guide 埋点优先，selector 兜底 */
 function resolveStepSelectors(step: GuideStep): string[] {
   const list: string[] = [];
@@ -49,6 +86,15 @@ function pickStepSelector(step: GuideStep): string {
     }
   }
   return sels[0];
+}
+
+/** 安全 querySelector（非法选择器返回 null） */
+function querySelectorSafe(selector: string): Element | null {
+  try {
+    return document.querySelector(selector);
+  } catch {
+    return null;
+  }
 }
 
 /** 依次尝试选择器，返回第一个命中的元素；无命中返回 null */
@@ -256,15 +302,22 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
 
       // 构造 onborda tour steps（DB 步骤 → onborda Step）
       const adminPath = getAdminPath();
-      const steps: Tour["steps"] = guide.steps.map((s) => ({
-        icon: null,
-        title: s.title,
-        content: s.content,
-        selector: pickStepSelector(s),
-        side: s.placement ?? "bottom",
-        showControls: false,
-        nextRoute: s.nextRoute ? `/${adminPath}${s.nextRoute}` : undefined,
-      }));
+      const steps: Tour["steps"] = guide.steps.map((s) => {
+        const selector = pickStepSelector(s);
+        // 失效监控：候选选择器在 DOM 中不存在 → 记录（节流后上报）
+        if (selector && !querySelectorSafe(selector)) {
+          void reportMiss(guide.guideKey, s, adminPath);
+        }
+        return {
+          icon: null,
+          title: s.title,
+          content: s.content,
+          selector,
+          side: s.placement ?? "bottom",
+          showControls: false,
+          nextRoute: s.nextRoute ? `/${adminPath}${s.nextRoute}` : undefined,
+        };
+      });
       if (steps.length === 0) return;
 
       // 事件触发：第一步指向触发元素；页面加载：首步未渲染则等待出现
@@ -272,7 +325,13 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
         ctx.element.setAttribute("data-guide", TEMP_ANCHOR);
         steps[0].selector = `[data-guide="${TEMP_ANCHOR}"]`;
       } else if (!queryFirst(resolveStepSelectors(guide.steps[0]))) {
-        await waitForElement(resolveStepSelectors(guide.steps[0]));
+        const firstEl = await waitForElement(
+          resolveStepSelectors(guide.steps[0])
+        );
+        if (!firstEl) {
+          // 等待超时仍未出现 → 首步定位失败，记录
+          void reportMiss(guide.guideKey, guide.steps[0], adminPath);
+        }
       }
 
       setTourSteps([{ tour: guide.guideKey, steps }]);
@@ -292,6 +351,8 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
         setTimeout(() => {
           if (step && queryFirst(resolveStepSelectors(step))) {
             setCurrentStep(progress.currentStep);
+          } else if (step) {
+            void reportMiss(guide.guideKey, step, adminPath);
           }
         }, 120);
       }

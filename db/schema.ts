@@ -338,6 +338,28 @@ export const userEvents = pgTable(
   ]
 );
 
+/* ---------- guide_step_events 引导步骤失效事件表（#29 选择器失效监控） ---------- */
+
+export const guideStepEvents = pgTable(
+  "guide_step_events",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    guideKey: text("guide_key").notNull(),
+    stepId: text("step_id").notNull(),
+    /** 运行时实际定位失败的候选选择器（data-guide 优先，其次动态 selector） */
+    selector: text("selector").notNull(),
+    /** 选择器来源：id / semantic / class / path / data-guide */
+    selectorSource: text("selector_source").notNull().default("unknown"),
+    /** 失效时的后台相对路径（如 /cron） */
+    page: text("page").notNull().default(""),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index("guide_step_events_guide_step_idx").on(t.guideKey, t.stepId),
+    index("guide_step_events_created_idx").on(t.createdAt),
+  ]
+);
+
 /* ---------- 类型导出（M2+ 使用） ---------- */
 export type Post = typeof posts.$inferSelect;
 export type NewPost = typeof posts.$inferInsert;
@@ -354,3 +376,5 @@ export type Guider = typeof guiders.$inferSelect;
 export type UserGuideProgress = typeof userGuideProgress.$inferSelect;
 export type UserEvent = typeof userEvents.$inferSelect;
 export type NewUserEvent = typeof userEvents.$inferInsert;
+export type GuideStepEvent = typeof guideStepEvents.$inferSelect;
+export type NewGuideStepEvent = typeof guideStepEvents.$inferInsert;
