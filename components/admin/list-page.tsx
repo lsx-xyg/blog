@@ -72,7 +72,7 @@ export function AdminListPage({
               value={search.value}
               onChange={search.onChange}
               placeholder={search.placeholder}
-              className="max-w-md"
+              className="max-w-md min-w-0 flex-1"
             />
           ) : null}
           {filters}
