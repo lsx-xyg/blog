@@ -669,8 +669,8 @@ export function ManageGuides({
       setError("请先在「页面」下拉选择本引导适用的后台页面，再拾取");
       return;
     }
-    showToast("已保存，正在打开目标页面拾取…", "success");
-    window.open(pickUrl, "_blank");
+    showToast("已保存，正在跳转目标页面拾取…", "success");
+    window.location.assign(pickUrl);
   };
 
   const openCreate = () => {
