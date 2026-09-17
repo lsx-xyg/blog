@@ -42,5 +42,10 @@ export async function getConfig<K extends RegistryKey>(
 
   const raw = envVal || dbResolved || def.default;
 
+  // TEMP-DEBUG：评论开关定位（验证后删除）
+  if (name === "giscus.enabled") {
+    console.error("[dbg-enabled]", JSON.stringify({ dbVal, envVal, raw, hasTransform: !!def.transform }));
+  }
+
   return def.transform ? def.transform(String(raw)) : raw;
 }
