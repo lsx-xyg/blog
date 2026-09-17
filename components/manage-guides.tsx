@@ -34,6 +34,7 @@ import { AdminModal } from "@/components/admin/modal";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { ADMIN_PAGES } from "@/lib/shared/admin-pages";
+import { buildGuidePickUrl } from "@/lib/shared/guide-pick-url";
 import { useToast } from "@/components/toast";
 import { AdminSearchInput } from "@/components/admin/search-input";
 
@@ -222,26 +223,33 @@ function ConditionRow({
                 </option>
               ))}
             </select>
-            {guideId && page ? (
-              <a
-                href={`/${adminPath}${page.startsWith("/") ? "" : "/"}${page}?guide-pick=1&guide_id=${guideId}&cond_idx=${condIndex}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-input bg-background px-2 py-1.5 text-xs font-medium transition hover:bg-accent"
-                title="跳到目标页面点选元素，保存为触发条件"
-              >
-                <MousePointerClick className="h-3.5 w-3.5" />
-                拾取元素
-              </a>
-            ) : (
-              <span
-                className="inline-flex shrink-0 cursor-not-allowed items-center gap-1 rounded-lg border border-input bg-muted/40 px-2 py-1.5 text-xs text-muted-foreground"
-                title="保存引导后可拾取"
-              >
-                <MousePointerClick className="h-3.5 w-3.5" />
-                拾取元素
-              </span>
-            )}
+            {guideId &&
+            (() => {
+              const pickUrl = buildGuidePickUrl(adminPath, page, {
+                guideId,
+                conditionIndex: condIndex,
+              });
+              return pickUrl ? (
+                <a
+                  href={pickUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-input bg-background px-2 py-1.5 text-xs font-medium transition hover:bg-accent"
+                  title="跳到目标页面点选元素，保存为触发条件"
+                >
+                  <MousePointerClick className="h-3.5 w-3.5" />
+                  拾取元素
+                </a>
+              ) : (
+                <span
+                  className="inline-flex shrink-0 cursor-not-allowed items-center gap-1 rounded-lg border border-input bg-muted/40 px-2 py-1.5 text-xs text-muted-foreground"
+                  title="请先在「页面」下拉选择本引导适用的后台页面，再拾取元素"
+                >
+                  <MousePointerClick className="h-3.5 w-3.5" />
+                  拾取元素
+                </span>
+              );
+            })()}
             {typeof cond.value === "string" &&
               cond.value !== "" &&
               !GUIDE_EVENT_ANCHORS.some((a) => a.target === cond.value) && (
@@ -410,25 +418,36 @@ function StepEditor({
                 引导要指向哪个元素。填该元素上的 data-guide 标记值，或点下方「拾取锚点」在目标页面点选生成动态选择器。
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                {guideId && page ? (
-                  <a
-                    href={`/${adminPath}${page.startsWith("/") ? "" : "/"}${page}?guide-pick=1&guide_id=${guideId}&step_id=${s.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-accent"
-                  >
-                    <MousePointerClick className="h-3.5 w-3.5" />
-                    拾取锚点
-                  </a>
-                ) : (
-                  <span
-                    className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-input bg-muted/40 px-2.5 py-1.5 text-xs text-muted-foreground"
-                    title="保存引导后可跳到目标页面拾取锚点"
-                  >
-                    <MousePointerClick className="h-3.5 w-3.5" />
-                    拾取锚点（先保存引导）
-                  </span>
-                )}
+                {guideId &&
+                (() => {
+                  const pickUrl = buildGuidePickUrl(adminPath, page, {
+                    guideId,
+                    stepId: s.id,
+                  });
+                  return pickUrl ? (
+                    <a
+                      href={pickUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-accent"
+                    >
+                      <MousePointerClick className="h-3.5 w-3.5" />
+                      拾取锚点
+                    </a>
+                  ) : (
+                    <span
+                      className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-input bg-muted/40 px-2.5 py-1.5 text-xs text-muted-foreground"
+                      title={
+                        guideId
+                          ? "请先在「页面」下拉选择本引导适用的后台页面，再拾取锚点"
+                          : "保存引导后可跳到目标页面拾取锚点"
+                      }
+                    >
+                      <MousePointerClick className="h-3.5 w-3.5" />
+                      拾取锚点（{guideId ? "先选页面" : "先保存引导"}）
+                    </span>
+                  );
+                })()}
                 {s.selector && (
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1.5 font-mono text-[11px] text-primary">
                     <span className="max-w-[240px] truncate">{s.selector}</span>
