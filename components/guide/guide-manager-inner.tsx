@@ -143,8 +143,6 @@ function waitForElement(
  * 页面只声明 data-guide 锚点并派发触发事件，不直接操作引导逻辑。
  */
 
-const TEMP_ANCHOR = "__guide_trigger__";
-
 function getAdminPath() {
   if (typeof window === "undefined") return "dashboard";
   return window.location.pathname.split("/")[1] || "dashboard";
@@ -201,13 +199,6 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
     []
   );
 
-  /** 清理临时锚点 */
-  const cleanupTempAnchors = useCallback(() => {
-    document
-      .querySelectorAll(`[data-guide="${TEMP_ANCHOR}"]`)
-      .forEach((el) => el.removeAttribute("data-guide"));
-  }, []);
-
   // 1. 加载引导配置与用户进度
   useEffect(() => {
     let cancelled = false;
@@ -246,7 +237,6 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
       guide: Guide,
       ctx: {
         page: string;
-        element?: HTMLElement | null;
         event?: string;
         target?: string;
         /** 允许续接 in_progress（页面加载场景） */
@@ -306,11 +296,8 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
       });
       if (steps.length === 0) return;
 
-      // 事件触发：第一步指向触发元素；页面加载：首步未渲染则等待出现
-      if (ctx.element instanceof HTMLElement) {
-        ctx.element.setAttribute("data-guide", TEMP_ANCHOR);
-        steps[0].selector = `[data-guide="${TEMP_ANCHOR}"]`;
-      } else if (!queryFirst(resolveStepSelectors(guide.steps[0]))) {
+      // 页面加载场景：首步未渲染则等待出现（事件触发的步骤按自身配置定位，不指向触发元素）
+      if (!queryFirst(resolveStepSelectors(guide.steps[0]))) {
         const firstEl = await waitForElement(
           resolveStepSelectors(guide.steps[0])
         );
@@ -344,8 +331,6 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
   // 2. 监听触发事件（行为触发：点击带 data-guide 的元素）——类型化总线收口
   useGuideTrigger(async (payload) => {
     const page = payload.page ?? "";
-    const element = payload.element ?? null;
-
     // 匹配 published 引导：本地先按 event_click + page 条件粗筛
     const candidates = guides
       .filter((g) =>
@@ -361,7 +346,6 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
 
     await maybeStartGuide(guide, {
       page,
-      element,
       event: payload.event,
       target: payload.target,
       resumeIfInProgress: true,
@@ -414,7 +398,6 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
               event: GUIDE_TRIGGER_EVENT,
               target: v,
               page,
-              element: el instanceof HTMLElement ? el : undefined,
             });
             return; // 一次点击只触发一个引导
           }
@@ -448,7 +431,6 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
         ...prev,
         [guideKey]: { ...prev[guideKey], status: GuideProgressStatus.COMPLETED } as GuideProgress,
       }));
-      cleanupTempAnchors();
       closeOnborda();
     };
     const handleSkip = (e: Event) => {
@@ -457,7 +439,6 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
         currentTourRef.current;
       if (!guideKey) return;
       reportProgress(guideKey, { status: GuideProgressStatus.SKIPPED });
-      cleanupTempAnchors();
       closeOnborda();
     };
     window.addEventListener("guide:complete", handleComplete);
@@ -466,10 +447,7 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
       window.removeEventListener("guide:complete", handleComplete);
       window.removeEventListener("guide:skip", handleSkip);
     };
-  }, [reportProgress, closeOnborda, cleanupTempAnchors]);
-
-  // 组件卸载时清理临时锚点
-  useEffect(() => cleanupTempAnchors, [cleanupTempAnchors]);
+  }, [reportProgress, closeOnborda]);
 
   return (
     <Onborda

@@ -87,7 +87,6 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
               event: GUIDE_TRIGGER_EVENT,
               target: "reveal-view",
               page: "/settings",
-              element: e.currentTarget as HTMLElement,
             });
             return;
           }

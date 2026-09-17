@@ -20,8 +20,6 @@ export interface GuideTriggerPayload {
   target: string;
   /** 触发时所在后台相对路径（如 /cron） */
   page: string;
-  /** 触发元素（点击捕获时指向被点击元素，供第一步 TEMP_ANCHOR 定位） */
-  element?: HTMLElement | null;
 }
 
 /** 派发行为触发事件（派发方唯一入口） */
