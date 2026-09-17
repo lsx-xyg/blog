@@ -1,4 +1,4 @@
-# ADR-0002: Onborda 引导系统（配置驱动 + 独立进度追踪）
+# ADR-0010: Onborda 引导系统（配置驱动 + 独立进度追踪）
 
 - Status: **Accepted**
 - Date: 2026-09-16
