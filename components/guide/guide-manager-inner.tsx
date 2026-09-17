@@ -228,6 +228,8 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
         target?: string;
         /** 允许续接 in_progress（页面加载场景） */
         resumeIfInProgress?: boolean;
+        /** force：强制重新开始（无视进度抑制） */
+        force?: boolean;
       }
     ) => {
       // 已有引导在显示 → 不叠加
@@ -240,6 +242,7 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
         target: ctx.target,
         progress: progressRef.current[guide.guideKey],
         resumeIfInProgress: ctx.resumeIfInProgress,
+        force: ctx.force,
       });
       if (!decision.shouldTrigger) return;
 
@@ -326,6 +329,8 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
       event: payload.event,
       target: payload.target,
       resumeIfInProgress: true,
+      // 无密码敏感查看等场景：用户主动点击锚点，强制重新引导（无视 skipped 冷却）
+      force: payload.force === true,
     });
   });
 

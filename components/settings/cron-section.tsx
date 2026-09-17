@@ -70,6 +70,8 @@ export function CronSection({
               event: GUIDE_TRIGGER_EVENT,
               target: "reveal-view",
               page: "/settings",
+              // 无密码账号主动点击「查看」→ 强制重新引导设置密码（无视进度 skipped 冷却）
+              force: true,
             });
             return;
           }

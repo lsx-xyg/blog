@@ -20,6 +20,8 @@ export interface GuideTriggerPayload {
   target: string;
   /** 触发时所在后台相对路径（如 /cron） */
   page: string;
+  /** force：强制重新触发（无视进度抑制），无密码敏感查看引导等场景使用 */
+  force?: boolean;
 }
 
 /** 派发行为触发事件（派发方唯一入口） */

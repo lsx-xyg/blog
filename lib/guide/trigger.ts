@@ -39,6 +39,8 @@ export interface TriggerContext {
   page: string;
   /** 事件触发时的事件名（固定 event_click）；页面加载场景缺省 */
   event?: string;
+  /** force：行为触发时强制重新开始（无视 completed/skipped 进度抑制），如无密码敏感查看引导 */
+  force?: boolean;
   /** 事件触发时的锚点值/选择器 */
   target?: string;
   /** 该引导的用户进度（无记录为 null） */
@@ -114,9 +116,11 @@ export function decideTrigger(
   const progress = ctx.progress ?? null;
   const fromEvent =
     typeof ctx.event === "string" && Boolean(ctx.event) && Boolean(ctx.target);
+  const force = ctx.force === true;
 
-  // 已完成永久抑制；已跳过未过冷却期 → 不触发
+  // 进度抑制：completed 永久、skipped 冷却期内；force（用户主动点击锚点要求重新引导）时全部忽略
   if (
+    !force &&
     progress &&
     (progress.status === GuideProgressStatus.COMPLETED ||
       (progress.status === GuideProgressStatus.SKIPPED &&

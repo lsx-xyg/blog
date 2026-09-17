@@ -220,6 +220,48 @@ describe("decideTrigger（综合决策）", () => {
     expect(d.shouldTrigger).toBe(true);
     expect(d.needsServer).toBe(true);
   });
+
+  it("skipped 冷却期内：事件触发被抑制，force=true 时强制重新触发", () => {
+    const g = makeGuide({
+      targetCondition: {
+        logic: "and",
+        conditions: [
+          { field: "event_click", op: "eq", value: "reveal-view" },
+          { field: "page", op: "eq", value: "/settings" },
+        ],
+      },
+    });
+    const progress = makeProgress(GuideProgressStatus.SKIPPED); // updatedAt 为现在 → 冷却期内
+    // 未 force：抑制
+    expect(
+      decideTrigger(g, {
+        page: "/settings",
+        event: "event_click",
+        target: "reveal-view",
+        progress,
+      }).shouldTrigger
+    ).toBe(false);
+    // force：强制触发
+    const d = decideTrigger(g, {
+      page: "/settings",
+      event: "event_click",
+      target: "reveal-view",
+      progress,
+      force: true,
+    });
+    expect(d.shouldTrigger).toBe(true);
+  });
+
+  it("completed：默认永久抑制，force=true 可重新触发", () => {
+    const g = makeGuide({ targetCondition: null });
+    const progress = makeProgress(GuideProgressStatus.COMPLETED);
+    expect(
+      decideTrigger(g, { page: "/cron", progress }).shouldTrigger
+    ).toBe(false);
+    expect(
+      decideTrigger(g, { page: "/cron", progress, force: true }).shouldTrigger
+    ).toBe(true);
+  });
 });
 
 describe("isSkippedExpired", () => {

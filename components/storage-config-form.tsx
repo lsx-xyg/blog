@@ -81,12 +81,15 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
         type="button"
         data-guide="reveal-view"
         onClick={(e) => {
+          if (hasPassword === null) return; // 密码状态检测中：不响应，避免二次验证弹窗时有时无
           if (hasPassword === false) {
             // 无密码：触发新手引导（弹窗说明 + 按钮引导设置密码），不弹验证框
             emitGuideTrigger({
               event: GUIDE_TRIGGER_EVENT,
               target: "reveal-view",
               page: "/settings",
+              // 无密码账号主动点击「查看」→ 强制重新引导设置密码（无视进度 skipped 冷却）
+              force: true,
             });
             return;
           }
