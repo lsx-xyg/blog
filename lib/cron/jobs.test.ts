@@ -5,6 +5,7 @@ import {
   isOrphanSystemJob,
   systemTagColor,
   methodLabel,
+  availableActions,
 } from "@/lib/cron/jobs";
 
 function makeJob(overrides: Partial<CronJob> = {}): CronJob {
@@ -117,6 +118,38 @@ describe("systemTagColor", () => {
     const b = systemTagColor("自动备份");
     expect(a).toBe(b);
     expect(a).toMatch(/^(bg-\S+ \S+ dark:\S+)$/);
+  });
+});
+
+describe("availableActions", () => {
+  it("系统任务启用中 → stop + run（预设支持）+ 编辑/历史/删除", () => {
+    const c = classifyJob(
+      makeJob({ title: "[blog:backup] 自动备份", url: "https://example.com/api/cron/backup", enabled: true })
+    );
+    expect(availableActions(makeJob({ enabled: true }), c)).toEqual([
+      "stop",
+      "run",
+      "edit",
+      "history",
+      "delete",
+    ]);
+  });
+
+  it("系统任务已停用 → start（不重复出现 run 之外动作）", () => {
+    const c = classifyJob(
+      makeJob({ title: "[blog:backup] 自动备份", url: "https://example.com/api/cron/backup", enabled: false })
+    );
+    expect(availableActions(makeJob({ enabled: false }), c)[0]).toBe("start");
+  });
+
+  it("普通任务 → toggle + 编辑/历史/删除", () => {
+    const c = classifyJob(makeJob());
+    expect(availableActions(makeJob(), c)).toEqual([
+      "toggle",
+      "edit",
+      "history",
+      "delete",
+    ]);
   });
 });
 

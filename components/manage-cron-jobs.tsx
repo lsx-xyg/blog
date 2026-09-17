@@ -49,6 +49,8 @@ import {
   classifyJob,
   systemTagColor,
   methodLabel,
+  availableActions,
+  type JobClassification,
 } from "@/lib/cron/jobs";
 
 type CronStatus = {
@@ -334,6 +336,131 @@ export function ManageCronJobs() {
     }
   };
 
+  /** 任务操作按钮组（桌面表格 / 移动卡片共用；动作集合与顺序收口在 lib/cron/jobs.availableActions） */
+  const renderActions = (job: CronJob, cls: JobClassification) => {
+    const { urlPreset } = cls;
+    const presetKey = urlPreset?.key;
+    return (
+      <>
+        {availableActions(job, cls).map((a) => {
+          switch (a) {
+            case "start":
+              return (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => executeAction("start", presetKey)}
+                  disabled={action !== null}
+                  className="rounded-md p-1.5 text-green-600 transition-colors hover:bg-green-500/10 disabled:opacity-50"
+                  title="启动（按预设创建/启用）"
+                >
+                  {action?.key === presetKey && action?.type === "start" ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Play className="h-4 w-4" />
+                  )}
+                </button>
+              );
+            case "stop":
+              return (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => executeAction("stop", presetKey)}
+                  disabled={action !== null}
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+                  title="停止（禁用，保留历史）"
+                >
+                  {action?.key === presetKey && action?.type === "stop" ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Square className="h-4 w-4" />
+                  )}
+                </button>
+              );
+            case "run":
+              return (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => executeAction("run", presetKey)}
+                  disabled={action !== null}
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-primary disabled:opacity-50"
+                  title="手动触发"
+                >
+                  {action?.key === presetKey && action?.type === "run" ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="h-4 w-4" />
+                  )}
+                </button>
+              );
+            case "toggle":
+              return (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => toggleJob(job)}
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  title={job.enabled ? "禁用" : "启用"}
+                >
+                  {job.enabled ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                </button>
+              );
+            case "edit":
+              return (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() =>
+                    openEditForm(
+                      urlPreset
+                        ? ({ jobId: job.jobId, title: job.title, enabled: job.enabled } as CronJob)
+                        : job
+                    )
+                  }
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  title="编辑"
+                >
+                  <Pencil className="h-4 w-4" />
+                </button>
+              );
+            case "history":
+              return (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() => setHistoryJob(job)}
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  title="执行历史"
+                >
+                  <HistoryIcon className="h-4 w-4" />
+                </button>
+              );
+            case "delete":
+              return (
+                <button
+                  key={a}
+                  type="button"
+                  onClick={() =>
+                    urlPreset
+                      ? deleteSystemJob(job.jobId, job.title || urlPreset.name)
+                      : deleteJob(job.jobId)
+                  }
+                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+                  title={urlPreset ? "彻底删除（保留请用停止）" : "删除"}
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              );
+            default:
+              return null;
+          }
+        })}
+      </>
+    );
+  };
+
   return (
     <div className="animate-page-enter">
       <AdminPageHeader
@@ -400,7 +527,8 @@ export function ManageCronJobs() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {jobs.map((job) => {
-                    const { preset, urlPreset, orphan } = classifyJob(job);
+                    const cls = classifyJob(job);
+                    const { preset, urlPreset, orphan } = cls;
                     return (
                       <tr key={job.jobId} className="transition-colors hover:bg-muted/30">
                         <td className="px-4 py-3">
@@ -456,92 +584,8 @@ export function ManageCronJobs() {
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="inline-flex items-center gap-1">
-                            {urlPreset ? (
-                              <>
-                                {job.enabled ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => executeAction("stop", urlPreset.key)}
-                                    disabled={action !== null}
-                                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
-                                    title="停止（禁用，保留历史）"
-                                  >
-                                    {action?.key === urlPreset.key && action?.type === "stop" ? (
-                                      <RefreshCw className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Square className="h-4 w-4" />
-                                    )}
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="button"
-                                    onClick={() => executeAction("start", urlPreset.key)}
-                                    disabled={action !== null}
-                                    className="rounded-md p-1.5 text-green-600 transition-colors hover:bg-green-500/10 disabled:opacity-50"
-                                    title="启动（按预设创建/启用）"
-                                  >
-                                    {action?.key === urlPreset.key && action?.type === "start" ? (
-                                      <RefreshCw className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <Play className="h-4 w-4" />
-                                    )}
-                                  </button>
-                                )}
-                                {urlPreset.supportsRun && (
-                                  <button
-                                    type="button"
-                                    onClick={() => executeAction("run", urlPreset.key)}
-                                    disabled={action !== null}
-                                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-primary disabled:opacity-50"
-                                    title="手动触发"
-                                  >
-                                    {action?.key === urlPreset.key && action?.type === "run" ? (
-                                      <RefreshCw className="h-4 w-4 animate-spin" />
-                                    ) : (
-                                      <RefreshCw className="h-4 w-4" />
-                                    )}
-                                  </button>
-                                )}
-                              </>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={() => toggleJob(job)}
-                                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                                title={job.enabled ? "禁用" : "启用"}
-                              >
-                                {job.enabled ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                              </button>
-                            )}
-                            <button
-                              type="button"
-                              onClick={() => openEditForm(urlPreset ? ({ jobId: job.jobId, title: job.title, enabled: job.enabled } as CronJob) : job)}
-                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                              title="编辑"
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setHistoryJob(job)}
-                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                              title="执行历史"
-                            >
-                              <HistoryIcon className="h-4 w-4" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() =>
-                                urlPreset
-                                  ? deleteSystemJob(job.jobId, job.title || urlPreset.name)
-                                  : deleteJob(job.jobId)
-                              }
-                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
-                              title={urlPreset ? "彻底删除（保留请用停止）" : "删除"}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
+              {renderActions(job, cls)}
+            </div>
                         </td>
                       </tr>
                     );
@@ -553,7 +597,8 @@ export function ManageCronJobs() {
             {/* 移动卡片 */}
             <div className="md:hidden divide-y divide-border">
               {jobs.map((job, index) => {
-                const { preset, urlPreset, orphan } = classifyJob(job);
+                const cls = classifyJob(job);
+                const { preset, urlPreset, orphan } = cls;
                 return (
                   <div
                     key={job.jobId}
@@ -604,92 +649,8 @@ export function ManageCronJobs() {
                     </div>
                     {/* 操作区：放数据下方 */}
                     <div className="mt-2 flex items-center justify-end gap-1 border-t border-border/50 pt-2">
-                      {urlPreset ? (
-                        <>
-                          {job.enabled ? (
-                            <button
-                              type="button"
-                              onClick={() => executeAction("stop", urlPreset.key)}
-                              disabled={action !== null}
-                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
-                              title="停止（禁用，保留历史）"
-                            >
-                              {action?.key === urlPreset.key && action?.type === "stop" ? (
-                                <RefreshCw className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Square className="h-4 w-4" />
-                              )}
-                            </button>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => executeAction("start", urlPreset.key)}
-                              disabled={action !== null}
-                              className="rounded-md p-1.5 text-green-600 transition-colors hover:bg-green-500/10 disabled:opacity-50"
-                              title="启动（按预设创建/启用）"
-                            >
-                              {action?.key === urlPreset.key && action?.type === "start" ? (
-                                <RefreshCw className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <Play className="h-4 w-4" />
-                              )}
-                            </button>
-                          )}
-                          {urlPreset.supportsRun && (
-                            <button
-                              type="button"
-                              onClick={() => executeAction("run", urlPreset.key)}
-                              disabled={action !== null}
-                              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-primary disabled:opacity-50"
-                              title="手动触发"
-                            >
-                              {action?.key === urlPreset.key && action?.type === "run" ? (
-                                <RefreshCw className="h-4 w-4 animate-spin" />
-                              ) : (
-                                <RefreshCw className="h-4 w-4" />
-                              )}
-                            </button>
-                          )}
-                        </>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => toggleJob(job)}
-                          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                          title={job.enabled ? "禁用" : "启用"}
-                        >
-                          {job.enabled ? <Square className="h-4 w-4" /> : <Play className="h-4 w-4" />}
-                        </button>
-                      )}
-                      <button
-                        type="button"
-                        onClick={() => openEditForm(urlPreset ? ({ jobId: job.jobId, title: job.title, enabled: job.enabled } as CronJob) : job)}
-                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                        title="编辑"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setHistoryJob(job)}
-                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                        title="执行历史"
-                      >
-                        <HistoryIcon className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          urlPreset
-                            ? deleteSystemJob(job.jobId, job.title || urlPreset.name)
-                            : deleteJob(job.jobId)
-                        }
-                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
-                        title={urlPreset ? "彻底删除（保留请用停止）" : "删除"}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
+              {renderActions(job, cls)}
+              </div>
                   </div>
                 );
               })}

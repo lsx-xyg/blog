@@ -78,3 +78,30 @@ export function methodLabel(method: number): string {
     `UNKNOWN(${method})`
   );
 }
+
+/** 任务可执行动作（渲染按钮集合，顺序即展示顺序） */
+export type CronAction =
+  | "start"
+  | "stop"
+  | "run"
+  | "toggle"
+  | "edit"
+  | "history"
+  | "delete";
+
+/**
+ * 按任务分类给出可执行动作集合（系统任务：启停 + 可手动触发 + 编辑/历史/删除；
+ * 普通任务：启用禁用 + 编辑/历史/删除）。桌面表格与移动卡片共用同一决策。
+ */
+export function availableActions(
+  job: CronJob,
+  c: JobClassification
+): CronAction[] {
+  if (c.urlPreset) {
+    const actions: CronAction[] = [job.enabled ? "stop" : "start"];
+    if (c.urlPreset.supportsRun) actions.push("run");
+    actions.push("edit", "history", "delete");
+    return actions;
+  }
+  return ["toggle", "edit", "history", "delete"];
+}
