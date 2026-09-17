@@ -75,8 +75,13 @@ export default function GuidePicker() {
   const [saveError, setSaveError] = useState("");
   const [saveCreated, setSaveCreated] = useState(false);
   const overlayRef = useRef<HTMLDivElement>(null);
-  // 回填目标：?guide-pick=1&guide_id=xxx&step_id=yyy（来自引导配置页）
-  const backfill = useRef<{ guideId: string; stepId: string } | null>(null);
+  // 回填目标：?guide-pick=1&guide_id=xxx&step_id=yyy（步骤锚点）
+  //           或 ?guide-pick=1&guide_id=xxx&cond_idx=N（触发条件 event_click）
+  const backfill = useRef<{
+    guideId: string;
+    stepId?: string;
+    conditionIndex?: number;
+  } | null>(null);
 
   const exit = useCallback(() => {
     setActive(false);
@@ -92,7 +97,12 @@ export default function GuidePicker() {
     if (params.get("guide-pick") === "1") {
       const guideId = params.get("guide_id");
       const stepId = params.get("step_id");
-      if (guideId && stepId) backfill.current = { guideId, stepId };
+      const condIdx = params.get("cond_idx");
+      if (guideId && stepId) {
+        backfill.current = { guideId, stepId };
+      } else if (guideId && condIdx !== null) {
+        backfill.current = { guideId, conditionIndex: Number(condIdx) };
+      }
       setActive(true);
       document.body.style.cursor = "crosshair";
     }
@@ -145,18 +155,25 @@ export default function GuidePicker() {
       });
       setCopied(null);
       setSaveCreated(false);
-      // 就地保存：回填到引导步骤
+      // 就地保存：回填到引导步骤 或 触发条件（event_click）
       const target = backfill.current;
       if (target) {
         setSaveState("saving");
-        fetch(`/api/admin/guides/${target.guideId}/step-selector`, {
+        const isTrigger = target.stepId === undefined && target.conditionIndex !== undefined;
+        const url = isTrigger
+          ? `/api/admin/guides/${target.guideId}/trigger-selector`
+          : `/api/admin/guides/${target.guideId}/step-selector`;
+        const payload = isTrigger
+          ? { conditionIndex: target.conditionIndex, value: g.selector }
+          : {
+              stepId: target.stepId,
+              selector: g.selector,
+              selectorMeta: { source: g.source, generatedAt: new Date().toISOString() },
+            };
+        fetch(url, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            stepId: target.stepId,
-            selector: g.selector,
-            selectorMeta: { source: g.source, generatedAt: new Date().toISOString() },
-          }),
+          body: JSON.stringify(payload),
         })
           .then(async (res) => {
             const data = await res.json().catch(() => ({}));
@@ -217,7 +234,9 @@ export default function GuidePicker() {
       {!picked && (
         <div className="pointer-events-none fixed top-4 left-1/2 z-[10001] -translate-x-1/2 rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background shadow-lg">
           {backfill.current
-            ? "点击目标元素，选择器将自动保存回引导步骤 · Esc 取消"
+            ? backfill.current.stepId === undefined && backfill.current.conditionIndex !== undefined
+              ? "点击目标元素，将保存为「用户点击该元素触发」条件 · Esc 取消"
+              : "点击目标元素，选择器将自动保存回引导步骤 · Esc 取消"
             : "点击元素生成引导锚点选择器 · Esc 取消"}
         </div>
       )}
@@ -253,9 +272,12 @@ export default function GuidePicker() {
                   )}
                   {saveState === "saved" && (
                     <span className="text-green-600 dark:text-green-400">
-                      {saveCreated
-                        ? "已保存 ✓（该步骤在草稿中尚未存在，已自动创建，返回配置页补全标题/内容即可发布）"
-                        : "已保存到引导步骤 ✓ 返回配置页刷新即可看到"}
+                      {backfill.current?.stepId === undefined &&
+                      backfill.current?.conditionIndex !== undefined
+                        ? "已保存 ✓（触发条件已更新，返回配置页刷新即可看到）"
+                        : saveCreated
+                          ? "已保存 ✓（该步骤在草稿中尚未存在，已自动创建，返回配置页补全标题/内容即可发布）"
+                          : "已保存到引导步骤 ✓ 返回配置页刷新即可看到"}
                     </span>
                   )}
                   {saveState === "error" && (

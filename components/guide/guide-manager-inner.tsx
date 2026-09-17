@@ -113,6 +113,11 @@ function adminPageFromPathname(pathname: string): string {
   return `/${parts.slice(1).join("/")}`;
 }
 
+/** 触发条件值是否像 CSS selector（#id / .class / [attr]）而非 data-guide 锚点名 */
+function isSelectorLike(value: string): boolean {
+  return /^[#.\[]/.test(value) || /[\s>+]/.test(value);
+}
+
 export function GuideManagerInner({ children }: { children: React.ReactNode }) {
   return (
     <OnbordaProvider>
@@ -366,6 +371,37 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
       resumeIfInProgress: true,
     });
   }, [guides, maybeStartGuide, pathname]);
+
+  // 2c. 全局点击捕获：匹配 event_click 触发条件（selector 或 data-guide 锚点名）
+  useEffect(() => {
+    const onClickCapture = (e: MouseEvent) => {
+      const el = e.target as Element | null;
+      if (!el || isOnbordaVisible) return; // 引导展示中不重复触发
+      const page = adminPageFromPathname(pathname);
+      for (const g of guides) {
+        const tc = normalizeTargetCondition(g.targetCondition);
+        const conditions = tc?.conditions ?? [];
+        for (const c of conditions) {
+          if (!c.field.startsWith("event_click")) continue;
+          const v = String(c.value ?? "");
+          if (!v) continue;
+          const matched = isSelectorLike(v)
+            ? el.closest(v) !== null
+            : el.closest(`[data-guide="${v}"]`) !== null;
+          if (matched) {
+            window.dispatchEvent(
+              new CustomEvent("guide:trigger", {
+                detail: { event: "click", target: v, page },
+              })
+            );
+            return; // 一次点击只触发一个引导
+          }
+        }
+      }
+    };
+    document.addEventListener("click", onClickCapture, true);
+    return () => document.removeEventListener("click", onClickCapture, true);
+  }, [guides, pathname, isOnbordaVisible]);
 
   // 3. 步骤变化上报进度（进入/切换步骤时）
   useEffect(() => {

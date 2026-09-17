@@ -115,10 +115,21 @@ function ConditionRow({
   cond,
   onChange,
   onRemove,
+  condIndex,
+  guideId,
+  page,
+  adminPath,
 }: {
   cond: GuideCondition;
   onChange: (next: GuideCondition) => void;
   onRemove: () => void;
+  /** 条件下标（拾取回填用） */
+  condIndex: number;
+  /** 引导 id（未保存时为 null，拾取需先保存） */
+  guideId: string | null;
+  /** 引导适用页面（相对后台路径，如 /settings） */
+  page: string;
+  adminPath: string;
 }) {
   const isClickCount = cond.field.startsWith("click_count.");
   const field = isClickCount ? "click_count" : cond.field;
@@ -192,17 +203,62 @@ function ConditionRow({
         </select>
 
         {field === "event_click" ? (
-          <select
-            value={typeof cond.value === "string" ? cond.value : ""}
-            onChange={(e) => onChange({ ...cond, value: e.target.value })}
-            className={`${inputClass} min-w-[200px] flex-1`}
-          >
-            {GUIDE_EVENT_ANCHORS.map((a) => (
-              <option key={a.target} value={a.target}>
-                {a.label}（{a.target}）
-              </option>
-            ))}
-          </select>
+          <div className="flex min-w-0 flex-1 items-center gap-1.5">
+            <select
+              value={
+                typeof cond.value === "string" &&
+                GUIDE_EVENT_ANCHORS.some((a) => a.target === cond.value)
+                  ? (cond.value as string)
+                  : ""
+              }
+              onChange={(e) => onChange({ ...cond, value: e.target.value })}
+              className={`${inputClass} min-w-[160px] flex-1`}
+              title="已埋点锚点（需页面有 data-guide 标记）；也可用右侧「拾取元素」选任意元素生成选择器"
+            >
+              <option value="">已埋点锚点…</option>
+              {GUIDE_EVENT_ANCHORS.map((a) => (
+                <option key={a.target} value={a.target}>
+                  {a.label}（{a.target}）
+                </option>
+              ))}
+            </select>
+            {guideId && page ? (
+              <a
+                href={`/${adminPath}${page.startsWith("/") ? "" : "/"}${page}?guide-pick=1&guide_id=${guideId}&cond_idx=${condIndex}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-input bg-background px-2 py-1.5 text-xs font-medium transition hover:bg-accent"
+                title="跳到目标页面点选元素，保存为触发条件"
+              >
+                <MousePointerClick className="h-3.5 w-3.5" />
+                拾取元素
+              </a>
+            ) : (
+              <span
+                className="inline-flex shrink-0 cursor-not-allowed items-center gap-1 rounded-lg border border-input bg-muted/40 px-2 py-1.5 text-xs text-muted-foreground"
+                title="保存引导后可拾取"
+              >
+                <MousePointerClick className="h-3.5 w-3.5" />
+                拾取元素
+              </span>
+            )}
+            {typeof cond.value === "string" &&
+              cond.value !== "" &&
+              !GUIDE_EVENT_ANCHORS.some((a) => a.target === cond.value) && (
+                <span className="inline-flex min-w-0 max-w-[200px] items-center gap-1 rounded-lg bg-primary/10 px-2 py-1 font-mono text-[11px] text-primary">
+                  <span className="truncate">{cond.value}</span>
+                  <button
+                    type="button"
+                    onClick={() => onChange({ ...cond, value: "" })}
+                    className="text-primary/60 transition-colors hover:text-primary"
+                    title="清除"
+                    aria-label="清除触发元素"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              )}
+          </div>
         ) : field === "page" ? (
           <select
             value={
@@ -577,6 +633,7 @@ export function ManageGuides({
   const [resetDone, setResetDone] = useState<string | null>(null);
 
   const loadGuides = useCallback(async () => {
+    setLoading(true);
     try {
       const res = await fetch("/api/admin/guides");
       if (res.ok) {
@@ -779,7 +836,7 @@ export function ManageGuides({
               className="inline-flex items-center gap-1.5 rounded-lg border border-input px-3 py-1.5 text-sm font-medium transition-colors hover:bg-accent"
               title="刷新列表"
             >
-              <RefreshCw className="h-4 w-4" />
+              <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
               <span className="hidden sm:inline">刷新</span>
             </button>
           </>
@@ -819,7 +876,7 @@ export function ManageGuides({
                 </tr>
               </thead>
               <tbody>
-                {filteredGuides.map((g) => {
+                {filteredGuides.map((g, rowIndex) => {
                   const tc = normalizeTargetCondition(g.targetCondition);
                   const condSummary = tc
                     ? tc.conditions.map((c) => c.field).join(" · ")
@@ -827,7 +884,8 @@ export function ManageGuides({
                   return (
                     <tr
                       key={g.id}
-                      className="border-b border-border/50 last:border-0"
+                      className="border-b border-border/50 last:border-0 animate-fade-in-up"
+                      style={{ animationDelay: `${Math.min(rowIndex * 30, 300)}ms` }}
                     >
                       <td className="px-4 py-3 font-medium text-foreground">
                         {g.title}
@@ -1175,6 +1233,7 @@ export function ManageGuides({
                 {form.conditions.map((c, i) => (
                   <ConditionRow
                     key={i}
+                    condIndex={i}
                     cond={c}
                     onChange={(next) =>
                       setForm({
@@ -1190,6 +1249,9 @@ export function ManageGuides({
                         conditions: form.conditions.filter((_, j) => j !== i),
                       })
                     }
+                    guideId={form.id ?? null}
+                    page={form.page}
+                    adminPath={adminPath}
                   />
                 ))}
               </div>
