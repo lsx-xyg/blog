@@ -44,7 +44,8 @@ export async function getConfig<K extends RegistryKey>(
 
   // TEMP-DEBUG：评论开关定位（验证后删除）
   if (name === "giscus.enabled") {
-    console.error("[dbg-enabled]", JSON.stringify({ dbVal, envVal, raw, hasTransform: !!def.transform }));
+    const out = def.transform ? def.transform(String(raw)) : raw;
+    console.error("[dbg-enabled]", JSON.stringify({ dbVal, dbType: typeof dbVal, envVal, raw, rawType: typeof raw, hasTransform: !!def.transform, out, outType: typeof out }));
   }
 
   return def.transform ? def.transform(String(raw)) : raw;
