@@ -12,14 +12,20 @@ import { GuideCard } from "./guide-card";
 import type { Guide, GuideProgress } from "@/lib/types/guides";
 import {
   GuideProgressStatus,
-  GUIDE_SKIP_COOLDOWN_DAYS,
   normalizeTargetCondition,
   type GuideStep,
 } from "@/lib/types/guides";
 import {
-  evaluateTargetCondition,
-  needsServerData,
-} from "@/lib/guides/conditions";
+  decideTrigger,
+  evaluateAutoTrigger,
+  evaluateEventTrigger,
+  resolveStepSelectors,
+} from "@/lib/guide/trigger";
+import {
+  emitGuideTrigger,
+  useGuideTrigger,
+} from "@/lib/guide/events";
+import { GUIDE_TRIGGER_EVENT } from "@/lib/guide-events";
 
 /** onborda Tour 结构（index.d.ts 未导出，按 types 目录定义） */
 interface Tour {
@@ -64,14 +70,6 @@ async function reportMiss(
   } catch {
     /* 上报失败不影响引导触发 */
   }
-}
-
-/** 步骤候选选择器（按优先级）：data-guide 埋点优先，selector 兜底 */
-function resolveStepSelectors(step: GuideStep): string[] {
-  const list: string[] = [];
-  if (step.target) list.push(`[data-guide="${step.target}"]`);
-  if (step.selector) list.push(step.selector);
-  return list;
 }
 
 /** 取第一个当前 DOM 命中的选择器；都不命中返回第一个（交给 onborda 兜底显示） */
@@ -210,16 +208,6 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
       .forEach((el) => el.removeAttribute("data-guide"));
   }, []);
 
-  /** skipped 是否已过冷却期（超过 N 天允许重新触发）；completed 永久抑制 */
-  const isSkippedExpired = (p: GuideProgress | undefined): boolean => {
-    if (!p || p.status !== GuideProgressStatus.SKIPPED || !p.updatedAt) {
-      return false;
-    }
-    const days =
-      (Date.now() - new Date(p.updatedAt).getTime()) / 86_400_000;
-    return days >= GUIDE_SKIP_COOLDOWN_DAYS;
-  };
-
   // 1. 加载引导配置与用户进度
   useEffect(() => {
     let cancelled = false;
@@ -268,20 +256,18 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
       // 已有引导在显示 → 不叠加
       if (isOnbordaVisible) return;
 
-      // 已完成永久抑制；已跳过未过冷却期 → 不触发
-      const progress = progressRef.current[guide.guideKey];
-      if (
-        progress &&
-        (progress.status === GuideProgressStatus.COMPLETED ||
-          (progress.status === GuideProgressStatus.SKIPPED &&
-            !isSkippedExpired(progress)))
-      ) {
-        return;
-      }
+      // 触发决策（进度抑制 + 条件评估 + 续接）收口在 lib/guide/trigger.ts
+      const decision = decideTrigger(guide, {
+        page: ctx.page,
+        event: ctx.event,
+        target: ctx.target,
+        progress: progressRef.current[guide.guideKey],
+        resumeIfInProgress: ctx.resumeIfInProgress,
+      });
+      if (!decision.shouldTrigger) return;
 
       // 含服务端条件（click_count / user_age_days）→ 调 evaluate API 精筛
-      const tc = normalizeTargetCondition(guide.targetCondition);
-      if (needsServerData(tc)) {
+      if (decision.needsServer) {
         try {
           const res = await fetch("/api/admin/guides/evaluate", {
             method: "POST",
@@ -340,17 +326,12 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
         status: GuideProgressStatus.IN_PROGRESS,
       });
 
-      // 续接：in_progress 且保存的步骤元素在当前页面存在 → 直接跳到该步骤
-      if (
-        ctx.resumeIfInProgress &&
-        progress?.status === GuideProgressStatus.IN_PROGRESS &&
-        typeof progress.currentStep === "number" &&
-        progress.currentStep > 0
-      ) {
-        const step = guide.steps[progress.currentStep];
+      // 续接：decision.resumeStep > 0 且保存的步骤元素在当前页面存在 → 直接跳到该步骤
+      if (decision.resumeStep > 0) {
+        const step = guide.steps[decision.resumeStep];
         setTimeout(() => {
           if (step && queryFirst(resolveStepSelectors(step))) {
-            setCurrentStep(progress.currentStep);
+            setCurrentStep(decision.resumeStep);
           } else if (step) {
             void reportMiss(guide.guideKey, step, adminPath);
           }
@@ -360,46 +341,32 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
     [isOnbordaVisible, reportProgress, setCurrentStep, startOnborda]
   );
 
-  // 2. 监听触发事件（行为触发：点击带 data-guide 的元素）
-  useEffect(() => {
-    const handler = async (e: Event) => {
-      const detail = (e as CustomEvent).detail ?? {};
-      const eventName = detail.event as string | undefined;
-      const target = detail.target as string | undefined;
-      const page = (detail.page as string) ?? "";
-      const element = detail.element as HTMLElement | null;
-      if (!eventName || !target) return;
+  // 2. 监听触发事件（行为触发：点击带 data-guide 的元素）——类型化总线收口
+  useGuideTrigger(async (payload) => {
+    const page = payload.page ?? "";
+    const element = payload.element ?? null;
 
-      // 匹配 published 引导：本地先按 event_click + page 条件粗筛
-      const candidates = guides
-        .filter((g) => {
-          const tc = normalizeTargetCondition(g.targetCondition);
-          if (!tc) return false;
-          // 本地可判条件（event_click / page）先过一遍；服务端条件不影响粗筛
-          const local = tc.conditions.filter(
-            (c) => c.field === "event_click" || c.field === "page"
-          );
-          if (local.length === 0) return false;
-          return evaluateTargetCondition(
-            { logic: tc.logic, conditions: local },
-            { event: eventName, target, page }
-          );
+    // 匹配 published 引导：本地先按 event_click + page 条件粗筛
+    const candidates = guides
+      .filter((g) =>
+        evaluateEventTrigger(g, {
+          page,
+          event: payload.event,
+          target: payload.target,
         })
-        .sort((a, b) => a.priority - b.priority);
-      const guide = candidates[0];
-      if (!guide) return;
+      )
+      .sort((a, b) => a.priority - b.priority);
+    const guide = candidates[0];
+    if (!guide) return;
 
-      await maybeStartGuide(guide, {
-        page,
-        element,
-        event: eventName,
-        target,
-        resumeIfInProgress: true,
-      });
-    };
-    window.addEventListener("guide:trigger", handler);
-    return () => window.removeEventListener("guide:trigger", handler);
-  }, [guides, maybeStartGuide]);
+    await maybeStartGuide(guide, {
+      page,
+      element,
+      event: payload.event,
+      target: payload.target,
+      resumeIfInProgress: true,
+    });
+  });
 
   // 2b. 页面加载/路由切换自动触发（page 条件引导，无需点击）
   const pathname = usePathname();
@@ -409,31 +376,7 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
     if (!page) return;
 
     const candidates = guides
-      .filter((g) => {
-        const tc = normalizeTargetCondition(g.targetCondition);
-        const conditions = tc?.conditions ?? [];
-        const hasEventClick = conditions.some(
-          (c) => c.field === "event_click"
-        );
-        // and 逻辑含 event_click：必须点击才触发，不自动弹出
-        if (hasEventClick && tc?.logic !== "or") return false;
-        if (hasEventClick && tc) {
-          // or 逻辑：去掉 event_click 后用剩余条件评估（任一满足即自动触发）
-          const local = conditions.filter((c) => c.field !== "event_click");
-          if (local.length === 0) return false;
-          return evaluateTargetCondition(
-            { logic: tc.logic, conditions: local },
-            { page }
-          );
-        }
-        // 无 event_click：页面匹配（guide.page 字段 或 page 条件）
-        const tcPages = conditions
-          .filter((c) => c.field === "page")
-          .map((c) => String(c.value))
-          .filter(Boolean);
-        const pages = [g.page, ...tcPages].filter(Boolean);
-        return pages.includes(page);
-      })
+      .filter((g) => evaluateAutoTrigger(g, page))
       .sort((a, b) => a.priority - b.priority);
     if (candidates.length === 0) return;
 
@@ -467,11 +410,12 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
             safeClosest(el, `[data-guide="${v}"]`) !== null ||
             safeClosest(el, v) !== null;
           if (matched) {
-            window.dispatchEvent(
-              new CustomEvent("guide:trigger", {
-                detail: { event: "event_click", target: v, page },
-              })
-            );
+            emitGuideTrigger({
+              event: GUIDE_TRIGGER_EVENT,
+              target: v,
+              page,
+              element: el instanceof HTMLElement ? el : undefined,
+            });
             return; // 一次点击只触发一个引导
           }
         }

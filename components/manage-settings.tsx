@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Save, RefreshCw, Globe, Link2, FileText, Settings as SettingsIcon, Eye, EyeOff, Check, Copy, ShieldCheck, AlertTriangle, Loader2 } from "lucide-react";
 import { useToast } from "@/components/toast";
+import { emitGuideTrigger } from "@/lib/guide/events";
+import { GUIDE_TRIGGER_EVENT } from "@/lib/guide-events";
 import type { 
   CronSettings, 
   FooterSettings, 
@@ -159,16 +161,12 @@ export function ManageSettings() {
         onClick={(e) => {
           if (hasPassword === false) {
             // 无密码：触发新手引导（弹窗说明 + 按钮引导设置密码），不弹验证框
-            window.dispatchEvent(
-              new CustomEvent("guide:trigger", {
-                detail: {
-                  event: "event_click",
-                  target: "reveal-view",
-                  page: "/settings",
-                  element: e.currentTarget as HTMLElement,
-                },
-              })
-            );
+            emitGuideTrigger({
+              event: GUIDE_TRIGGER_EVENT,
+              target: "reveal-view",
+              page: "/settings",
+              element: e.currentTarget as HTMLElement,
+            });
             return;
           }
           setRevealDialog({ key, label });

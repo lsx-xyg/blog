@@ -6,6 +6,8 @@ import { STORAGE_DRIVER_VALUES, StorageDriverType } from "@/lib/types/storage";
 import type { StorageSettings } from "@/lib/types/settings";
 import { SecretRevealDialog } from "@/components/secret-reveal-dialog";
 import { usePasswordStatus, getAdminPathFromUrl } from "@/components/use-password-status";
+import { emitGuideTrigger } from "@/lib/guide/events";
+import { GUIDE_TRIGGER_EVENT } from "@/lib/guide-events";
 
 interface StorageConfigFormProps {
   storage: StorageSettings;
@@ -81,16 +83,12 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
         onClick={(e) => {
           if (hasPassword === false) {
             // 无密码：触发新手引导（弹窗说明 + 按钮引导设置密码），不弹验证框
-            window.dispatchEvent(
-              new CustomEvent("guide:trigger", {
-                detail: {
-                  event: "event_click",
-                  target: "reveal-view",
-                  page: "/settings",
-                  element: e.currentTarget as HTMLElement,
-                },
-              })
-            );
+            emitGuideTrigger({
+              event: GUIDE_TRIGGER_EVENT,
+              target: "reveal-view",
+              page: "/settings",
+              element: e.currentTarget as HTMLElement,
+            });
             return;
           }
           setRevealDialog({ key, label });
