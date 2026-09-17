@@ -24,7 +24,7 @@ export default async function AdminGuidesPage({
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8 animate-page-enter">
       <AdminBreadcrumb current="引导管理" adminPath={adminPath} />
-      <ManageGuides />
+      <ManageGuides adminPath={adminPath} />
     </div>
   );
 }

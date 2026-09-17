@@ -13,6 +13,7 @@ import {
   RotateCcw,
   Check,
   HelpCircle,
+  MousePointerClick,
 } from "lucide-react";
 import type {
   Guide,
@@ -241,9 +242,17 @@ function ConditionRow({
 function StepEditor({
   steps,
   onChange,
+  guideId,
+  page,
+  adminPath,
 }: {
   steps: StepForm[];
   onChange: (next: StepForm[]) => void;
+  /** 引导 id（未保存时为 null，拾取需先保存） */
+  guideId: string | null;
+  /** 引导适用页面（相对后台路径，如 /settings） */
+  page: string;
+  adminPath: string;
 }) {
   const setStep = (i: number, patch: Partial<StepForm>) => {
     onChange(steps.map((s, j) => (j === i ? { ...s, ...patch } : s)));
@@ -308,9 +317,45 @@ function StepEditor({
                 placeholder="data-guide 锚点名，如 reveal-view"
               />
               <p className={helpClass}>
-                引导要指向哪个元素。填该元素上的 data-guide
-                标记值；下方下拉是已埋点锚点，可直接选。
+                引导要指向哪个元素。填该元素上的 data-guide 标记值，或点下方「拾取锚点」在目标页面点选生成动态选择器。
               </p>
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                {guideId && page ? (
+                  <a
+                    href={`/${adminPath}${page.startsWith("/") ? "" : "/"}${page}?guide-pick=1&guide_id=${guideId}&step_id=${s.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-accent"
+                  >
+                    <MousePointerClick className="h-3.5 w-3.5" />
+                    拾取锚点
+                  </a>
+                ) : (
+                  <span
+                    className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-input bg-muted/40 px-2.5 py-1.5 text-xs text-muted-foreground"
+                    title="保存引导后可跳到目标页面拾取锚点"
+                  >
+                    <MousePointerClick className="h-3.5 w-3.5" />
+                    拾取锚点（先保存引导）
+                  </span>
+                )}
+                {s.selector && (
+                  <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1.5 font-mono text-[11px] text-primary">
+                    <span className="max-w-[240px] truncate">{s.selector}</span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setStep(i, { selector: undefined, selectorMeta: undefined })
+                      }
+                      className="text-primary/60 transition-colors hover:text-primary"
+                      title="清除动态选择器"
+                      aria-label="清除动态选择器"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                )}
+              </div>
             </div>
             <div>
               <label className={labelClass}>标题（title）</label>
@@ -391,6 +436,9 @@ interface StepForm {
   content: string;
   placement: string;
   nextRoute: string;
+  /** 动态选择器（拾取生成，target 留空时的兜底定位） */
+  selector?: string;
+  selectorMeta?: GuideStep["selectorMeta"];
 }
 
 const emptyStepForm = (): StepForm => ({
@@ -411,6 +459,8 @@ const toStepForms = (steps: GuideStep[]): StepForm[] =>
     content: s.content ?? "",
     placement: s.placement ?? "bottom",
     nextRoute: s.nextRoute ?? "",
+    selector: s.selector,
+    selectorMeta: s.selectorMeta,
   }));
 
 interface FormState {
@@ -443,7 +493,7 @@ const EMPTY_FORM: FormState = {
   steps: [emptyStepForm()],
 };
 
-export function ManageGuides() {
+export function ManageGuides({ adminPath }: { adminPath: string }) {
   const [guides, setGuides] = useState<Guide[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -536,8 +586,8 @@ export function ManageGuides() {
     // steps 校验（结构化表单 → GuideStep[]）
     const steps: GuideStep[] = [];
     for (const [i, s] of form.steps.entries()) {
-      if (!s.target.trim() || !s.title.trim() || !s.content.trim()) {
-        setError(`步骤 ${i + 1} 未填写完整：高亮元素 / 标题 / 说明文字必填`);
+      if ((!s.target.trim() && !s.selector?.trim()) || !s.title.trim() || !s.content.trim()) {
+        setError(`步骤 ${i + 1} 未填写完整：高亮元素（data-guide 或动态选择器）/ 标题 / 说明文字必填`);
         return;
       }
       steps.push({
@@ -547,6 +597,8 @@ export function ManageGuides() {
         content: s.content.trim(),
         placement: (s.placement as GuideStep["placement"]) || "bottom",
         nextRoute: s.nextRoute.trim() || undefined,
+        selector: s.selector?.trim() || undefined,
+        selectorMeta: s.selectorMeta,
       });
     }
     if (
@@ -1101,6 +1153,9 @@ export function ManageGuides() {
               <StepEditor
                 steps={form.steps}
                 onChange={(steps) => setForm({ ...form, steps })}
+                guideId={form.id ?? null}
+                page={form.page}
+                adminPath={adminPath}
               />
             </div>
 

@@ -29,7 +29,11 @@ export default function GuidePicker() {
   const [box, setBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
   const [picked, setPicked] = useState<Picked | null>(null);
   const [copied, setCopied] = useState<"sel" | "json" | null>(null);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle");
+  const [saveError, setSaveError] = useState("");
   const overlayRef = useRef<HTMLDivElement>(null);
+  // 回填目标：?guide-pick=1&guide_id=xxx&step_id=yyy（来自引导配置页）
+  const backfill = useRef<{ guideId: string; stepId: string } | null>(null);
 
   const exit = useCallback(() => {
     setActive(false);
@@ -41,7 +45,11 @@ export default function GuidePicker() {
 
   // 激活：URL 参数 guide-pick=1
   useEffect(() => {
-    if (new URLSearchParams(window.location.search).get("guide-pick") === "1") {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("guide-pick") === "1") {
+      const guideId = params.get("guide_id");
+      const stepId = params.get("step_id");
+      if (guideId && stepId) backfill.current = { guideId, stepId };
       setActive(true);
       document.body.style.cursor = "crosshair";
     }
@@ -91,6 +99,30 @@ export default function GuidePicker() {
         text: (el.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 30),
       });
       setCopied(null);
+      // 就地保存：回填到引导步骤
+      const target = backfill.current;
+      if (target) {
+        setSaveState("saving");
+        fetch(`/api/admin/guides/${target.guideId}/step-selector`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            stepId: target.stepId,
+            selector: g.selector,
+            selectorMeta: { source: g.source, generatedAt: new Date().toISOString() },
+          }),
+        })
+          .then(async (res) => {
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) throw new Error(data.error || "保存失败");
+            setSaveState("saved");
+          })
+          .catch((err: unknown) => {
+            console.error("回填选择器失败：", err);
+            setSaveState("error");
+            setSaveError(err instanceof Error ? err.message : "保存失败");
+          });
+      }
     };
     window.addEventListener("click", onClick, true);
     return () => window.removeEventListener("click", onClick, true);
@@ -136,7 +168,9 @@ export default function GuidePicker() {
       {/* 顶部提示 */}
       {!picked && (
         <div className="pointer-events-none fixed top-4 left-1/2 z-[10001] -translate-x-1/2 rounded-full bg-foreground px-4 py-2 text-sm font-medium text-background shadow-lg">
-          点击元素生成引导锚点选择器 · Esc 取消
+          {backfill.current
+            ? "点击目标元素，选择器将自动保存回引导步骤 · Esc 取消"
+            : "点击元素生成引导锚点选择器 · Esc 取消"}
         </div>
       )}
 
@@ -161,6 +195,22 @@ export default function GuidePicker() {
                 <span className="mx-1">·</span>
                 已校验页面唯一
               </p>
+              {backfill.current && (
+                <p className="mt-1.5 inline-flex items-center gap-1.5 text-xs">
+                  {saveState === "saving" && (
+                    <span className="inline-flex items-center gap-1 text-muted-foreground">
+                      <span className="h-3 w-3 animate-spin rounded-full border border-current border-t-transparent" />
+                      保存到引导中…
+                    </span>
+                  )}
+                  {saveState === "saved" && (
+                    <span className="text-green-600 dark:text-green-400">已保存到引导步骤 ✓ 返回配置页刷新即可看到</span>
+                  )}
+                  {saveState === "error" && (
+                    <span className="text-red-600 dark:text-red-400">保存失败：{saveError}（可用下方按钮复制后手动粘贴）</span>
+                  )}
+                </p>
+              )}
             </div>
             <button
               type="button"
@@ -214,10 +264,12 @@ export default function GuidePicker() {
             </button>
           </div>
 
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            使用：在引导配置页对应步骤的「target」留空不填（或填 data-guide 锚点），把上面 JSON 的
-            selector / selectorMeta 填入步骤字段即可。
-          </p>
+          {!backfill.current && (
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              使用：在引导配置页对应步骤的「target」留空不填（或填 data-guide 锚点），把上面 JSON 的
+              selector / selectorMeta 填入步骤字段即可。
+            </p>
+          )}
         </div>
       )}
     </div>
