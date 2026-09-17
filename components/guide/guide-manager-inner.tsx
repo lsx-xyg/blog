@@ -21,6 +21,7 @@ import {
   evaluateEventTrigger,
   resolveStepSelectors,
 } from "@/lib/guide/trigger";
+import { buildTourSteps } from "@/lib/guide/tour";
 import {
   emitGuideTrigger,
   useGuideTrigger,
@@ -70,20 +71,6 @@ async function reportMiss(
   } catch {
     /* 上报失败不影响引导触发 */
   }
-}
-
-/** 取第一个当前 DOM 命中的选择器；都不命中返回第一个（交给 onborda 兜底显示） */
-function pickStepSelector(step: GuideStep): string {
-  const sels = resolveStepSelectors(step);
-  if (sels.length === 0) return "";
-  for (const sel of sels) {
-    try {
-      if (document.querySelector(sel)) return sel;
-    } catch {
-      /* 非法选择器跳过 */
-    }
-  }
-  return sels[0];
 }
 
 /** 安全 querySelector（非法选择器返回 null） */
@@ -276,23 +263,13 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // 构造 onborda tour steps（DB 步骤 → onborda Step）
+      // 构造 onborda tour steps（映射规则收口在 lib/guide/tour.ts，含失效监控分发）
       const adminPath = getAdminPath();
-      const steps: Tour["steps"] = guide.steps.map((s) => {
-        const selector = pickStepSelector(s);
-        // 失效监控：候选选择器在 DOM 中不存在 → 记录（节流后上报）
-        if (selector && !querySelectorSafe(selector)) {
+      const steps = buildTourSteps(guide, adminPath, {
+        isHit: (sel) => querySelectorSafe(sel) !== null,
+        onMiss: (s) => {
           void reportMiss(guide.guideKey, s, adminPath);
-        }
-        return {
-          icon: null,
-          title: s.title,
-          content: s.content,
-          selector,
-          side: s.placement ?? "bottom",
-          showControls: false,
-          nextRoute: s.nextRoute ? `/${adminPath}${s.nextRoute}` : undefined,
-        };
+        },
       });
       if (steps.length === 0) return;
 
