@@ -493,7 +493,14 @@ const EMPTY_FORM: FormState = {
   steps: [emptyStepForm()],
 };
 
-export function ManageGuides({ adminPath }: { adminPath: string }) {
+export function ManageGuides({
+  adminPath,
+  pages,
+}: {
+  adminPath: string;
+  /** 后台页面列表（服务端扫描生成），供「页面」下拉选择 */
+  pages: { path: string; label: string }[];
+}) {
   const [guides, setGuides] = useState<Guide[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -581,6 +588,10 @@ export function ManageGuides({ adminPath }: { adminPath: string }) {
     setError("");
     if (!form.guideKey.trim() || !form.title.trim() || !form.page.trim()) {
       setError("请填写标题、guideKey、页面（必填项）");
+      return;
+    }
+    if (form.status === GuideStatus.PUBLISHED && form.steps.length === 0) {
+      setError("发布前至少需要一个步骤（可先保存草稿，再用拾取锚点补充）");
       return;
     }
     // steps 校验（结构化表单 → GuideStep[]）
@@ -1021,15 +1032,31 @@ export function ManageGuides({ adminPath }: { adminPath: string }) {
               </div>
               <div>
                 <label className={labelClass}>页面</label>
-                <input
-                  value={form.page}
-                  onChange={(e) => setForm({ ...form, page: e.target.value })}
-                  className={`${inputClass} font-mono`}
-                  placeholder="/settings"
-                />
+                <select
+                  value={
+                    pages.some((p) => p.path === form.page)
+                      ? form.page
+                      : "__custom__"
+                  }
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setForm({ ...form, page: v === "__custom__" ? form.page : v });
+                  }}
+                  className={inputClass}
+                >
+                  {pages.map((p) => (
+                    <option key={p.path} value={p.path}>
+                      {p.path === "/" ? "/（首页）" : p.path} · {p.label}
+                    </option>
+                  ))}
+                  {!pages.some((p) => p.path === form.page) && form.page && (
+                    <option value="__custom__">
+                      {form.page}（手写值，不在列表中）
+                    </option>
+                  )}
+                </select>
                 <p className={helpClass}>
-                  后台相对路径。你的后台地址是 /&lt;adminSlug&gt;/settings，
-                  这里就填 /settings（不含 adminSlug 前缀）。
+                  引导适用的后台页面（不含 adminSlug 前缀，如 /settings）。选项由服务端扫描后台路由自动生成；如页面未收录可选「手写值」保留当前路径。
                 </p>
               </div>
               <div>

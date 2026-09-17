@@ -77,8 +77,14 @@ export async function POST(request: Request) {
   if (typeof page !== "string" || !page.trim()) {
     return NextResponse.json({ error: "page 必填" }, { status: 400 });
   }
-  if (!Array.isArray(steps) || steps.length === 0) {
-    return NextResponse.json({ error: "steps 必须是非空数组" }, { status: 400 });
+  if (!Array.isArray(steps)) {
+    return NextResponse.json({ error: "steps 必须是数组" }, { status: 400 });
+  }
+  if (body.status === GuideStatus.PUBLISHED && steps.length === 0) {
+    return NextResponse.json(
+      { error: "发布（published）引导必须包含至少一个步骤" },
+      { status: 400 },
+    );
   }
   for (const step of steps as GuideStep[]) {
     if (

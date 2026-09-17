@@ -42,7 +42,7 @@ export async function PUT(request: Request, context: RouteContext) {
   }
 
   const [existing] = await db
-    .select({ id: guiders.id })
+    .select({ id: guiders.id, steps: guiders.steps })
     .from(guiders)
     .where(eq(guiders.id, id));
   if (!existing) {
@@ -91,7 +91,7 @@ export async function PUT(request: Request, context: RouteContext) {
   }
   if (body.steps !== undefined) {
     if (!Array.isArray(body.steps) || body.steps.length === 0) {
-      return NextResponse.json({ error: "steps 必须是非空数组" }, { status: 400 });
+      return NextResponse.json({ error: "steps 必须是数组" }, { status: 400 });
     }
     for (const step of body.steps as GuideStep[]) {
       if (
@@ -130,6 +130,17 @@ export async function PUT(request: Request, context: RouteContext) {
       );
     }
     patch.targetCondition = tc as GuideTargetCondition | null;
+  }
+
+  // 发布校验：最终步骤（本次提交 ∪ 已存步骤）不能为空
+  if (patch.status === GuideStatus.PUBLISHED) {
+    const finalSteps = patch.steps ?? (existing.steps as GuideStep[] | null) ?? [];
+    if (finalSteps.length === 0) {
+      return NextResponse.json(
+        { error: "发布（published）引导必须包含至少一个步骤" },
+        { status: 400 },
+      );
+    }
   }
 
   const [updated] = await db

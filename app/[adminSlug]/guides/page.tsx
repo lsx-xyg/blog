@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { getAdminPathAsync } from "@/lib/shared/admin-path";
+import { getAdminPages } from "@/lib/shared/admin-pages";
 import { isAdminUser } from "@/lib/shared/utils";
 import { ManageGuides } from "@/components/manage-guides";
 import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
@@ -24,7 +25,7 @@ export default async function AdminGuidesPage({
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8 animate-page-enter">
       <AdminBreadcrumb current="引导管理" adminPath={adminPath} />
-      <ManageGuides adminPath={adminPath} />
+      <ManageGuides adminPath={adminPath} pages={getAdminPages()} />
     </div>
   );
 }
