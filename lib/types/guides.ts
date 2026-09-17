@@ -132,9 +132,11 @@ export function isValidTargetCondition(value: unknown): value is GuideTargetCond
     if (cond.field === "click_count.") return false;
     if (typeof cond.op !== "string") return false;
     if (!Object.values(GuideConditionOp).includes(cond.op as GuideConditionOp)) return false;
-    // 非 exists 条件需有 value
+    // 非 exists 条件需有 value；event_click 除外（待拾取元素，允许保存后回填）
+    const isEventClick = cond.field.startsWith("event_click");
     if (
       cond.op !== GuideConditionOp.EXISTS &&
+      !isEventClick &&
       (cond.value === undefined || cond.value === null || cond.value === "")
     ) {
       return false;

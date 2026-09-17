@@ -120,6 +120,7 @@ function ConditionRow({
   guideId,
   page,
   adminPath,
+  onPick,
 }: {
   cond: GuideCondition;
   onChange: (next: GuideCondition) => void;
@@ -131,6 +132,8 @@ function ConditionRow({
   /** 引导适用页面（相对后台路径，如 /settings） */
   page: string;
   adminPath: string;
+  /** 拾取触发条件元素：自动保存当前表单后跳目标页 */
+  onPick: (params: { conditionIndex: number }) => void;
 }) {
   const isClickCount = cond.field.startsWith("click_count.");
   const field = isClickCount ? "click_count" : cond.field;
@@ -223,33 +226,25 @@ function ConditionRow({
                 </option>
               ))}
             </select>
-            {guideId &&
-            (() => {
-              const pickUrl = buildGuidePickUrl(adminPath, page, {
-                guideId,
-                conditionIndex: condIndex,
-              });
-              return pickUrl ? (
-                <a
-                  href={pickUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-input bg-background px-2 py-1.5 text-xs font-medium transition hover:bg-accent"
-                  title="跳到目标页面点选元素，保存为触发条件"
-                >
-                  <MousePointerClick className="h-3.5 w-3.5" />
-                  拾取元素
-                </a>
-              ) : (
-                <span
-                  className="inline-flex shrink-0 cursor-not-allowed items-center gap-1 rounded-lg border border-input bg-muted/40 px-2 py-1.5 text-xs text-muted-foreground"
-                  title="请先在「页面」下拉选择本引导适用的后台页面，再拾取元素"
-                >
-                  <MousePointerClick className="h-3.5 w-3.5" />
-                  拾取元素
-                </span>
-              );
-            })()}
+            {page ? (
+              <button
+                type="button"
+                onClick={() => onPick({ conditionIndex: condIndex })}
+                className="inline-flex shrink-0 items-center gap-1 rounded-lg border border-input bg-background px-2 py-1.5 text-xs font-medium transition hover:bg-accent"
+                title="自动保存当前表单后，跳到目标页面点选元素保存为触发条件"
+              >
+                <MousePointerClick className="h-3.5 w-3.5" />
+                拾取元素
+              </button>
+            ) : (
+              <span
+                className="inline-flex shrink-0 cursor-not-allowed items-center gap-1 rounded-lg border border-input bg-muted/40 px-2 py-1.5 text-xs text-muted-foreground"
+                title="请先在「页面」下拉选择本引导适用的后台页面，再拾取元素"
+              >
+                <MousePointerClick className="h-3.5 w-3.5" />
+                拾取元素
+              </span>
+            )}
             {typeof cond.value === "string" &&
               cond.value !== "" &&
               !GUIDE_EVENT_ANCHORS.some((a) => a.target === cond.value) && (
@@ -341,6 +336,7 @@ function StepEditor({
   page,
   adminPath,
   pages,
+  onPick,
 }: {
   steps: StepForm[];
   onChange: (next: StepForm[]) => void;
@@ -351,6 +347,8 @@ function StepEditor({
   adminPath: string;
   /** 后台页面列表（nextRoute 下拉选择） */
   pages: { path: string; label: string }[];
+  /** 拾取步骤锚点：自动保存当前表单后跳目标页 */
+  onPick: (params: { stepId: string }) => void;
 }) {
   const setStep = (i: number, patch: Partial<StepForm>) => {
     onChange(steps.map((s, j) => (j === i ? { ...s, ...patch } : s)));
@@ -418,36 +416,25 @@ function StepEditor({
                 引导要指向哪个元素。填该元素上的 data-guide 标记值，或点下方「拾取锚点」在目标页面点选生成动态选择器。
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
-                {guideId &&
-                (() => {
-                  const pickUrl = buildGuidePickUrl(adminPath, page, {
-                    guideId,
-                    stepId: s.id,
-                  });
-                  return pickUrl ? (
-                    <a
-                      href={pickUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-accent"
-                    >
-                      <MousePointerClick className="h-3.5 w-3.5" />
-                      拾取锚点
-                    </a>
-                  ) : (
-                    <span
-                      className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-input bg-muted/40 px-2.5 py-1.5 text-xs text-muted-foreground"
-                      title={
-                        guideId
-                          ? "请先在「页面」下拉选择本引导适用的后台页面，再拾取锚点"
-                          : "保存引导后可跳到目标页面拾取锚点"
-                      }
-                    >
-                      <MousePointerClick className="h-3.5 w-3.5" />
-                      拾取锚点（{guideId ? "先选页面" : "先保存引导"}）
-                    </span>
-                  );
-                })()}
+                {page ? (
+                  <button
+                    type="button"
+                    onClick={() => onPick({ stepId: s.id })}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-accent"
+                    title="自动保存当前表单后，跳到目标页面点选元素生成选择器"
+                  >
+                    <MousePointerClick className="h-3.5 w-3.5" />
+                    拾取锚点
+                  </button>
+                ) : (
+                  <span
+                    className="inline-flex cursor-not-allowed items-center gap-1.5 rounded-lg border border-input bg-muted/40 px-2.5 py-1.5 text-xs text-muted-foreground"
+                    title="请先在「页面」下拉选择本引导适用的后台页面，再拾取锚点"
+                  >
+                    <MousePointerClick className="h-3.5 w-3.5" />
+                    拾取锚点（先选页面）
+                  </span>
+                )}
                 {s.selector && (
                   <span className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-2.5 py-1.5 font-mono text-[11px] text-primary">
                     <span className="max-w-[240px] truncate">{s.selector}</span>
@@ -670,6 +657,22 @@ export function ManageGuides({
     loadGuides();
   }, [loadGuides]);
 
+  /** 拾取前自动保存当前表单（含未入库的步骤/条件），成功后才跳转目标页 */
+  const saveThenPick = async (params: { stepId?: string; conditionIndex?: number }) => {
+    const guideId = await handleSave({ keepEditing: true });
+    if (!guideId) return; // 校验/保存失败已 setError 提示
+    const pickUrl = buildGuidePickUrl(adminPath, form.page, {
+      guideId,
+      ...params,
+    });
+    if (!pickUrl) {
+      setError("请先在「页面」下拉选择本引导适用的后台页面，再拾取");
+      return;
+    }
+    showToast("已保存，正在打开目标页面拾取…", "success");
+    window.open(pickUrl, "_blank");
+  };
+
   const openCreate = () => {
     setForm(EMPTY_FORM);
     setError("");
@@ -712,22 +715,23 @@ export function ManageGuides({
     return true;
   };
 
-  const handleSave = async () => {
+  /** 保存引导；keepEditing 时保存成功不关表单（用于拾取前自动保存），返回新 guide id */
+  const handleSave = async (opts?: { keepEditing?: boolean }): Promise<string | null> => {
     setError("");
     if (!form.guideKey.trim() || !form.title.trim() || !form.page.trim()) {
       setError("请填写标题、guideKey、页面（必填项）");
-      return;
+      return null;
     }
     if (form.status === GuideStatus.PUBLISHED && form.steps.length === 0) {
       setError("发布前至少需要一个步骤（可先保存草稿，再用拾取锚点补充）");
-      return;
+      return null;
     }
     // steps 校验（结构化表单 → GuideStep[]）
     const steps: GuideStep[] = [];
     for (const [i, s] of form.steps.entries()) {
       if ((!s.target.trim() && !s.selector?.trim()) || !s.title.trim() || !s.content.trim()) {
         setError(`步骤 ${i + 1} 未填写完整：高亮元素（data-guide 或动态选择器）/ 标题 / 说明文字必填`);
-        return;
+        return null;
       }
       steps.push({
         id: s.id.trim() || `step_${i + 1}`,
@@ -745,9 +749,9 @@ export function ManageGuides({
       !form.conditions.every(conditionValid)
     ) {
       setError(
-        "触发条件至少一条，且 click_count 需填锚点名、非 exists 条件需填 value"
+        "触发条件至少一条，且 click_count 需填锚点名、非 exists 条件需填 value（event_click 可先留空，保存后拾取回填）"
       );
-      return;
+      return null;
     }
 
     setSaving(true);
@@ -780,13 +784,23 @@ export function ManageGuides({
       const data = await res.json();
       if (!res.ok) {
         setError(data.error || "保存失败");
-        return;
+        return null;
+      }
+      const savedId = (data.guide?.id as string | undefined) ?? form.id;
+      if (opts?.keepEditing) {
+        // 保存并保持编辑：更新 id（新建场景），不关表单，供拾取跳转使用
+        if (savedId && savedId !== form.id) {
+          setForm((f) => ({ ...f, id: savedId }));
+        }
+        return savedId ?? null;
       }
       setEditing(false);
       setForm(EMPTY_FORM);
       await loadGuides();
+      return savedId ?? null;
     } catch {
       setError("网络错误，请稍后重试");
+      return null;
     } finally {
       setSaving(false);
     }
@@ -1097,7 +1111,7 @@ export function ManageGuides({
               </button>
               <button
                 type="button"
-                onClick={handleSave}
+                onClick={() => void handleSave()}
                 disabled={saving}
                 className="inline-flex items-center rounded-lg bg-primary px-4 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary/90"
               >
@@ -1271,6 +1285,7 @@ export function ManageGuides({
                     guideId={form.id ?? null}
                     page={form.page}
                     adminPath={adminPath}
+                    onPick={saveThenPick}
                   />
                 ))}
               </div>
@@ -1299,6 +1314,7 @@ export function ManageGuides({
                 page={form.page}
                 adminPath={adminPath}
                 pages={pages}
+                onPick={saveThenPick}
               />
             </div>
 

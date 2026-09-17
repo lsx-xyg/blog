@@ -46,18 +46,22 @@ export async function PATCH(request: Request, context: RouteContext) {
       return NextResponse.json({ error: "引导没有触发条件" }, { status: 400 });
     }
     const conditions: GuideCondition[] = tc.conditions;
-    const cond = conditions[body.conditionIndex];
+    let created = false;
+    let cond = conditions[body.conditionIndex];
     if (!cond) {
-      return NextResponse.json({ error: "触发条件不存在" }, { status: 404 });
-    }
-    if (!cond.field.startsWith("event_click")) {
+      // 表单新建的条件尚未入库 → 追加到末尾（防索引脱节）
+      cond = { field: "event_click", op: "eq" as const, value: body.value };
+      conditions.push(cond);
+      created = true;
+    } else if (!cond.field.startsWith("event_click")) {
       return NextResponse.json(
         { error: "仅 event_click 触发条件支持拾取元素" },
         { status: 400 },
       );
+    } else {
+      cond = { ...cond, value: body.value };
+      conditions[body.conditionIndex] = cond;
     }
-
-    conditions[body.conditionIndex] = { ...cond, value: body.value };
     const nextTc: GuideTargetCondition = { ...tc, conditions };
     await db
       .update(guiders)
@@ -66,6 +70,7 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     return NextResponse.json({
       ok: true,
+      created,
       condition: { index: body.conditionIndex, field: cond.field, value: body.value },
     });
   } catch (error) {
