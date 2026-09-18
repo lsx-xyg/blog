@@ -3,7 +3,6 @@ import { notFound } from "next/navigation";
 import { getPublishedPostBySlugOrId, listPublishedPosts } from "@/lib/posts";
 import { renderMdx } from "@/lib/mdx";
 import { formatDate } from "@/lib/shared/utils";
-import { extractToc } from "@/lib/shared/toc";
 import { CodeCopy } from "@/components/code-copy";
 import { ViewCounter } from "@/components/view-counter";
 import { ArticleToc } from "@/components/article-toc";
@@ -85,11 +84,10 @@ export default async function PostPage({
   // 阅读时长估算：中文约 500 字/分钟（markdown 原文含语法，取整保护最小 1 分钟）
   const readingMinutes = Math.max(1, Math.round(post.content.length / 500));
 
-  // 从 markdown 提取目录
-  const tocItems = extractToc(post.content);
-
   // 获取 giscus 评论配置（环境变量优先级最高，DB 次之）
   const giscusConfig = await getGiscusSettings();
+
+  const { content, toc } = await renderMdx(post.content);
 
   return (
     <main className="container mx-auto px-4 py-4 md:px-4 md:py-8 pb-24 md:pb-8">
@@ -140,7 +138,7 @@ export default async function PostPage({
               </div>
 
               {/* 正文内容 */}
-              <div className="mdx-content">{renderMdx(post.content)}</div>
+              <div className="mdx-content">{content}</div>
               <CodeCopy />
 
               {/* giscus 评论（延迟加载，不影响首屏渲染；后台评论开关关闭时不渲染） */}
@@ -151,7 +149,7 @@ export default async function PostPage({
       </div>
 
       {/* 目录（PC端右侧固定，移动端弹出） */}
-      <ArticleToc items={tocItems} />
+      <ArticleToc items={toc} />
 
       {/* 悬浮按钮（回顶部 + 关闭） */}
       <ArticleFloatButtons />

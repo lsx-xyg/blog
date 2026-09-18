@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { List, Copy, Check } from "lucide-react";
-import type { TocItem } from "@/lib/shared/toc";
+import type { TocItem } from "remark-flexible-toc";
 import { scrollToElement } from "@/lib/shared/smooth-scroll";
 import {
   Sheet,
@@ -12,7 +12,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-/** 文章目录（TOC）组件（对齐参考站 czhlove.cn）：
+/** 文章目录（TOC）组件：
  * - PC端：右侧固定目录（top-24 固定位置，不垂直居中），标题'目录'+复制图标
  * - 不显示编号，直接展示原样内容，不同等级标题用缩进区分
  * - 移动端：底部按钮点击弹出目录对话框
@@ -23,7 +23,9 @@ export function ArticleToc({ items }: { items: TocItem[] }) {
   const [activeId, setActiveId] = useState<string>("");
   const [copied, setCopied] = useState(false);
 
-  // 跟踪当前阅读位置
+  // 把 href 转成 id（去掉 # 前缀）
+  const getId = (item: TocItem) => item.href?.replace(/^#/, "") ?? "";
+
   useEffect(() => {
     if (items.length === 0) return;
 
@@ -40,7 +42,7 @@ export function ArticleToc({ items }: { items: TocItem[] }) {
     );
 
     items.forEach((item) => {
-      const el = document.getElementById(item.id);
+      const el = document.getElementById(getId(item));
       if (el) observer.observe(el);
     });
 
@@ -50,9 +52,7 @@ export function ArticleToc({ items }: { items: TocItem[] }) {
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
     if (el) {
-      // 手动同步高亮，确保点击后目录当前位置立即更新
       setActiveId(id);
-      // 自定义平滑滚动，600ms，offset 100px（减去导航栏高度）
       scrollToElement(el, 100, 600);
     }
   };
@@ -68,29 +68,30 @@ export function ArticleToc({ items }: { items: TocItem[] }) {
 
   const TocList = () => (
     <ul className="space-y-2 text-base">
-      {items.map((item) => (
-        <li key={item.id}>
-          <button
-            type="button"
-            onClick={() => scrollTo(item.id)}
-            className={`text-left transition-colors leading-relaxed ${
-              item.level === 1 ? "pl-0" : item.level === 2 ? "pl-4" : "pl-8"
-            } ${
-              activeId === item.id
-                ? "font-bold text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            {item.text}
-          </button>
-        </li>
-      ))}
+      {items.map((item, index) => {
+        const id = getId(item);
+        return (
+          <li key={`${item.href ?? id}-${index}`}>
+            <button
+              type="button"
+              onClick={() => scrollTo(id)}
+              className={`text-left transition-colors leading-relaxed ${item.depth === 1 ? "pl-0" : item.depth === 2 ? "pl-4" : "pl-8"
+                } ${activeId === id
+                  ? "font-bold text-foreground"
+                  : "text-muted-foreground hover:text-foreground"
+                }`}
+            >
+              {item.value}
+            </button>
+          </li>
+        );
+      })}
     </ul>
   );
 
   return (
     <>
-      {/* PC端：右侧固定目录（xl 屏幕以上显示，避免和文章内容重叠；top-24 固定位置，right-6 不贴边） */}
+      {/* PC端：右侧固定目录 */}
       <aside className="hidden xl:block fixed right-6 top-24 w-52 max-h-[70vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <h3 className="font-semibold text-foreground text-lg">目录</h3>
@@ -110,7 +111,7 @@ export function ArticleToc({ items }: { items: TocItem[] }) {
         <TocList />
       </aside>
 
-      {/* 移动端/中等屏幕：底部左下角按钮 + 弹出目录（xl 以下显示，与PC端目录互补） */}
+      {/* 移动端：底部按钮 + 弹出目录 */}
       <div className="xl:hidden fixed bottom-28 left-4 z-40">
         <Sheet>
           <SheetTrigger className="flex h-12 w-12 items-center justify-center rounded-full bg-foreground text-background shadow-lg">

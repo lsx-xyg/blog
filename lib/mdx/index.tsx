@@ -1,11 +1,13 @@
 /**
  * MDX 渲染（SPEC §2：next-mdx-remote-client + Shiki）
- * - 代码高亮：github-dark（深色代码块在三主题下对比度稳定；T7 可做双主题适配）
+ * - 代码高亮：github-dark（深色代码块在三主题下对比度稳定）
  * - rehype-slug 为标题生成锚点 id
- * - 图片懒加载：使用自定义 LazyImage 组件（占位符 + 淡入动画 + Intersection Observer）
- * - Shiki 优化：使用 lazy 选项按需加载语言和主题，减少首屏体积
+ * - TOC：remark-flexible-toc 自动提取目录，通过 vfileDataIntoScope 注入 scope
+ * - 图片懒加载：使用自定义 LazyImage 组件
+ * - Shiki 优化：使用 lazy 选项按需加载语言和主题
  */
-import { MDXRemote } from "next-mdx-remote-client/rsc";
+import { evaluate, type EvaluateOptions } from "next-mdx-remote-client/rsc";
+import remarkFlexibleToc, { type TocItem } from "remark-flexible-toc";
 import rehypeShiki from "@shikijs/rehype";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
@@ -27,23 +29,34 @@ const components = {
   },
 };
 
-export function renderMdx(source: string) {
-  return (
-    <MDXRemote
-      source={source}
-      components={components}
-      options={{
-        mdxOptions: {
-          remarkPlugins: [remarkGfm],
-          rehypePlugins: [
-            // Shiki 代码高亮
-            // 使用 lazy 选项按需加载语言和主题，减少首屏体积
-            // 主题：github-dark（深色代码块在三主题下对比度稳定）
-            [rehypeShiki, { theme: "github-dark", lazy: true }],
-            rehypeSlug,
-          ],
-        },
-      }}
-    />
-  );
+type Scope = {
+  toc?: TocItem[];
+};
+
+export async function renderMdx(source: string) {
+  const options: EvaluateOptions<Scope> = {
+    mdxOptions: {
+      remarkPlugins: [remarkGfm, remarkFlexibleToc],
+      rehypePlugins: [
+        [rehypeShiki, { theme: "github-dark", lazy: true }],
+        rehypeSlug,
+      ],
+    },
+    vfileDataIntoScope: "toc",
+  };
+
+  const { content, scope, error } = await evaluate<
+    Record<string, unknown>,
+    Scope
+  >({
+    source,
+    options,
+    components,
+  });
+
+  if (error) {
+    return { content: <div>内容加载失败</div>, toc: [] };
+  }
+
+  return { content, toc: scope.toc ?? [] };
 }

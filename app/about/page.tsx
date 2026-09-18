@@ -26,6 +26,8 @@ export default async function AboutPage() {
     getAboutContent(),
   ]);
 
+  const { content: mdxContent } = await renderMdx(content);
+
   return (
     <div className="container mx-auto px-4 py-16 max-w-3xl animate-page-enter">
       <header className="mb-10 text-center">
@@ -34,7 +36,7 @@ export default async function AboutPage() {
       </header>
 
       <article className="prose prose-neutral dark:prose-invert max-w-none">
-        {renderMdx(content)}
+        {mdxContent}
       </article>
     </div>
   );
