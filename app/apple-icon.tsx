@@ -1,12 +1,12 @@
-import { readFile } from "node:fs/promises";
 import { ImageResponse } from "next/og";
 import { cookies } from "next/headers";
+import { LIN_SERIF_BOLD_BASE64 } from "@/lib/favicon-font";
 
 /**
  * Apple 主屏图标（apple-touch-icon，180×180 PNG）。
  *
  * 与 app/icon.tsx 同一套主题配色，用「林」字子集字体渲染
- * （public/fonts/lin-serif-bold.ttf，仅含「林」字，约 4KB）。
+ * （base64 内联，仅含「林」字，约 4KB，Vercel standalone 兼容）。
  * iOS 保存到主屏时按当前主题生成对应颜色。
  */
 export const size = { width: 180, height: 180 };
@@ -26,10 +26,10 @@ export default async function AppleIcon() {
   const theme = cookieStore.get("site-theme")?.value ?? "system";
   const c = THEME_COLORS[theme] ?? THEME_COLORS.system;
 
-  const fontData = await readFile(
-    // public/ 会被复制进构建产物（含 Vercel standalone），运行时按项目根读取
-    `${process.cwd()}/public/fonts/lin-serif-bold.ttf`,
-  );
+  // Buffer.from 可能落在共享 Buffer 池上，必须 slice 出精确 ArrayBuffer，
+  // 否则 opentype 解析会因底层 buffer 越界报 DataView 错
+  const buf = Buffer.from(LIN_SERIF_BOLD_BASE64, "base64");
+  const fontData = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength);
 
   return new ImageResponse(
     <div
