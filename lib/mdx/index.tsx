@@ -8,6 +8,7 @@
 import { MDXRemote } from "next-mdx-remote-client/rsc";
 import rehypeShiki from "@shikijs/rehype";
 import rehypeSlug from "rehype-slug";
+import remarkGfm from "remark-gfm";
 import { LazyImage } from "@/components/lazy-image";
 
 // 自定义 MDX 组件
@@ -33,6 +34,7 @@ export function renderMdx(source: string) {
       components={components}
       options={{
         mdxOptions: {
+          remarkPlugins: [remarkGfm],
           rehypePlugins: [
             // Shiki 代码高亮
             // 使用 lazy 选项按需加载语言和主题，减少首屏体积
