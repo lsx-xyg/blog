@@ -7,7 +7,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { env } from "@/db/env";
+import { getEnv } from "@/lib/env/utils";
 import { users, sessions, accounts, verifications } from "@/db/schema";
 
 export const auth = betterAuth({
@@ -20,8 +20,8 @@ export const auth = betterAuth({
       verification: verifications,
     },
   }),
-  secret: env("BETTER_AUTH_SECRET") ?? "dev-insecure-secret-change-me",
-  baseURL: env("BETTER_AUTH_URL"),
+  secret: getEnv("BETTER_AUTH_SECRET") ?? "dev-insecure-secret-change-me",
+  baseURL: getEnv("BETTER_AUTH_URL"),
   emailAndPassword: {
     enabled: true,
   },
@@ -38,8 +38,8 @@ export const auth = betterAuth({
   },
   socialProviders: {
     github: {
-      clientId: env("GITHUB_CLIENT_ID") ?? "",
-      clientSecret: env("GITHUB_CLIENT_SECRET") ?? "",
+      clientId: getEnv("GITHUB_CLIENT_ID") ?? "",
+      clientSecret: getEnv("GITHUB_CLIENT_SECRET") ?? "",
     },
   },
   // 账号关联：GitHub 登录与现有同邮箱密码账号自动关联；登录后可手动绑定（linkSocial）

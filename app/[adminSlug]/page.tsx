@@ -10,7 +10,7 @@ import { auth } from "@/lib/auth/auth";
 import { getAdminPathAsync } from "@/lib/shared/admin-path";
 import { isAdminUser } from "@/lib/shared/utils";
 import { formatDate } from "@/lib/shared/utils";
-import { env } from "@/db/env";
+import { getEnv } from "@/lib/env/utils";
 import { AdminLogin } from "@/components/admin-login";
 import { SignOutButton } from "@/components/sign-out-button";
 import { SetupWizard } from "@/components/setup-wizard";
@@ -62,7 +62,7 @@ export default async function AdminRootPage({
             创建第一个账号（自动成为管理员）。建议使用 GitHub 登录。
           </p>
         </header>
-        <SetupWizard needsSecret={Boolean(env("SETUP_SECRET"))} adminPath={adminPath} />
+        <SetupWizard needsSecret={Boolean(getEnv("SETUP_SECRET"))} adminPath={adminPath} />
       </main>
     );
   }

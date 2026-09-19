@@ -1,25 +1,17 @@
 /**
  * 后台路径解析（SPEC §8）：
- * - 同步版本 getAdminPath()：仅从 env 读取（用于 client component props 初始化等）
  * - 异步版本 getAdminPathAsync()：env 优先 → DB settings 覆盖 → 兜底 admin
  *
  * 注意：兜底为 admin 时，/admin 由动态路由 [adminSlug] 处理：
  * - 用户表为空 → 显示引导页（创建第一个管理员）
  * - 用户表不为空 → 显示登录页或后台首页
  */
-import { env } from "@/db/env";
+import { getEnv, ENV_KEYS } from "@/lib/env";
 import { getSetting } from "@/lib/settings";
-
-/** 同步版本：仅从 env 读取（兜底 admin） */
-export function getAdminPath(): string {
-  const fromEnv = env("ADMIN_PATH");
-  if (fromEnv) return fromEnv.replace(/^\/+|\/+$/g, "");
-  return "admin";
-}
 
 /** 异步版本：env 优先 → DB settings.admin_path 覆盖 → 兜底 admin */
 export async function getAdminPathAsync(): Promise<string> {
-  const fromEnv = env("ADMIN_PATH");
+  const fromEnv = getEnv(ENV_KEYS.ADMIN_PATH);
   if (fromEnv) return fromEnv.replace(/^\/+|\/+$/g, "");
 
   try {

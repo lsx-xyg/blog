@@ -9,7 +9,7 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "analyze": "ANALYZE=true next build",
-    "db:test": "tsx scripts/test-db.ts",
+    "db:test": "tsx scripts/db-connect.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:migrate:debug": "tsx scripts/migrate.ts",

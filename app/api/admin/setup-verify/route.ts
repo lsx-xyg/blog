@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { env } from "@/db/env";
+import { getEnv } from "@/lib/env/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
   if ((row?.count ?? 0) > 0) {
     return NextResponse.json({ error: "Not Found" }, { status: 404 });
   }
-  const expected = env("SETUP_SECRET");
+  const expected = getEnv("SETUP_SECRET");
   if (!expected) {
     return NextResponse.json({ ok: true });
   }
