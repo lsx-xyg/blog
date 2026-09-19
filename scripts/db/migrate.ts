@@ -2,14 +2,15 @@
 // 使用方式：npx tsx scripts/migrate.ts
 // 优势：迁移失败时会显示真实错误，不会像 drizzle-kit CLI 那样静默吞错
 
-import "../db/load-env";
+import "@/lib/env/load";
+import { ENV_KEYS, getEnv } from "@/lib/env";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";
 
 const run = async () => {
   // 迁移必须走非池化（direct）连接串
-  const databaseUrl = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
+  const databaseUrl = getEnv(ENV_KEYS.DATABASE_URL_UNPOOLED) ?? getEnv(ENV_KEYS.DATABASE_URL);
   if (!databaseUrl) {
     console.error("❌ DATABASE_URL 或 DATABASE_URL_UNPOOLED 未配置");
     process.exit(1);
@@ -20,7 +21,7 @@ const run = async () => {
 
   try {
     console.log("⏳ migrating...");
-    await migrate(db, { migrationsFolder: "./drizzle" });
+    await migrate(db, { migrationsFolder: "./db/drizzle" });
     console.log("✅ done");
   } catch (e) {
     console.error("❌ failed:", e);

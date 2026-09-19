@@ -1,23 +1,26 @@
-/** 存储驱动测试脚本
+/**
+ * 存储驱动测试脚本
  *
- * 用法：npx tsx scripts/test-storage.ts
+ * 用法：
+ *   npx tsx scripts/storage.ts            # 用当前 STORAGE_DRIVER
+ *   npx tsx scripts/storage.ts github     # 强制用 GitHub 驱动
  *
  * 测试内容：
- * 1. 从 picsum.photos 下载测试图片
- * 2. 测试本地驱动上传
- * 3. 测试本地驱动删除
- * 4. 测试 GitHub 驱动上传（如果配置了 GITHUB_TOKEN 且 STORAGE_DRIVER=GITHUB）
+ * 1. 准备内嵌的 1x1 JPEG 测试图（不依赖外网）
+ * 2. 校验图片（validateImage）
+ * 3. 上传到公开存储
+ * 4. 读取 getUrl
+ * 5. 删除文件
  */
-import "../db/load-env";
-import { getPublicStorageDriver, resetStorageDriver, StorageDriverType } from "@/lib/storage";
-import { validateImage } from "@/lib/storage";
+import "@/lib/env/load";
+import { getPublicStorageDriver, resetStorageDriver, STORAGE_DRIVER_VALUES, validateImage } from "@/lib/storage";
 
 async function main() {
   console.log("=== 存储驱动测试 ===\n");
 
-  // 支持命令行参数指定驱动：npx tsx scripts/test-storage.ts github
+  // 支持命令行参数指定驱动：npx tsx scripts/driver.ts github
   const driverArg = process.argv[2]?.toUpperCase();
-  if (driverArg === StorageDriverType.GITHUB || driverArg === StorageDriverType.LOCAL || driverArg === StorageDriverType.S3) {
+  if (driverArg && STORAGE_DRIVER_VALUES.some((d) => d === driverArg)) {
     process.env.STORAGE_DRIVER = driverArg;
     resetStorageDriver();
     console.log(`（命令行强制指定驱动：${driverArg}）\n`);
@@ -25,8 +28,7 @@ async function main() {
 
   // 1. 准备测试图片（1x1 红色 JPEG，base64 编码，避免依赖外部网络）
   console.log("1. 准备测试图片（1x1 红色 JPEG）...");
-  const base64Image =
-    "/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigD//2Q==";
+  const base64Image = "/9j/4AAQSkZJRgABAQEASABIAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dnd4eXqDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYGRomJygpKjU2Nzg5OkNERUZHSElKU1RVVldYWVpjZGVmZ2hpanN0dXZ3eHl6goOEhYaHiImKkpOUlZaXmJmaoqOkpaanqKmqsrO0tba3uLm6wsPExcbHyMnK0tPU1dbX2Nna4uPk5ebn6Onq8vP09fb3+Pn6/9oADAMBAAIRAxEAPwD3+iiigD//2Q==";
   const buffer = Buffer.from(base64Image, "base64");
   const mimeType = "image/jpeg";
   console.log(`   准备成功：${buffer.length} bytes，${mimeType}\n`);

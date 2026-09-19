@@ -5,9 +5,9 @@
  * 重构说明：gallery_items 表已删除，相册图片统一在 media 表管理（type=GALLERY）。
  * 精选字段（featured）也在 media 表中。
  */
-import "../db/load-env";
-import { db } from "../db";
-import { media } from "../db/schema";
+import "@/lib/env/load";
+import { db } from "@/db";
+import { media } from "@/db/schema";
 import { MediaType } from "@/lib/types/media";
 import { StorageDriverType } from "@/lib/types/storage";
 

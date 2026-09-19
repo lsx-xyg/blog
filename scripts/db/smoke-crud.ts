@@ -1,7 +1,7 @@
-import "../db/load-env";
+import "@/lib/env/load";
 import { eq } from "drizzle-orm";
-import { db, sql } from "../db";
-import { tags } from "../db/schema";
+import { db, sql } from "@/db";
+import { tags } from "@/db/schema";
 
 async function main() {
   // 插入（大小写敏感原样存储验证）
@@ -16,6 +16,6 @@ async function main() {
 
   await db.delete(tags).where(eq(tags.id, tag.id));
   console.log("✅ 删除完成，CRUD 冒烟通过");
-  await sql.end();
+  await sql.end(); 
 }
 main().catch(e => { console.error("❌", e.message); process.exit(1); });

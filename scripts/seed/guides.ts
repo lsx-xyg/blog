@@ -1,17 +1,16 @@
 // 引导配置 seed 脚本
 // 使用方式：npx tsx scripts/seed-guides.ts
 // 幂等：guideKey 已存在则跳过（改版换新 guideKey 版本号）
-import "../db/load-env";
+import "@/lib/env/load-env";
+import { getEnv, ENV_KEYS } from "@/lib/env";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { eq } from "drizzle-orm";
 import postgres from "postgres";
-import { guiders } from "../db/schema";
-import { GuideStatus, type GuideStep } from "../lib/types/guides";
-
-type NewGuider = typeof guiders.$inferInsert;
+import { guiders, type NewGuider } from "@/db/schema";
+import { GuideStatus, type GuideStep } from "@/lib/types/guides";
 
 const run = async () => {
-  const databaseUrl = process.env.DATABASE_URL_UNPOOLED ?? process.env.DATABASE_URL;
+  const databaseUrl = getEnv(ENV_KEYS.DATABASE_URL_UNPOOLED) ?? getEnv(ENV_KEYS.DATABASE_URL);
   if (!databaseUrl) {
     console.error("❌ DATABASE_URL 或 DATABASE_URL_UNPOOLED 未配置");
     process.exit(1);

@@ -2,15 +2,15 @@
  * 数据库连通性测试：npm run db:test
  * 验证 DATABASE_URL 可用并返回数据库信息
  */
-import "../db/load-env";
+import "@/lib/env/load";
+import { getEnv, ENV_KEYS} from "@/lib/env";
 import postgres from "postgres";
-import { env } from "../db/env";
 
 async function main() {
-  const url = env("DATABASE_URL");
+  const url = getEnv(ENV_KEYS.DATABASE_URL);
   if (!url) {
-    console.error("❌ 缺少环境变量 DATABASE_URL");
-    console.error("   请在 .env 中配置，例如：DATABASE_URL=postgres://user:pass@host/db");
+    console.error(`❌ 缺少环境变量 ${ENV_KEYS.DATABASE_URL}`);
+    console.error(`   请在 .env 中配置，例如：${ENV_KEYS.DATABASE_URL}=postgres://user:pass@host/db`);
     process.exit(1);
   }
 
