@@ -10,14 +10,14 @@ import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { Guide, GuideStep } from "@/lib/types/guides";
 import { GuideStatus, normalizeTargetCondition } from "@/lib/types/guides";
-import { buildGuidePickUrl } from "@/lib/shared/guide-pick-url";
-import { useToast } from "@/components/toast";
+import { buildGuidePickUrl } from "@/lib/guides/client";
+import { useToast } from "@/components/ui/toast";
 import {
   EMPTY_FORM,
   toStepForms,
   type FormState,
-} from "@/lib/guides/form-meta";
-import { validateGuideForm } from "@/lib/guides/validate";
+} from "@/lib/guides/client/form-meta";
+import { validateGuideForm } from "@/lib/guides/client";
 
 export function useGuideForm(opts: {
   adminPath: string;

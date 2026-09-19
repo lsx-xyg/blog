@@ -9,7 +9,7 @@ import {
   evaluateTargetCondition,
   needsServerData,
   type GuideConditionContext,
-} from "@/lib/guides/conditions";
+} from "@/lib/guides";
 import { normalizeTargetCondition } from "@/lib/types/guides";
 
 /**

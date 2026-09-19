@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { GalleryWall } from "@/components/gallery-wall";
+import { GalleryWall } from "@/components/media/gallery-wall";
 
 export const metadata: Metadata = {
   title: "相册",

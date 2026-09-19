@@ -29,7 +29,7 @@ import {
   Loader2,
   AlertTriangle,
 } from "lucide-react";
-import { useToast } from "@/components/toast";
+import { useToast } from "@/components/ui/toast";
 import { useCronForm } from "@/components/cron/use-cron-form";
 import { CronJobFormDialog } from "@/components/cron/cron-job-form-dialog";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
@@ -38,7 +38,7 @@ import { AdminEmptyState, AdminLoadingState } from "@/components/admin/status";
 import { CronDeployPlatform } from "@/lib/types/settings";
 import { type CronJob, type CronJobConfig, type CronJobSchedule } from "@/lib/types/cron";
 
-import { CronJobHistoryDialog } from "@/components/cron-job-history";
+import { CronJobHistoryDialog } from "@/components/cron/cron-job-history";
 import {
   classifyJob,
   systemTagColor,

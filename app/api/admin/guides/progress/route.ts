@@ -6,7 +6,7 @@ import {
   upsertProgress,
   deleteProgress,
   parseProgressInput,
-} from "@/lib/guide/service";
+} from "@/lib/guides/server/service";
 
 /**
  * 用户引导进度 API（user_guide_progress 表）——C9 薄壳

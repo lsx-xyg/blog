@@ -38,7 +38,7 @@ import {
   GripVertical,
   type LucideIcon,
 } from "lucide-react";
-import { useToast } from "@/components/toast";
+import { useToast } from "@/components/ui/toast";
 
 export type QuickLinkDef = {
   key: string;

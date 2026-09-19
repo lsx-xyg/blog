@@ -1,13 +1,13 @@
-import type { Guide, GuideProgress, GuideStep } from "@/lib/types/guides";
 import {
   GuideProgressStatus,
   GUIDE_SKIP_COOLDOWN_DAYS,
   normalizeTargetCondition,
+  type Guide, type GuideProgress, type GuideStep
 } from "@/lib/types/guides";
 import {
   evaluateTargetCondition,
   needsServerData,
-} from "@/lib/guides/conditions";
+} from "./conditions";
 
 /**
  * Guide 触发决策模块（深模块：小接口 + 全部触发规则）
@@ -131,18 +131,18 @@ export function decideTrigger(
 
   const matched = fromEvent
     ? evaluateEventTrigger(guide, {
-        page: ctx.page,
-        event: ctx.event,
-        target: ctx.target,
-      })
+      page: ctx.page,
+      event: ctx.event,
+      target: ctx.target,
+    })
     : evaluateAutoTrigger(guide, ctx.page);
   if (!matched) return NO_TRIGGER(fromEvent);
 
   const resumeStep =
     ctx.resumeIfInProgress &&
-    progress?.status === GuideProgressStatus.IN_PROGRESS &&
-    typeof progress.currentStep === "number" &&
-    progress.currentStep > 0
+      progress?.status === GuideProgressStatus.IN_PROGRESS &&
+      typeof progress.currentStep === "number" &&
+      progress.currentStep > 0
       ? progress.currentStep
       : 0;
 

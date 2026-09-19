@@ -5,8 +5,8 @@ import { auth } from "@/lib/auth/auth";
 import { getAdminPathAsync } from "@/lib/shared/admin-path";
 import { getAdminPages } from "@/lib/shared/admin-pages";
 import { isAdminUser } from "@/lib/shared/utils";
-import { ManageGuides } from "@/components/manage-guides";
-import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
+import { ManageGuides } from "@/components/manage/manage-guides";
+import { AdminBreadcrumb } from "@/components/admin/admin-breadcrumb";
 
 export const dynamic = "force-dynamic";
 

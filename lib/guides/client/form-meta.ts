@@ -3,9 +3,9 @@ import type {
   GuideStep,
 } from "@/lib/types/guides";
 import { GuideConditionOp, GuideStatus } from "@/lib/types/guides";
-import { GUIDE_EVENT_ANCHORS } from "@/lib/guide-events";
+import { GUIDE_EVENT_ANCHORS } from "../shared/anchor-registry";
 
-/**
+/**w
  * 引导表单元数据（纯数据：类型 + 常量 + 默认值）
  *
  * 供管理页表单（manage-guides）、条件编辑器、步骤编辑器共享，

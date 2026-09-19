@@ -19,9 +19,9 @@ import { auth } from "@/lib/auth/auth";
 import { getAdminPathAsync } from "@/lib/shared/admin-path";
 import { isAdminUser } from "@/lib/shared/utils";
 import { getPostById } from "@/lib/posts";
-import { PostEditor } from "@/components/post-editor";
+import { PostEditor } from "@/components/posts/post-editor";
 import type { PostFormData } from "@/lib/posts/form";
-import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
+import { AdminBreadcrumb } from "@/components/admin/admin-breadcrumb";
 
 export const dynamic = "force-dynamic";
 

@@ -4,8 +4,8 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { getAdminPathAsync } from "@/lib/shared/admin-path";
 import { isAdminUser } from "@/lib/shared/utils";
-import { ManageMedia } from "@/components/manage-media";
-import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
+import { ManageMedia } from "@/components/manage/manage-media";
+import { AdminBreadcrumb } from "@/components/admin/admin-breadcrumb";
 
 export const dynamic = "force-dynamic";
 

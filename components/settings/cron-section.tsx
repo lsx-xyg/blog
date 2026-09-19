@@ -12,10 +12,10 @@ import { useEffect, useReducer, useState } from "react";
 import { Eye, EyeOff, Check, Copy } from "lucide-react";
 import type { CronSettings } from "@/lib/types/settings";
 import { CronDeployPlatform } from "@/lib/types/settings";
-import { emitGuideTrigger } from "@/lib/guide/events";
-import { GUIDE_TRIGGER_EVENT } from "@/lib/guide-events";
-import { SecretRevealDialog } from "@/components/secret-reveal-dialog";
-import { usePasswordStatus, getAdminPathFromUrl } from "@/components/use-password-status";
+import { emitGuideTrigger } from "@/lib/guides/client";
+import { GUIDE_TRIGGER_EVENT } from "@/lib/guides";
+import { SecretRevealDialog } from "@/components/shared/secret-reveal-dialog";
+import { usePasswordStatus, getAdminPathFromUrl } from "@/components/auth/use-password-status";
 import { secretRevealReducer } from "@/lib/settings/secret-reveal";
 
 const inputClass =

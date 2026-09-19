@@ -9,7 +9,7 @@ import type { Metadata } from "next";
 // ssr: true - 保持服务端渲染，不影响首屏内容和 SEO
 // 打包成单独的 chunk，不影响首屏的其他代码加载
 const PostWall = dynamic(
-  () => import("@/components/post-wall").then((mod) => mod.PostWall),
+  () => import("@/components/posts/post-wall").then((mod) => mod.PostWall),
   {
     ssr: true,
     loading: () => (

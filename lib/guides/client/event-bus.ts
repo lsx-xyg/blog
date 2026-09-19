@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { GUIDE_TRIGGER_EVENT } from "@/lib/guide-events";
+import { GUIDE_TRIGGER_EVENT } from "../shared/anchor-registry";
 
 /**
  * guide:trigger 类型化事件总线（行为触发契约）

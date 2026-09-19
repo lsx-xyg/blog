@@ -21,7 +21,7 @@ import { useMediaUpload } from "@/components/media/use-media-upload";
 import { UploadDialog } from "@/components/media/upload-dialog";
 import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
 import { Switch } from "@/components/ui/switch";
-import { TagInput } from "@/components/tag-input";
+import { TagInput } from "@/components/shared/tag-input";
 import { StorageDriverType } from "@/lib/types/storage";
 
 type MediaItem = {

@@ -11,7 +11,7 @@ import remarkFlexibleToc, { type TocItem } from "remark-flexible-toc";
 import rehypeShiki from "@shikijs/rehype";
 import rehypeSlug from "rehype-slug";
 import remarkGfm from "remark-gfm";
-import { LazyImage } from "@/components/lazy-image";
+import { LazyImage } from "@/components/media/lazy-image";
 
 // 自定义 MDX 组件
 const components = {

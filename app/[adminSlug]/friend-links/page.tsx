@@ -4,8 +4,8 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { getAdminPathAsync } from "@/lib/shared/admin-path";
 import { isAdminUser } from "@/lib/shared/utils";
-import { ManageFriendLinks } from "@/components/manage-friend-links";
-import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
+import { ManageFriendLinks } from "@/components/manage/manage-friend-links";
+import { AdminBreadcrumb } from "@/components/admin/admin-breadcrumb";
 
 export const dynamic = "force-dynamic";
 

@@ -8,7 +8,7 @@
  */
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useToast } from "@/components/toast";
+import { useToast } from "@/components/ui/toast";
 import {
   PostFormData,
   emptyForm,

@@ -15,11 +15,11 @@ import {
   HelpCircle,
   MousePointerClick,
 } from "lucide-react";
-import type { Guide } from "@/lib/types/guides";
 import {
   GuideStatus,
   GUIDE_STATUS_VALUES,
   normalizeTargetCondition,
+  type Guide
 } from "@/lib/types/guides";
 
 import { AdminModal } from "@/components/admin/modal";
@@ -27,7 +27,7 @@ import { AdminModal } from "@/components/admin/modal";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminListPage } from "@/components/admin/list-page";
 import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
-import { useToast } from "@/components/toast";
+import { useToast } from "@/components/ui/toast";
 import { GuideMissesPanel } from "@/components/guide/misses-panel";
 
 import { StepEditor } from "@/components/guide/step-editor";
@@ -37,7 +37,7 @@ import {
   labelClass,
   inputClass,
   helpClass,
-} from "@/lib/guides/form-meta";
+} from "@/lib/guides/client";
 
 /**
  * 引导管理组件（guiders 表 CRUD）
@@ -158,27 +158,27 @@ export function ManageGuides({
 
   return (
     <>
-    <AdminListPage
-      title="引导管理"
-      description="页面通过 data-guide 锚点声明定位目标；「重置」只清空当前登录账号的引导进度（跳过/完成状态移除后，该引导可重新触发）。"
-      actions={
-        <>
-          <CreateButton onClick={openCreate} label="新建引导" />
-          <RefreshButton onClick={loadGuides} loading={loading} />
-        </>
-      }
-      search={{ value: search, onChange: setSearch, placeholder: "搜索标题、guideKey 或页面…" }}
-      loading={loading}
-      empty={
-        filteredGuides.length === 0 ? {
+      <AdminListPage
+        title="引导管理"
+        description="页面通过 data-guide 锚点声明定位目标；「重置」只清空当前登录账号的引导进度（跳过/完成状态移除后，该引导可重新触发）。"
+        actions={
+          <>
+            <CreateButton onClick={openCreate} label="新建引导" />
+            <RefreshButton onClick={loadGuides} loading={loading} />
+          </>
+        }
+        search={{ value: search, onChange: setSearch, placeholder: "搜索标题、guideKey 或页面…" }}
+        loading={loading}
+        empty={
+          filteredGuides.length === 0 ? {
 
-          title: search ? "没有找到匹配的引导" : "暂无引导配置",
-          description: search ? undefined : "点击右上角「新建引导」创建",
-      
-        } : null
-      }
-    >
-      <>
+            title: search ? "没有找到匹配的引导" : "暂无引导配置",
+            description: search ? undefined : "点击右上角「新建引导」创建",
+
+          } : null
+        }
+      >
+        <>
           {/* 桌面端：表格（与其他管理页统一样式） */}
           <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-card">
             <table className="w-full">
@@ -370,8 +370,8 @@ export function ManageGuides({
               );
             })}
           </div>
-      </>
-    </AdminListPage>
+        </>
+      </AdminListPage>
 
       {/* 新建 / 编辑表单 */}
       {editing && (
@@ -408,126 +408,126 @@ export function ManageGuides({
           }
         >
 
-            {/* 基本信息 */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className={labelClass}>标题</label>
-                <input
-                  value={form.title}
-                  onChange={(e) => setForm({ ...form, title: e.target.value })}
-                  className={inputClass}
-                  placeholder="如：设置密码引导"
-                />
-                <p className={helpClass}>引导的名称，仅在管理页展示。</p>
-              </div>
-              <div>
-                <label className={labelClass}>guideKey</label>
-                <input
-                  value={form.guideKey}
-                  onChange={(e) =>
-                    setForm({ ...form, guideKey: e.target.value })
-                  }
-                  className={`${inputClass} font-mono`}
-                  placeholder="如 reveal_password_setup_v1"
-                />
-                <p className={helpClass}>
-                  引导的唯一标识（带版本号）。改版时换新 key（如
-                  _v2），已看过旧版的用户会自动重新触发。
-                </p>
-              </div>
-              <div>
-                <label className={labelClass}>页面</label>
-                <select
-                  value={
-                    pages.some((p) => p.path === form.page)
-                      ? form.page
-                      : "__custom__"
-                  }
-                  onChange={(e) => {
-                    const v = e.target.value;
-                    setForm({ ...form, page: v === "__custom__" ? form.page : v });
-                  }}
-                  className={inputClass}
-                >
-                  {pages.map((p) => (
-                    <option key={p.path} value={p.path}>
-                      {p.path === "/" ? "/（首页）" : p.path} · {p.label}
-                    </option>
-                  ))}
-                  {!pages.some((p) => p.path === form.page) && form.page && (
-                    <option value="__custom__">
-                      {form.page}（手写值，不在列表中）
-                    </option>
-                  )}
-                </select>
-                <p className={helpClass}>
-                  引导适用的后台页面（不含 adminSlug 前缀，如 /settings）。选项由服务端扫描后台路由自动生成；如页面未收录可选「手写值」保留当前路径。
-                </p>
-              </div>
-              <div>
-                <label className={labelClass}>优先级</label>
-                <input
-                  type="number"
-                  value={form.priority}
-                  onChange={(e) =>
-                    setForm({ ...form, priority: Number(e.target.value) })
-                  }
-                  className={`${inputClass} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
-                />
-                <p className={helpClass}>
-                  同页面有多个引导可触发时，数字小的先显示。
-                </p>
-              </div>
-              <div>
-                <label className={labelClass}>状态</label>
-                <select
-                  value={form.status}
-                  onChange={(e) =>
-                    setForm({ ...form, status: e.target.value as GuideStatus })
-                  }
-                  className={inputClass}
-                >
-                  {GUIDE_STATUS_VALUES.map((s) => (
-                    <option key={s} value={s}>
-                      {STATUS_LABEL[s]}
-                    </option>
-                  ))}
-                </select>
-                <p className={helpClass}>
-                  草稿不触发；发布后按触发条件生效；归档停用。
-                </p>
-              </div>
+          {/* 基本信息 */}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <label className={labelClass}>标题</label>
+              <input
+                value={form.title}
+                onChange={(e) => setForm({ ...form, title: e.target.value })}
+                className={inputClass}
+                placeholder="如：设置密码引导"
+              />
+              <p className={helpClass}>引导的名称，仅在管理页展示。</p>
             </div>
+            <div>
+              <label className={labelClass}>guideKey</label>
+              <input
+                value={form.guideKey}
+                onChange={(e) =>
+                  setForm({ ...form, guideKey: e.target.value })
+                }
+                className={`${inputClass} font-mono`}
+                placeholder="如 reveal_password_setup_v1"
+              />
+              <p className={helpClass}>
+                引导的唯一标识（带版本号）。改版时换新 key（如
+                _v2），已看过旧版的用户会自动重新触发。
+              </p>
+            </div>
+            <div>
+              <label className={labelClass}>页面</label>
+              <select
+                value={
+                  pages.some((p) => p.path === form.page)
+                    ? form.page
+                    : "__custom__"
+                }
+                onChange={(e) => {
+                  const v = e.target.value;
+                  setForm({ ...form, page: v === "__custom__" ? form.page : v });
+                }}
+                className={inputClass}
+              >
+                {pages.map((p) => (
+                  <option key={p.path} value={p.path}>
+                    {p.path === "/" ? "/（首页）" : p.path} · {p.label}
+                  </option>
+                ))}
+                {!pages.some((p) => p.path === form.page) && form.page && (
+                  <option value="__custom__">
+                    {form.page}（手写值，不在列表中）
+                  </option>
+                )}
+              </select>
+              <p className={helpClass}>
+                引导适用的后台页面（不含 adminSlug 前缀，如 /settings）。选项由服务端扫描后台路由自动生成；如页面未收录可选「手写值」保留当前路径。
+              </p>
+            </div>
+            <div>
+              <label className={labelClass}>优先级</label>
+              <input
+                type="number"
+                value={form.priority}
+                onChange={(e) =>
+                  setForm({ ...form, priority: Number(e.target.value) })
+                }
+                className={`${inputClass} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
+              />
+              <p className={helpClass}>
+                同页面有多个引导可触发时，数字小的先显示。
+              </p>
+            </div>
+            <div>
+              <label className={labelClass}>状态</label>
+              <select
+                value={form.status}
+                onChange={(e) =>
+                  setForm({ ...form, status: e.target.value as GuideStatus })
+                }
+                className={inputClass}
+              >
+                {GUIDE_STATUS_VALUES.map((s) => (
+                  <option key={s} value={s}>
+                    {STATUS_LABEL[s]}
+                  </option>
+                ))}
+              </select>
+              <p className={helpClass}>
+                草稿不触发；发布后按触发条件生效；归档停用。
+              </p>
+            </div>
+          </div>
 
-            {/* 触发条件（结构化行式编辑器，逻辑/添加/删除收口在 condition-editor） */}
-            <ConditionSection
-              logic={form.logic}
-              onLogicChange={(logic) => setForm({ ...form, logic })}
-              conditions={form.conditions}
-              onConditionsChange={(conditions) => setForm({ ...form, conditions })}
+          {/* 触发条件（结构化行式编辑器，逻辑/添加/删除收口在 condition-editor） */}
+          <ConditionSection
+            logic={form.logic}
+            onLogicChange={(logic) => setForm({ ...form, logic })}
+            conditions={form.conditions}
+            onConditionsChange={(conditions) => setForm({ ...form, conditions })}
+            guideId={form.id ?? null}
+            page={form.page}
+            adminPath={adminPath}
+            onPick={saveThenPick}
+          />
+
+          {/* 引导步骤 */}
+          <div className="mt-5">
+            <label className={labelClass}>
+              引导步骤（按顺序弹出的引导卡片）
+            </label>
+            <StepEditor
+              steps={form.steps}
+              onChange={(steps) => setForm({ ...form, steps })}
               guideId={form.id ?? null}
               page={form.page}
               adminPath={adminPath}
+              pages={pages}
               onPick={saveThenPick}
             />
+          </div>
 
-            {/* 引导步骤 */}
-            <div className="mt-5">
-              <label className={labelClass}>
-                引导步骤（按顺序弹出的引导卡片）
-              </label>
-              <StepEditor
-                steps={form.steps}
-                onChange={(steps) => setForm({ ...form, steps })}
-                guideId={form.id ?? null}
-                page={form.page}
-                adminPath={adminPath}
-                pages={pages}
-                onPick={saveThenPick}
-              />
-            </div>
-
-            {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
+          {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
 
         </AdminModal>
       )}

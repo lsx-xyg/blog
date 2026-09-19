@@ -3,8 +3,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import MiniSearch from "minisearch";
-import { PostCard } from "@/components/post-card";
-import { PostToolbar } from "@/components/post-toolbar";
+import { PostCard } from "@/components/posts/post-card";
+import { PostToolbar } from "@/components/posts/post-toolbar";
 import type { Post } from "@/db/schema";
 
 /**

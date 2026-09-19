@@ -7,7 +7,7 @@
  * - 高亮框跟随滚动 / resize；Esc 取消
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import { generateSelector, type GeneratedSelector } from "@/lib/guide/selector";
+import { generateSelector, type GeneratedSelector } from "@/lib/guides/client";
 
 type Picked = GeneratedSelector & {
   tag: string;

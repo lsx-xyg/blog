@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, apiError } from "@/lib/shared/admin-api";
-import { parseGuidePatch, updateGuide, deleteGuideById } from "@/lib/guide/service";
+import { parseGuidePatch, updateGuide, deleteGuideById } from "@/lib/guides/server/service";
 
 /**
  * 引导配置详情 API——C9 薄壳

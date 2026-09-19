@@ -8,7 +8,7 @@
  * 保存成功后通过 onSaved 通知父组件刷新列表（避免 hook 依赖列表加载）。
  */
 import { useState } from "react";
-import { useToast } from "@/components/toast";
+import { useToast } from "@/components/ui/toast";
 import { DEFAULT_FORM, formToConfig, jobToForm, formatScheduleArray, type FormState } from "@/lib/cron/form";
 import type { CronJob } from "@/lib/types/cron";
 

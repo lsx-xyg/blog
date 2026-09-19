@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { Check, Copy, Eye, EyeOff } from "lucide-react";
 import { STORAGE_DRIVER_VALUES, StorageDriverType } from "@/lib/types/storage";
 import type { StorageSettings } from "@/lib/types/settings";
-import { SecretRevealDialog } from "@/components/secret-reveal-dialog";
-import { usePasswordStatus, getAdminPathFromUrl } from "@/components/use-password-status";
-import { emitGuideTrigger } from "@/lib/guide/events";
-import { GUIDE_TRIGGER_EVENT } from "@/lib/guide-events";
+import { SecretRevealDialog } from "@/components/shared/secret-reveal-dialog";
+import { usePasswordStatus, getAdminPathFromUrl } from "@/components/auth/use-password-status";
+import { emitGuideTrigger } from "@/lib/guides/client/event-bus";
+import { GUIDE_TRIGGER_EVENT } from "@/lib/guides/shared/anchor-registry";
 
 interface StorageConfigFormProps {
   storage: StorageSettings;

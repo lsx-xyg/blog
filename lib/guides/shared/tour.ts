@@ -8,7 +8,7 @@
  * 依赖方向：tour.ts → trigger.ts（resolveStepSelectors）/ types（单向）。
  */
 import type { Guide, GuideStep } from "@/lib/types/guides";
-import { resolveStepSelectors } from "@/lib/guide/trigger";
+import { resolveStepSelectors } from "./trigger";
 
 export interface BuildTourOptions {
   /** 选择器命中检测（默认 document.querySelector，测试注入 fake） */

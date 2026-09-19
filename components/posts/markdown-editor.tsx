@@ -6,7 +6,7 @@ import gfm from "@bytemd/plugin-gfm";
 import type { BytemdPlugin } from "bytemd";
 import type { HighlighterCore } from "@shikijs/core";
 import { Image as ImageIcon, Columns2, Eye, Pencil } from "lucide-react";
-import { MediaPicker } from "@/components/media-picker";
+import { MediaPicker } from "@/components/media/media-picker";
 import "bytemd/dist/index.css";
 import { MediaType } from "@/lib/types/media";
 import { getStoredTheme, type ThemeMode } from "@/lib/shared/theme";

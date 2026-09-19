@@ -36,7 +36,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
-import { useToast } from "@/components/toast";
+import { useToast } from "@/components/ui/toast";
 
 export type DashboardStats = {
   totalPosts: number;

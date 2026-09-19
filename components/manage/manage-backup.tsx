@@ -17,7 +17,7 @@ import { Download, Trash2, RefreshCw, Upload } from "lucide-react";
 import { AdminListPage } from "@/components/admin/list-page";
 import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
-import { useToast } from "@/components/toast";
+import { useToast } from "@/components/ui/toast";
 
 interface BackupRecord {
   id: string;

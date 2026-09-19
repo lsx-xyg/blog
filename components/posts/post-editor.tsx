@@ -16,9 +16,9 @@
 import { useState } from "react";
 import dynamic from "next/dynamic";
 import { ChevronLeft, ChevronRight, FileText, ImagePlus, Settings, X } from "lucide-react";
-import { TagInput } from "@/components/tag-input";
-import { MediaPicker } from "@/components/media-picker";
-import { usePostForm } from "@/components/post/use-post-form";
+import { TagInput } from "@/components/shared/tag-input";
+import { MediaPicker } from "@/components/media/media-picker";
+import { usePostForm } from "@/components/posts/use-post-form";
 import { EDITOR_STEPS, type PostFormData } from "@/lib/posts/form";
 import { PostStatus } from "@/lib/types/posts";
 
@@ -29,7 +29,7 @@ import { PostStatus } from "@/lib/types/posts";
  * 使用 dynamic import + ssr: false 延迟加载。
  */
 const MarkdownEditor = dynamic(
-  () => import("@/components/markdown-editor").then((mod) => mod.MarkdownEditor),
+  () => import("@/components/posts/markdown-editor").then((mod) => mod.MarkdownEditor),
   {
     ssr: false, // ByteMD 编辑器只能在客户端渲染
     loading: () => (

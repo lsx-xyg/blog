@@ -11,7 +11,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Trash2, ShieldAlert } from "lucide-react";
 import { AdminLoadingState } from "@/components/admin/status";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
-import { useToast } from "@/components/toast";
+import { useToast } from "@/components/ui/toast";
 
 type MissRow = {
   guideKey: string;

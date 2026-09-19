@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { formatDate } from "@/lib/shared/utils";
 import { CalendarDays, Star } from "lucide-react";
-import { LazyImage } from "@/components/lazy-image";
+import { LazyImage } from "@/components/media/lazy-image";
 
 /** 卡片所需字段（兼容 db Post 与 search-index JSON 两种来源） */
 export type CardPost = {

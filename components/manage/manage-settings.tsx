@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { Save, RefreshCw, Globe, Link2, FileText, Settings as SettingsIcon, ShieldCheck, AlertTriangle, Loader2 } from "lucide-react";
-import { useToast } from "@/components/toast";
+import { useToast } from "@/components/ui/toast";
 import type { 
   CronSettings, 
   FooterSettings, 
@@ -15,7 +15,7 @@ import type {
 } from "@/lib/types/settings";
 import {STORAGE_DRIVER_VALUES, StorageDriverType} from "@/lib/types/storage";
 import {CronDeployPlatform} from "@/lib/types/settings";
-import { StorageConfigForm } from "@/components/storage-config-form";
+import { StorageConfigForm } from "@/components/shared/storage-config-form";
 import { CronSection } from "@/components/settings/cron-section";
 
 /**
@@ -30,7 +30,7 @@ import { CronSection } from "@/components/settings/cron-section";
  * - 编辑器只在点击"关于页面"分区时才加载
  */
 const AboutEditor = dynamic(
-  () => import("@/components/about-editor").then((mod) => mod.AboutEditor),
+  () => import("@/components/shared/about-editor").then((mod) => mod.AboutEditor),
   {
     ssr: false, // ByteMD 编辑器只能在客户端渲染
     loading: () => (

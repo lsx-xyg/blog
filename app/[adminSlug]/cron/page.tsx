@@ -4,8 +4,8 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { getAdminPathAsync } from "@/lib/shared/admin-path";
 import { isAdminUser } from "@/lib/shared/utils";
-import { ManageCronJobs } from "@/components/manage-cron-jobs";
-import { AdminBreadcrumb } from "@/components/admin-breadcrumb";
+import { ManageCronJobs } from "@/components/manage/manage-cron-jobs";
+import { AdminBreadcrumb } from "@/components/admin/admin-breadcrumb";
 
 export const dynamic = "force-dynamic";
 

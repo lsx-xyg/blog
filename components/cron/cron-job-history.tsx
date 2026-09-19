@@ -22,7 +22,7 @@ import {
   Eye,
   ShieldAlert,
 } from "lucide-react";
-import { useToast } from "@/components/toast";
+import { useToast } from "@/components/ui/toast";
 import type { CronJobHistoryItem, CronJobExecutionDetail } from "@/lib/types/cron";
 
 /** 官方 statusText → 展示样式 */

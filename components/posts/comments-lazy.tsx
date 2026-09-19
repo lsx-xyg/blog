@@ -23,7 +23,7 @@ type GiscusConfig = {
 // 评论组件延迟加载（giscus 第三方脚本体积较大，不影响首屏渲染）
 // ssr: false - 只在客户端加载，避免服务端渲染时加载第三方脚本
 const Comments = dynamic(
-  () => import("@/components/comments").then((mod) => mod.Comments),
+  () => import("@/components/posts/comments").then((mod) => mod.Comments),
   {
     ssr: false,
     loading: () => (

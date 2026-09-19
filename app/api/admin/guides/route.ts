@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, apiError } from "@/lib/shared/admin-api";
-import { listGuides, createGuide, parseGuideInput } from "@/lib/guide/service";
+import { listGuides, createGuide, parseGuideInput } from "@/lib/guides/server/service";
 import { GuideStatus } from "@/lib/types/guides";
 
 /**
