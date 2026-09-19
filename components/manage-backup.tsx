@@ -221,7 +221,7 @@ export function ManageBackup() {
         } : null
       }
     >
-      <div className="overflow-hidden rounded-xl border border-border bg-surface">
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="flex items-center justify-between border-b border-border px-4 py-3">
           <h2 className="text-sm font-semibold">备份列表</h2>
           <span className="text-xs text-muted-foreground">共 {backups.length} 个备份</span>

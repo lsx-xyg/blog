@@ -244,7 +244,7 @@ export default function GuidePicker() {
       {/* 选中预览 */}
       {picked && (
         <div
-          className="pointer-events-auto fixed bottom-6 left-1/2 z-[10001] w-[min(92vw,560px)] -translate-x-1/2 rounded-xl border border-border bg-surface p-4 shadow-2xl"
+          className="pointer-events-auto fixed bottom-6 left-1/2 z-[10001] w-[min(92vw,560px)] -translate-x-1/2 rounded-xl border border-border bg-card p-4 shadow-2xl"
           role="dialog"
           aria-label="选择器预览"
         >

@@ -42,7 +42,7 @@ export function AdminLoadingState({ variant = "table", className = "" }: AdminLo
   return (
     <div className={`animate-fade-in-up ${className}`} aria-busy="true" aria-label="加载中">
       {/* 桌面骨架：表格形态 */}
-      <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-surface">
+      <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-card">
         <div className="flex items-center gap-3 border-b border-border bg-muted/50 px-4 py-3">
           <div className="h-4 w-4 shrink-0 animate-pulse rounded bg-muted" />
           <div className="h-3 w-20 shrink-0 animate-pulse rounded bg-muted" />
@@ -68,7 +68,7 @@ export function AdminLoadingState({ variant = "table", className = "" }: AdminLo
         ))}
       </div>
       {/* 移动骨架：紧凑行形态 */}
-      <div className="md:hidden overflow-hidden rounded-xl border border-border bg-surface">
+      <div className="md:hidden overflow-hidden rounded-xl border border-border bg-card">
         <div className="flex items-center gap-3 border-b border-border bg-muted/50 px-4 py-2.5">
           <div className="h-4 w-4 animate-pulse rounded bg-muted" />
           <div className="h-3 w-16 animate-pulse rounded bg-muted" />

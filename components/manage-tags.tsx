@@ -171,7 +171,7 @@ export function ManageTags() {
     >
       <>
           {/* 桌面端：表格 */}
-          <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-surface">
+          <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-card">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
@@ -251,7 +251,7 @@ export function ManageTags() {
             {filteredTags.map((tag, index) => (
               <div
                 key={tag.id}
-                className="rounded-xl border border-border bg-surface p-4 animate-fade-in-up"
+                className="rounded-xl border border-border bg-card p-4 animate-fade-in-up"
                 style={{ animationDelay: `${index * 30}ms` }}
               >
                 {/* 数据区 */}

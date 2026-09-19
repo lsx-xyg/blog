@@ -12,7 +12,7 @@ export function SignOutButton() {
         router.push("/");
         router.refresh();
       }}
-      className="rounded-lg border border-border px-3 py-1.5 text-xs text-fg-muted hover:bg-surface-strong"
+      className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary"
     >
       退出登录
     </button>

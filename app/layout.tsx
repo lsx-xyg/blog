@@ -97,41 +97,10 @@ export default async function RootLayout({
     >
       {/* 首屏防 FOUC：渲染前同步应用主题（localStorage + prefers-color-scheme） */}
       <head>
-        {/* LXGW WenKai Screen（霞鹜文楷屏显）：参考站 czhlove.cn 同款字体
-            优化：preload 提前加载 + 异步加载避免阻塞首屏渲染
-            - preload：提前加载字体 CSS，提升加载速度
-            - 内联 script 动态创建 link 元素，异步加载 CSS，不阻塞首屏渲染
-            - noscript fallback：禁用 JS 时正常加载
-        */}
-        <link
-          rel="preload"
-          as="style"
-          href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css"
-        />
-        {/* 异步加载字体 CSS：动态创建 link 元素，设置 media="print"，
-            加载完成后把 media 改成 "all"，这样不会阻塞首屏渲染 */}
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                var link = document.createElement('link');
-                link.rel = 'stylesheet';
-                link.href = 'https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css';
-                link.media = 'print';
-                link.onload = function() {
-                  link.media = 'all';
-                };
-                document.head.appendChild(link);
-              })();
-            `,
-          }}
-        />
-        <noscript>
-          <link
-            rel="stylesheet"
-            href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css"
-          />
-        </noscript>
+       {/* LXGW WenKai Screen（霞鹜文楷屏显）：本地自托管
+            字体 CSS + woff2 已放在 public/fonts/lxgw/ 下 */}
+        <link rel="stylesheet" href="/fonts/lxgw/style.css" />
+        
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         {/* 外部文件兜底：硬导航 404 等错误壳路径下，head 内容由客户端动态插入，
             内联脚本不会执行，src 形式的脚本会被浏览器正常加载执行，保证主题一致 */}

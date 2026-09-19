@@ -58,8 +58,8 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
   const [showCoverPicker, setShowCoverPicker] = useState(false);
 
   const input =
-    "rounded-lg border border-border bg-surface-strong px-3 py-2 text-base outline-none focus:border-ring";
-  const label = "text-sm font-medium text-fg-muted";
+    "rounded-lg border border-border bg-secondary px-3 py-2 text-base outline-none focus:border-ring";
+  const label = "text-sm font-medium text-muted-foreground";
 
   return (
     <div className="animate-page-enter">
@@ -80,7 +80,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
 
       <form
         onSubmit={save}
-        className="mb-10 rounded-xl border border-border bg-surface p-6"
+        className="mb-10 rounded-xl border border-border bg-card p-6"
       >
         {/* 步骤条 */}
         <div className="mb-6 flex items-center">
@@ -176,7 +176,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                     <button
                       type="button"
                       onClick={() => setShowCoverPicker(true)}
-                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-surface-strong px-3 py-2 text-sm text-fg-muted transition-colors hover:text-foreground"
+                      className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border bg-secondary px-3 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                       title="从图库选择或上传图片"
                     >
                       <ImagePlus className="h-4 w-4" />

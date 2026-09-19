@@ -59,7 +59,7 @@ export function PostToolbar({
                       className={`rounded-full border px-3.5 py-1 text-sm transition ${
                         active
                           ? "border-primary bg-primary/10 text-primary font-medium"
-                          : "border-border text-fg-muted hover:text-fg hover:border-primary/30"
+                          : "border-border text-muted-foreground hover:text-foreground hover:border-primary/30"
                       }`}
                     >
                       {tag}
@@ -73,7 +73,7 @@ export function PostToolbar({
 
       {/* 最新/精选切换（靠左对齐，滑块动画） */}
       <div className="flex items-center justify-start">
-        <div className="relative flex shrink-0 items-center rounded-full border border-border bg-surface p-1 text-sm">
+        <div className="relative flex shrink-0 items-center rounded-full border border-border bg-card p-1 text-sm">
           {/* 滑块 */}
           <div
             className={`absolute top-1 bottom-1 w-[calc(50%-4px)] rounded-full bg-fg transition-transform duration-300 ease-in-out ${
@@ -91,7 +91,7 @@ export function PostToolbar({
               type="button"
               onClick={onToggleFeatured}
               className={`relative z-10 w-[72px] rounded-full px-5 py-1.5 text-center transition-colors duration-300 ${
-                onlyFeatured === o.key ? "text-bg font-medium" : "text-fg-muted hover:text-fg"
+                onlyFeatured === o.key ? "text-bg font-medium" : "text-muted-foreground hover:text-foreground"
               }`}
             >
               {o.label}

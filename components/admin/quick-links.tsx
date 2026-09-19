@@ -94,7 +94,7 @@ function SortableLink({ def, adminPath }: { def: QuickLinkDef; adminPath: string
       ref={setNodeRef}
       href={def.href}
       style={{ transform: CSS.Transform.toString(transform), transition }}
-      className={`flex items-center gap-3 rounded-xl border border-border bg-surface p-4 transition hover:border-fg-faint hover:shadow-sm ${
+      className={`flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition hover:border-fg-faint hover:shadow-sm ${
         isDragging
           ? "z-50 scale-[1.03] shadow-xl ring-2 ring-primary/40"
           : ""
@@ -105,7 +105,7 @@ function SortableLink({ def, adminPath }: { def: QuickLinkDef; adminPath: string
       </div>
       <div className="min-w-0 flex-1">
         <p className="text-sm font-semibold">{def.title}</p>
-        <p className="truncate text-xs text-fg-muted">{def.desc}</p>
+        <p className="truncate text-xs text-muted-foreground">{def.desc}</p>
       </div>
       {/* 拖拽把手：唯一拖拽入口；stopPropagation 拦截拖拽结束的补发 click，Link 不会跳转 */}
       <button

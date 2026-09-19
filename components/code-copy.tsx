@@ -24,7 +24,7 @@ export function CodeCopy() {
         "复制代码",
       );
       btn.className =
-        "absolute right-2 top-2 rounded-md border border-border bg-surface-strong px-2 py-0.5 font-mono text-xs text-fg-muted opacity-0 transition-opacity duration-150 hover:text-fg focus:opacity-100 group-hover:opacity-100";
+        "absolute right-2 top-2 rounded-md border border-border bg-secondary px-2 py-0.5 font-mono text-xs text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-foreground focus:opacity-100 group-hover:opacity-100";
       pre.classList.add("group", "relative");
 
       btn.addEventListener("click", async () => {

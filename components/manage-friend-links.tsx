@@ -208,7 +208,7 @@ export function ManageFriendLinks() {
     >
       <>
         {/* 桌面端：表格（与其他管理页统一样式） */}
-        <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-surface">
+        <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-card">
           <table className="w-full">
             <thead>
               <tr className="border-b border-border bg-muted/50">
@@ -298,7 +298,7 @@ export function ManageFriendLinks() {
           </table>
         </div>
         {/* 移动端：卡片列表 */}
-        <div className="md:hidden rounded-xl border border-border bg-surface divide-y divide-border">
+        <div className="md:hidden rounded-xl border border-border bg-card divide-y divide-border">
           {filteredLinks.map((link, index) => (
             <div key={link.id} className="p-4 animate-fade-in-up" style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}>
               <div className="flex items-start justify-between gap-2">

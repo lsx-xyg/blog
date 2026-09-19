@@ -384,7 +384,7 @@ export function ManageCronJobs() {
       />
 
       {/* 任务列表：桌面表格 + 移动卡片（一次加载全部，系统任务带标签） */}
-      <div className="overflow-hidden rounded-xl border border-border bg-surface">
+      <div className="overflow-hidden rounded-xl border border-border bg-card">
         <div className="border-b border-border px-4 py-3">
           <h2 className="text-sm font-semibold">定时任务</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">

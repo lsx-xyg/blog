@@ -331,7 +331,7 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
         )}
 
         {/* 桌面端：表格（与其他管理页统一样式，列天然对齐） */}
-            <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-surface">
+            <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-card">
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border bg-muted/50">
@@ -456,7 +456,7 @@ export function ManagePosts({ adminPath }: ManagePostsProps) {
             </div>
 
             {/* 移动端：紧凑行列表（Slug 与独立标签列隐藏，标签附在标题下方） */}
-            <div className="md:hidden overflow-hidden rounded-xl border border-border bg-surface">
+            <div className="md:hidden overflow-hidden rounded-xl border border-border bg-card">
               <ul
                 key={`${statusFilter}-${search}`}
                 className="divide-y divide-border"

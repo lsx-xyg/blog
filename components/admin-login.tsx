@@ -42,18 +42,18 @@ export function AdminLogin({ adminPath }: { adminPath: string }) {
   };
 
   const input =
-    "rounded-lg border border-border bg-surface-strong px-3 py-2 text-sm outline-none focus:border-ring";
-  const label = "text-xs font-medium text-fg-muted";
+    "rounded-lg border border-border bg-secondary px-3 py-2 text-sm outline-none focus:border-ring";
+  const label = "text-xs font-medium text-muted-foreground";
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col px-6 pt-16 pb-12 md:pt-24">
       <header className="mb-8 text-center">
         <h1 className="text-xl font-semibold">后台登录</h1>
-        <p className="mt-2 text-sm text-fg-muted">仅管理员可访问</p>
+        <p className="mt-2 text-sm text-muted-foreground">仅管理员可访问</p>
       </header>
       <form
         onSubmit={signIn}
-        className="rounded-xl border border-border bg-surface p-6"
+        className="rounded-xl border border-border bg-card p-6"
       >
         <div className="space-y-3">
           <div>
@@ -97,7 +97,7 @@ export function AdminLogin({ adminPath }: { adminPath: string }) {
       <button
         onClick={githubLogin}
         disabled={busy}
-        className="w-full rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium hover:bg-surface-strong disabled:opacity-50"
+        className="w-full rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-secondary disabled:opacity-50"
       >
         使用 GitHub 登录
       </button>

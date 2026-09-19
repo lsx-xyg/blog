@@ -197,7 +197,7 @@ export function PostWall({
       />
 
       {visibleItems.length === 0 ? (
-        <div className="rounded-xl border border-border bg-surface p-12 text-center text-fg-muted">
+        <div className="rounded-xl border border-border bg-card p-12 text-center text-muted-foreground">
           {query || selectedTags.length || onlyFeatured
             ? "没有符合条件的文章，换个筛选试试。"
             : "还没有已发布的文章，去后台写第一篇吧。"}
@@ -217,12 +217,12 @@ export function PostWall({
       {hasMore && <div ref={sentinelRef} aria-hidden />}
 
       {loading && (
-        <p className="py-8 text-center font-mono text-xs text-fg-muted">
+        <p className="py-8 text-center font-mono text-xs text-muted-foreground">
           加载中…
         </p>
       )}
       {!hasMore && filtered.length > 0 && (
-        <p className="py-8 text-center font-mono text-xs text-fg-muted">
+        <p className="py-8 text-center font-mono text-xs text-muted-foreground">
           · 已经到底啦 ·
         </p>
       )}

@@ -222,7 +222,7 @@ export function GalleryWall() {
           }`}
         >
           <div className="overflow-hidden">
-            <div className="flex flex-wrap gap-2 rounded-lg border border-border bg-surface p-4">
+            <div className="flex flex-wrap gap-2 rounded-lg border border-border bg-card p-4">
               {allTags.length === 0 ? (
                 <p className="text-sm text-muted-foreground">暂无标签</p>
               ) : (
@@ -257,7 +257,7 @@ export function GalleryWall() {
 
       {/* 瀑布流 */}
       {visibleItems.length === 0 ? (
-        <div className="rounded-xl border border-border bg-surface p-12 text-center text-sm text-muted-foreground">
+        <div className="rounded-xl border border-border bg-card p-12 text-center text-sm text-muted-foreground">
           {selectedTags.length || onlyFeatured
             ? "没有符合条件的图片，换个筛选试试。"
             : "还没有图片，去后台上传第一张吧。"}
@@ -335,7 +335,7 @@ export function GalleryWall() {
       {hasMore && <div ref={sentinelRef} aria-hidden />}
 
       {loading && (
-        <p className="py-8 text-center font-mono text-xs text-fg-muted">加载中…</p>
+        <p className="py-8 text-center font-mono text-xs text-muted-foreground">加载中…</p>
       )}
       {!hasMore && filtered.length > 0 && (
         <p className="py-8 text-center text-sm text-muted-foreground">已经到底啦 ·</p>
