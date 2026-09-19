@@ -1,10 +1,10 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { env } from "./env";
+import { getEnv } from "@/lib/env/utils";
 
-const url = env("DATABASE_URL");
+const url = getEnv("DATABASE_URL");
 if (!url) {
-  throw new Error("缺少环境变量 DATABASE_URL（可在 .env 中配置，Neon 控制台获取）");
+  throw new Error("缺少环境变量 DATABASE_URL（可在 .env 中配置）");
 }
 
 /**
@@ -13,6 +13,8 @@ if (!url) {
  * 问题：开发模式下每次文件修改都会重新加载模块，创建新的 postgres 客户端，
  * 旧连接没有释放，累积后超过数据库连接限制（"too many clients already"）。
  *
+ * globalThis 提供了一个标准的方式来获取不同环境下的全局 this 对象
+ * 
  * 解决方案：使用 globalThis 缓存连接实例，热重载时复用已有连接。
  * 生产环境中模块只加载一次，不会有这个问题。
  */

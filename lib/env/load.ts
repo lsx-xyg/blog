@@ -7,11 +7,15 @@
 import fs from "node:fs";
 import { config } from "dotenv";
 
-const NODE_ENV = process.env.NODE_ENV ?? "development";
-const files = [".env", ".env.local", `.env.${NODE_ENV}`, `.env.${NODE_ENV}.local`];
+export function loadEnv(): void {
+  const NODE_ENV = process.env.NODE_ENV ?? "development";
+  const files = [".env", ".env.local", `.env.${NODE_ENV}`, `.env.${NODE_ENV}.local`];
 
-for (const file of files) {
-  if (fs.existsSync(file)) {
-    config({ path: file, override: true });
+  for (const file of files) {
+    if (fs.existsSync(file)) {
+      config({ path: file, override: true,quiet: true  });
+    }
   }
 }
+
+loadEnv();
