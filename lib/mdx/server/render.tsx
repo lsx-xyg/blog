@@ -27,7 +27,25 @@ type Scope = {
   toc?: TocItem[];
 };
 
+/**
+ * 进程内渲染缓存：key 为文章原文
+ *
+ * evaluate 是运行时全量编译（MDX AST + Shiki 高亮），长文可能耗时数百毫秒到秒级；
+ * ISR 过期/冷启动后的首次访问都要重付这笔代价。缓存命中直接复用已渲染的
+ * React 元素与 TOC，重复内容零开销。上限 50 篇（按插入顺序淘汰，博客场景足够）。
+ */
+const MDX_CACHE_LIMIT = 50;
+const mdxCache = new Map<string, { content: React.ReactElement; toc: TocItem[] }>();
+
 export async function renderMdx(source: string) {
+  const cached = mdxCache.get(source);
+  if (cached) {
+    // 重新插入以实现简易 LRU（Map 保持插入序，delete+set 移到末尾）
+    mdxCache.delete(source);
+    mdxCache.set(source, cached);
+    return cached;
+  }
+
   const options: EvaluateOptions<Scope> = {
     mdxOptions: {
       remarkPlugins: [remarkGfm, remarkFlexibleToc],
@@ -46,5 +64,12 @@ export async function renderMdx(source: string) {
     return { content: <div>内容加载失败</div>, toc: [] };
   }
 
-  return { content, toc: scope.toc ?? [] };
+  const result = { content, toc: scope.toc ?? [] };
+  mdxCache.set(source, result);
+  if (mdxCache.size > MDX_CACHE_LIMIT) {
+    // 淘汰最早的条目
+    const oldest = mdxCache.keys().next().value;
+    if (oldest !== undefined) mdxCache.delete(oldest);
+  }
+  return result;
 }

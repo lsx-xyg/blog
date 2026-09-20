@@ -82,9 +82,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       {/* 首屏防 FOUC：渲染前同步应用主题（localStorage + prefers-color-scheme） */}
       <head>
         {/* LXGW WenKai Screen（霞鹜文楷屏显）：本地自托管
-            字体 CSS + woff2 已放在 public/fonts/lxgw/ 下 */}
+            字体 CSS + woff2 已放在 public/fonts/lxgw/ 下
+            直接并列引用（原 style.css 内是 4 层 @import，会串行阻塞渲染） */}
         {/* eslint-disable-next-line @next/next/no-css-tags -- 本地自托管字体 CSS，必须手动引入 */}
-        <link rel="stylesheet" href="/fonts/lxgw/style.css" />
+        <link rel="stylesheet" href="/fonts/lxgw/lxgwwenkaigbscreen.css" />
+        <link rel="stylesheet" href="/fonts/lxgw/lxgwwenkaigbscreenr.css" />
+        <link rel="stylesheet" href="/fonts/lxgw/lxgwwenkaiscreen.css" />
+        <link rel="stylesheet" href="/fonts/lxgw/lxgwwenkaiscreenr.css" />
 
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
         {/* 外部文件兜底：硬导航 404 等错误壳路径下，head 内容由客户端动态插入，

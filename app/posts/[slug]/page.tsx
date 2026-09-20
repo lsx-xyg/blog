@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
+import Image from 'next/image';
 import { notFound } from 'next/navigation';
+import { cache } from 'react';
 import { getPublishedPostBySlugOrId, listPublishedPosts } from '@/lib/posts/server';
 import { renderMdx } from '@/lib/mdx/server';
 import { formatDate } from '@/lib/shared';
@@ -14,6 +16,9 @@ import { getGiscusSettings } from '@/lib/settings/server';
 import { CalendarDays, Clock } from 'lucide-react';
 
 export const dynamicParams = true;
+
+// 同一请求内 generateMetadata 与页面组件共用一次 DB 查询（React cache 请求级去重）
+const getPost = cache(getPublishedPostBySlugOrId);
 
 // ISR（增量静态再生）：每 60 秒重新生成一次页面
 // 新发布的文章或更新的文章最多 60 秒后生效
@@ -31,7 +36,7 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPublishedPostBySlugOrId(slug);
+  const post = await getPost(slug);
   if (!post) return { title: '文章不存在' };
 
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -74,7 +79,7 @@ export async function generateMetadata({
 
 export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const post = await getPublishedPostBySlugOrId(slug);
+  const post = await getPost(slug);
   if (!post) notFound();
 
   // 阅读时长估算：中文约 500 字/分钟（markdown 原文含语法，取整保护最小 1 分钟）
@@ -97,15 +102,19 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               {/* 阅读进度条 */}
               <ArticleProgress />
 
-              {/* 封面图 */}
+              {/* 封面图：priority + fetchPriority=high 抢占 LCP，由 next/image 做
+                  格式转换/尺寸裁剪/预加载，避免原图（图床直链）拖慢首屏 */}
               {post.coverUrl ? (
                 <div className="mb-4 md:mb-8">
                   <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={post.coverUrl}
                       alt={post.title}
-                      className="absolute h-full w-full object-cover"
+                      fill
+                      priority
+                      fetchPriority="high"
+                      sizes="(max-width: 896px) 100vw, 896px"
+                      className="object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
                   </div>
