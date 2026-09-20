@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdmin, apiError } from '@/lib/admin/server';
 import { getSettingsBundle, applySettingsPatch } from '@/lib/settings/server';
+import { resetStorageDriver } from '@/lib/storage/server';
 
 /**
  * 站点设置 API（C9 薄壳：领域逻辑在 lib/settings/service.ts）
@@ -27,6 +28,9 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     await applySettingsPatch(body);
+    // 存储驱动实例按类型缓存在模块级 Map 里，配置变更后必须重置，
+    // 否则后台改 cdnBase/owner/token 等字段在进程重启前都不会生效
+    resetStorageDriver();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('更新设置失败：', error);

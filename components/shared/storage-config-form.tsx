@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Check, Copy, Eye, EyeOff } from 'lucide-react';
-import { STORAGE_DRIVER_VALUES, StorageDriverType } from '@/lib/types/storage';
+import { GithubUrlStyle, STORAGE_DRIVER_VALUES, StorageDriverType } from '@/lib/types/storage';
 import type { StorageSettings } from '@/lib/types/settings';
 import { SecretRevealDialog } from '@/components/shared/secret-reveal-dialog';
 import { usePasswordStatus, getAdminPathFromUrl } from '@/components/auth/use-password-status';
@@ -22,6 +22,18 @@ const labelClass = 'block text-sm font-medium mb-1.5';
 
 /** 敏感信息字段 key 前缀（与后端 SECRET_KEYS 白名单对应） */
 const secretPrefix = (isPrivate: boolean) => (isPrivate ? 'storage_private' : 'storage');
+
+/** GitHub 图床访问预设 */
+const RAW_BASE = 'https://raw.githubusercontent.com';
+const JSDELIVR_BASE = 'https://cdn.jsdelivr.net/gh';
+type GithubPreset = 'raw' | 'jsdelivr' | 'custom';
+
+/** 根据当前 cdnBase + urlStyle 推断选中的预设 */
+function detectPreset(cdnBase: string, urlStyle: string): GithubPreset {
+  if (urlStyle === 'at' && cdnBase === JSDELIVR_BASE) return 'jsdelivr';
+  if (urlStyle === 'path' && cdnBase === RAW_BASE) return 'raw';
+  return 'custom';
+}
 
 /** 明文展示时长（秒） */
 const REVEAL_SECONDS = 30;
@@ -48,6 +60,10 @@ export function StorageConfigForm({
   const [showGithubToken, setShowGithubToken] = useState(false);
   const [showAccessKey, setShowAccessKey] = useState(false);
   const [showSecretKey, setShowSecretKey] = useState(false);
+
+  // urlStyle 运行时兜底：旧数据/旧后端可能没有该字段，缺省按普通路径格式
+  const githubUrlStyle =
+    storage.github.urlStyle === GithubUrlStyle.AT ? GithubUrlStyle.AT : GithubUrlStyle.PATH;
 
   // 明文 30 秒倒计时，到期自动隐藏
   useEffect(() => {
@@ -244,21 +260,91 @@ export function StorageConfigForm({
               />
             </div>
             {!isPrivate && (
-              <div>
-                <label className={labelClass}>CDN 基础 URL</label>
-                <input
-                  type="text"
-                  value={storage.github.cdnBase}
-                  onChange={(e) =>
-                    setStorage({
-                      ...storage,
-                      github: { ...storage.github, cdnBase: e.target.value },
-                    })
-                  }
-                  className={inputClass}
-                  placeholder="https://cdn.jsdelivr.net/gh"
-                />
-              </div>
+              <>
+                <div className="md:col-span-2">
+                  <label className={labelClass}>加速方式</label>
+                  <div className="flex gap-2 flex-wrap">
+                    {(
+                      [
+                        { key: 'raw', label: '直连 raw（默认）' },
+                        { key: 'jsdelivr', label: 'jsDelivr CDN' },
+                        { key: 'custom', label: '自定义加速' },
+                      ] as Array<{ key: GithubPreset; label: string }>
+                    ).map((p) => (
+                      <button
+                        key={p.key}
+                        type="button"
+                        onClick={() => {
+                          // 预设自动填充 cdnBase + 拼接方式；自定义则保留当前输入让用户自己改
+                          if (p.key === 'raw') {
+                            setStorage({
+                              ...storage,
+                              github: { ...storage.github, cdnBase: RAW_BASE, urlStyle: 'path' },
+                            });
+                          } else if (p.key === 'jsdelivr') {
+                            setStorage({
+                              ...storage,
+                              github: {
+                                ...storage.github,
+                                cdnBase: JSDELIVR_BASE,
+                                urlStyle: 'at',
+                              },
+                            });
+                          }
+                        }}
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                          detectPreset(storage.github.cdnBase, githubUrlStyle) === p.key
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    国内访问 raw 直连较慢时，可选用 jsDelivr 或自建加速（如 ghproxy 类反代）。
+                  </p>
+                </div>
+                <div>
+                  <label className={labelClass}>CDN 前缀（cdnBase）</label>
+                  <input
+                    type="text"
+                    value={storage.github.cdnBase}
+                    onChange={(e) =>
+                      setStorage({
+                        ...storage,
+                        github: { ...storage.github, cdnBase: e.target.value },
+                      })
+                    }
+                    className={inputClass}
+                    placeholder={RAW_BASE}
+                  />
+                </div>
+                <div>
+                  <label className={labelClass}>URL 拼接方式</label>
+                  <select
+                    value={githubUrlStyle}
+                    onChange={(e) =>
+                      setStorage({
+                        ...storage,
+                        github: {
+                          ...storage.github,
+                          urlStyle: e.target.value as StorageSettings['github']['urlStyle'],
+                        },
+                      })
+                    }
+                    className={inputClass}
+                  >
+                    <option value="path">
+                      普通路径（/{'{'}branch{'}'}/xxx，raw 与多数代理用这个）
+                    </option>
+                    <option value="at">
+                      jsDelivr 风格（@{'{'}branch{'}'}/xxx）
+                    </option>
+                  </select>
+                </div>
+              </>
             )}
             <div className="md:col-span-2">
               <label className={labelClass}>
@@ -297,10 +383,12 @@ export function StorageConfigForm({
           </div>
           {!isPrivate && (
             <p className="text-xs text-muted-foreground">
-              访问 URL 格式：{storage.github.cdnBase || 'https://cdn.jsdelivr.net/gh'}/
-              {storage.github.owner || 'owner'}/{storage.github.repo || 'repo'}@
-              {storage.github.branch || 'main'}/
-              {storage.github.directory ? storage.github.directory + '/' : ''}
+              访问 URL 预览：{storage.github.cdnBase || RAW_BASE}/{storage.github.owner || 'owner'}/
+              {storage.github.repo || 'repo'}
+              {githubUrlStyle === 'at'
+                ? `@${storage.github.branch || 'main'}`
+                : `/${storage.github.branch || 'main'}`}
+              /{storage.github.directory ? storage.github.directory + '/' : ''}
               {'{path}'}
             </p>
           )}

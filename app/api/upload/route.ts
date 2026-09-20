@@ -46,9 +46,12 @@ export async function POST(request: NextRequest) {
     const driver = await getPublicStorageDriver();
     const result = await driver.upload(buffer, file.name, file.type);
 
-    // 返回结果中包含 storageDriver，用于后续删除时选择对应平台
+    // 返回站内路由地址（/m/{key}），由 app/m/[...key] 按当前存储配置 302 到真实 CDN。
+    // 文章/媒体库持久化站内地址，后台切换 CDN 时历史图片无需迁移。
+    // 结果中包含 storageDriver，用于后续删除时选择对应平台
     return NextResponse.json({
       ...result,
+      url: `/m/${result.key}`,
       storageDriver: driver.name.toUpperCase(),
     });
   } catch (error) {

@@ -46,6 +46,7 @@ function shapeStorage(storage: StorageSettings) {
       repo: storage.github.repo,
       branch: storage.github.branch,
       cdnBase: storage.github.cdnBase,
+      urlStyle: storage.github.urlStyle,
       directory: storage.github.directory,
       tokenConfigured: !!storage.github.token,
     },
@@ -197,6 +198,7 @@ export function buildSettingsOps(
       addSetting('storage.github.repo', github.repo);
       addSetting('storage.github.branch', github.branch);
       addSetting('storage.github.cdn_base', github.cdnBase);
+      addSetting('storage.github.url_style', github.urlStyle);
       addSetting('storage.github.directory', github.directory);
       handleSecret(github.token, 'storage.github.token');
     }
@@ -230,6 +232,7 @@ export function buildSettingsOps(
       addSetting('storage_private.github.repo', github.repo);
       addSetting('storage_private.github.branch', github.branch);
       addSetting('storage_private.github.cdn_base', github.cdnBase);
+      addSetting('storage_private.github.url_style', github.urlStyle);
       addSetting('storage_private.github.directory', github.directory);
       handleSecret(github.token, 'storage_private.github.token');
     }

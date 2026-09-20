@@ -80,10 +80,11 @@ export async function POST(request: Request) {
     const driver = await getPublicStorageDriver();
     const uploadResult = await driver.upload(buffer, file.name, file.type);
 
-    // 创建媒体记录
+    // 媒体库持久化站内路由地址（/m/{key}），由 app/m/[...key] 按当前存储配置
+    // 302 到真实 CDN；后台切换 CDN 时历史图片无需迁移
     const mediaRecord = await createMedia({
       type,
-      url: uploadResult.url,
+      url: `/m/${uploadResult.key}`,
       storageDriver: driver.name.toUpperCase() as StorageDriverType,
       storageKey: uploadResult.key,
       title: file.name.replace(/\.[^.]+$/, ''),

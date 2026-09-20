@@ -1,19 +1,21 @@
-import type { StorageDriverInterface, UploadResult } from '@/lib/types/storage';
+import type { StorageDriverInterface, UploadResult, GithubUrlStyle } from '@/lib/types/storage';
+import { GithubUrlStyle as UrlStyle } from '@/lib/types/storage';
 import { generateKey } from '../utils';
 import { StorageSettings } from '@/lib/types/settings';
 
 /** GitHub 图床存储驱动（生产环境用）
  *
- * 上传到 GitHub 公开仓库，通过 jsDelivr CDN 加速访问
- * - 仓库：storage.github.owner/repo（可在后台动态配置）
- * - 分支：storage.github.branch
- * - 访问 URL：https://cdn.jsdelivr.net/gh/{owner}/{repo}@{branch}/{path}
+ * 上传到 GitHub 公开仓库，访问 URL 由后台配置决定：
+ * - 仓库：storage.github.owner/repo/branch（可在后台动态配置）
+ * - 加速方式（cdnBase）：raw 直连（默认）/ jsDelivr / 自定义反代
+ * - 拼接方式（urlStyle）：path = {cdnBase}/{owner}/{repo}/{branch}/{path}（默认）
+ *                        at   = {cdnBase}/{owner}/{repo}@{branch}/{path}（jsDelivr 特有）
  *
  * 敏感信息（Token）加密存储在 DB 中，环境变量优先级最高：
  * - GITHUB_STORAGE_TOKEN（环境变量）
  * - storage.github.token（DB 加密存储）
  *
- * 优点：免费、jsDelivr CDN 全球加速、公开仓库可直接访问
+ * 优点：免费、公开仓库可直接访问、CDN 前缀与拼接方式均可在后台随时切换
  * 缺点：单文件最大 100MB（GitHub 限制）、API 调用有速率限制
  */
 export class GithubStorageDriver implements StorageDriverInterface {
@@ -26,10 +28,18 @@ export class GithubStorageDriver implements StorageDriverInterface {
       owner: process.env.GITHUB_STORAGE_OWNER || 'lsx-xyg',
       repo: process.env.GITHUB_STORAGE_REPO || 'public',
       branch: process.env.GITHUB_STORAGE_BRANCH || 'main',
-      cdnBase: process.env.GITHUB_STORAGE_CDN_BASE || 'https://cdn.jsdelivr.net/gh',
+      cdnBase: process.env.GITHUB_STORAGE_CDN_BASE || 'https://raw.githubusercontent.com',
+      urlStyle:
+        process.env.GITHUB_STORAGE_URL_STYLE?.toLowerCase() === UrlStyle.AT
+          ? UrlStyle.AT
+          : UrlStyle.PATH,
       directory: process.env.GITHUB_STORAGE_DIRECTORY || '',
       token: process.env.GITHUB_STORAGE_TOKEN || '',
     };
+    // 兜底：历史数据/旧配置缺 urlStyle 时按普通路径格式处理
+    if (!this.config.urlStyle) {
+      this.config.urlStyle = UrlStyle.PATH;
+    }
   }
 
   private get token(): string {
@@ -52,6 +62,10 @@ export class GithubStorageDriver implements StorageDriverInterface {
     return this.config.cdnBase;
   }
 
+  private get urlStyle(): GithubUrlStyle {
+    return this.config.urlStyle ?? UrlStyle.PATH;
+  }
+
   private get directory(): string {
     return this.config.directory || '';
   }
@@ -61,10 +75,15 @@ export class GithubStorageDriver implements StorageDriverInterface {
     return this.directory ? `${this.directory}/${key}` : key;
   }
 
-  /** 构建 jsDelivr CDN URL */
+  /** 构建访问 URL（拼接方式由后台 urlStyle 配置决定） */
   getUrl(key: string): string {
     const fullPath = this.buildPath(key);
-    return `${this.cdnBase}/${this.owner}/${this.repo}@${this.branch}/${fullPath}`;
+    if (this.urlStyle === UrlStyle.AT) {
+      // jsDelivr 风格：cdnBase/owner/repo@branch/fullPath
+      return `${this.cdnBase}/${this.owner}/${this.repo}@${this.branch}/${fullPath}`;
+    }
+    // 普通路径格式（默认）：cdnBase/owner/repo/branch/fullPath
+    return `${this.cdnBase}/${this.owner}/${this.repo}/${this.branch}/${fullPath}`;
   }
 
   async upload(file: Buffer, filename: string, mimeType: string): Promise<UploadResult> {

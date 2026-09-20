@@ -25,6 +25,7 @@ const fullStorage = {
     repo: 'r',
     branch: 'main',
     cdnBase: 'https://cdn.example.com',
+    urlStyle: 'path',
     directory: 'uploads',
     token: 'ghp_secret',
   },
@@ -125,6 +126,22 @@ describe('buildSettingsOps 三分支规则', () => {
     });
     expect(ops.update).toContainEqual({ key: 'storage.driver', value: 'S3' });
     expect(ops.update).toContainEqual({ key: 'cron.deploy_platform', value: 'SERVER' });
+  });
+
+  it('github urlStyle（拼接方式）持久化，undefined 跳过', () => {
+    const ops = buildSettingsOps({
+      storage: { github: { urlStyle: 'at', cdnBase: 'https://cdn.jsdelivr.net/gh' } },
+    });
+    expect(ops.update).toContainEqual({ key: 'storage.github.url_style', value: 'at' });
+    expect(ops.update).toContainEqual({
+      key: 'storage.github.cdn_base',
+      value: 'https://cdn.jsdelivr.net/gh',
+    });
+    expect(
+      buildSettingsOps({ storage: { github: {} } }).update.some(
+        (u) => u.key === 'storage.github.url_style',
+      ),
+    ).toBe(false);
   });
 
   it('giscus.enabled：布尔转字符串存储，undefined 跳过', () => {

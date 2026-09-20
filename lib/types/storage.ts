@@ -62,3 +62,15 @@ export type StorageDriverType =
   (typeof StorageDriverType)[keyof typeof StorageDriverType]; /** 存储驱动枚举 */
 
 export const STORAGE_DRIVER_VALUES = Object.values(StorageDriverType) as StorageDriverType[];
+
+/** GitHub 访问 URL 拼接方式 */
+export const GithubUrlStyle = {
+  /** 普通路径格式：{cdnBase}/{owner}/{repo}/{branch}/{path}（raw 直连、各类代理均为此格式） */
+  PATH: 'path',
+  /** jsDelivr 特有格式：{cdnBase}/{owner}/{repo}@{branch}/{path} */
+  AT: 'at',
+} as const;
+
+export type GithubUrlStyle = (typeof GithubUrlStyle)[keyof typeof GithubUrlStyle];
+
+export const GITHUB_URL_STYLE_VALUES = Object.values(GithubUrlStyle) as GithubUrlStyle[];

@@ -44,8 +44,10 @@
  *                             [env: GITHUB_STORAGE_REPO]
  * - storage.github.branch   → storage.github.branch
  *                             [env: GITHUB_STORAGE_BRANCH]
- * - storage.github.cdnBase  → storage.github.cdn_base
+ * - storage.github.cdnBase  → storage.github.cdn_base（默认 raw.githubusercontent.com 直连）
  *                             [env: GITHUB_STORAGE_CDN_BASE]
+ * - storage.github.urlStyle → storage.github.url_style（path=/{branch}/ 普通路径；at=@{branch} jsDelivr 格式）
+ *                             [env: GITHUB_STORAGE_URL_STYLE]
  * - storage.github.token    → storage.github.token（敏感，AES-256-GCM）
  *                             [env: GITHUB_STORAGE_TOKEN]
  * - storage.s3.endpoint     → storage.s3.endpoint
@@ -64,7 +66,7 @@
  * 优先级统一为：env > DB > default（仅 getConfig 一处合并）。
  */
 
-import { StorageDriverType } from '@/lib/types/storage';
+import { StorageDriverType, GithubUrlStyle } from '@/lib/types/storage';
 import { CronDeployPlatform } from '@/lib/types/settings';
 
 /**
@@ -212,7 +214,15 @@ export const registry = {
   'storage.github.cdnBase': {
     key: 'storage.github.cdn_base',
     env: 'GITHUB_STORAGE_CDN_BASE',
-    default: 'https://cdn.jsdelivr.net/gh',
+    default: 'https://raw.githubusercontent.com',
+  },
+  'storage.github.urlStyle': {
+    key: 'storage.github.url_style',
+    env: 'GITHUB_STORAGE_URL_STYLE',
+    default: GithubUrlStyle.PATH,
+    // 归一化：仅 'at' 视为 jsDelivr 拼接格式，其余一律落到普通路径格式
+    transform: (v) =>
+      v.toLowerCase() === GithubUrlStyle.AT ? GithubUrlStyle.AT : GithubUrlStyle.PATH,
   },
   'storage.github.directory': {
     key: 'storage.github.directory',
@@ -297,7 +307,14 @@ export const registry = {
   'storagePrivate.github.cdnBase': {
     key: 'storage_private.github.cdn_base',
     env: 'GITHUB_PRIVATE_CDN_BASE',
-    default: 'https://cdn.jsdelivr.net/gh',
+    default: 'https://raw.githubusercontent.com',
+  },
+  'storagePrivate.github.urlStyle': {
+    key: 'storage_private.github.url_style',
+    env: 'GITHUB_PRIVATE_URL_STYLE',
+    default: GithubUrlStyle.PATH,
+    transform: (v) =>
+      v.toLowerCase() === GithubUrlStyle.AT ? GithubUrlStyle.AT : GithubUrlStyle.PATH,
   },
   'storagePrivate.github.directory': {
     key: 'storage_private.github.directory',

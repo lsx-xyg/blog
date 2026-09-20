@@ -16,6 +16,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:migrate:debug": "tsx scripts/migrate.ts",
+    "storage:migrate-urls": "tsx scripts/storage/migrate-to-internal-urls.ts",
     "test": "vitest run",
     "prepare": "husky || true",
     "commit": "czg",

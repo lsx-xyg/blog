@@ -5,7 +5,7 @@
  * - 被 @/lib/settings/server、@/lib/storage、后台组件等多处引用
  * - 避免类型层与实现层形成循环依赖
  */
-import { StorageDriverType } from '@/lib/types/storage';
+import { StorageDriverType, type GithubUrlStyle } from '@/lib/types/storage';
 
 /** 站点设置类型 */
 export type SiteSettings = {
@@ -63,6 +63,8 @@ export type StorageSettings = {
     repo: string;
     branch: string;
     cdnBase: string;
+    /** URL 拼接方式：path = /{branch}/ 普通路径（默认）；at = @{branch} jsDelivr 特有格式 */
+    urlStyle: GithubUrlStyle;
     directory: string; // 仓库内的子目录（如 uploads / backups）
     token: string; // 用户输入的明文（保存时用）
     tokenConfigured?: boolean; // 是否已配置（加载时显示用，不返回明文）
