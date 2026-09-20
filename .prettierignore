@@ -1,0 +1,21 @@
+# .prettierignore
+
+# 依赖目录
+node_modules/
+
+# 构建产物
+dist/
+build/
+coverage/
+
+# 压缩文件
+*.min.js
+*.min.css
+
+# 锁文件（通常不需要格式化）
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# 自动生成的文件
+*.generated.*
