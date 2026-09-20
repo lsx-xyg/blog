@@ -1,4 +1,4 @@
-import { listFriendLinks } from "@/lib/friend-links";
+import { listFriendLinks } from "@/lib/friend-links/server";
 import { getSiteSettings } from "@/lib/settings/server";
 import { Link2 } from "lucide-react";
 import type { Metadata } from "next";

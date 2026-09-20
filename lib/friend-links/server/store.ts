@@ -3,10 +3,7 @@
  */
 import { eq, asc } from "drizzle-orm";
 import { db } from "@/db";
-import { friendLinks } from "@/db/schema";
-
-export type NewFriendLink = typeof friendLinks.$inferInsert;
-export type FriendLink = typeof friendLinks.$inferSelect;
+import { friendLinks, type FriendLink, type NewFriendLink } from "@/db/schema";
 
 /** 获取所有友链（按 sort_order 排序） */
 export async function listFriendLinks(): Promise<FriendLink[]> {
