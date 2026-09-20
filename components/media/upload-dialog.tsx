@@ -8,7 +8,7 @@ import { useRef } from "react";
 import { Image as ImageIcon, X } from "lucide-react";
 import { AdminModal } from "@/components/admin/modal";
 import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
-import type { UploadTarget } from "@/lib/media/upload";
+import type { UploadTarget } from "@/lib/media/client";
 
 export function UploadDialog({
   open,

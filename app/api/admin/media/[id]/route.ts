@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/server/auth";
 import { headers } from "next/headers";
 import { isAdminUser } from "@/lib/shared/utils";
-import { getMediaById, updateMedia, deleteMedia } from "@/lib/media";
+import { getMediaById, updateMedia, deleteMedia } from "@/lib/media/server";
 import { getPublicStorageDriver } from "@/lib/storage/server";
 import { MediaType } from "@/lib/types/media";
 

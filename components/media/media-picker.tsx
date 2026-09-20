@@ -9,7 +9,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
-import { uploadMediaFile } from "@/lib/media/upload";
+import { uploadMediaFile } from "@/lib/media/client";
 
 type MediaItem = {
   id: string;

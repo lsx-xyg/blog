@@ -4,11 +4,11 @@
  * 媒体上传状态机 hook（C12：manage-media 上传流程收口）。
  *
  * 收口：上传弹窗开关、目标类型、暂存文件、批量上传编排。
- * 上传执行 / 目标校验在 lib/media/upload.ts（纯函数 + 共享 API 调用）。
+ * 上传执行 / 目标校验在 lib/media/client/index.ts（纯函数 + 共享 API 调用）。
  * 上传完成通过 onUploaded 通知父组件刷新列表。
  */
 import { useState } from "react";
-import { uploadMediaFiles, UPLOAD_TARGET_OPTIONS, type UploadTarget } from "@/lib/media/upload";
+import { uploadMediaFiles, UPLOAD_TARGET_OPTIONS, type UploadTarget } from "@/lib/media/client";
 import { MediaType } from "@/lib/types/media";
 
 export function useMediaUpload({ onUploaded }: { onUploaded?: () => void }) {

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { validateUploadTarget, uploadMediaFile, uploadMediaFiles } from "@/lib/media/upload";
+import { validateUploadTarget, uploadMediaFile, uploadMediaFiles } from "@/lib/media/client";
 import { MediaType } from "@/lib/types/media";
 
 describe("validateUploadTarget", () => {
