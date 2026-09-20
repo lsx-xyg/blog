@@ -1,5 +1,5 @@
 import { getAboutContent, getSiteSettings } from "@/lib/settings/server";
-import { renderMdx } from "@/lib/mdx";
+import { renderMdx } from "@/lib/mdx/server";
 import type { Metadata } from "next";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";

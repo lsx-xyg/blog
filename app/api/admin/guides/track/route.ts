@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth/server/auth";
 import { isAdminUser } from "@/lib/shared/utils";
 import { db } from "@/db";
 import { userEvents } from "@/db/schema";
-import { GUIDE_TRIGGER_EVENT } from "@/lib/guides";
+import { GUIDE_TRIGGER_EVENT } from "@/lib/guides/shared";
 
 /**
  * 用户行为事件上报 API（user_events 表）

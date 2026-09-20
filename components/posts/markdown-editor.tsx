@@ -10,8 +10,8 @@ import { MediaPicker } from "@/components/media/media-picker";
 import "bytemd/dist/index.css";
 import { MediaType } from "@/lib/types/media";
 import { getStoredTheme, type ThemeMode } from "@/lib/shared/theme";
-import { createShikiHighlighter, createShikiRehypePlugin, getEffectiveTheme } from "@/lib/mdx/shiki";
-import { ZH_LOCALE } from "@/lib/mdx/locale";
+import { createShikiHighlighter, createShikiRehypePlugin, getEffectiveTheme } from "@/lib/mdx/client";
+import { ZH_LOCALE } from "@/lib/mdx/client";
 
 /**
  * Markdown 编辑器组件（基于 ByteMD + Shiki）——C10 精简后只做装配
@@ -25,7 +25,7 @@ import { ZH_LOCALE } from "@/lib/mdx/locale";
  * - ByteMD 内置全屏模式
  * - 受控组件（value + onChange）
  *
- * shiki 初始化/插件/主题解析在 lib/mdx/shiki.ts，中文文案在 lib/mdx/locale.ts。
+ * shiki 初始化/插件/主题解析在 lib/mdx/client/shiki.ts，中文文案在 lib/mdx/client/locale.ts。
  * 用法：
  * <MarkdownEditor value={content} onChange={setContent} />
  */

@@ -21,12 +21,12 @@ import {
   evaluateEventTrigger,
   resolveStepSelectors,
 } from "@/lib/guides/shared/trigger";
-import { buildTourSteps } from "@/lib/guides";
+import { buildTourSteps } from "@/lib/guides/shared";
 import {
   emitGuideTrigger,
   useGuideTrigger,
-} from "@/lib/guides/client/event-bus";
-import { GUIDE_TRIGGER_EVENT } from "@/lib/guides/shared/anchor-registry";
+} from "@/lib/guides/client";
+import { GUIDE_TRIGGER_EVENT } from "@/lib/guides/shared";
 
 /** onborda Tour 结构（index.d.ts 未导出，按 types 目录定义） */
 interface Tour {

@@ -13,7 +13,7 @@ import { Eye, EyeOff, Check, Copy } from "lucide-react";
 import type { CronSettings } from "@/lib/types/settings";
 import { CronDeployPlatform } from "@/lib/types/settings";
 import { emitGuideTrigger } from "@/lib/guides/client";
-import { GUIDE_TRIGGER_EVENT } from "@/lib/guides";
+import { GUIDE_TRIGGER_EVENT } from "@/lib/guides/shared";
 import { SecretRevealDialog } from "@/components/shared/secret-reveal-dialog";
 import { usePasswordStatus, getAdminPathFromUrl } from "@/components/auth/use-password-status";
 import { secretRevealReducer } from "@/lib/settings/shared";
