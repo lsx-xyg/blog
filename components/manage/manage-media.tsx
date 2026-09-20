@@ -13,7 +13,7 @@ import {
   X,
   ZoomIn,
 } from "lucide-react";
-import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { AdminModal } from "@/components/admin/modal";
 import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
 import { AdminListPage } from "@/components/admin/list-page";

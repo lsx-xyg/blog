@@ -32,7 +32,7 @@ import {
 import { useToast } from "@/components/ui/toast";
 import { useCronForm } from "@/components/cron/use-cron-form";
 import { CronJobFormDialog } from "@/components/cron/cron-job-form-dialog";
-import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { AdminPageHeader } from "@/components/admin/page-header";
 import { AdminEmptyState, AdminLoadingState } from "@/components/admin/status";
 import { CronDeployPlatform } from "@/lib/types/settings";

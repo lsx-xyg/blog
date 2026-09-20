@@ -24,7 +24,7 @@ import {
 
 import { AdminModal } from "@/components/admin/modal";
 
-import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { AdminListPage } from "@/components/admin/list-page";
 import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
 import { useToast } from "@/components/ui/toast";

@@ -18,7 +18,7 @@
  * - 移动端搜索、状态筛选、刷新按钮放在同一行，节省空间
  */
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { AdminListPage } from "@/components/admin/list-page";
 import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
 import { useRouter } from "next/navigation";

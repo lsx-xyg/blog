@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Trash2, Edit3, Link2, X } from "lucide-react";
-import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 import { AdminModal } from "@/components/admin/modal";
 import { AdminListPage } from "@/components/admin/list-page";
 import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";

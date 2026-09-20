@@ -5,7 +5,7 @@ import { Trash2, Tag, Pencil, AlertTriangle, X, FileText, Image, RefreshCw } fro
 import { AdminModal } from "@/components/admin/modal";
 import { AdminListPage } from "@/components/admin/list-page";
 import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
-import { ConfirmDialog } from "@/components/admin/confirm-dialog";
+import { ConfirmDialog } from "@/components/shared/confirm-dialog";
 
 type TagWithCount = {
   id: string;
