@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 引导步骤编辑器（结构化编辑，保存时由校验模块组装为 GuideStep[] JSON）
@@ -6,32 +6,32 @@
  * 每步卡片：高亮元素（data-guide 或拾取生成的选择器）/ 标题 / 卡片位置 / 说明文字 /
  * 下一步跳转页面（跨页引导）。拾取锚点自动保存当前表单后跳目标页点选。
  */
-import { Plus, Trash2, X, HelpCircle, MousePointerClick } from "lucide-react";
-import { GUIDE_EVENT_ANCHORS } from "@/lib/guides/shared";
+import { Plus, Trash2, X, HelpCircle, MousePointerClick } from 'lucide-react';
+import { GUIDE_EVENT_ANCHORS } from '@/lib/guides/shared';
 import {
   inputClass,
   labelClass,
   helpClass,
   PLACEMENT_OPTIONS,
   type StepForm,
-} from "@/lib/guides/client";
+} from '@/lib/guides/client';
 
 export function StepEditor({
   steps,
   onChange,
-  guideId,
+  _guideId,
   page,
-  adminPath,
+  _adminPath,
   pages,
   onPick,
 }: {
   steps: StepForm[];
   onChange: (next: StepForm[]) => void;
   /** 引导 id（未保存时为 null，拾取需先保存） */
-  guideId: string | null;
+  _guideId: string | null;
   /** 引导适用页面（相对后台路径，如 /settings） */
   page: string;
-  adminPath: string;
+  _adminPath: string;
   /** 后台页面列表（nextRoute 下拉选择） */
   pages: { path: string; label: string }[];
   /** 拾取步骤锚点：自动保存当前表单后跳目标页 */
@@ -46,21 +46,17 @@ export function StepEditor({
       ...steps,
       {
         id: `step_${steps.length + 1}`,
-        target: "",
-        title: "",
-        content: "",
-        placement: "bottom",
-        nextRoute: "",
+        target: '',
+        title: '',
+        content: '',
+        placement: 'bottom',
+        nextRoute: '',
       },
     ]);
   };
 
   const removeStep = (i: number) => {
-    onChange(
-      steps
-        .filter((_, j) => j !== i)
-        .map((s, j) => ({ ...s, id: `step_${j + 1}` }))
-    );
+    onChange(steps.filter((_, j) => j !== i).map((s, j) => ({ ...s, id: `step_${j + 1}` })));
   };
 
   return (
@@ -75,9 +71,7 @@ export function StepEditor({
       {steps.map((s, i) => (
         <div key={i} className="rounded-lg border border-border/60 bg-muted/30 p-3">
           <div className="mb-2 flex items-center justify-between">
-            <span className="text-xs font-medium text-muted-foreground">
-              步骤 {i + 1}
-            </span>
+            <span className="text-xs font-medium text-muted-foreground">步骤 {i + 1}</span>
             <button
               type="button"
               onClick={() => removeStep(i)}
@@ -107,7 +101,8 @@ export function StepEditor({
                 placeholder="data-guide 锚点名，如 reveal-view"
               />
               <p className={helpClass}>
-                引导要指向哪个元素。填该元素上的 data-guide 标记值，或点下方「拾取锚点」在目标页面点选生成动态选择器。
+                引导要指向哪个元素。填该元素上的 data-guide
+                标记值，或点下方「拾取锚点」在目标页面点选生成动态选择器。
               </p>
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {page ? (
@@ -134,9 +129,7 @@ export function StepEditor({
                     <span className="max-w-[240px] truncate">{s.selector}</span>
                     <button
                       type="button"
-                      onClick={() =>
-                        setStep(i, { selector: undefined, selectorMeta: undefined })
-                      }
+                      onClick={() => setStep(i, { selector: undefined, selectorMeta: undefined })}
                       className="text-primary/60 transition-colors hover:text-primary"
                       title="清除动态选择器"
                       aria-label="清除动态选择器"
@@ -196,19 +189,19 @@ export function StepEditor({
                   s.nextRoute && pages.some((p) => p.path === s.nextRoute)
                     ? s.nextRoute
                     : s.nextRoute
-                      ? "__custom__"
-                      : ""
+                      ? '__custom__'
+                      : ''
                 }
                 onChange={(e) => {
                   const v = e.target.value;
-                  setStep(i, { nextRoute: v === "__custom__" ? s.nextRoute : v });
+                  setStep(i, { nextRoute: v === '__custom__' ? s.nextRoute : v });
                 }}
                 className={inputClass}
               >
                 <option value="">不跳转（下一步在当前页高亮）</option>
                 {pages.map((p) => (
                   <option key={p.path} value={p.path}>
-                    {p.path === "/" ? "/（首页）" : p.path} · {p.label}
+                    {p.path === '/' ? '/（首页）' : p.path} · {p.label}
                   </option>
                 ))}
                 {s.nextRoute && !pages.some((p) => p.path === s.nextRoute) && (
@@ -216,7 +209,8 @@ export function StepEditor({
                 )}
               </select>
               <p className={helpClass}>
-                点击「下一步」后跳转到的后台页面（选项由服务端扫描路由自动生成，不含 adminSlug 前缀），用于跨页引导；不选则下一步只在当前页高亮下一个元素。
+                点击「下一步」后跳转到的后台页面（选项由服务端扫描路由自动生成，不含 adminSlug
+                前缀），用于跨页引导；不选则下一步只在当前页高亮下一个元素。
               </p>
             </div>
           </div>

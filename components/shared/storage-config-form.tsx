@@ -1,13 +1,13 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { Check, Copy, Eye, EyeOff } from "lucide-react";
-import { STORAGE_DRIVER_VALUES, StorageDriverType } from "@/lib/types/storage";
-import type { StorageSettings } from "@/lib/types/settings";
-import { SecretRevealDialog } from "@/components/shared/secret-reveal-dialog";
-import { usePasswordStatus, getAdminPathFromUrl } from "@/components/auth/use-password-status";
-import { emitGuideTrigger } from "@/lib/guides/client";
-import { GUIDE_TRIGGER_EVENT } from "@/lib/guides/shared";
+import { useEffect, useState } from 'react';
+import { Check, Copy, Eye, EyeOff } from 'lucide-react';
+import { STORAGE_DRIVER_VALUES, StorageDriverType } from '@/lib/types/storage';
+import type { StorageSettings } from '@/lib/types/settings';
+import { SecretRevealDialog } from '@/components/shared/secret-reveal-dialog';
+import { usePasswordStatus, getAdminPathFromUrl } from '@/components/auth/use-password-status';
+import { emitGuideTrigger } from '@/lib/guides/client';
+import { GUIDE_TRIGGER_EVENT } from '@/lib/guides/shared';
 
 interface StorageConfigFormProps {
   storage: StorageSettings;
@@ -17,12 +17,11 @@ interface StorageConfigFormProps {
 }
 
 const inputClass =
-  "w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all";
-const labelClass = "block text-sm font-medium mb-1.5";
+  'w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all';
+const labelClass = 'block text-sm font-medium mb-1.5';
 
 /** 敏感信息字段 key 前缀（与后端 SECRET_KEYS 白名单对应） */
-const secretPrefix = (isPrivate: boolean) =>
-  isPrivate ? "storage_private" : "storage";
+const secretPrefix = (isPrivate: boolean) => (isPrivate ? 'storage_private' : 'storage');
 
 /** 明文展示时长（秒） */
 const REVEAL_SECONDS = 30;
@@ -32,7 +31,11 @@ const REVEAL_SECONDS = 30;
  * 用于公开存储和私有存储的配置，根据 isPrivate 显示不同的提示文案
  * 敏感字段（GitHub Token / S3 Access Key / Secret Key）支持二次验证后临时查看明文（#18）
  */
-export function StorageConfigForm({ storage, setStorage, isPrivate = false }: StorageConfigFormProps) {
+export function StorageConfigForm({
+  storage,
+  setStorage,
+  isPrivate = false,
+}: StorageConfigFormProps) {
   // 二次验证弹窗状态（#18）
   const [revealDialog, setRevealDialog] = useState<{ key: string; label: string } | null>(null);
   // 已通过验证正在展示的明文（不写入表单 state，30 秒后自动隐藏）
@@ -81,13 +84,14 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
         type="button"
         data-guide="reveal-view"
         onClick={(e) => {
+          console.error('点击查看已配置明文按钮', e);
           if (hasPassword === null) return; // 密码状态检测中：不响应，避免二次验证弹窗时有时无
           if (hasPassword === false) {
             // 无密码：触发新手引导（弹窗说明 + 按钮引导设置密码），不弹验证框
             emitGuideTrigger({
               event: GUIDE_TRIGGER_EVENT,
-              target: "reveal-view",
-              page: "/settings",
+              target: 'reveal-view',
+              page: '/settings',
               // 无密码账号主动点击「查看」→ 强制重新引导设置密码（无视进度 skipped 冷却）
               force: true,
             });
@@ -110,7 +114,7 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
       onClick={onToggle}
       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
       tabIndex={-1}
-      title={show ? "隐藏输入内容" : "显示输入内容"}
+      title={show ? '隐藏输入内容' : '显示输入内容'}
     >
       {show ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
     </button>
@@ -128,8 +132,12 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
           className="shrink-0 flex items-center gap-1 rounded-md px-1.5 py-0.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
           title="复制明文"
         >
-          {copied ? <Check className="h-3.5 w-3.5 text-green-600" /> : <Copy className="h-3.5 w-3.5" />}
-          {copied ? "已复制" : "复制"}
+          {copied ? (
+            <Check className="h-3.5 w-3.5 text-green-600" />
+          ) : (
+            <Copy className="h-3.5 w-3.5" />
+          )}
+          {copied ? '已复制' : '复制'}
         </button>
         <span className="shrink-0 text-xs text-muted-foreground" title="到期自动隐藏">
           {countdown}s
@@ -161,18 +169,19 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
               key={d}
               type="button"
               onClick={() => setStorage({ ...storage, driver: d })}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${storage.driver === d
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
-                }`}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                storage.driver === d
+                  ? 'bg-primary text-primary-foreground'
+                  : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
+              }`}
             >
               {d === StorageDriverType.LOCAL
-                ? "本地存储"
+                ? '本地存储'
                 : d === StorageDriverType.GITHUB
                   ? isPrivate
-                    ? "GitHub 私有仓库"
-                    : "GitHub 公开仓库"
-                  : "S3 兼容存储"}
+                    ? 'GitHub 私有仓库'
+                    : 'GitHub 公开仓库'
+                  : 'S3 兼容存储'}
             </button>
           ))}
         </div>
@@ -181,16 +190,16 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
       {/* GitHub 配置 */}
       {storage.driver === StorageDriverType.GITHUB && (
         <div className="space-y-4 p-4 rounded-lg bg-muted/50">
-          <h3 className="font-medium text-sm">
-            GitHub {isPrivate ? "私有仓库" : "公开仓库"}配置
-          </h3>
+          <h3 className="font-medium text-sm">GitHub {isPrivate ? '私有仓库' : '公开仓库'}配置</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Owner（用户名/组织）</label>
               <input
                 type="text"
                 value={storage.github.owner}
-                onChange={(e) => setStorage({ ...storage, github: { ...storage.github, owner: e.target.value } })}
+                onChange={(e) =>
+                  setStorage({ ...storage, github: { ...storage.github, owner: e.target.value } })
+                }
                 className={inputClass}
                 placeholder="lsx-xyg"
               />
@@ -200,9 +209,11 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
               <input
                 type="text"
                 value={storage.github.repo}
-                onChange={(e) => setStorage({ ...storage, github: { ...storage.github, repo: e.target.value } })}
+                onChange={(e) =>
+                  setStorage({ ...storage, github: { ...storage.github, repo: e.target.value } })
+                }
                 className={inputClass}
-                placeholder={isPrivate ? "backups" : "public"}
+                placeholder={isPrivate ? 'backups' : 'public'}
               />
             </div>
             <div>
@@ -210,21 +221,26 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
               <input
                 type="text"
                 value={storage.github.branch}
-                onChange={(e) => setStorage({ ...storage, github: { ...storage.github, branch: e.target.value } })}
+                onChange={(e) =>
+                  setStorage({ ...storage, github: { ...storage.github, branch: e.target.value } })
+                }
                 className={inputClass}
                 placeholder="main"
               />
             </div>
             <div>
-              <label className={labelClass}>
-                子目录（Directory，可选）
-              </label>
+              <label className={labelClass}>子目录（Directory，可选）</label>
               <input
                 type="text"
                 value={storage.github.directory}
-                onChange={(e) => setStorage({ ...storage, github: { ...storage.github, directory: e.target.value } })}
+                onChange={(e) =>
+                  setStorage({
+                    ...storage,
+                    github: { ...storage.github, directory: e.target.value },
+                  })
+                }
                 className={inputClass}
-                placeholder={isPrivate ? "backups" : "uploads（留空则存根目录）"}
+                placeholder={isPrivate ? 'backups' : 'uploads（留空则存根目录）'}
               />
             </div>
             {!isPrivate && (
@@ -233,7 +249,12 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
                 <input
                   type="text"
                   value={storage.github.cdnBase}
-                  onChange={(e) => setStorage({ ...storage, github: { ...storage.github, cdnBase: e.target.value } })}
+                  onChange={(e) =>
+                    setStorage({
+                      ...storage,
+                      github: { ...storage.github, cdnBase: e.target.value },
+                    })
+                  }
                   className={inputClass}
                   placeholder="https://cdn.jsdelivr.net/gh"
                 />
@@ -245,27 +266,42 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
                 {storage.github.tokenConfigured && (
                   <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
                 )}
-                {revealButton(`${secretPrefix(isPrivate)}.github.token`, "GitHub Token", storage.github.tokenConfigured)}
+                {revealButton(
+                  `${secretPrefix(isPrivate)}.github.token`,
+                  'GitHub Token',
+                  storage.github.tokenConfigured,
+                )}
               </label>
               <div className="relative">
                 <input
-                  type={showGithubToken ? "text" : "password"}
+                  type={showGithubToken ? 'text' : 'password'}
                   value={storage.github.token}
-                  onChange={(e) => setStorage({ ...storage, github: { ...storage.github, token: e.target.value } })}
+                  onChange={(e) =>
+                    setStorage({ ...storage, github: { ...storage.github, token: e.target.value } })
+                  }
                   className={`${inputClass} pr-10`}
-                  placeholder={storage.github.tokenConfigured ? "留空则保持当前配置，输入新值则覆盖" : "ghp_xxxxxxxxxxxxxxxxxxxx"}
+                  placeholder={
+                    storage.github.tokenConfigured
+                      ? '留空则保持当前配置，输入新值则覆盖'
+                      : 'ghp_xxxxxxxxxxxxxxxxxxxx'
+                  }
                 />
                 {eyeToggle(showGithubToken, () => setShowGithubToken((v) => !v))}
               </div>
-              {revealBanner(`${secretPrefix(isPrivate)}.github.token`, "GitHub Token")}
+              {revealBanner(`${secretPrefix(isPrivate)}.github.token`, 'GitHub Token')}
               <p className="mt-1 text-xs text-muted-foreground">
-                需要 repo 权限。加密存储在数据库中，环境变量 {isPrivate ? "GITHUB_PRIVATE_TOKEN" : "GITHUB_STORAGE_TOKEN"} 优先级更高。
+                需要 repo 权限。加密存储在数据库中，环境变量{' '}
+                {isPrivate ? 'GITHUB_PRIVATE_TOKEN' : 'GITHUB_STORAGE_TOKEN'} 优先级更高。
               </p>
             </div>
           </div>
           {!isPrivate && (
             <p className="text-xs text-muted-foreground">
-              访问 URL 格式：{storage.github.cdnBase || "https://cdn.jsdelivr.net/gh"}/{storage.github.owner || "owner"}/{storage.github.repo || "repo"}@{storage.github.branch || "main"}/{storage.github.directory ? storage.github.directory + "/" : ""}{'{path}'}
+              访问 URL 格式：{storage.github.cdnBase || 'https://cdn.jsdelivr.net/gh'}/
+              {storage.github.owner || 'owner'}/{storage.github.repo || 'repo'}@
+              {storage.github.branch || 'main'}/
+              {storage.github.directory ? storage.github.directory + '/' : ''}
+              {'{path}'}
             </p>
           )}
           {isPrivate && (
@@ -279,14 +315,18 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
       {/* S3 配置 */}
       {storage.driver === StorageDriverType.S3 && (
         <div className="space-y-4 p-4 rounded-lg bg-muted/50">
-          <h3 className="font-medium text-sm">S3 兼容存储配置（{isPrivate ? "私有 bucket" : "公开 bucket"}）</h3>
+          <h3 className="font-medium text-sm">
+            S3 兼容存储配置（{isPrivate ? '私有 bucket' : '公开 bucket'}）
+          </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className={labelClass}>Endpoint（端点）</label>
               <input
                 type="text"
                 value={storage.s3.endpoint}
-                onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, endpoint: e.target.value } })}
+                onChange={(e) =>
+                  setStorage({ ...storage, s3: { ...storage.s3, endpoint: e.target.value } })
+                }
                 className={inputClass}
                 placeholder="https://oss-cn-hangzhou.aliyuncs.com"
               />
@@ -296,9 +336,11 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
               <input
                 type="text"
                 value={storage.s3.bucket}
-                onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, bucket: e.target.value } })}
+                onChange={(e) =>
+                  setStorage({ ...storage, s3: { ...storage.s3, bucket: e.target.value } })
+                }
                 className={inputClass}
-                placeholder={isPrivate ? "my-private-bucket" : "my-public-bucket"}
+                placeholder={isPrivate ? 'my-private-bucket' : 'my-public-bucket'}
               />
             </div>
             <div>
@@ -306,7 +348,9 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
               <input
                 type="text"
                 value={storage.s3.region}
-                onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, region: e.target.value } })}
+                onChange={(e) =>
+                  setStorage({ ...storage, s3: { ...storage.s3, region: e.target.value } })
+                }
                 className={inputClass}
                 placeholder="auto / us-east-1"
               />
@@ -316,9 +360,11 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
               <input
                 type="text"
                 value={storage.s3.directory}
-                onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, directory: e.target.value } })}
+                onChange={(e) =>
+                  setStorage({ ...storage, s3: { ...storage.s3, directory: e.target.value } })
+                }
                 className={inputClass}
-                placeholder={isPrivate ? "backups" : "uploads（留空则存根目录）"}
+                placeholder={isPrivate ? 'backups' : 'uploads（留空则存根目录）'}
               />
             </div>
             <div>
@@ -327,44 +373,66 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
                 {storage.s3.accessKeyConfigured && (
                   <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
                 )}
-                {revealButton(`${secretPrefix(isPrivate)}.s3.accessKey`, "Access Key ID", storage.s3.accessKeyConfigured)}
+                {revealButton(
+                  `${secretPrefix(isPrivate)}.s3.accessKey`,
+                  'Access Key ID',
+                  storage.s3.accessKeyConfigured,
+                )}
               </label>
               <div className="relative">
                 <input
-                  type={showAccessKey ? "text" : "password"}
+                  type={showAccessKey ? 'text' : 'password'}
                   value={storage.s3.accessKey}
-                  onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, accessKey: e.target.value } })}
+                  onChange={(e) =>
+                    setStorage({ ...storage, s3: { ...storage.s3, accessKey: e.target.value } })
+                  }
                   className={`${inputClass} pr-10`}
-                  placeholder={storage.s3.accessKeyConfigured ? "留空则保持当前配置" : "AKIAxxxxxxxxxxxxxxxx"}
+                  placeholder={
+                    storage.s3.accessKeyConfigured ? '留空则保持当前配置' : 'AKIAxxxxxxxxxxxxxxxx'
+                  }
                 />
                 {eyeToggle(showAccessKey, () => setShowAccessKey((v) => !v))}
               </div>
             </div>
-            {revealBanner(`${secretPrefix(isPrivate)}.s3.accessKey`, "Access Key ID")}
+            {revealBanner(`${secretPrefix(isPrivate)}.s3.accessKey`, 'Access Key ID')}
             <div>
               <label className={labelClass}>
                 Secret Access Key
                 {storage.s3.secretKeyConfigured && (
                   <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
                 )}
-                {revealButton(`${secretPrefix(isPrivate)}.s3.secretKey`, "Secret Access Key", storage.s3.secretKeyConfigured)}
+                {revealButton(
+                  `${secretPrefix(isPrivate)}.s3.secretKey`,
+                  'Secret Access Key',
+                  storage.s3.secretKeyConfigured,
+                )}
               </label>
               <div className="relative">
                 <input
-                  type={showSecretKey ? "text" : "password"}
+                  type={showSecretKey ? 'text' : 'password'}
                   value={storage.s3.secretKey}
-                  onChange={(e) => setStorage({ ...storage, s3: { ...storage.s3, secretKey: e.target.value } })}
+                  onChange={(e) =>
+                    setStorage({ ...storage, s3: { ...storage.s3, secretKey: e.target.value } })
+                  }
                   className={`${inputClass} pr-10`}
-                  placeholder={storage.s3.secretKeyConfigured ? "留空则保持当前配置" : "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
+                  placeholder={
+                    storage.s3.secretKeyConfigured
+                      ? '留空则保持当前配置'
+                      : 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'
+                  }
                 />
                 {eyeToggle(showSecretKey, () => setShowSecretKey((v) => !v))}
               </div>
             </div>
-            {revealBanner(`${secretPrefix(isPrivate)}.s3.secretKey`, "Secret Access Key")}
+            {revealBanner(`${secretPrefix(isPrivate)}.s3.secretKey`, 'Secret Access Key')}
           </div>
           <p className="text-xs text-muted-foreground">
-            敏感信息加密存储在数据库中，环境变量 {isPrivate ? "S3_PRIVATE_ACCESS_KEY / S3_PRIVATE_SECRET_KEY" : "S3_ACCESS_KEY / S3_SECRET_KEY"} 优先级更高。
-            {isPrivate && " 私有 bucket 建议开启服务端加密（SSE-S3 或 SSE-KMS）。"}
+            敏感信息加密存储在数据库中，环境变量{' '}
+            {isPrivate
+              ? 'S3_PRIVATE_ACCESS_KEY / S3_PRIVATE_SECRET_KEY'
+              : 'S3_ACCESS_KEY / S3_SECRET_KEY'}{' '}
+            优先级更高。
+            {isPrivate && ' 私有 bucket 建议开启服务端加密（SSE-S3 或 SSE-KMS）。'}
           </p>
         </div>
       )}
@@ -372,18 +440,24 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
       {/* LOCAL 配置 */}
       {storage.driver === StorageDriverType.LOCAL && (
         <div className="space-y-4 p-4 rounded-lg bg-muted/50">
-          <h3 className="font-medium text-sm">本地存储配置（{isPrivate ? "私有目录" : "公开目录"}）</h3>
+          <h3 className="font-medium text-sm">
+            本地存储配置（{isPrivate ? '私有目录' : '公开目录'}）
+          </h3>
           <div className="space-y-4">
             <div>
               <label className={labelClass}>
-                {isPrivate ? "私有目录（相对于项目根目录，不暴露到 Web）" : "上传目录（相对于项目根目录，可通过 HTTP 访问）"}
+                {isPrivate
+                  ? '私有目录（相对于项目根目录，不暴露到 Web）'
+                  : '上传目录（相对于项目根目录，可通过 HTTP 访问）'}
               </label>
               <input
                 type="text"
                 value={storage.local.uploadDir}
-                onChange={(e) => setStorage({ ...storage, local: { ...storage.local, uploadDir: e.target.value } })}
+                onChange={(e) =>
+                  setStorage({ ...storage, local: { ...storage.local, uploadDir: e.target.value } })
+                }
                 className={inputClass}
-                placeholder={isPrivate ? "private/storage" : "public/uploads"}
+                placeholder={isPrivate ? 'private/storage' : 'public/uploads'}
               />
             </div>
             <div>
@@ -391,16 +465,18 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
               <input
                 type="text"
                 value={storage.local.directory}
-                onChange={(e) => setStorage({ ...storage, local: { ...storage.local, directory: e.target.value } })}
+                onChange={(e) =>
+                  setStorage({ ...storage, local: { ...storage.local, directory: e.target.value } })
+                }
                 className={inputClass}
-                placeholder={isPrivate ? "backups" : "uploads（留空则存根目录）"}
+                placeholder={isPrivate ? 'backups' : 'uploads（留空则存根目录）'}
               />
             </div>
           </div>
           <p className="text-xs text-muted-foreground">
             {isPrivate
-              ? "私有目录不会暴露到 Web，只能通过后台 API 下载。适用于存储备份等敏感数据。"
-              : "注意：本地存储仅适用于开发环境。Vercel 等 Serverless 平台无持久化文件系统，生产环境请使用 GitHub 或 S3。"}
+              ? '私有目录不会暴露到 Web，只能通过后台 API 下载。适用于存储备份等敏感数据。'
+              : '注意：本地存储仅适用于开发环境。Vercel 等 Serverless 平台无持久化文件系统，生产环境请使用 GitHub 或 S3。'}
           </p>
         </div>
       )}
@@ -408,8 +484,8 @@ export function StorageConfigForm({ storage, setStorage, isPrivate = false }: St
       {/* 敏感信息二次验证弹窗（#18 方案 C：管理员密码验证） */}
       <SecretRevealDialog
         open={!!revealDialog}
-        fieldLabel={revealDialog?.label ?? ""}
-        fieldKey={revealDialog?.key ?? ""}
+        fieldLabel={revealDialog?.label ?? ''}
+        fieldKey={revealDialog?.key ?? ''}
         onClose={() => setRevealDialog(null)}
         onRevealed={(value) => {
           if (revealDialog) {

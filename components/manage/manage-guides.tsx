@@ -1,43 +1,26 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Plus,
-  Pencil,
-  Trash2,
-  Rocket,
-  Archive,
-  Loader2,
-  X,
-  RefreshCw,
-  RotateCcw,
-  Check,
-  HelpCircle,
-  MousePointerClick,
-} from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pencil, Trash2, Rocket, Archive, Loader2, RotateCcw, Check } from 'lucide-react';
 import {
   GuideStatus,
   GUIDE_STATUS_VALUES,
   normalizeTargetCondition,
-  type Guide
-} from "@/lib/types/guides";
+  type Guide,
+} from '@/lib/types/guides';
 
-import { AdminModal } from "@/components/admin/modal";
+import { AdminModal } from '@/components/admin/modal';
 
-import { ConfirmDialog } from "@/components/shared/confirm-dialog";
-import { AdminListPage } from "@/components/admin/list-page";
-import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
-import { useToast } from "@/components/ui/toast";
-import { GuideMissesPanel } from "@/components/guides/misses-panel";
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { AdminListPage } from '@/components/admin/list-page';
+import { CreateButton, RefreshButton } from '@/components/admin/action-buttons';
+import { useToast } from '@/components/ui/toast';
+import { GuideMissesPanel } from '@/components/guides/misses-panel';
 
-import { StepEditor } from "@/components/guides/step-editor";
-import { ConditionSection } from "@/components/guides/condition-editor";
-import { useGuideForm } from "@/components/guides/use-guide-form";
-import {
-  labelClass,
-  inputClass,
-  helpClass,
-} from "@/lib/guides/client";
+import { StepEditor } from '@/components/guides/step-editor';
+import { ConditionSection } from '@/components/guides/condition-editor';
+import { useGuideForm } from '@/components/guides/use-guide-form';
+import { labelClass, inputClass, helpClass } from '@/lib/guides/client';
 
 /**
  * 引导管理组件（guiders 表 CRUD）
@@ -48,15 +31,15 @@ import {
  */
 
 const STATUS_STYLE: Record<GuideStatus, string> = {
-  draft: "bg-muted text-muted-foreground",
-  published: "bg-green-500/10 text-green-600 dark:text-green-400",
-  archived: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-500",
+  draft: 'bg-muted text-muted-foreground',
+  published: 'bg-green-500/10 text-green-600 dark:text-green-400',
+  archived: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-500',
 };
 
 const STATUS_LABEL: Record<GuideStatus, string> = {
-  draft: "草稿",
-  published: "已发布",
-  archived: "已归档",
+  draft: '草稿',
+  published: '已发布',
+  archived: '已归档',
 };
 
 /** 条件字段下拉选项 */
@@ -74,7 +57,7 @@ export function ManageGuides({
   const { showToast } = useToast();
   const [guides, setGuides] = useState<Guide[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
 
   // 搜索过滤（标题 / guideKey / 页面）
   const filteredGuides = useMemo(() => {
@@ -84,7 +67,7 @@ export function ManageGuides({
       (g) =>
         g.title.toLowerCase().includes(kw) ||
         g.guideKey.toLowerCase().includes(kw) ||
-        (g.page || "").toLowerCase().includes(kw),
+        (g.page || '').toLowerCase().includes(kw),
     );
   }, [guides, search]);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
@@ -94,7 +77,7 @@ export function ManageGuides({
   const loadGuides = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/guides");
+      const res = await fetch('/api/admin/guides');
       if (res.ok) {
         const d = await res.json();
         setGuides(d.guides ?? []);
@@ -111,33 +94,43 @@ export function ManageGuides({
   }, [loadGuides]);
 
   // 表单状态机（校验/保存/拾取流程收口在 use-guide-form + lib/guides/validate）
-  const { saving, editing, form, setForm, error, handleSave, saveThenPick, openCreate, openEdit, closeForm } =
-    useGuideForm({ adminPath, refresh: loadGuides });
+  const {
+    saving,
+    editing,
+    form,
+    setForm,
+    error,
+    handleSave,
+    saveThenPick,
+    openCreate,
+    openEdit,
+    closeForm,
+  } = useGuideForm({ adminPath, refresh: loadGuides });
 
   const toggleStatus = async (g: Guide, next: GuideStatus) => {
     const res = await fetch(`/api/admin/guides/${g.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: next }),
     });
     if (res.ok) {
       showToast(
         next === GuideStatus.PUBLISHED
-          ? "已发布"
+          ? '已发布'
           : next === GuideStatus.ARCHIVED
-            ? "已归档"
-            : "已恢复为草稿",
-        "success"
+            ? '已归档'
+            : '已恢复为草稿',
+        'success',
       );
       await loadGuides();
       return;
     }
     const data = await res.json().catch(() => ({}));
-    showToast(data.error || "状态切换失败", "error");
+    showToast(data.error || '状态切换失败', 'error');
   };
 
   const handleDelete = async (id: string) => {
-    const res = await fetch(`/api/admin/guides/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/admin/guides/${id}`, { method: 'DELETE' });
     if (res.ok) {
       setConfirmDelete(null);
       await loadGuides();
@@ -146,10 +139,9 @@ export function ManageGuides({
 
   /** 重置当前账号（登录用户自己）某引导的进度 */
   const handleResetProgress = async (guideKey: string) => {
-    const res = await fetch(
-      `/api/admin/guides/progress?guideKey=${encodeURIComponent(guideKey)}`,
-      { method: "DELETE" }
-    );
+    const res = await fetch(`/api/admin/guides/progress?guideKey=${encodeURIComponent(guideKey)}`, {
+      method: 'DELETE',
+    });
     if (res.ok) {
       setResetDone(guideKey);
       setTimeout(() => setResetDone(null), 3000);
@@ -167,15 +159,15 @@ export function ManageGuides({
             <RefreshButton onClick={loadGuides} loading={loading} />
           </>
         }
-        search={{ value: search, onChange: setSearch, placeholder: "搜索标题、guideKey 或页面…" }}
+        search={{ value: search, onChange: setSearch, placeholder: '搜索标题、guideKey 或页面…' }}
         loading={loading}
         empty={
-          filteredGuides.length === 0 ? {
-
-            title: search ? "没有找到匹配的引导" : "暂无引导配置",
-            description: search ? undefined : "点击右上角「新建引导」创建",
-
-          } : null
+          filteredGuides.length === 0
+            ? {
+                title: search ? '没有找到匹配的引导' : '暂无引导配置',
+                description: search ? undefined : '点击右上角「新建引导」创建',
+              }
+            : null
         }
       >
         <>
@@ -184,46 +176,52 @@ export function ManageGuides({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/50">
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">标题</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">guideKey</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">页面</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">触发条件</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">优先级</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">步骤</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">状态</th>
-                  <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">操作</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    标题
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    guideKey
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    页面
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    触发条件
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    优先级
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    步骤
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    状态
+                  </th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                    操作
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {filteredGuides.map((g, rowIndex) => {
                   const tc = normalizeTargetCondition(g.targetCondition);
-                  const condSummary = tc
-                    ? tc.conditions.map((c) => c.field).join(" · ")
-                    : "—";
+                  const condSummary = tc ? tc.conditions.map((c) => c.field).join(' · ') : '—';
                   return (
                     <tr
                       key={g.id}
                       className="border-b border-border/50 last:border-0 animate-fade-in-up"
                       style={{ animationDelay: `${Math.min(rowIndex * 30, 300)}ms` }}
                     >
-                      <td className="px-4 py-3 font-medium text-foreground">
-                        {g.title}
-                      </td>
+                      <td className="px-4 py-3 font-medium text-foreground">{g.title}</td>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
                         {g.guideKey}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {g.page}
-                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{g.page}</td>
                       <td className="max-w-[160px] truncate px-4 py-3 text-muted-foreground">
                         <span className="font-mono text-xs">{condSummary}</span>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {g.priority}
-                      </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {g.steps.length} 步
-                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{g.priority}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{g.steps.length} 步</td>
                       <td className="px-4 py-3">
                         <span
                           className={`inline-block rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[g.status]}`}
@@ -236,9 +234,7 @@ export function ManageGuides({
                           {g.status !== GuideStatus.PUBLISHED && (
                             <button
                               type="button"
-                              onClick={() =>
-                                toggleStatus(g, GuideStatus.PUBLISHED)
-                              }
+                              onClick={() => toggleStatus(g, GuideStatus.PUBLISHED)}
                               className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-green-600"
                               title="发布"
                             >
@@ -248,9 +244,7 @@ export function ManageGuides({
                           {g.status !== GuideStatus.ARCHIVED && (
                             <button
                               type="button"
-                              onClick={() =>
-                                toggleStatus(g, GuideStatus.ARCHIVED)
-                              }
+                              onClick={() => toggleStatus(g, GuideStatus.ARCHIVED)}
                               className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-yellow-600"
                               title="归档"
                             >
@@ -300,15 +294,15 @@ export function ManageGuides({
           <div className="md:hidden rounded-xl border border-border bg-card divide-y divide-border">
             {filteredGuides.map((g) => {
               const tc = normalizeTargetCondition(g.targetCondition);
-              const condSummary = tc
-                ? tc.conditions.map((c) => c.field).join(" · ")
-                : "—";
+              const condSummary = tc ? tc.conditions.map((c) => c.field).join(' · ') : '—';
               return (
                 <div key={g.id} className="p-4 animate-fade-in-up">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-foreground">{g.title}</p>
-                      <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">{g.guideKey}</p>
+                      <p className="mt-0.5 truncate font-mono text-xs text-muted-foreground">
+                        {g.guideKey}
+                      </p>
                     </div>
                     <span
                       className={`inline-block shrink-0 rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[g.status]}`}
@@ -317,8 +311,12 @@ export function ManageGuides({
                     </span>
                   </div>
                   <div className="mt-2 space-y-1 text-xs text-muted-foreground">
-                    <p>页面：{g.page || "—"} · 触发：{condSummary}</p>
-                    <p>优先级 {g.priority} · {g.steps.length} 步</p>
+                    <p>
+                      页面：{g.page || '—'} · 触发：{condSummary}
+                    </p>
+                    <p>
+                      优先级 {g.priority} · {g.steps.length} 步
+                    </p>
                   </div>
                   <div className="mt-3 flex items-center justify-end gap-1 border-t border-border/50 pt-2">
                     {g.status !== GuideStatus.PUBLISHED && (
@@ -377,7 +375,7 @@ export function ManageGuides({
       {editing && (
         <AdminModal
           open
-          title={form.id ? "编辑引导" : "新建引导"}
+          title={form.id ? '编辑引导' : '新建引导'}
           onClose={closeForm}
           maxWidth="3xl"
           footer={
@@ -401,13 +399,12 @@ export function ManageGuides({
                     保存中…
                   </>
                 ) : (
-                  "保存"
+                  '保存'
                 )}
               </button>
             </>
           }
         >
-
           {/* 基本信息 */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
@@ -424,9 +421,7 @@ export function ManageGuides({
               <label className={labelClass}>guideKey</label>
               <input
                 value={form.guideKey}
-                onChange={(e) =>
-                  setForm({ ...form, guideKey: e.target.value })
-                }
+                onChange={(e) => setForm({ ...form, guideKey: e.target.value })}
                 className={`${inputClass} font-mono`}
                 placeholder="如 reveal_password_setup_v1"
               />
@@ -438,30 +433,25 @@ export function ManageGuides({
             <div>
               <label className={labelClass}>页面</label>
               <select
-                value={
-                  pages.some((p) => p.path === form.page)
-                    ? form.page
-                    : "__custom__"
-                }
+                value={pages.some((p) => p.path === form.page) ? form.page : '__custom__'}
                 onChange={(e) => {
                   const v = e.target.value;
-                  setForm({ ...form, page: v === "__custom__" ? form.page : v });
+                  setForm({ ...form, page: v === '__custom__' ? form.page : v });
                 }}
                 className={inputClass}
               >
                 {pages.map((p) => (
                   <option key={p.path} value={p.path}>
-                    {p.path === "/" ? "/（首页）" : p.path} · {p.label}
+                    {p.path === '/' ? '/（首页）' : p.path} · {p.label}
                   </option>
                 ))}
                 {!pages.some((p) => p.path === form.page) && form.page && (
-                  <option value="__custom__">
-                    {form.page}（手写值，不在列表中）
-                  </option>
+                  <option value="__custom__">{form.page}（手写值，不在列表中）</option>
                 )}
               </select>
               <p className={helpClass}>
-                引导适用的后台页面（不含 adminSlug 前缀，如 /settings）。选项由服务端扫描后台路由自动生成；如页面未收录可选「手写值」保留当前路径。
+                引导适用的后台页面（不含 adminSlug 前缀，如
+                /settings）。选项由服务端扫描后台路由自动生成；如页面未收录可选「手写值」保留当前路径。
               </p>
             </div>
             <div>
@@ -469,22 +459,16 @@ export function ManageGuides({
               <input
                 type="number"
                 value={form.priority}
-                onChange={(e) =>
-                  setForm({ ...form, priority: Number(e.target.value) })
-                }
+                onChange={(e) => setForm({ ...form, priority: Number(e.target.value) })}
                 className={`${inputClass} [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none`}
               />
-              <p className={helpClass}>
-                同页面有多个引导可触发时，数字小的先显示。
-              </p>
+              <p className={helpClass}>同页面有多个引导可触发时，数字小的先显示。</p>
             </div>
             <div>
               <label className={labelClass}>状态</label>
               <select
                 value={form.status}
-                onChange={(e) =>
-                  setForm({ ...form, status: e.target.value as GuideStatus })
-                }
+                onChange={(e) => setForm({ ...form, status: e.target.value as GuideStatus })}
                 className={inputClass}
               >
                 {GUIDE_STATUS_VALUES.map((s) => (
@@ -493,9 +477,7 @@ export function ManageGuides({
                   </option>
                 ))}
               </select>
-              <p className={helpClass}>
-                草稿不触发；发布后按触发条件生效；归档停用。
-              </p>
+              <p className={helpClass}>草稿不触发；发布后按触发条件生效；归档停用。</p>
             </div>
           </div>
 
@@ -513,22 +495,19 @@ export function ManageGuides({
 
           {/* 引导步骤 */}
           <div className="mt-5">
-            <label className={labelClass}>
-              引导步骤（按顺序弹出的引导卡片）
-            </label>
+            <label className={labelClass}>引导步骤（按顺序弹出的引导卡片）</label>
             <StepEditor
               steps={form.steps}
               onChange={(steps) => setForm({ ...form, steps })}
-              guideId={form.id ?? null}
+              _guideId={form.id ?? null}
               page={form.page}
-              adminPath={adminPath}
+              _adminPath={adminPath}
               pages={pages}
               onPick={saveThenPick}
             />
           </div>
 
           {error && <p className="mt-3 text-sm text-destructive">{error}</p>}
-
         </AdminModal>
       )}
 

@@ -1,18 +1,21 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import { Editor } from "@bytemd/react";
-import gfm from "@bytemd/plugin-gfm";
-import type { BytemdPlugin } from "bytemd";
-import type { HighlighterCore } from "@shikijs/core";
-import { Image as ImageIcon, Columns2, Eye, Pencil } from "lucide-react";
-import { MediaPicker } from "@/components/media/media-picker";
-import "bytemd/dist/index.css";
-import { MediaType } from "@/lib/types/media";
-import { type ThemeMode } from "@/lib/theme/shared";
-import { getStoredTheme } from "@/lib/theme/client";
-import { createShikiHighlighter, createShikiRehypePlugin, getEffectiveTheme } from "@/lib/mdx/client";
-import { ZH_LOCALE } from "@/lib/mdx/client";
+import { useEffect, useRef, useState } from 'react';
+import { Editor } from '@bytemd/react';
+import gfm from '@bytemd/plugin-gfm';
+import type { BytemdPlugin } from 'bytemd';
+import type { HighlighterCore } from '@shikijs/core';
+import { ImageIcon, Columns2, Pencil } from 'lucide-react';
+import { MediaPicker } from '@/components/media/media-picker';
+import 'bytemd/dist/index.css';
+import { MediaType } from '@/lib/types/media';
+import { getStoredTheme } from '@/lib/theme/client';
+import {
+  createShikiHighlighter,
+  createShikiRehypePlugin,
+  getEffectiveTheme,
+} from '@/lib/mdx/client';
+import { ZH_LOCALE } from '@/lib/mdx/client';
 
 /**
  * Markdown 编辑器组件（基于 ByteMD + Shiki）——C10 精简后只做装配
@@ -39,62 +42,59 @@ export function MarkdownEditor({
 }) {
   const [highlighter, setHighlighter] = useState<HighlighterCore | null>(null);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
-  const [editorMode, setEditorMode] = useState<"split" | "tab">("split");
+  const [editorMode, setEditorMode] = useState<'split' | 'tab'>('split');
   const wrapperRef = useRef<HTMLDivElement>(null);
   // 主题状态
-  const [themeMode, setThemeMode] = useState<ThemeMode>("system");
-  const [effectiveTheme, setEffectiveTheme] = useState<"light" | "dark" | "warm">("dark");
+  const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark' | 'warm'>('dark');
 
   // 响应式：移动端默认 tab 模式（标签页切换），桌面端默认 split 模式（左右分屏）
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(max-width: 768px)");
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
     const handleChange = (e: MediaQueryListEvent) => {
-      setEditorMode(e.matches ? "tab" : "split");
+      setEditorMode(e.matches ? 'tab' : 'split');
     };
 
     // 初始设置
-    setEditorMode(mediaQuery.matches ? "tab" : "split");
+    setEditorMode(mediaQuery.matches ? 'tab' : 'split');
 
     // 监听变化
-    mediaQuery.addEventListener("change", handleChange);
-    return () => mediaQuery.removeEventListener("change", handleChange);
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   // 监听主题变化（使用 MutationObserver 监听 html 元素的 class 变化）
   useEffect(() => {
     // 初始获取主题
     const initialTheme = getStoredTheme();
-    setThemeMode(initialTheme);
     setEffectiveTheme(getEffectiveTheme(initialTheme));
 
     // 监听系统主题变化
-    const systemMediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const systemMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     const handleSystemThemeChange = () => {
       setEffectiveTheme((prev) => {
         // 只有当前是 system 模式时才更新
         const current = getStoredTheme();
-        if (current === "system") {
-          return getEffectiveTheme("system");
+        if (current === 'system') {
+          return getEffectiveTheme('system');
         }
         return prev;
       });
     };
-    systemMediaQuery.addEventListener("change", handleSystemThemeChange);
+    systemMediaQuery.addEventListener('change', handleSystemThemeChange);
 
     // 监听 html 元素的 class 变化（主题切换时会修改 class）
     const observer = new MutationObserver(() => {
       const currentTheme = getStoredTheme();
-      setThemeMode(currentTheme);
       setEffectiveTheme(getEffectiveTheme(currentTheme));
     });
 
     observer.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ["class"],
+      attributeFilter: ['class'],
     });
 
     return () => {
-      systemMediaQuery.removeEventListener("change", handleSystemThemeChange);
+      systemMediaQuery.removeEventListener('change', handleSystemThemeChange);
       observer.disconnect();
     };
   }, []); // 空依赖数组，只运行一次
@@ -108,7 +108,7 @@ export function MarkdownEditor({
         if (!cancelled) setHighlighter(h);
       })
       .catch((err) => {
-        console.error("Shiki highlighter 初始化失败：", err);
+        console.error('Shiki highlighter 初始化失败：', err);
       });
 
     return () => {
@@ -123,18 +123,18 @@ export function MarkdownEditor({
     for (const file of files) {
       try {
         const formData = new FormData();
-        formData.append("file", file);
-        formData.append("type", MediaType.ARTICLE); // 从编辑器上传默认是文章图片
+        formData.append('file', file);
+        formData.append('type', MediaType.ARTICLE); // 从编辑器上传默认是文章图片
 
         // 使用新的媒体库上传 API（自动保存到 media 表）
-        const response = await fetch("/api/admin/media", {
-          method: "POST",
+        const response = await fetch('/api/admin/media', {
+          method: 'POST',
           body: formData,
         });
 
         if (!response.ok) {
           const error = await response.json();
-          throw new Error(error.error || "上传失败");
+          throw new Error(error.error || '上传失败');
         }
 
         const result = await response.json();
@@ -144,13 +144,13 @@ export function MarkdownEditor({
           title: file.name,
         });
       } catch (error) {
-        console.error("图片上传失败：", error);
+        console.error('图片上传失败：', error);
         // 上传失败时尝试旧的上传 API（兼容）
         try {
           const formData = new FormData();
-          formData.append("file", file);
-          const response = await fetch("/api/upload", {
-            method: "POST",
+          formData.append('file', file);
+          const response = await fetch('/api/upload', {
+            method: 'POST',
             body: formData,
           });
           if (response.ok) {
@@ -162,7 +162,7 @@ export function MarkdownEditor({
             });
           }
         } catch (e) {
-          console.error("旧上传 API 也失败：", e);
+          console.error('旧上传 API 也失败：', e);
         }
       }
     }
@@ -172,10 +172,12 @@ export function MarkdownEditor({
 
   // 从媒体库选择图片：优先在光标位置插入，编辑器实例不可用时兜底追加到末尾
   const handleMediaSelect = (url: string, alt?: string) => {
-    const markdown = `![${alt || "图片"}](${url})`;
+    const markdown = `![${alt || '图片'}](${url})`;
     // ByteMD 底层是 CodeMirror 5，实例挂在 .CodeMirror 元素上（bytemd 内部同款遍历方式）
-    const cmEl = wrapperRef.current?.querySelector<HTMLElement>(".CodeMirror") as
-      | (HTMLElement & { CodeMirror?: { replaceSelection: (t: string) => void; focus: () => void } })
+    const cmEl = wrapperRef.current?.querySelector<HTMLElement>('.CodeMirror') as
+      | (HTMLElement & {
+          CodeMirror?: { replaceSelection: (t: string) => void; focus: () => void };
+        })
       | null
       | undefined;
     const editor = cmEl?.CodeMirror;
@@ -186,7 +188,7 @@ export function MarkdownEditor({
       return;
     }
     // 兜底：无编辑器实例（如预览/仅预览模式）→ 追加到末尾
-    const sep = value && !value.endsWith("\n") ? "\n\n" : "\n";
+    const sep = value && !value.endsWith('\n') ? '\n\n' : '\n';
     onChange(value ? `${value}${sep}${markdown}\n` : markdown);
   };
 
@@ -194,7 +196,7 @@ export function MarkdownEditor({
   // 注意：preview 代码块使用固定的 github-dark 主题，与前台文章详情页保持一致
   const plugins: BytemdPlugin[] = [gfm()];
   if (highlighter) {
-    plugins.push(createShikiRehypePlugin(highlighter, "github-dark"));
+    plugins.push(createShikiRehypePlugin(highlighter, 'github-dark'));
   }
 
   // highlighter 未就绪时显示加载状态
@@ -207,7 +209,10 @@ export function MarkdownEditor({
   }
 
   return (
-    <div className="bytemd-editor-wrapper overflow-hidden rounded-lg border border-border bg-background" ref={wrapperRef}>
+    <div
+      className="bytemd-editor-wrapper overflow-hidden rounded-lg border border-border bg-background"
+      ref={wrapperRef}
+    >
       {/* 自定义工具栏：图片库按钮 + 模式切换 */}
       <div className="flex items-center gap-1 border-b border-border bg-muted/30 px-2 py-1">
         <button
@@ -224,11 +229,11 @@ export function MarkdownEditor({
           <div className="flex items-center rounded-md border border-border overflow-hidden">
             <button
               type="button"
-              onClick={() => setEditorMode("tab")}
+              onClick={() => setEditorMode('tab')}
               className={`flex items-center gap-1 px-2 py-1 text-xs transition-colors ${
-                editorMode === "tab"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                editorMode === 'tab'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
               }`}
               title="编辑/预览标签页模式（推荐移动端）"
             >
@@ -237,11 +242,11 @@ export function MarkdownEditor({
             </button>
             <button
               type="button"
-              onClick={() => setEditorMode("split")}
+              onClick={() => setEditorMode('split')}
               className={`flex items-center gap-1 px-2 py-1 text-xs transition-colors ${
-                editorMode === "split"
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-accent hover:text-foreground"
+                editorMode === 'split'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-muted-foreground hover:bg-accent hover:text-foreground'
               }`}
               title="左右分屏模式（推荐桌面端）"
             >

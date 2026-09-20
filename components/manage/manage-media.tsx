@@ -1,28 +1,28 @@
-"use client";
+'use client';
 
-import { useEffect, useState, useRef } from "react";
+import { useCallback, useEffect, useState } from 'react';
 import {
   Upload,
   Trash2,
-  Search,
-  Image as ImageIcon,
+  ImageIcon,
   RefreshCw,
   AlertTriangle,
   Edit3,
   Star,
   X,
   ZoomIn,
-} from "lucide-react";
-import { ConfirmDialog } from "@/components/shared/confirm-dialog";
-import { AdminModal } from "@/components/admin/modal";
-import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
-import { AdminListPage } from "@/components/admin/list-page";
-import { useMediaUpload } from "@/components/media/use-media-upload";
-import { UploadDialog } from "@/components/media/upload-dialog";
-import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
-import { Switch } from "@/components/ui/switch";
-import { TagInput } from "@/components/shared/tag-input";
-import { StorageDriverType } from "@/lib/types/storage";
+} from 'lucide-react';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { AdminModal } from '@/components/admin/modal';
+import { MediaType, MEDIA_TYPE_LABELS } from '@/lib/types/media';
+import { AdminListPage } from '@/components/admin/list-page';
+import { useMediaUpload } from '@/components/media/use-media-upload';
+import { UploadDialog } from '@/components/media/upload-dialog';
+import { CreateButton, RefreshButton } from '@/components/admin/action-buttons';
+import { Switch } from '@/components/ui/switch';
+import { TagInput } from '@/components/shared/tag-input';
+import { StorageDriverType } from '@/lib/types/storage';
+import Image from 'next/image';
 
 type MediaItem = {
   id: string;
@@ -56,20 +56,19 @@ type MediaItem = {
 export function ManageMedia() {
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<MediaType | "ALL">("ALL");
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState<MediaType | 'ALL'>('ALL');
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [pageSize] = useState(20);
-  const [uploadOpen, setUploadOpen] = useState(false);
   const [showUnusedCleanup, setShowUnusedCleanup] = useState(false);
   const [unusedItems, setUnusedItems] = useState<MediaItem[]>([]);
   const [unusedLoading, setUnusedLoading] = useState(false);
 
   // 编辑弹窗状态
   const [editingItem, setEditingItem] = useState<MediaItem | null>(null);
-  const [editTitle, setEditTitle] = useState("");
-  const [editDescription, setEditDescription] = useState("");
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
   const [editFeatured, setEditFeatured] = useState(false);
   const [editTags, setEditTags] = useState<string[]>([]);
   const [allTags, setAllTags] = useState<{ id: string; name: string; slug: string }[]>([]);
@@ -77,14 +76,14 @@ export function ManageMedia() {
 
   // 灯箱状态
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null);
-  const [lightboxTitle, setLightboxTitle] = useState<string>("");
+  const [lightboxTitle, setLightboxTitle] = useState<string>('');
 
   // 当前存储驱动
   const [currentDriver, setCurrentDriver] = useState<StorageDriverType>(StorageDriverType.LOCAL);
 
   // 加载当前存储驱动
   useEffect(() => {
-    fetch("/api/admin/settings")
+    fetch('/api/admin/settings')
       .then((res) => res.json())
       .then((data) => {
         if (data.storage?.driver) {
@@ -95,14 +94,14 @@ export function ManageMedia() {
   }, []);
 
   // 加载媒体列表
-  const loadItems = async () => {
+  const loadItems = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      params.set("page", String(page));
-      params.set("pageSize", String(pageSize));
-      if (typeFilter !== "ALL") params.set("type", typeFilter);
-      if (search) params.set("search", search);
+      params.set('page', String(page));
+      params.set('pageSize', String(pageSize));
+      if (typeFilter !== 'ALL') params.set('type', typeFilter);
+      if (search) params.set('search', search);
 
       const res = await fetch(`/api/admin/media?${params.toString()}`);
       if (res.ok) {
@@ -111,15 +110,15 @@ export function ManageMedia() {
         setTotal(data.total || 0);
       }
     } catch (e) {
-      console.error("加载媒体库失败：", e);
+      console.error('加载媒体库失败：', e);
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, pageSize, typeFilter, search]);
 
   useEffect(() => {
     loadItems();
-  }, [page, typeFilter, search]);
+  }, [loadItems]);
 
   // 删除确认对话框受控状态
   const [confirmState, setConfirmState] = useState<{
@@ -131,8 +130,8 @@ export function ManageMedia() {
   // 删除
   const deleteItem = async (id: string) => {
     setConfirmState({
-      title: "删除这张图片",
-      description: "存储中的文件也会被删除。",
+      title: '删除这张图片',
+      description: '存储中的文件也会被删除。',
       onConfirm: async () => {
         setConfirmState(null);
         await doDeleteItem(id);
@@ -143,12 +142,12 @@ export function ManageMedia() {
   const doDeleteItem = async (id: string) => {
     try {
       await fetch(`/api/admin/media/${id}`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
       await loadItems();
     } catch (e) {
-      console.error("删除失败：", e);
-      alert("删除失败，请重试");
+      console.error('删除失败：', e);
+      alert('删除失败，请重试');
     }
   };
 
@@ -156,8 +155,8 @@ export function ManageMedia() {
   const openEditModal = async (item: MediaItem) => {
     setEditingItem(item);
     setEditSaving(false);
-    setEditTitle(item.title || "");
-    setEditDescription(item.description || "");
+    setEditTitle(item.title || '');
+    setEditDescription(item.description || '');
     setEditFeatured(item.featured ?? false);
     setEditTags([]);
 
@@ -165,7 +164,7 @@ export function ManageMedia() {
     try {
       const [mediaTagsRes, allTagsRes] = await Promise.all([
         fetch(`/api/admin/media/${item.id}/tags`),
-        fetch("/api/admin/tags"),
+        fetch('/api/admin/tags'),
       ]);
 
       if (mediaTagsRes.ok) {
@@ -178,7 +177,7 @@ export function ManageMedia() {
         setAllTags(data.tags || []);
       }
     } catch (e) {
-      console.error("加载标签失败：", e);
+      console.error('加载标签失败：', e);
     }
   };
 
@@ -200,33 +199,33 @@ export function ManageMedia() {
 
       // 1. 保存基本信息
       const res = await fetch(`/api/admin/media/${editingItem.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updateData),
       });
 
       if (!res.ok) {
-        alert("保存基本信息失败，请重试");
+        alert('保存基本信息失败，请重试');
         return;
       }
 
       // 2. 保存标签
       const tagsRes = await fetch(`/api/admin/media/${editingItem.id}/tags`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tags: editTags }),
       });
 
       if (!tagsRes.ok) {
-        alert("保存标签失败，请重试");
+        alert('保存标签失败，请重试');
         return;
       }
 
       setEditingItem(null);
       await loadItems();
     } catch (e) {
-      console.error("保存失败：", e);
-      alert("保存失败，请重试");
+      console.error('保存失败：', e);
+      alert('保存失败，请重试');
     } finally {
       setEditSaving(false);
     }
@@ -241,20 +240,20 @@ export function ManageMedia() {
   // 关闭灯箱
   const closeLightbox = () => {
     setLightboxUrl(null);
-    setLightboxTitle("");
+    setLightboxTitle('');
   };
 
   // 加载未使用图片
   const loadUnusedMedia = async () => {
     setUnusedLoading(true);
     try {
-      const res = await fetch("/api/admin/media/unused");
+      const res = await fetch('/api/admin/media/unused');
       if (res.ok) {
         const data = await res.json();
         setUnusedItems(data.items || []);
       }
     } catch (e) {
-      console.error("加载未使用图片失败：", e);
+      console.error('加载未使用图片失败：', e);
     } finally {
       setUnusedLoading(false);
     }
@@ -264,7 +263,7 @@ export function ManageMedia() {
   const cleanupUnusedMedia = async () => {
     setConfirmState({
       title: `删除 ${unusedItems.length} 张未使用的图片`,
-      description: "此操作不可恢复。",
+      description: '此操作不可恢复。',
       onConfirm: async () => {
         setConfirmState(null);
         await doCleanupUnusedMedia();
@@ -274,15 +273,15 @@ export function ManageMedia() {
 
   const doCleanupUnusedMedia = async () => {
     try {
-      await fetch("/api/admin/media/unused", {
-        method: "DELETE",
+      await fetch('/api/admin/media/unused', {
+        method: 'DELETE',
       });
       setShowUnusedCleanup(false);
       setUnusedItems([]);
       await loadItems();
     } catch (e) {
-      console.error("清理未使用图片失败：", e);
-      alert("清理失败，请重试");
+      console.error('清理未使用图片失败：', e);
+      alert('清理失败，请重试');
     }
   };
 
@@ -290,7 +289,7 @@ export function ManageMedia() {
 
   // 格式化文件大小
   const formatSize = (bytes: number | null) => {
-    if (!bytes) return "-";
+    if (!bytes) return '-';
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
@@ -301,6 +300,7 @@ export function ManageMedia() {
     uploadType,
     setUploadType,
     uploadFiles,
+    uploadOpen,
     openUpload,
     closeUpload,
     pickFiles,
@@ -310,235 +310,243 @@ export function ManageMedia() {
 
   return (
     <>
-    <AdminListPage
-      title="媒体库"
-      titleExtra={
-        <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-          {currentDriver === StorageDriverType.LOCAL ? "本地存储" : currentDriver === StorageDriverType.GITHUB ? "GitHub 图床" : "S3 存储"}
-        </span>
-      }
-      actions={
-        <>
-          <button
-            type="button"
-            onClick={() => {
-              setShowUnusedCleanup(!showUnusedCleanup);
-              if (!showUnusedCleanup) loadUnusedMedia();
-            }}
-            className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
-          >
-            <AlertTriangle className="h-4 w-4" />
-            <span className="hidden sm:inline">清理未使用</span>
-          </button>
-          <CreateButton onClick={openUpload} label="上传图片" icon={Upload} />
-          <RefreshButton onClick={loadItems} />
-        </>
-      }
-      search={{
-        value: search,
-        onChange: (v) => {
-          setSearch(v);
-          setPage(1);
-        },
-        placeholder: "搜索图片标题或 URL…",
-      }}
-      filters={
-        <div className="ml-auto flex items-center gap-2">
-          <select
-            value={typeFilter}
-            onChange={(e) => {
-              setTypeFilter(e.target.value as MediaType | "ALL");
-              setPage(1);
-            }}
-            className="shrink-0 rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="ALL">全部图片</option>
-            <option value={MediaType.ARTICLE}>{MEDIA_TYPE_LABELS[MediaType.ARTICLE]}</option>
-            <option value={MediaType.GALLERY}>{MEDIA_TYPE_LABELS[MediaType.GALLERY]}</option>
-          </select>
-        </div>
-      }
-      loading={loading}
-      empty={
-        items.length === 0 ? {
-
-          icon: <ImageIcon className="h-12 w-12" />,
-          title: "还没有图片",
-          description: "点击上方按钮上传第一张吧",
-      
-        } : null
-      }
-    >
-
-      {/* 未使用图片清理面板（动画展开/收起） */}
-      <div
-        className={`grid transition-all duration-300 ease-in-out ${
-          showUnusedCleanup ? "grid-rows-[1fr] opacity-100 mb-6" : "grid-rows-[0fr] opacity-0 mb-0"
-        }`}
+      <AdminListPage
+        title="媒体库"
+        titleExtra={
+          <span className="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+            {currentDriver === StorageDriverType.LOCAL
+              ? '本地存储'
+              : currentDriver === StorageDriverType.GITHUB
+                ? 'GitHub 图床'
+                : 'S3 存储'}
+          </span>
+        }
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => {
+                setShowUnusedCleanup(!showUnusedCleanup);
+                if (!showUnusedCleanup) loadUnusedMedia();
+              }}
+              className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              <span className="hidden sm:inline">清理未使用</span>
+            </button>
+            <CreateButton onClick={openUpload} label="上传图片" icon={Upload} />
+            <RefreshButton onClick={loadItems} />
+          </>
+        }
+        search={{
+          value: search,
+          onChange: (v) => {
+            setSearch(v);
+            setPage(1);
+          },
+          placeholder: '搜索图片标题或 URL…',
+        }}
+        filters={
+          <div className="ml-auto flex items-center gap-2">
+            <select
+              value={typeFilter}
+              onChange={(e) => {
+                setTypeFilter(e.target.value as MediaType | 'ALL');
+                setPage(1);
+              }}
+              className="shrink-0 rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="ALL">全部图片</option>
+              <option value={MediaType.ARTICLE}>{MEDIA_TYPE_LABELS[MediaType.ARTICLE]}</option>
+              <option value={MediaType.GALLERY}>{MEDIA_TYPE_LABELS[MediaType.GALLERY]}</option>
+            </select>
+          </div>
+        }
+        loading={loading}
+        empty={
+          items.length === 0
+            ? {
+                icon: <ImageIcon className="h-12 w-12" />,
+                title: '还没有图片',
+                description: '点击上方按钮上传第一张吧',
+              }
+            : null
+        }
       >
-        <div className="overflow-hidden">
-          <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-            <div className="mb-3 flex items-center justify-between">
-              <h3 className="flex items-center gap-2 text-sm font-semibold text-destructive">
-                <AlertTriangle className="h-4 w-4" />
-                未使用图片清理
-              </h3>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={loadUnusedMedia}
-                  disabled={unusedLoading}
-                  className="flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs hover:bg-accent transition-colors"
-                >
-                  <RefreshCw className={`h-3 w-3 ${unusedLoading ? "animate-spin" : ""}`} />
-                  刷新
-                </button>
-                <button
-                  type="button"
-                  onClick={cleanupUnusedMedia}
-                  disabled={unusedItems.length === 0}
-                  className="rounded-md bg-destructive px-2 py-1 text-xs text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors"
-                >
-                  全部删除 ({unusedItems.length})
-                </button>
+        {/* 未使用图片清理面板（动画展开/收起） */}
+        <div
+          className={`grid transition-all duration-300 ease-in-out ${
+            showUnusedCleanup
+              ? 'grid-rows-[1fr] opacity-100 mb-6'
+              : 'grid-rows-[0fr] opacity-0 mb-0'
+          }`}
+        >
+          <div className="overflow-hidden">
+            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="flex items-center gap-2 text-sm font-semibold text-destructive">
+                  <AlertTriangle className="h-4 w-4" />
+                  未使用图片清理
+                </h3>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={loadUnusedMedia}
+                    disabled={unusedLoading}
+                    className="flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs hover:bg-accent transition-colors"
+                  >
+                    <RefreshCw className={`h-3 w-3 ${unusedLoading ? 'animate-spin' : ''}`} />
+                    刷新
+                  </button>
+                  <button
+                    type="button"
+                    onClick={cleanupUnusedMedia}
+                    disabled={unusedItems.length === 0}
+                    className="rounded-md bg-destructive px-2 py-1 text-xs text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors"
+                  >
+                    全部删除 ({unusedItems.length})
+                  </button>
+                </div>
               </div>
+              {unusedLoading ? (
+                <p className="text-sm text-muted-foreground">扫描中…</p>
+              ) : unusedItems.length === 0 ? (
+                <p className="text-sm text-muted-foreground">没有发现未使用的图片 🎉</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-6">
+                  {unusedItems.slice(0, 12).map((item) => (
+                    <div
+                      key={item.id}
+                      className="relative aspect-square overflow-hidden rounded border animate-fade-in-up"
+                    >
+                      <Image
+                        src={item.url}
+                        alt={item.title || '未使用图片'}
+                        width={200}
+                        height={200}
+                        className="h-full w-full object-cover"
+                        unoptimized
+                      />
+                    </div>
+                  ))}
+                  {unusedItems.length > 12 && (
+                    <div className="flex aspect-square items-center justify-center rounded border bg-muted text-sm text-muted-foreground">
+                      +{unusedItems.length - 12}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
-            {unusedLoading ? (
-              <p className="text-sm text-muted-foreground">扫描中…</p>
-            ) : unusedItems.length === 0 ? (
-              <p className="text-sm text-muted-foreground">没有发现未使用的图片 🎉</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-6">
-                {unusedItems.slice(0, 12).map((item) => (
-                  <div key={item.id} className="relative aspect-square overflow-hidden rounded border animate-fade-in-up">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={item.url}
-                      alt={item.title || "未使用图片"}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                  </div>
-                ))}
-                {unusedItems.length > 12 && (
-                  <div className="flex aspect-square items-center justify-center rounded border bg-muted text-sm text-muted-foreground">
-                    +{unusedItems.length - 12}
-                  </div>
-                )}
-              </div>
-            )}
           </div>
         </div>
-      </div>
 
-      {/* 媒体网格（key 变化时触发切换动画） */}
-      <div
-        key={`grid-${typeFilter}-${search}-${page}`}
-        className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 animate-fade-in-up"
-      >
-            {items.map((item, index) => (
+        {/* 媒体网格（key 变化时触发切换动画） */}
+        <div
+          key={`grid-${typeFilter}-${search}-${page}`}
+          className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 animate-fade-in-up"
+        >
+          {items.map((item, index) => (
+            <div
+              key={item.id}
+              className="group overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
+              style={{ animationDelay: `${index * 30}ms` }}
+            >
+              {/* 图片 */}
               <div
-                key={item.id}
-                className="group overflow-hidden rounded-lg border border-border bg-card transition-all duration-300 hover:shadow-lg hover:-translate-y-1"
-                style={{ animationDelay: `${index * 30}ms` }}
+                className="relative aspect-square overflow-hidden bg-muted cursor-zoom-in"
+                onClick={() => openLightbox(item.url, item.title || '媒体图片')}
               >
-                {/* 图片 */}
-                <div
-                  className="relative aspect-square overflow-hidden bg-muted cursor-zoom-in"
-                  onClick={() => openLightbox(item.url, item.title || "媒体图片")}
-                >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={item.url}
-                    alt={item.title || "媒体图片"}
-                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                    loading="lazy"
-                  />
-                  {/* 类型标签 */}
-                  <div className="absolute top-2 left-2">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs ${
-                        item.type === MediaType.ARTICLE
-                          ? "bg-blue-500/90 text-white"
-                          : "bg-purple-500/90 text-white"
-                      }`}
-                    >
-                      {MEDIA_TYPE_LABELS[item.type as MediaType] || item.type}
-                    </span>
-                  </div>
-                  {/* 放大图标（hover 显示） */}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
-                    <ZoomIn className="h-8 w-8 text-white drop-shadow-lg" />
-                  </div>
+                <Image
+                  src={item.url}
+                  alt={item.title || '媒体图片'}
+                  width={300}
+                  height={300}
+                  className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  unoptimized
+                />
+                {/* 类型标签 */}
+                <div className="absolute top-2 left-2">
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs ${
+                      item.type === MediaType.ARTICLE
+                        ? 'bg-blue-500/90 text-white'
+                        : 'bg-purple-500/90 text-white'
+                    }`}
+                  >
+                    {MEDIA_TYPE_LABELS[item.type as MediaType] || item.type}
+                  </span>
                 </div>
-
-                {/* 信息 */}
-                <div className="p-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="truncate text-sm font-medium flex-1">
-                      {item.title || "未命名"}
-                    </h3>
-                    {/* 相册图片显示精选标记（只有真正精选的才显示） */}
-                    {item.type === MediaType.GALLERY && item.featured === true && (
-                      <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500 ml-1 flex-shrink-0" />
-                    )}
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {formatSize(item.size)} · {item.storageDriver}
-                  </p>
-
-                  {/* 操作按钮 */}
-                  <div className="mt-3 flex gap-1">
-                    {/* 编辑按钮（所有图片都可以编辑：标题/描述/标签，相册图片还可以编辑精选） */}
-                    <button
-                      type="button"
-                      onClick={() => openEditModal(item)}
-                      className="flex flex-1 items-center justify-center gap-1 rounded-md border border-input px-2 py-1 text-xs hover:bg-accent transition-colors"
-                      title={item.type === MediaType.GALLERY ? "编辑信息/精选/标签" : "编辑信息/标签"}
-                    >
-                      <Edit3 className="h-3 w-3" />
-                      编辑
-                    </button>
-                    {/* 删除 */}
-                    <button
-                      type="button"
-                      onClick={() => deleteItem(item.id)}
-                      className="flex items-center justify-center rounded-md border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10 transition-colors"
-                      title="删除"
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </button>
-                  </div>
+                {/* 放大图标（hover 显示） */}
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">
+                  <ZoomIn className="h-8 w-8 text-white drop-shadow-lg" />
                 </div>
               </div>
-            ))}
-          </div>
 
-          {/* 分页 */}
-          {totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-center gap-2">
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="rounded-md border border-input px-3 py-1.5 text-sm disabled:opacity-50 hover:bg-accent transition-all duration-200 hover:scale-105 active:scale-95"
-              >
-                上一页
-              </button>
-              <span className="text-sm text-muted-foreground">
-                第 {page} / {totalPages} 页（共 {total} 张）
-              </span>
-              <button
-                type="button"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="rounded-md border border-input px-3 py-1.5 text-sm disabled:opacity-50 hover:bg-accent transition-all duration-200 hover:scale-105 active:scale-95"
-              >
-                下一页
-              </button>
+              {/* 信息 */}
+              <div className="p-3">
+                <div className="flex items-center justify-between">
+                  <h3 className="truncate text-sm font-medium flex-1">{item.title || '未命名'}</h3>
+                  {/* 相册图片显示精选标记（只有真正精选的才显示） */}
+                  {item.type === MediaType.GALLERY && item.featured === true && (
+                    <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500 ml-1 flex-shrink-0" />
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {formatSize(item.size)} · {item.storageDriver}
+                </p>
+
+                {/* 操作按钮 */}
+                <div className="mt-3 flex gap-1">
+                  {/* 编辑按钮（所有图片都可以编辑：标题/描述/标签，相册图片还可以编辑精选） */}
+                  <button
+                    type="button"
+                    onClick={() => openEditModal(item)}
+                    className="flex flex-1 items-center justify-center gap-1 rounded-md border border-input px-2 py-1 text-xs hover:bg-accent transition-colors"
+                    title={item.type === MediaType.GALLERY ? '编辑信息/精选/标签' : '编辑信息/标签'}
+                  >
+                    <Edit3 className="h-3 w-3" />
+                    编辑
+                  </button>
+                  {/* 删除 */}
+                  <button
+                    type="button"
+                    onClick={() => deleteItem(item.id)}
+                    className="flex items-center justify-center rounded-md border border-destructive/30 px-2 py-1 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+                    title="删除"
+                  >
+                    <Trash2 className="h-3 w-3" />
+                  </button>
+                </div>
+              </div>
             </div>
-      )}
-    </AdminListPage>
+          ))}
+        </div>
+
+        {/* 分页 */}
+        {totalPages > 1 && (
+          <div className="mt-6 flex items-center justify-center gap-2">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="rounded-md border border-input px-3 py-1.5 text-sm disabled:opacity-50 hover:bg-accent transition-all duration-200 hover:scale-105 active:scale-95"
+            >
+              上一页
+            </button>
+            <span className="text-sm text-muted-foreground">
+              第 {page} / {totalPages} 页（共 {total} 张）
+            </span>
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="rounded-md border border-input px-3 py-1.5 text-sm disabled:opacity-50 hover:bg-accent transition-all duration-200 hover:scale-105 active:scale-95"
+            >
+              下一页
+            </button>
+          </div>
+        )}
+      </AdminListPage>
 
       {/* 编辑弹窗 */}
       {editingItem && (
@@ -564,73 +572,78 @@ export function ManageMedia() {
                 disabled={editSaving}
                 className="rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
-                {editSaving ? "保存中…" : "保存"}
+                {editSaving ? '保存中…' : '保存'}
               </button>
             </>
           }
         >
-            <div className="space-y-4">
-                {/* 预览图 */}
-                <div className="aspect-video overflow-hidden rounded-lg bg-muted">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={editingItem.url}
-                    alt={editingItem.title || "预览"}
-                    className="h-full w-full object-contain"
-                  />
-                </div>
-
-                {/* 标题 */}
-                <div>
-                  <label className="mb-1 block text-sm font-medium">标题</label>
-                  <input
-                    type="text"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    placeholder="输入图片标题"
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                  />
-                </div>
-
-                {/* 描述 */}
-                <div>
-                  <label className="mb-1 block text-sm font-medium">描述</label>
-                  <textarea
-                    value={editDescription}
-                    onChange={(e) => setEditDescription(e.target.value)}
-                    placeholder="输入图片描述"
-                    rows={3}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
-                  />
-                </div>
-
-                {/* 标签（文章图片和相册图片都可以编辑） */}
-                <div>
-                  <label className="mb-1 block text-sm font-medium">标签</label>
-                  <TagInput
-                    value={editTags}
-                    onChange={setEditTags}
-                    allTags={allTags}
-                    placeholder="输入标签后回车添加，可选择已有标签"
-                  />
-                  <p className="mt-1 text-xs text-muted-foreground">回车添加新标签，输入时可选择已有标签</p>
-                </div>
-
-                {/* 精选开关（仅相册图片显示，文章图片默认 false） */}
-                {editingItem.type === MediaType.GALLERY && (
-                  <div className="flex items-center justify-between rounded-lg border border-input p-3">
-                    <div className="flex items-center gap-2">
-                      <Star className={`h-4 w-4 ${editFeatured ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"}`} />
-                      <span className="text-sm font-medium">设为精选</span>
-                    </div>
-                    <Switch
-                      checked={editFeatured}
-                      onCheckedChange={(checked) => setEditFeatured(checked)}
-                    />
-                  </div>
-                )}
-
+          <div className="space-y-4">
+            {/* 预览图 */}
+            <div className="aspect-video overflow-hidden rounded-lg bg-muted">
+              <Image
+                src={editingItem.url}
+                alt={editingItem.title || '预览'}
+                width={800}
+                height={450}
+                className="h-full w-full object-contain"
+                unoptimized
+              />
             </div>
+
+            {/* 标题 */}
+            <div>
+              <label className="mb-1 block text-sm font-medium">标题</label>
+              <input
+                type="text"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                placeholder="输入图片标题"
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+
+            {/* 描述 */}
+            <div>
+              <label className="mb-1 block text-sm font-medium">描述</label>
+              <textarea
+                value={editDescription}
+                onChange={(e) => setEditDescription(e.target.value)}
+                placeholder="输入图片描述"
+                rows={3}
+                className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20 resize-none"
+              />
+            </div>
+
+            {/* 标签（文章图片和相册图片都可以编辑） */}
+            <div>
+              <label className="mb-1 block text-sm font-medium">标签</label>
+              <TagInput
+                value={editTags}
+                onChange={setEditTags}
+                allTags={allTags}
+                placeholder="输入标签后回车添加，可选择已有标签"
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                回车添加新标签，输入时可选择已有标签
+              </p>
+            </div>
+
+            {/* 精选开关（仅相册图片显示，文章图片默认 false） */}
+            {editingItem.type === MediaType.GALLERY && (
+              <div className="flex items-center justify-between rounded-lg border border-input p-3">
+                <div className="flex items-center gap-2">
+                  <Star
+                    className={`h-4 w-4 ${editFeatured ? 'text-yellow-500 fill-yellow-500' : 'text-muted-foreground'}`}
+                  />
+                  <span className="text-sm font-medium">设为精选</span>
+                </div>
+                <Switch
+                  checked={editFeatured}
+                  onCheckedChange={(checked) => setEditFeatured(checked)}
+                />
+              </div>
+            )}
+          </div>
         </AdminModal>
       )}
 
@@ -650,16 +663,18 @@ export function ManageMedia() {
           </button>
 
           {/* 标题 */}
-          <div className="absolute top-4 left-4 text-white text-sm opacity-80">
-            {lightboxTitle}
-          </div>
+          <div className="absolute top-4 left-4 text-white text-sm opacity-80">{lightboxTitle}</div>
 
           {/* 图片 */}
-          <img
+          <Image
             src={lightboxUrl}
             alt={lightboxTitle}
+            fill={false}
+            width={1200}
+            height={800}
             className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg shadow-2xl"
             onClick={(e) => e.stopPropagation()}
+            unoptimized
           />
         </div>
       )}
@@ -678,7 +693,7 @@ export function ManageMedia() {
       {/* 删除确认 */}
       <ConfirmDialog
         open={!!confirmState}
-        title={confirmState?.title ?? ""}
+        title={confirmState?.title ?? ''}
         description={confirmState?.description}
         confirmLabel="删除"
         onConfirm={confirmState?.onConfirm ?? (() => {})}

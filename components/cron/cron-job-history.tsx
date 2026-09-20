@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 定时任务执行历史弹窗
@@ -9,7 +9,7 @@
  *   列表项 date/statusText/httpStatus，详情标识符为 identifier（字符串）
  * - 尊重免费版 cron-job.org API 每日配额：不在弹窗内自动批量请求
  */
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 import {
   X,
   Loader2,
@@ -21,31 +21,37 @@ import {
   ChevronUp,
   Eye,
   ShieldAlert,
-} from "lucide-react";
-import { useToast } from "@/components/ui/toast";
-import type { CronJobHistoryItem, CronJobExecutionDetail } from "@/lib/types/cron";
+} from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
+import type { CronJobHistoryItem, CronJobExecutionDetail } from '@/lib/types/cron';
 
 /** 官方 statusText → 展示样式 */
-function statusMeta(statusText: string): { label: string; tone: "ok" | "warn" | "fail" } {
-  const t = (statusText || "").toUpperCase();
-  if (t === "OK") return { label: "OK", tone: "ok" };
-  if (t === "TIMEOUT" || t === "REQUEST_TOO_LARGE") return { label: t, tone: "warn" };
-  return { label: t || "未知状态", tone: "fail" };
+function statusMeta(statusText: string): { label: string; tone: 'ok' | 'warn' | 'fail' } {
+  const t = (statusText || '').toUpperCase();
+  if (t === 'OK') return { label: 'OK', tone: 'ok' };
+  if (t === 'TIMEOUT' || t === 'REQUEST_TOO_LARGE') return { label: t, tone: 'warn' };
+  return { label: t || '未知状态', tone: 'fail' };
 }
 
 function StatusBadge({ item }: { item: { statusText: string; httpStatus: number } }) {
   const meta = statusMeta(item.statusText);
   const toneClass =
-    meta.tone === "ok"
-      ? "bg-green-100 text-green-700"
-      : meta.tone === "warn"
-        ? "bg-yellow-100 text-yellow-700"
-        : "bg-red-100 text-red-700";
+    meta.tone === 'ok'
+      ? 'bg-green-100 text-green-700'
+      : meta.tone === 'warn'
+        ? 'bg-yellow-100 text-yellow-700'
+        : 'bg-red-100 text-red-700';
   return (
-    <span className={`inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${toneClass}`}>
-      {meta.tone === "ok" ? <CheckCircle className="h-3 w-3" /> : <AlertCircle className="h-3 w-3" />}
+    <span
+      className={`inline-flex flex-shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${toneClass}`}
+    >
+      {meta.tone === 'ok' ? (
+        <CheckCircle className="h-3 w-3" />
+      ) : (
+        <AlertCircle className="h-3 w-3" />
+      )}
       {meta.label}
-      {meta.tone === "ok" && item.httpStatus > 0 && (
+      {meta.tone === 'ok' && item.httpStatus > 0 && (
         <span className="font-mono">{item.httpStatus}</span>
       )}
     </span>
@@ -53,25 +59,25 @@ function StatusBadge({ item }: { item: { statusText: string; httpStatus: number 
 }
 
 function formatDuration(ms: number): string {
-  if (!ms || ms < 0) return "-";
+  if (!ms || ms < 0) return '-';
   if (ms < 1000) return `${ms}ms`;
   return `${(ms / 1000).toFixed(2)}s`;
 }
 
 /** 性能统计为微秒，转毫秒展示 */
 function formatUs(us: number): string {
-  if (!us || us < 0) return "-";
+  if (!us || us < 0) return '-';
   return formatDuration(us / 1000);
 }
 
 function formatTime(unixSeconds: number): string {
-  if (!unixSeconds) return "-";
-  return new Date(unixSeconds * 1000).toLocaleString("zh-CN");
+  if (!unixSeconds) return '-';
+  return new Date(unixSeconds * 1000).toLocaleString('zh-CN');
 }
 
 /** 格式化响应体：尝试 JSON 美化，其余原样；超长截断 */
 function formatBody(body: string | false | undefined): { text: string; truncated: boolean } {
-  if (!body) return { text: "", truncated: false };
+  if (!body) return { text: '', truncated: false };
   let raw = body;
   try {
     raw = JSON.stringify(JSON.parse(raw), null, 2);
@@ -88,9 +94,9 @@ function formatHeadersText(headers: string | false | undefined): Array<[string, 
   if (!headers) return null;
   return headers
     .split(/\r?\n/)
-    .filter((l) => l.includes(":"))
+    .filter((l) => l.includes(':'))
     .map((line) => {
-      const idx = line.indexOf(":");
+      const idx = line.indexOf(':');
       return [line.slice(0, idx).trim(), line.slice(idx + 1).trim()];
     });
 }
@@ -127,16 +133,16 @@ export function CronJobHistoryDialog({ jobId, jobTitle, open, onClose }: Props) 
           setHistory(data.history || []);
         } else {
           const data = await res.json();
-          showToast(data.error || "加载执行历史失败", "error");
+          showToast(data.error || '加载执行历史失败', 'error');
         }
       } catch (e) {
-        console.error("加载执行历史失败：", e);
-        showToast("加载执行历史失败，请重试", "error");
+        console.error('加载执行历史失败：', e);
+        showToast('加载执行历史失败，请重试', 'error');
       } finally {
         setLoading(false);
       }
     })();
-  }, [open, jobId]);
+  }, [open, jobId, showToast]);
 
   if (!open) return null;
 
@@ -157,12 +163,12 @@ export function CronJobHistoryDialog({ jobId, jobTitle, open, onClose }: Props) 
         setDetail(data.executionDetails || null);
       } else {
         const data = await res.json();
-        showToast(data.error || "加载执行详情失败", "error");
+        showToast(data.error || '加载执行详情失败', 'error');
         setActiveLogId(null);
       }
     } catch (e) {
-      console.error("加载执行详情失败：", e);
-      showToast("加载执行详情失败，请重试", "error");
+      console.error('加载执行详情失败：', e);
+      showToast('加载执行详情失败，请重试', 'error');
       setActiveLogId(null);
     } finally {
       setDetailLoading(false);
@@ -178,7 +184,9 @@ export function CronJobHistoryDialog({ jobId, jobTitle, open, onClose }: Props) 
             <HistoryIcon className="h-5 w-5 text-muted-foreground" />
             <div>
               <h2 className="text-lg font-semibold">执行历史</h2>
-              <p className="max-w-md truncate text-xs text-muted-foreground">{jobTitle}（ID: {jobId}）</p>
+              <p className="max-w-md truncate text-xs text-muted-foreground">
+                {jobTitle}（ID: {jobId}）
+              </p>
             </div>
           </div>
           <button type="button" onClick={onClose} className="rounded-md p-1 hover:bg-accent">
@@ -194,7 +202,7 @@ export function CronJobHistoryDialog({ jobId, jobTitle, open, onClose }: Props) 
             </div>
           ) : history === null || history.length === 0 ? (
             <div className="py-12 text-center text-sm text-muted-foreground">
-              {history === null ? "加载失败" : "暂无执行记录"}
+              {history === null ? '加载失败' : '暂无执行记录'}
             </div>
           ) : (
             <div className="space-y-2">
@@ -212,9 +220,13 @@ export function CronJobHistoryDialog({ jobId, jobTitle, open, onClose }: Props) 
                           <Clock className="h-3 w-3" />
                           {formatTime(item.date)}
                         </span>
-                        <span className="text-muted-foreground">时长：{formatDuration(item.duration)}</span>
+                        <span className="text-muted-foreground">
+                          时长：{formatDuration(item.duration)}
+                        </span>
                       </div>
-                      <p className="mt-1 truncate font-mono text-xs text-muted-foreground">{item.url}</p>
+                      <p className="mt-1 truncate font-mono text-xs text-muted-foreground">
+                        {item.url}
+                      </p>
                     </div>
                     {activeLogId === item.jobLogId ? (
                       <ChevronUp className="h-4 w-4 flex-shrink-0 text-muted-foreground" />
@@ -237,7 +249,7 @@ export function CronJobHistoryDialog({ jobId, jobTitle, open, onClose }: Props) 
                               <p className="text-xs text-muted-foreground">状态</p>
                               <p className="font-medium">
                                 {detail.statusText}
-                                {detail.httpStatus > 0 ? `（HTTP ${detail.httpStatus}）` : ""}
+                                {detail.httpStatus > 0 ? `（HTTP ${detail.httpStatus}）` : ''}
                               </p>
                             </div>
                             <div>
@@ -258,8 +270,8 @@ export function CronJobHistoryDialog({ jobId, jobTitle, open, onClose }: Props) 
                             </div>
                             <div>
                               <p className="text-xs text-muted-foreground">请求 URL</p>
-                              <p className="truncate font-mono text-xs" title={detail.url || "-"}>
-                                {detail.url || "-"}
+                              <p className="truncate font-mono text-xs" title={detail.url || '-'}>
+                                {detail.url || '-'}
                               </p>
                             </div>
                           </div>
@@ -273,16 +285,20 @@ export function CronJobHistoryDialog({ jobId, jobTitle, open, onClose }: Props) 
                                 className="flex w-full items-center justify-between text-left text-sm font-medium"
                               >
                                 <span>性能统计</span>
-                                {showTimes ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                                {showTimes ? (
+                                  <ChevronUp className="h-4 w-4" />
+                                ) : (
+                                  <ChevronDown className="h-4 w-4" />
+                                )}
                               </button>
                               {showTimes && (
                                 <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-5">
                                   {[
-                                    ["DNS 查询", detail.stats.nameLookup],
-                                    ["连接", detail.stats.connect],
-                                    ["TLS 握手", detail.stats.appConnect],
-                                    ["首字节", detail.stats.startTransfer],
-                                    ["总时长", detail.stats.total],
+                                    ['DNS 查询', detail.stats.nameLookup],
+                                    ['连接', detail.stats.connect],
+                                    ['TLS 握手', detail.stats.appConnect],
+                                    ['首字节', detail.stats.startTransfer],
+                                    ['总时长', detail.stats.total],
                                   ].map(([label, value]) => (
                                     <div key={String(label)}>
                                       <p className="text-xs text-muted-foreground">{label}</p>
@@ -369,7 +385,7 @@ export function CronJobHistoryDialog({ jobId, jobTitle, open, onClose }: Props) 
                     </p>
                   )}
                   <pre className="max-h-[50vh] overflow-auto rounded-lg border border-border bg-muted/30 p-3 font-mono text-xs leading-relaxed whitespace-pre-wrap break-all">
-                    {formatBody(detail.body).text || "（空响应体）"}
+                    {formatBody(detail.body).text || '（空响应体）'}
                   </pre>
                 </div>
               )}

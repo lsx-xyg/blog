@@ -5,23 +5,20 @@
  * DELETE - 删除备份（同时删除存储文件和数据库记录）
  */
 
-import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth/server";
-import { isAdminUser } from "@/lib/shared";
-import { deleteBackup, downloadBackup, getBackup } from "@/lib/backup/server";
+import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth/server';
+import { isAdminUser } from '@/lib/shared';
+import { deleteBackup, downloadBackup } from '@/lib/backup/server';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 /** 下载备份文件 */
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session || !isAdminUser(session.user)) {
-      return NextResponse.json({ error: "未授权" }, { status: 401 });
+      return NextResponse.json({ error: '未授权' }, { status: 401 });
     }
 
     const { id } = await params;
@@ -32,33 +29,30 @@ export async function GET(
 
     return new NextResponse(uint8Array, {
       headers: {
-        "Content-Type": mimeType,
-        "Content-Disposition": `attachment; filename="${filename}"`,
-        "Content-Length": buffer.length.toString(),
+        'Content-Type': mimeType,
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Length': buffer.length.toString(),
       },
     });
   } catch (e) {
-    console.error("下载备份失败:", e);
-    return NextResponse.json({ error: "下载备份失败" }, { status: 500 });
+    console.error('下载备份失败:', e);
+    return NextResponse.json({ error: '下载备份失败' }, { status: 500 });
   }
 }
 
 /** 删除备份 */
-export async function DELETE(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
+export async function DELETE(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session || !isAdminUser(session.user)) {
-      return NextResponse.json({ error: "未授权" }, { status: 401 });
+      return NextResponse.json({ error: '未授权' }, { status: 401 });
     }
 
     const { id } = await params;
     await deleteBackup(id);
     return NextResponse.json({ success: true });
   } catch (e) {
-    console.error("删除备份失败:", e);
-    return NextResponse.json({ error: "删除备份失败" }, { status: 500 });
+    console.error('删除备份失败:', e);
+    return NextResponse.json({ error: '删除备份失败' }, { status: 500 });
   }
 }

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 页面加载进度条组件
@@ -16,8 +16,8 @@
  * - 使用 CSS transition 实现平滑动画
  */
 
-import { useEffect, useState, useRef } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { usePathname } from 'next/navigation';
 
 export function PageProgress() {
   const pathname = usePathname();
@@ -40,7 +40,7 @@ export function PageProgress() {
   };
 
   // 开始加载动画（0% -> 90%）
-  const startLoading = () => {
+  const startLoading = useCallback(() => {
     if (isLoadingRef.current) return;
     isLoadingRef.current = true;
     clearTimers();
@@ -62,10 +62,10 @@ export function PageProgress() {
         }
       }
     }, 100);
-  };
+  }, []);
 
   // 完成加载（90% -> 100% -> 隐藏）
-  const finishLoading = () => {
+  const finishLoading = useCallback(() => {
     if (!isLoadingRef.current) return;
     isLoadingRef.current = false;
 
@@ -82,41 +82,40 @@ export function PageProgress() {
       // 重置进度，为下次加载做准备
       setTimeout(() => setProgress(0), 300);
     }, 300);
-  };
+  }, []);
 
   // 全局监听链接点击事件，点击时立即显示进度条
   useEffect(() => {
     const handleClick = (e: MouseEvent) => {
       // 找到点击的链接元素
       const target = e.target as HTMLElement;
-      const link = target.closest("a[href]") as HTMLAnchorElement | null;
+      const link = target.closest('a[href]') as HTMLAnchorElement | null;
 
       if (!link) return;
 
-      const href = link.getAttribute("href");
+      const href = link.getAttribute('href');
       if (!href) return;
 
       // 只处理站内链接（相对路径或同域名）
       const isExternal =
-        href.startsWith("http://") ||
-        href.startsWith("https://") ||
-        href.startsWith("mailto:") ||
-        href.startsWith("tel:") ||
-        href.startsWith("#");
+        href.startsWith('http://') ||
+        href.startsWith('https://') ||
+        href.startsWith('mailto:') ||
+        href.startsWith('tel:') ||
+        href.startsWith('#');
 
       if (isExternal) return;
 
       // 检查是否是新标签页打开（target="_blank" 或按住 cmd/ctrl）
-      const isNewTab =
-        link.target === "_blank" || e.metaKey || e.ctrlKey || e.shiftKey;
+      const isNewTab = link.target === '_blank' || e.metaKey || e.ctrlKey || e.shiftKey;
       if (isNewTab) return;
 
       // 检查是否是下载链接
-      if (link.hasAttribute("download")) return;
+      if (link.hasAttribute('download')) return;
 
       // 检查是否和当前页面是同一个页面（去除 hash 和 query）
       const currentPath = window.location.pathname;
-      const targetPath = href.split("#")[0].split("?")[0];
+      const targetPath = href.split('#')[0].split('?')[0];
       if (currentPath === targetPath) {
         // 同一个页面，不触发进度条，直接返回
         return;
@@ -126,23 +125,23 @@ export function PageProgress() {
       startLoading();
     };
 
-    document.addEventListener("click", handleClick);
-    return () => document.removeEventListener("click", handleClick);
-  }, []);
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, [startLoading]);
 
   // 监听全局导航事件（router.push() 触发）
   useEffect(() => {
     const handleNavigationStart = () => startLoading();
     const handleNavigationEnd = () => finishLoading();
 
-    window.addEventListener("navigationstart", handleNavigationStart);
-    window.addEventListener("navigationend", handleNavigationEnd);
+    window.addEventListener('navigationstart', handleNavigationStart);
+    window.addEventListener('navigationend', handleNavigationEnd);
 
     return () => {
-      window.removeEventListener("navigationstart", handleNavigationStart);
-      window.removeEventListener("navigationend", handleNavigationEnd);
+      window.removeEventListener('navigationstart', handleNavigationStart);
+      window.removeEventListener('navigationend', handleNavigationEnd);
     };
-  }, []);
+  }, [startLoading, finishLoading]);
 
   // 监听路由变化，路由变化后完成进度
   useEffect(() => {
@@ -154,7 +153,7 @@ export function PageProgress() {
     return () => {
       clearTimeout(finishTimer);
     };
-  }, [pathname]);
+  }, [finishLoading, pathname]);
 
   // 组件卸载时清除定时器
   useEffect(() => {
@@ -177,13 +176,13 @@ export function PageProgress() {
         style={{
           width: `${progress}%`,
           opacity: visible ? 1 : 0,
-          transition: "width 0.2s ease-out, opacity 0.3s ease-in-out",
+          transition: 'width 0.2s ease-out, opacity 0.3s ease-in-out',
         }}
       >
         {/* 末端 glow 效果 */}
         <div
           className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-[hsl(var(--ring))] to-transparent opacity-60"
-          style={{ filter: "blur(2px)" }}
+          style={{ filter: 'blur(2px)' }}
         />
         {/* 末端亮块 */}
         <div className="absolute right-0 top-0 bottom-0 w-2 bg-[hsl(var(--ring))] opacity-80" />

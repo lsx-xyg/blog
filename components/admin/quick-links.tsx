@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 管理首页快捷入口：拖拽排序（dnd-kit，把手方案）
@@ -7,8 +7,8 @@
  * - 只有把手上 touch-action: none，卡片主体滚动不受影响
  * - 顺序持久化到后端 settings（跨设备、跨会话生效）
  */
-import { useState } from "react";
-import Link from "next/link";
+import { useState } from 'react';
+import Link from 'next/link';
 import {
   DndContext,
   rectIntersection,
@@ -17,14 +17,9 @@ import {
   useSensor,
   useSensors,
   type DragEndEvent,
-} from "@dnd-kit/core";
-import {
-  SortableContext,
-  rectSortingStrategy,
-  useSortable,
-  arrayMove,
-} from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
+} from '@dnd-kit/core';
+import { SortableContext, rectSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import {
   FileText,
   Image as ImageIcon,
@@ -37,8 +32,8 @@ import {
   Route,
   GripVertical,
   type LucideIcon,
-} from "lucide-react";
-import { useToast } from "@/components/ui/toast";
+} from 'lucide-react';
+import { useToast } from '@/components/ui/toast';
 
 export type QuickLinkDef = {
   key: string;
@@ -51,41 +46,99 @@ export type QuickLinkDef = {
 
 /** 默认顺序：未自定义时兜底 */
 export const DEFAULT_QUICK_ORDER = [
-  "posts",
-  "media",
-  "tags",
-  "friendLinks",
-  "settings",
-  "cron",
-  "backup",
-  "account",
-  "guides",
+  'posts',
+  'media',
+  'tags',
+  'friendLinks',
+  'settings',
+  'cron',
+  'backup',
+  'account',
+  'guides',
 ] as const;
 
 function makeDefs(adminPath: string): Record<string, QuickLinkDef> {
   const link = (p: string) => `/${adminPath}${p}`;
   return {
-    posts: { key: "posts", title: "文章管理", desc: "创建 / 编辑 / 发布", href: link("/posts"), icon: FileText, iconClass: "bg-primary/10 text-primary" },
-    media: { key: "media", title: "媒体库", desc: "图片管理 / 清理", href: link("/media"), icon: ImageIcon, iconClass: "bg-pink-500/10 text-pink-600 dark:text-pink-400" },
-    tags: { key: "tags", title: "标签管理", desc: "查看 / 删除 / 统计", href: link("/tags"), icon: Tag, iconClass: "bg-orange-500/10 text-orange-600 dark:text-orange-400" },
-    friendLinks: { key: "friendLinks", title: "友链管理", desc: "添加 / 编辑 / 删除", href: link("/friend-links"), icon: Link2, iconClass: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400" },
-    settings: { key: "settings", title: "站点设置", desc: "站名 / SEO / 存储 / 评论", href: link("/settings"), icon: Settings, iconClass: "bg-gray-500/10 text-gray-600 dark:text-gray-400" },
-    cron: { key: "cron", title: "定时任务", desc: "启动 / 停止 / 手动触发", href: link("/cron"), icon: Timer, iconClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400" },
-    backup: { key: "backup", title: "备份管理", desc: "创建 / 下载 / 恢复", href: link("/backup"), icon: DatabaseBackup, iconClass: "bg-green-500/10 text-green-600 dark:text-green-400" },
-    account: { key: "account", title: "账号设置", desc: "修改密码 / 关联 GitHub", href: link("/account"), icon: UserRound, iconClass: "bg-violet-500/10 text-violet-600 dark:text-violet-400" },
-    guides: { key: "guides", title: "引导管理", desc: "新手引导配置", href: link("/guides"), icon: Route, iconClass: "bg-orange-500/10 text-orange-600 dark:text-orange-400" },
+    posts: {
+      key: 'posts',
+      title: '文章管理',
+      desc: '创建 / 编辑 / 发布',
+      href: link('/posts'),
+      icon: FileText,
+      iconClass: 'bg-primary/10 text-primary',
+    },
+    media: {
+      key: 'media',
+      title: '媒体库',
+      desc: '图片管理 / 清理',
+      href: link('/media'),
+      icon: ImageIcon,
+      iconClass: 'bg-pink-500/10 text-pink-600 dark:text-pink-400',
+    },
+    tags: {
+      key: 'tags',
+      title: '标签管理',
+      desc: '查看 / 删除 / 统计',
+      href: link('/tags'),
+      icon: Tag,
+      iconClass: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
+    },
+    friendLinks: {
+      key: 'friendLinks',
+      title: '友链管理',
+      desc: '添加 / 编辑 / 删除',
+      href: link('/friend-links'),
+      icon: Link2,
+      iconClass: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400',
+    },
+    settings: {
+      key: 'settings',
+      title: '站点设置',
+      desc: '站名 / SEO / 存储 / 评论',
+      href: link('/settings'),
+      icon: Settings,
+      iconClass: 'bg-gray-500/10 text-gray-600 dark:text-gray-400',
+    },
+    cron: {
+      key: 'cron',
+      title: '定时任务',
+      desc: '启动 / 停止 / 手动触发',
+      href: link('/cron'),
+      icon: Timer,
+      iconClass: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+    },
+    backup: {
+      key: 'backup',
+      title: '备份管理',
+      desc: '创建 / 下载 / 恢复',
+      href: link('/backup'),
+      icon: DatabaseBackup,
+      iconClass: 'bg-green-500/10 text-green-600 dark:text-green-400',
+    },
+    account: {
+      key: 'account',
+      title: '账号设置',
+      desc: '修改密码 / 关联 GitHub',
+      href: link('/account'),
+      icon: UserRound,
+      iconClass: 'bg-violet-500/10 text-violet-600 dark:text-violet-400',
+    },
+    guides: {
+      key: 'guides',
+      title: '引导管理',
+      desc: '新手引导配置',
+      href: link('/guides'),
+      icon: Route,
+      iconClass: 'bg-orange-500/10 text-orange-600 dark:text-orange-400',
+    },
   };
 }
 
-function SortableLink({ def, adminPath }: { def: QuickLinkDef; adminPath: string }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: def.key });
+function SortableLink({ def, _adminPath }: { def: QuickLinkDef; _adminPath: string }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: def.key,
+  });
 
   const Icon = def.icon;
 
@@ -95,9 +148,7 @@ function SortableLink({ def, adminPath }: { def: QuickLinkDef; adminPath: string
       href={def.href}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={`flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition hover:border-fg-faint hover:shadow-sm ${
-        isDragging
-          ? "z-50 scale-[1.03] shadow-xl ring-2 ring-primary/40"
-          : ""
+        isDragging ? 'z-50 scale-[1.03] shadow-xl ring-2 ring-primary/40' : ''
       }`}
     >
       <div className={`rounded-lg p-2 ${def.iconClass}`}>
@@ -131,9 +182,7 @@ export default function QuickLinks({
   initialOrder: string[] | null;
 }) {
   const { showToast } = useToast();
-  const [order, setOrder] = useState<string[]>(
-    initialOrder ?? [...DEFAULT_QUICK_ORDER],
-  );
+  const [order, setOrder] = useState<string[]>(initialOrder ?? [...DEFAULT_QUICK_ORDER]);
   const [saving, setSaving] = useState(false);
   const defs = makeDefs(adminPath);
 
@@ -147,19 +196,19 @@ export default function QuickLinks({
   const persistOrder = async (next: string[]) => {
     setSaving(true);
     try {
-      const res = await fetch("/api/admin/dashboard/order?scope=quick", {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ order: next, scope: "quick" }),
+      const res = await fetch('/api/admin/dashboard/order?scope=quick', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ order: next, scope: 'quick' }),
       });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || "保存失败");
+        throw new Error(data.error || '保存失败');
       }
-      showToast("快捷入口顺序已保存", "success");
+      showToast('快捷入口顺序已保存', 'success');
     } catch (e) {
-      console.error("保存快捷入口顺序失败：", e);
-      showToast("保存顺序失败，刷新后将恢复默认", "error");
+      console.error('保存快捷入口顺序失败：', e);
+      showToast('保存顺序失败，刷新后将恢复默认', 'error');
     } finally {
       setSaving(false);
     }
@@ -178,18 +227,12 @@ export default function QuickLinks({
 
   return (
     <div>
-      <DndContext
-        sensors={sensors}
-        collisionDetection={rectIntersection}
-        onDragEnd={handleDragEnd}
-      >
+      <DndContext sensors={sensors} collisionDetection={rectIntersection} onDragEnd={handleDragEnd}>
         <SortableContext items={order} strategy={rectSortingStrategy}>
           <nav className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             {order.map((key) => {
               const def = defs[key];
-              return def ? (
-                <SortableLink key={key} def={def} adminPath={adminPath} />
-              ) : null;
+              return def ? <SortableLink key={key} def={def} _adminPath={adminPath} /> : null;
             })}
           </nav>
         </SortableContext>
@@ -201,7 +244,7 @@ export default function QuickLinks({
             保存中…
           </span>
         ) : (
-          "拖拽卡片右侧 ⠿ 手柄调整顺序 · 移动端长按手柄 · 顺序跨设备保存"
+          '拖拽卡片右侧 ⠿ 手柄调整顺序 · 移动端长按手柄 · 顺序跨设备保存'
         )}
       </p>
     </div>

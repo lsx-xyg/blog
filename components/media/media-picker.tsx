@@ -1,15 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import {
-  X,
-  Upload,
-  Search,
-  Image as ImageIcon,
-  Loader2,
-} from "lucide-react";
-import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
-import { uploadMediaFile } from "@/lib/media/client";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { X, Upload, Search, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { MediaType, MEDIA_TYPE_LABELS } from '@/lib/types/media';
+import { uploadMediaFile } from '@/lib/media/client';
 
 type MediaItem = {
   id: string;
@@ -30,7 +24,7 @@ type MediaPickerProps = {
   open: boolean;
   onClose: () => void;
   onSelect: (url: string, alt?: string) => void;
-  defaultType?: MediaType | "ALL";
+  defaultType?: MediaType | 'ALL';
 };
 
 /**
@@ -42,27 +36,27 @@ type MediaPickerProps = {
  * - 网格布局展示缩略图，点击选择
  * - 支持搜索和分页
  */
-export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: MediaPickerProps) {
-  const [activeTab, setActiveTab] = useState<"upload" | "library">("library");
+export function MediaPicker({ open, onClose, onSelect, defaultType = 'ALL' }: MediaPickerProps) {
+  const [activeTab, setActiveTab] = useState<'upload' | 'library'>('library');
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState<MediaType | "ALL">(defaultType);
+  const [search, setSearch] = useState('');
+  const [typeFilter, setTypeFilter] = useState<MediaType | 'ALL'>(defaultType);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [pageSize] = useState(24);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 加载媒体库
-  const loadItems = async () => {
+  const loadItems = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
-      params.set("page", String(page));
-      params.set("pageSize", String(pageSize));
-      if (typeFilter !== "ALL") params.set("type", typeFilter);
-      if (search) params.set("search", search);
+      params.set('page', String(page));
+      params.set('pageSize', String(pageSize));
+      if (typeFilter !== 'ALL') params.set('type', typeFilter);
+      if (search) params.set('search', search);
 
       const res = await fetch(`/api/admin/media?${params.toString()}`);
       if (res.ok) {
@@ -71,17 +65,17 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
         setTotal(data.total || 0);
       }
     } catch (e) {
-      console.error("加载媒体库失败：", e);
+      console.error('加载媒体库失败：', e);
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, pageSize, typeFilter, search]);
 
   useEffect(() => {
-    if (open && activeTab === "library") {
+    if (open && activeTab === 'library') {
       loadItems();
     }
-  }, [open, activeTab, page, typeFilter, search]);
+  }, [open, activeTab, loadItems]);
 
   // 处理文件上传（复用 lib/media/upload.ts 共享执行）
   const handleFileUpload = async (files: FileList | null) => {
@@ -100,8 +94,8 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
         alert(`上传失败：${r.error}`);
       }
     } catch (e) {
-      console.error("上传失败：", e);
-      alert("上传失败，请重试");
+      console.error('上传失败：', e);
+      alert('上传失败，请重试');
     } finally {
       setUploading(false);
     }
@@ -123,32 +117,31 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
         {/* 头部 */}
         <div className="flex items-center justify-between border-b border-border p-4">
           <h2 className="text-lg font-semibold">插入图片</h2>
-          <button type="button"
-            onClick={onClose}
-            className="rounded-md p-1 hover:bg-accent"
-          >
+          <button type="button" onClick={onClose} className="rounded-md p-1 hover:bg-accent">
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Tab 切换 */}
         <div className="flex border-b border-border">
-          <button type="button"
-            onClick={() => setActiveTab("library")}
+          <button
+            type="button"
+            onClick={() => setActiveTab('library')}
             className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === "library"
-                ? "border-b-2 border-primary text-primary"
-                : "text-muted-foreground hover:text-foreground"
+              activeTab === 'library'
+                ? 'border-b-2 border-primary text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             从图库选择
           </button>
-          <button type="button"
-            onClick={() => setActiveTab("upload")}
+          <button
+            type="button"
+            onClick={() => setActiveTab('upload')}
             className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
-              activeTab === "upload"
-                ? "border-b-2 border-primary text-primary"
-                : "text-muted-foreground hover:text-foreground"
+              activeTab === 'upload'
+                ? 'border-b-2 border-primary text-primary'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             上传新图片
@@ -157,7 +150,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
 
         {/* 内容区 */}
         <div className="flex-1 overflow-y-auto p-4">
-          {activeTab === "upload" ? (
+          {activeTab === 'upload' ? (
             /* 上传新图片 */
             <div className="flex flex-col items-center justify-center py-12">
               <input
@@ -168,7 +161,8 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
                 className="hidden"
                 onChange={(e) => handleFileUpload(e.target.files)}
               />
-              <button type="button"
+              <button
+                type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
                 className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-border px-12 py-8 hover:border-primary/50 hover:bg-accent/50 transition-colors disabled:opacity-50"
@@ -179,7 +173,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
                   <Upload className="h-12 w-12 text-muted-foreground" />
                 )}
                 <span className="text-sm font-medium">
-                  {uploading ? "上传中…" : "点击选择图片或拖拽到此处"}
+                  {uploading ? '上传中…' : '点击选择图片或拖拽到此处'}
                 </span>
                 <span className="text-xs text-muted-foreground">
                   支持 JPG / PNG / WebP / GIF，最大 10MB
@@ -196,32 +190,44 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
               <div className="flex flex-wrap items-center gap-3">
                 {/* 类型筛选 */}
                 <div className="flex rounded-lg border border-border overflow-hidden">
-                  <button type="button"
-                    onClick={() => { setTypeFilter("ALL"); setPage(1); }}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTypeFilter('ALL');
+                      setPage(1);
+                    }}
                     className={`px-3 py-1.5 text-sm transition-colors ${
-                      typeFilter === "ALL"
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-accent"
+                      typeFilter === 'ALL'
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-accent'
                     }`}
                   >
                     全部
                   </button>
-                  <button type="button"
-                    onClick={() => { setTypeFilter(MediaType.ARTICLE); setPage(1); }}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTypeFilter(MediaType.ARTICLE);
+                      setPage(1);
+                    }}
                     className={`px-3 py-1.5 text-sm transition-colors ${
                       typeFilter === MediaType.ARTICLE
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-accent"
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-accent'
                     }`}
                   >
                     {MEDIA_TYPE_LABELS[MediaType.ARTICLE]}
                   </button>
-                  <button type="button"
-                    onClick={() => { setTypeFilter(MediaType.GALLERY); setPage(1); }}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTypeFilter(MediaType.GALLERY);
+                      setPage(1);
+                    }}
                     className={`px-3 py-1.5 text-sm transition-colors ${
                       typeFilter === MediaType.GALLERY
-                        ? "bg-primary text-primary-foreground"
-                        : "hover:bg-accent"
+                        ? 'bg-primary text-primary-foreground'
+                        : 'hover:bg-accent'
                     }`}
                   >
                     {MEDIA_TYPE_LABELS[MediaType.GALLERY]}
@@ -234,7 +240,10 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
                   <input
                     type="text"
                     value={search}
-                    onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                    onChange={(e) => {
+                      setSearch(e.target.value);
+                      setPage(1);
+                    }}
                     placeholder="搜索图片…"
                     className="w-full rounded-lg border border-input bg-background py-1.5 pl-9 pr-3 text-sm"
                   />
@@ -255,7 +264,8 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
                 <>
                   <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-6">
                     {items.map((item) => (
-                      <button type="button"
+                      <button
+                        type="button"
                         key={item.id}
                         onClick={() => handleSelect(item)}
                         className="group relative aspect-square overflow-hidden rounded-lg border border-border hover:border-primary transition-colors"
@@ -263,7 +273,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={item.url}
-                          alt={item.title || "媒体图片"}
+                          alt={item.title || '媒体图片'}
                           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                           loading="lazy"
                         />
@@ -272,11 +282,11 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
                           <span
                             className={`rounded-full px-1.5 py-0.5 text-[10px] ${
                               item.type === MediaType.ARTICLE
-                                ? "bg-blue-500/90 text-white"
-                                : "bg-purple-500/90 text-white"
+                                ? 'bg-blue-500/90 text-white'
+                                : 'bg-purple-500/90 text-white'
                             }`}
                           >
-                            {item.type === MediaType.ARTICLE ? "文" : "相"}
+                            {item.type === MediaType.ARTICLE ? '文' : '相'}
                           </span>
                         </div>
                         {/* 悬浮遮罩 */}
@@ -290,7 +300,8 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
                   {/* 分页 */}
                   {totalPages > 1 && (
                     <div className="flex items-center justify-center gap-2 pt-4">
-                      <button type="button"
+                      <button
+                        type="button"
                         onClick={() => setPage((p) => Math.max(1, p - 1))}
                         disabled={page === 1}
                         className="rounded-md border border-input px-3 py-1 text-sm disabled:opacity-50 hover:bg-accent"
@@ -300,7 +311,8 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = "ALL" }: Me
                       <span className="text-sm text-muted-foreground">
                         {page} / {totalPages}
                       </span>
-                      <button type="button"
+                      <button
+                        type="button"
                         onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                         disabled={page === totalPages}
                         className="rounded-md border border-input px-3 py-1 text-sm disabled:opacity-50 hover:bg-accent"

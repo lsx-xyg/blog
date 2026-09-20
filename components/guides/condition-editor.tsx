@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 引导触发条件编辑器（条件行 + 满足逻辑 + 添加/删除）
@@ -7,11 +7,11 @@
  * （page 用下拉、数字字段用数字框、event_click 支持拾取元素生成选择器），
  * 切换字段时重置操作符与值（数据隔离）。校验规则见 lib/guides/validate.ts。
  */
-import { Plus, Trash2, X, MousePointerClick } from "lucide-react";
-import type { GuideCondition } from "@/lib/types/guides";
-import { GuideConditionOp } from "@/lib/types/guides";
-import { GUIDE_EVENT_ANCHORS } from "@/lib/guides/shared";
-import { ADMIN_PAGES } from "@/lib/admin/shared";
+import { Plus, Trash2, X, MousePointerClick } from 'lucide-react';
+import type { GuideCondition } from '@/lib/types/guides';
+import { GuideConditionOp } from '@/lib/types/guides';
+import { GUIDE_EVENT_ANCHORS } from '@/lib/guides/shared';
+import { ADMIN_PAGES } from '@/lib/admin/shared';
 import {
   inputClass,
   labelClass,
@@ -20,7 +20,7 @@ import {
   OP_LABEL,
   OP_BY_FIELD,
   DEFAULT_VALUE_BY_FIELD,
-} from "@/lib/guides/client";
+} from '@/lib/guides/client';
 
 export function ConditionSection({
   logic,
@@ -32,8 +32,8 @@ export function ConditionSection({
   adminPath,
   onPick,
 }: {
-  logic: "and" | "or";
-  onLogicChange: (logic: "and" | "or") => void;
+  logic: 'and' | 'or';
+  onLogicChange: (logic: 'and' | 'or') => void;
   conditions: GuideCondition[];
   onConditionsChange: (next: GuideCondition[]) => void;
   guideId: string | null;
@@ -46,9 +46,9 @@ export function ConditionSection({
     onConditionsChange([
       ...conditions,
       {
-        field: "event_click",
+        field: 'event_click',
         op: GuideConditionOp.EQ,
-        value: GUIDE_EVENT_ANCHORS[0]?.target ?? "",
+        value: GUIDE_EVENT_ANCHORS[0]?.target ?? '',
       },
     ]);
   };
@@ -61,7 +61,7 @@ export function ConditionSection({
           <span>满足逻辑：</span>
           <select
             value={logic}
-            onChange={(e) => onLogicChange(e.target.value as "and" | "or")}
+            onChange={(e) => onLogicChange(e.target.value as 'and' | 'or')}
             className="rounded-md border border-input bg-background px-2 py-1 text-xs"
           >
             <option value="and">全部满足 (and)</option>
@@ -83,17 +83,11 @@ export function ConditionSection({
             key={i}
             condIndex={i}
             cond={c}
-            onChange={(next) =>
-              onConditionsChange(
-                conditions.map((x, j) => (j === i ? next : x))
-              )
-            }
-            onRemove={() =>
-              onConditionsChange(conditions.filter((_, j) => j !== i))
-            }
-            guideId={guideId}
+            onChange={(next) => onConditionsChange(conditions.map((x, j) => (j === i ? next : x)))}
+            onRemove={() => onConditionsChange(conditions.filter((_, j) => j !== i))}
+            _guideId={guideId}
             page={page}
-            adminPath={adminPath}
+            _adminPath={adminPath}
             onPick={onPick}
           />
         ))}
@@ -112,9 +106,9 @@ function ConditionRow({
   onChange,
   onRemove,
   condIndex,
-  guideId,
+  _guideId,
   page,
-  adminPath,
+  _adminPath,
   onPick,
 }: {
   cond: GuideCondition;
@@ -123,22 +117,20 @@ function ConditionRow({
   /** 条件下标（拾取回填用） */
   condIndex: number;
   /** 引导 id（未保存时为 null，拾取需先保存） */
-  guideId: string | null;
+  _guideId: string | null;
   /** 引导适用页面（相对后台路径，如 /settings） */
   page: string;
-  adminPath: string;
+  _adminPath: string;
   /** 拾取触发条件元素：自动保存当前表单后跳目标页 */
   onPick: (params: { conditionIndex: number }) => void;
 }) {
-  const isClickCount = cond.field.startsWith("click_count.");
-  const field = isClickCount ? "click_count" : cond.field;
-  const clickAnchor = isClickCount
-    ? cond.field.slice("click_count.".length)
-    : "";
+  const isClickCount = cond.field.startsWith('click_count.');
+  const field = isClickCount ? 'click_count' : cond.field;
+  const clickAnchor = isClickCount ? cond.field.slice('click_count.'.length) : '';
 
   const setField = (next: string) => {
     // 数据隔离：切换字段时重置操作符与值，不沿用上一字段的数据
-    if (next === "click_count") {
+    if (next === 'click_count') {
       onChange({
         ...cond,
         field: `click_count.`,
@@ -150,7 +142,7 @@ function ConditionRow({
         ...cond,
         field: next,
         op: OP_BY_FIELD[next]?.[0] ?? GuideConditionOp.EQ,
-        value: DEFAULT_VALUE_BY_FIELD[next] ?? "",
+        value: DEFAULT_VALUE_BY_FIELD[next] ?? '',
       });
     }
   };
@@ -189,9 +181,7 @@ function ConditionRow({
 
         <select
           value={cond.op}
-          onChange={(e) =>
-            onChange({ ...cond, op: e.target.value as GuideConditionOp })
-          }
+          onChange={(e) => onChange({ ...cond, op: e.target.value as GuideConditionOp })}
           className={`${inputClass} w-36`}
         >
           {(OP_BY_FIELD[field] ?? [GuideConditionOp.EQ]).map((op) => (
@@ -201,14 +191,14 @@ function ConditionRow({
           ))}
         </select>
 
-        {field === "event_click" ? (
+        {field === 'event_click' ? (
           <div className="flex min-w-0 flex-1 items-center gap-1.5">
             <select
               value={
-                typeof cond.value === "string" &&
+                typeof cond.value === 'string' &&
                 GUIDE_EVENT_ANCHORS.some((a) => a.target === cond.value)
                   ? (cond.value as string)
-                  : ""
+                  : ''
               }
               onChange={(e) => onChange({ ...cond, value: e.target.value })}
               className={`${inputClass} min-w-[160px] flex-1`}
@@ -240,14 +230,14 @@ function ConditionRow({
                 拾取元素
               </span>
             )}
-            {typeof cond.value === "string" &&
-              cond.value !== "" &&
+            {typeof cond.value === 'string' &&
+              cond.value !== '' &&
               !GUIDE_EVENT_ANCHORS.some((a) => a.target === cond.value) && (
                 <span className="inline-flex min-w-0 max-w-[200px] items-center gap-1 rounded-lg bg-primary/10 px-2 py-1 font-mono text-[11px] text-primary">
                   <span className="truncate">{cond.value}</span>
                   <button
                     type="button"
-                    onClick={() => onChange({ ...cond, value: "" })}
+                    onClick={() => onChange({ ...cond, value: '' })}
                     className="text-primary/60 transition-colors hover:text-primary"
                     title="清除"
                     aria-label="清除触发元素"
@@ -257,19 +247,19 @@ function ConditionRow({
                 </span>
               )}
           </div>
-        ) : field === "page" ? (
+        ) : field === 'page' ? (
           <select
             value={
-              typeof cond.value === "string" &&
-              (ADMIN_PAGES.some((p) => p.path === cond.value) || cond.value === "")
+              typeof cond.value === 'string' &&
+              (ADMIN_PAGES.some((p) => p.path === cond.value) || cond.value === '')
                 ? (cond.value as string)
-                : "__custom__"
+                : '__custom__'
             }
             onChange={(e) => {
               const v = e.target.value;
               onChange({
                 ...cond,
-                value: v === "__custom__" ? (cond.value as string) : v,
+                value: v === '__custom__' ? (cond.value as string) : v,
               });
             }}
             className={`${inputClass} min-w-[200px] flex-1`}
@@ -277,11 +267,11 @@ function ConditionRow({
             <option value="">请选择页面</option>
             {ADMIN_PAGES.map((p) => (
               <option key={p.path} value={p.path}>
-                {p.path === "/" ? "/（首页）" : p.path} · {p.label}
+                {p.path === '/' ? '/（首页）' : p.path} · {p.label}
               </option>
             ))}
-            {typeof cond.value === "string" &&
-              cond.value !== "" &&
+            {typeof cond.value === 'string' &&
+              cond.value !== '' &&
               !ADMIN_PAGES.some((p) => p.path === cond.value) && (
                 <option value="__custom__">{cond.value}（手写值）</option>
               )}
@@ -290,15 +280,15 @@ function ConditionRow({
           <input
             type="number"
             min={0}
-            value={typeof cond.value === "number" ? cond.value : ""}
+            value={typeof cond.value === 'number' ? cond.value : ''}
             onChange={(e) =>
               onChange({
                 ...cond,
-                value: e.target.value === "" ? 0 : Number(e.target.value),
+                value: e.target.value === '' ? 0 : Number(e.target.value),
               })
             }
             className={`${inputClass} min-w-[140px] flex-1`}
-            placeholder={field === "click_count" ? "次数，如 1" : "天数，如 3"}
+            placeholder={field === 'click_count' ? '次数，如 1' : '天数，如 3'}
           />
         )}
 
@@ -312,9 +302,7 @@ function ConditionRow({
         </button>
       </div>
       {FIELD_HELP[field] && (
-        <p className="px-1 text-xs text-muted-foreground/90 leading-relaxed">
-          {FIELD_HELP[field]}
-        </p>
+        <p className="px-1 text-xs text-muted-foreground/90 leading-relaxed">{FIELD_HELP[field]}</p>
       )}
     </div>
   );

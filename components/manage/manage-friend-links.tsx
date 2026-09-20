@@ -1,11 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { Trash2, Edit3, Link2, X } from "lucide-react";
-import { ConfirmDialog } from "@/components/shared/confirm-dialog";
-import { AdminModal } from "@/components/admin/modal";
-import { AdminListPage } from "@/components/admin/list-page";
-import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
+import { useEffect, useMemo, useState } from 'react';
+import { Trash2, Edit3, Link2 } from 'lucide-react';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { AdminModal } from '@/components/admin/modal';
+import { AdminListPage } from '@/components/admin/list-page';
+import { CreateButton, RefreshButton } from '@/components/admin/action-buttons';
+import Image from 'next/image';
 
 type FriendLink = {
   id: string;
@@ -19,11 +20,11 @@ type FriendLink = {
 };
 
 const emptyForm = {
-  name: "",
-  url: "",
-  avatarUrl: "",
-  description: "",
-  tags: "",
+  name: '',
+  url: '',
+  avatarUrl: '',
+  description: '',
+  tags: '',
   sortOrder: 0,
 };
 
@@ -42,7 +43,7 @@ export function ManageFriendLinks() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState('');
 
   // 搜索过滤（名称/链接/描述）
   const filteredLinks = useMemo(() => {
@@ -52,7 +53,7 @@ export function ManageFriendLinks() {
       (l) =>
         l.name.toLowerCase().includes(kw) ||
         l.url.toLowerCase().includes(kw) ||
-        (l.description || "").toLowerCase().includes(kw),
+        (l.description || '').toLowerCase().includes(kw),
     );
   }, [links, search]);
 
@@ -60,13 +61,13 @@ export function ManageFriendLinks() {
   const loadLinks = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/friend-links");
+      const res = await fetch('/api/admin/friend-links');
       if (res.ok) {
         const data = await res.json();
         setLinks(data.links || []);
       }
     } catch (e) {
-      console.error("加载友链失败：", e);
+      console.error('加载友链失败：', e);
     } finally {
       setLoading(false);
     }
@@ -89,9 +90,9 @@ export function ManageFriendLinks() {
     setForm({
       name: link.name,
       url: link.url,
-      avatarUrl: link.avatarUrl ?? "",
+      avatarUrl: link.avatarUrl ?? '',
       description: link.description,
-      tags: link.tags.join(", "),
+      tags: link.tags.join(', '),
       sortOrder: link.sortOrder,
     });
     setShowModal(true);
@@ -100,14 +101,14 @@ export function ManageFriendLinks() {
   // 保存友链
   const saveLink = async () => {
     if (!form.name || !form.url) {
-      alert("名称和链接不能为空");
+      alert('名称和链接不能为空');
       return;
     }
 
     setSaving(true);
     try {
       const tags = form.tags
-        .split(",")
+        .split(',')
         .map((t) => t.trim())
         .filter(Boolean);
 
@@ -120,14 +121,12 @@ export function ManageFriendLinks() {
         sortOrder: Number(form.sortOrder) || 0,
       };
 
-      const url = editingId
-        ? `/api/admin/friend-links/${editingId}`
-        : "/api/admin/friend-links";
-      const method = editingId ? "PUT" : "POST";
+      const url = editingId ? `/api/admin/friend-links/${editingId}` : '/api/admin/friend-links';
+      const method = editingId ? 'PUT' : 'POST';
 
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
 
@@ -135,11 +134,11 @@ export function ManageFriendLinks() {
         setShowModal(false);
         await loadLinks();
       } else {
-        alert("保存失败，请重试");
+        alert('保存失败，请重试');
       }
     } catch (e) {
-      console.error("保存友链失败：", e);
-      alert("保存失败，请重试");
+      console.error('保存友链失败：', e);
+      alert('保存失败，请重试');
     } finally {
       setSaving(false);
     }
@@ -163,201 +162,228 @@ export function ManageFriendLinks() {
   };
 
   const doDeleteLink = async (id: string) => {
-
     try {
       const res = await fetch(`/api/admin/friend-links/${id}`, {
-        method: "DELETE",
+        method: 'DELETE',
       });
       if (res.ok) {
         await loadLinks();
       } else {
-        alert("删除失败，请重试");
+        alert('删除失败，请重试');
       }
     } catch (e) {
-      console.error("删除友链失败：", e);
-      alert("删除失败，请重试");
+      console.error('删除友链失败：', e);
+      alert('删除失败，请重试');
     }
   };
 
   const inputClass =
-    "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all";
-  const labelClass = "block text-sm font-medium mb-1.5";
+    'w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all';
+  const labelClass = 'block text-sm font-medium mb-1.5';
 
   return (
     <>
-    <AdminListPage
-      title="友链管理"
-      description={`共 ${links.length} 个友链`}
-      actions={
+      <AdminListPage
+        title="友链管理"
+        description={`共 ${links.length} 个友链`}
+        actions={
+          <>
+            <CreateButton onClick={openCreate} label="添加友链" />
+            <RefreshButton onClick={loadLinks} loading={loading} />
+          </>
+        }
+        search={{ value: search, onChange: setSearch, placeholder: '搜索友链名称、链接或描述…' }}
+        loading={loading}
+        empty={
+          filteredLinks.length === 0
+            ? {
+                icon: <Link2 className="h-12 w-12" />,
+                title: search ? '没有找到匹配的友链' : '还没有友链',
+                description: search ? undefined : '点击右上角添加',
+              }
+            : null
+        }
+      >
         <>
-          <CreateButton onClick={openCreate} label="添加友链" />
-          <RefreshButton onClick={loadLinks} loading={loading} />
-        </>
-      }
-      search={{ value: search, onChange: setSearch, placeholder: "搜索友链名称、链接或描述…" }}
-      loading={loading}
-      empty={
-        filteredLinks.length === 0 ? {
-
-          icon: <Link2 className="h-12 w-12" />,
-          title: search ? "没有找到匹配的友链" : "还没有友链",
-          description: search ? undefined : "点击右上角添加",
-      
-        } : null
-      }
-    >
-      <>
-        {/* 桌面端：表格（与其他管理页统一样式） */}
-        <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-card">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="px-4 py-3 text-left text-sm font-medium">名称</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">链接</th>
-                <th className="px-4 py-3 text-left text-sm font-medium">标签</th>
-                <th className="px-4 py-3 text-center text-sm font-medium">排序</th>
-                <th className="px-4 py-3 text-right text-sm font-medium">操作</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredLinks.map((link, index) => (
-                <tr
-                  key={link.id}
-                  className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors animate-fade-in-up"
-                  style={{ animationDelay: `${index * 30}ms` }}
-                >
-                  <td className="px-4 py-3">
-                    <div className="flex items-center gap-3">
-                      {link.avatarUrl ? (
-                        <img
-                          src={link.avatarUrl}
-                          alt={link.name}
-                          className="h-8 w-8 rounded-full object-cover"
-                        />
-                      ) : (
-                        <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                          <Link2 className="h-4 w-4 text-muted-foreground" />
-                        </div>
-                      )}
-                      <div>
-                        <p className="text-sm font-medium">{link.name}</p>
-                        {link.description && (
-                          <p className="text-xs text-muted-foreground truncate max-w-xs">{link.description}</p>
-                        )}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <a
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary hover:underline truncate block max-w-xs"
-                    >
-                      {link.url}
-                    </a>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {link.tags.map((tag) => (
-                        <span
-                          key={tag}
-                          className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-center">
-                    <span className="text-sm text-muted-foreground">{link.sortOrder}</span>
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        type="button"
-                        onClick={() => openEdit(link)}
-                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                        title="编辑"
-                      >
-                        <Edit3 className="h-4 w-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => deleteLink(link.id, link.name)}
-                        className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
-                        title="删除"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
+          {/* 桌面端：表格（与其他管理页统一样式） */}
+          <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-card">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="px-4 py-3 text-left text-sm font-medium">名称</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">链接</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium">标签</th>
+                  <th className="px-4 py-3 text-center text-sm font-medium">排序</th>
+                  <th className="px-4 py-3 text-right text-sm font-medium">操作</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        {/* 移动端：卡片列表 */}
-        <div className="md:hidden rounded-xl border border-border bg-card divide-y divide-border">
-          {filteredLinks.map((link, index) => (
-            <div key={link.id} className="p-4 animate-fade-in-up" style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}>
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-center gap-3 min-w-0">
-                  {link.avatarUrl ? (
-                    <img src={link.avatarUrl} alt={link.name} className="h-9 w-9 shrink-0 rounded-full object-cover" />
-                  ) : (
-                    <div className="h-9 w-9 shrink-0 rounded-full bg-muted flex items-center justify-center">
-                      <Link2 className="h-4 w-4 text-muted-foreground" />
+              </thead>
+              <tbody>
+                {filteredLinks.map((link, index) => (
+                  <tr
+                    key={link.id}
+                    className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors animate-fade-in-up"
+                    style={{ animationDelay: `${index * 30}ms` }}
+                  >
+                    <td className="px-4 py-3">
+                      <div className="flex items-center gap-3">
+                        {link.avatarUrl ? (
+                          <Image
+                            src={link.avatarUrl}
+                            alt={link.name}
+                            width={32}
+                            height={32}
+                            className="h-8 w-8 rounded-full object-cover"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                            <Link2 className="h-4 w-4 text-muted-foreground" />
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-sm font-medium">{link.name}</p>
+                          {link.description && (
+                            <p className="text-xs text-muted-foreground truncate max-w-xs">
+                              {link.description}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline truncate block max-w-xs"
+                      >
+                        {link.url}
+                      </a>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1">
+                        {link.tags.map((tag) => (
+                          <span
+                            key={tag}
+                            className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                          >
+                            {tag}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="text-sm text-muted-foreground">{link.sortOrder}</span>
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => openEdit(link)}
+                          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                          title="编辑"
+                        >
+                          <Edit3 className="h-4 w-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => deleteLink(link.id, link.name)}
+                          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+                          title="删除"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* 移动端：卡片列表 */}
+          <div className="md:hidden rounded-xl border border-border bg-card divide-y divide-border">
+            {filteredLinks.map((link, index) => (
+              <div
+                key={link.id}
+                className="p-4 animate-fade-in-up"
+                style={{ animationDelay: `${Math.min(index * 30, 300)}ms` }}
+              >
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0">
+                    {link.avatarUrl ? (
+                      <Image
+                        src={link.avatarUrl}
+                        alt={link.name}
+                        width={36}
+                        height={36}
+                        className="h-9 w-9 shrink-0 rounded-full object-cover"
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="h-9 w-9 shrink-0 rounded-full bg-muted flex items-center justify-center">
+                        <Link2 className="h-4 w-4 text-muted-foreground" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-medium">{link.name}</p>
+                      <a
+                        href={link.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block truncate text-xs text-primary hover:underline"
+                      >
+                        {link.url}
+                      </a>
                     </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">{link.name}</p>
-                    <a href={link.url} target="_blank" rel="noopener noreferrer" className="block truncate text-xs text-primary hover:underline">
-                      {link.url}
-                    </a>
                   </div>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    排序 {link.sortOrder}
+                  </span>
                 </div>
-                <span className="shrink-0 text-xs text-muted-foreground">排序 {link.sortOrder}</span>
-              </div>
-              {link.tags.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-1">
-                  {link.tags.map((tag) => (
-                    <span key={tag} className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                      {tag}
-                    </span>
-                  ))}
+                {link.tags.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {link.tags.map((tag) => (
+                      <span
+                        key={tag}
+                        className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary"
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                {link.description && (
+                  <p className="mt-2 text-xs text-muted-foreground">{link.description}</p>
+                )}
+                <div className="mt-3 flex items-center justify-end gap-1 border-t border-border/50 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => openEdit(link)}
+                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    title="编辑"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => deleteLink(link.id, link.name)}
+                    className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
+                    title="删除"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                  </button>
                 </div>
-              )}
-              {link.description && <p className="mt-2 text-xs text-muted-foreground">{link.description}</p>}
-              <div className="mt-3 flex items-center justify-end gap-1 border-t border-border/50 pt-2">
-                <button
-                  type="button"
-                  onClick={() => openEdit(link)}
-                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                  title="编辑"
-                >
-                  <Edit3 className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => deleteLink(link.id, link.name)}
-                  className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-red-600"
-                  title="删除"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </button>
               </div>
-            </div>
-          ))}
-        </div>
-      </>
-    </AdminListPage>
+            ))}
+          </div>
+        </>
+      </AdminListPage>
 
       {/* 表单弹窗 */}
       {showModal && (
         <AdminModal
           open
-          title={editingId ? "编辑友链" : "添加友链"}
+          title={editingId ? '编辑友链' : '添加友链'}
           onClose={() => setShowModal(false)}
           closeOnBackdrop={false}
           footer={
@@ -375,81 +401,81 @@ export function ManageFriendLinks() {
                 disabled={saving}
                 className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
-                {saving ? "保存中…" : "保存"}
+                {saving ? '保存中…' : '保存'}
               </button>
             </>
           }
         >
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelClass}>名称 *</label>
-                  <input
-                    type="text"
-                    value={form.name}
-                    onChange={(e) => setForm({ ...form, name: e.target.value })}
-                    className={inputClass}
-                    placeholder="友链名称"
-                  />
-                </div>
-                <div>
-                  <label className={labelClass}>排序</label>
-                  <input
-                    type="number"
-                    value={form.sortOrder}
-                    onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })}
-                    className={inputClass}
-                    placeholder="0"
-                  />
-                </div>
-              </div>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>链接 *</label>
-                <input
-                  type="url"
-                  value={form.url}
-                  onChange={(e) => setForm({ ...form, url: e.target.value })}
-                  className={inputClass}
-                  placeholder="https://example.com"
-                />
-              </div>
-              <div>
-                <label className={labelClass}>头像 URL（可选）</label>
-                <input
-                  type="url"
-                  value={form.avatarUrl}
-                  onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })}
-                  className={inputClass}
-                  placeholder="https://example.com/avatar.png"
-                />
-              </div>
-              <div>
-                <label className={labelClass}>描述</label>
-                <textarea
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  className={`${inputClass} min-h-[60px] resize-y`}
-                  placeholder="一句话描述"
-                />
-              </div>
-              <div>
-                <label className={labelClass}>标签（用逗号分隔）</label>
+                <label className={labelClass}>名称 *</label>
                 <input
                   type="text"
-                  value={form.tags}
-                  onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
                   className={inputClass}
-                  placeholder="前端, 设计, 生活"
+                  placeholder="友链名称"
+                />
+              </div>
+              <div>
+                <label className={labelClass}>排序</label>
+                <input
+                  type="number"
+                  value={form.sortOrder}
+                  onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })}
+                  className={inputClass}
+                  placeholder="0"
                 />
               </div>
             </div>
+            <div>
+              <label className={labelClass}>链接 *</label>
+              <input
+                type="url"
+                value={form.url}
+                onChange={(e) => setForm({ ...form, url: e.target.value })}
+                className={inputClass}
+                placeholder="https://example.com"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>头像 URL（可选）</label>
+              <input
+                type="url"
+                value={form.avatarUrl}
+                onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })}
+                className={inputClass}
+                placeholder="https://example.com/avatar.png"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>描述</label>
+              <textarea
+                value={form.description}
+                onChange={(e) => setForm({ ...form, description: e.target.value })}
+                className={`${inputClass} min-h-[60px] resize-y`}
+                placeholder="一句话描述"
+              />
+            </div>
+            <div>
+              <label className={labelClass}>标签（用逗号分隔）</label>
+              <input
+                type="text"
+                value={form.tags}
+                onChange={(e) => setForm({ ...form, tags: e.target.value })}
+                className={inputClass}
+                placeholder="前端, 设计, 生活"
+              />
+            </div>
+          </div>
         </AdminModal>
       )}
 
       {/* 删除确认 */}
       <ConfirmDialog
         open={!!confirmState}
-        title={confirmState?.title ?? ""}
+        title={confirmState?.title ?? ''}
         description={confirmState?.description}
         confirmLabel="删除"
         onConfirm={confirmState?.onConfirm ?? (() => {})}

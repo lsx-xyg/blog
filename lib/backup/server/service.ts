@@ -23,25 +23,25 @@
  * }
  */
 
-import { db } from "@/db";
-import { backupRecords } from "@/db/schema";
-import { getPrivateStorageDriver } from "@/lib/storage/server";
-import type { StorageDriverInterface } from "@/lib/types/storage";
-import { BackupTrigger, BackupAuditAction } from "@/lib/types/backup";
-import { StorageDriverType } from "@/lib/types/storage";
-import { isEncryptionAvailable } from "@/lib/crypto/server";
-import { eq, desc } from "drizzle-orm";
+import { db } from '@/db';
+import { backupRecords } from '@/db/schema';
+import { getPrivateStorageDriver } from '@/lib/storage/server';
+import type { StorageDriverInterface } from '@/lib/types/storage';
+import { BackupTrigger, BackupAuditAction } from '@/lib/types/backup';
+import { StorageDriverType } from '@/lib/types/storage';
+import { isEncryptionAvailable } from '@/lib/crypto/server';
+import { eq, desc } from 'drizzle-orm';
 import {
   BACKUP_TABLES,
   TABLE_SCHEMA_MAP,
   convertDateFields,
   restoreAccountRow,
   sanitizeAccountRow,
-} from "./schema";
-import { BACKUP_VERSION, encodeBackupContent, decodeBackupContent } from "./codec";
-import type { BackupData } from "./codec";
-import { resolveBackupStorageDriver } from "./store";
-import { logBackupAudit, listBackupAuditLogs } from "./audit";
+} from './schema';
+import { BACKUP_VERSION, encodeBackupContent, decodeBackupContent } from './codec';
+import type { BackupData } from './codec';
+import { resolveBackupStorageDriver } from './store';
+import { logBackupAudit } from './audit';
 /* ---------- 导出 / 导入 ---------- */
 
 /**
@@ -62,7 +62,7 @@ export async function exportBackup(): Promise<BackupData> {
     const rows = await db.select().from(schema);
 
     // 对 accounts 表的敏感字段进行加密或脱敏
-    if (tableName === "accounts") {
+    if (tableName === 'accounts') {
       tables[tableName] = rows.map((row) => sanitizeAccountRow(row as Record<string, unknown>));
     } else {
       tables[tableName] = rows;
@@ -70,7 +70,9 @@ export async function exportBackup(): Promise<BackupData> {
   }
 
   if (!encryptionAvailable) {
-    console.warn("[backup] ENCRYPTION_KEY 未配置，accounts 表的敏感字段（token/密码）已脱敏为 null，恢复后需要重新登录");
+    console.warn(
+      '[backup] ENCRYPTION_KEY 未配置，accounts 表的敏感字段（token/密码）已脱敏为 null，恢复后需要重新登录',
+    );
   }
 
   return {
@@ -120,7 +122,7 @@ export async function importBackup(backupData: BackupData): Promise<void> {
       let processed = row as Record<string, unknown>;
 
       // accounts 表敏感字段解密
-      if (tableName === "accounts" && backupData.sensitiveFieldsEncrypted) {
+      if (tableName === 'accounts' && backupData.sensitiveFieldsEncrypted) {
         processed = restoreAccountRow(processed);
       }
 
@@ -139,7 +141,9 @@ export async function importBackup(backupData: BackupData): Promise<void> {
   }
 
   if (!backupData.sensitiveFieldsEncrypted) {
-    console.warn("[backup] 备份时敏感字段已脱敏，accounts 表的 token/密码为 null，恢复后需要重新登录");
+    console.warn(
+      '[backup] 备份时敏感字段已脱敏，accounts 表的 token/密码为 null，恢复后需要重新登录',
+    );
   }
 }
 
@@ -159,17 +163,17 @@ export async function createBackup(
 
   // 2. 序列化 + 加密（codec 负责版本/魔数/明文降级）
   const { content: contentToUpload } = encodeBackupContent(backupData);
-  const buffer = Buffer.from(contentToUpload, "utf-8");
+  const buffer = Buffer.from(contentToUpload, 'utf-8');
 
   // 3. 生成文件名（按日期分目录）
   const now = new Date();
-  const dateStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, "0")}/${String(now.getDate()).padStart(2, "0")}`;
-  const timestamp = now.toISOString().replace(/[:.]/g, "-");
+  const dateStr = `${now.getFullYear()}/${String(now.getMonth() + 1).padStart(2, '0')}/${String(now.getDate()).padStart(2, '0')}`;
+  const timestamp = now.toISOString().replace(/[:.]/g, '-');
   const filename = `backups/${dateStr}/backup-${timestamp}.json`;
 
   // 4. 上传到私有存储（备份文件包含敏感数据，必须存储在私有仓库/bucket）
   const driver = await getPrivateStorageDriver();
-  const uploadResult = await driver.upload(buffer, filename, "application/json");
+  const uploadResult = await driver.upload(buffer, filename, 'application/json');
 
   // 5. 创建备份记录（记录创建时使用的存储驱动，便于切换驱动后仍能操作旧备份）
   // driver.name 返回小写（local/github/s3），转换为大写的 StorageDriverType
@@ -247,7 +251,9 @@ export async function deleteBackup(id: string): Promise<void> {
  * @param id 备份 ID
  * @returns 备份数据 Buffer 和文件名
  */
-export async function downloadBackup(id: string): Promise<{ buffer: Buffer; filename: string; mimeType: string }> {
+export async function downloadBackup(
+  id: string,
+): Promise<{ buffer: Buffer; filename: string; mimeType: string }> {
   const record = await getBackup(id);
   if (!record) {
     throw new Error(`备份记录不存在: ${id}`);
@@ -261,7 +267,7 @@ export async function downloadBackup(id: string): Promise<{ buffer: Buffer; file
   const buffer = decodeBackupContent(rawBuffer);
 
   // 从 fileKey 提取文件名
-  const filename = record.fileKey.split("/").pop() || "backup.json";
+  const filename = record.fileKey.split('/').pop() || 'backup.json';
 
   // 记录审计日志
   await logBackupAudit(record.id, record.fileKey, BackupAuditAction.DOWNLOAD);
@@ -269,6 +275,6 @@ export async function downloadBackup(id: string): Promise<{ buffer: Buffer; file
   return {
     buffer,
     filename,
-    mimeType: "application/json",
+    mimeType: 'application/json',
   };
 }

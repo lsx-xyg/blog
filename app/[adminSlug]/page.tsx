@@ -1,39 +1,34 @@
 /** 后台根路径：路由不匹配一律 404 伪装；用户表为空 → 引导页；未登录 → 登录页；非管理员 → 404 */
-import { notFound } from "next/navigation";
-import { headers } from "next/headers";
-import Link from "next/link";
-import { sql, desc, eq, and } from "drizzle-orm";
-import { db } from "@/db";
-import { users, posts, tags, media, friendLinks } from "@/db/schema";
-import { PostStatus } from "@/lib/types/posts";
-import { auth } from "@/lib/auth/server";
-import { getAdminPathAsync } from "@/lib/admin/server";
-import { isAdminUser } from "@/lib/shared";
-import { formatDate } from "@/lib/shared";
-import { getEnv } from "@/lib/env/server";
-import { AdminLogin } from "@/components/auth/admin-login";
-import { SignOutButton } from "@/components/auth/sign-out-button";
-import { SetupWizard } from "@/components/auth/setup-wizard";
-import { AdminBreadcrumb } from "@/components/admin/admin-breadcrumb";
-import DashboardCards from "@/components/admin/dashboard-cards";
-import QuickLinks from "@/components/admin/quick-links";
-import { getSetting } from "@/lib/settings/server";
+import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
+import Link from 'next/link';
+import { sql, desc, eq } from 'drizzle-orm';
+import { db } from '@/db';
+import { users, posts, tags, media, friendLinks } from '@/db/schema';
+import { PostStatus } from '@/lib/types/posts';
+import { auth } from '@/lib/auth/server';
+import { getAdminPathAsync } from '@/lib/admin/server';
+import { isAdminUser } from '@/lib/shared';
+import { formatDate } from '@/lib/shared';
+import { getEnv } from '@/lib/env/server';
+import { AdminLogin } from '@/components/auth/admin-login';
+import { SignOutButton } from '@/components/auth/sign-out-button';
+import { SetupWizard } from '@/components/auth/setup-wizard';
+import { AdminBreadcrumb } from '@/components/admin/admin-breadcrumb';
+import DashboardCards from '@/components/admin/dashboard-cards';
+import QuickLinks from '@/components/admin/quick-links';
+import { getSetting } from '@/lib/settings/server';
 import {
   normalizeCardOrder,
   normalizeQuickOrder,
   DASHBOARD_ORDER_KEY,
   QUICK_ORDER_KEY,
-} from "@/lib/admin/shared";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import {
-  FileText,
-  Image as ImageIcon,
-  Calendar,
-  ChevronRight,
-} from "lucide-react";
+} from '@/lib/admin/shared';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { FileText, Image as ImageIcon, Calendar, ChevronRight } from 'lucide-react';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export default async function AdminRootPage({
   params,
@@ -46,9 +41,7 @@ export default async function AdminRootPage({
   if (adminSlug !== adminPath) notFound();
 
   // 检查用户表是否为空（首次安装引导）
-  const [row] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(users);
+  const [row] = await db.select({ count: sql<number>`count(*)::int` }).from(users);
   const hasUsers = (row?.count ?? 0) > 0;
 
   // 用户表为空 → 显示引导页（创建第一个管理员）
@@ -62,7 +55,7 @@ export default async function AdminRootPage({
             创建第一个账号（自动成为管理员）。建议使用 GitHub 登录。
           </p>
         </header>
-        <SetupWizard needsSecret={Boolean(getEnv("SETUP_SECRET"))} adminPath={adminPath} />
+        <SetupWizard needsSecret={Boolean(getEnv('SETUP_SECRET'))} adminPath={adminPath} />
       </main>
     );
   }
@@ -85,18 +78,41 @@ export default async function AdminRootPage({
     recentMedia,
   ] = await Promise.all([
     db.select({ count: sql<number>`count(*)::int` }).from(posts),
-    db.select({ count: sql<number>`count(*)::int` }).from(posts).where(eq(posts.status, PostStatus.PUBLISHED)),
-    db.select({ count: sql<number>`count(*)::int` }).from(posts).where(eq(posts.status, PostStatus.DRAFT)),
-    db.select({ count: sql<number>`count(*)::int` }).from(posts).where(eq(posts.status, PostStatus.SCHEDULED)),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(posts)
+      .where(eq(posts.status, PostStatus.PUBLISHED)),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(posts)
+      .where(eq(posts.status, PostStatus.DRAFT)),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(posts)
+      .where(eq(posts.status, PostStatus.SCHEDULED)),
     db.select({ count: sql<number>`count(*)::int` }).from(tags),
     db.select({ count: sql<number>`count(*)::int` }).from(media),
     db.select({ count: sql<number>`count(*)::int` }).from(friendLinks),
     db.select({ sum: sql<number>`coalesce(sum(view_count), 0)::int` }).from(posts),
-    db.select({ id: posts.id, title: posts.title, status: posts.status, createdAt: posts.createdAt, slug: posts.slug })
+    db
+      .select({
+        id: posts.id,
+        title: posts.title,
+        status: posts.status,
+        createdAt: posts.createdAt,
+        slug: posts.slug,
+      })
       .from(posts)
       .orderBy(desc(posts.createdAt))
       .limit(5),
-    db.select({ id: media.id, url: media.url, title: media.title, createdAt: media.createdAt, type: media.type })
+    db
+      .select({
+        id: media.id,
+        url: media.url,
+        title: media.title,
+        createdAt: media.createdAt,
+        type: media.type,
+      })
       .from(media)
       .orderBy(desc(media.createdAt))
       .limit(5),
@@ -127,9 +143,7 @@ export default async function AdminRootPage({
       {/* 欢迎信息 + 退出按钮 */}
       <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold">
-            你好，{session.user.name}
-          </h1>
+          <h1 className="text-2xl font-semibold">你好，{session.user.name}</h1>
           <p className="mt-1 text-sm text-muted-foreground">欢迎回来，这是你的博客数据概览</p>
         </div>
         <SignOutButton />
@@ -150,7 +164,10 @@ export default async function AdminRootPage({
                 <FileText className="h-4 w-4" />
                 最近文章
               </CardTitle>
-              <Link href={`/${adminPath}/posts`} className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              <Link
+                href={`/${adminPath}/posts`}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+              >
                 查看全部
                 <ChevronRight className="h-3 w-3" />
               </Link>
@@ -158,7 +175,9 @@ export default async function AdminRootPage({
           </CardHeader>
           <CardContent>
             {recentPosts.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">暂无文章，点击「写文章」开始创作</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                暂无文章，点击「写文章」开始创作
+              </p>
             ) : (
               <div className="space-y-2">
                 {recentPosts.map((post) => (
@@ -168,7 +187,7 @@ export default async function AdminRootPage({
                     className="flex items-center justify-between rounded-lg p-2 hover:bg-accent/50 transition-colors"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{post.title || "无标题"}</p>
+                      <p className="truncate text-sm font-medium">{post.title || '无标题'}</p>
                       <p className="mt-0.5 text-xs text-muted-foreground flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         {formatDate(post.createdAt)}
@@ -177,18 +196,18 @@ export default async function AdminRootPage({
                     <Badge
                       variant={
                         post.status === PostStatus.PUBLISHED
-                          ? "default"
+                          ? 'default'
                           : post.status === PostStatus.SCHEDULED
-                          ? "secondary"
-                          : "outline"
+                            ? 'secondary'
+                            : 'outline'
                       }
                       className="ml-2 shrink-0 text-xs"
                     >
                       {post.status === PostStatus.PUBLISHED
-                        ? "已发布"
+                        ? '已发布'
                         : post.status === PostStatus.SCHEDULED
-                        ? "定时"
-                        : "草稿"}
+                          ? '定时'
+                          : '草稿'}
                     </Badge>
                   </Link>
                 ))}
@@ -205,7 +224,10 @@ export default async function AdminRootPage({
                 <ImageIcon className="h-4 w-4" />
                 最近媒体
               </CardTitle>
-              <Link href={`/${adminPath}/media`} className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1">
+              <Link
+                href={`/${adminPath}/media`}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+              >
                 查看全部
                 <ChevronRight className="h-3 w-3" />
               </Link>
@@ -213,7 +235,9 @@ export default async function AdminRootPage({
           </CardHeader>
           <CardContent>
             {recentMedia.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">暂无媒体，上传你的第一张图片吧</p>
+              <p className="py-8 text-center text-sm text-muted-foreground">
+                暂无媒体，上传你的第一张图片吧
+              </p>
             ) : (
               <div className="grid grid-cols-5 gap-2">
                 {recentMedia.map((item) => (
@@ -221,12 +245,12 @@ export default async function AdminRootPage({
                     key={item.id}
                     href={`/${adminPath}/media?id=${item.id}`}
                     className="group relative aspect-square overflow-hidden rounded-lg bg-muted"
-                    title={item.title || "图片"}
+                    title={item.title || '图片'}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={item.url}
-                      alt={item.title || "图片"}
+                      alt={item.title || '图片'}
                       className="h-full w-full object-cover transition-transform group-hover:scale-110"
                       loading="lazy"
                     />

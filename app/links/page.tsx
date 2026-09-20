@@ -1,9 +1,10 @@
-import { listFriendLinks } from "@/lib/friend-links/server";
-import { getSiteSettings } from "@/lib/settings/server";
-import { Link2 } from "lucide-react";
-import type { Metadata } from "next";
+import { listFriendLinks } from '@/lib/friend-links/server';
+import { getSiteSettings } from '@/lib/settings/server';
+import Image from 'next/image';
+import { Link2 } from 'lucide-react';
+import type { Metadata } from 'next';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 /** 动态生成友链页面 metadata */
 export async function generateMetadata(): Promise<Metadata> {
@@ -22,10 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export const revalidate = 300;
 
 export default async function LinksPage() {
-  const [site, links] = await Promise.all([
-    getSiteSettings(),
-    listFriendLinks(),
-  ]);
+  const [_site, links] = await Promise.all([getSiteSettings(), listFriendLinks()]);
 
   return (
     <div className="container mx-auto px-4 py-16 max-w-4xl animate-page-enter">
@@ -52,9 +50,11 @@ export default async function LinksPage() {
             >
               <div className="flex items-start gap-4">
                 {link.avatarUrl ? (
-                  <img
+                  <Image
                     src={link.avatarUrl}
                     alt={link.name}
+                    width={48}
+                    height={48}
                     className="h-12 w-12 rounded-full object-cover flex-shrink-0"
                   />
                 ) : (

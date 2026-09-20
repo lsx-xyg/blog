@@ -1,5 +1,5 @@
 /** @type {import('czg').UserConfig} */
-export default {
+const commitlintConfig =  {
   extends: ['@commitlint/config-conventional'],
   rules: {
     'type-enum': [
@@ -14,3 +14,5 @@ export default {
     // 其他 cz-git 配置...
   }
 };
+
+export default commitlintConfig;

@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
-import { desc, eq, and } from "drizzle-orm";
-import { db } from "@/db";
-import { mediaTags, tags, media } from "@/db/schema";
-import { listPublishedPostMeta } from "@/lib/posts/server";
-import { MediaType } from "@/lib/types/media";
+import { NextResponse } from 'next/server';
+import { desc, eq } from 'drizzle-orm';
+import { db } from '@/db';
+import { mediaTags, tags, media } from '@/db/schema';
+import { listPublishedPostMeta } from '@/lib/posts/server';
+import { MediaType } from '@/lib/types/media';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 /**
  * 搜索索引内存缓存
@@ -63,15 +63,18 @@ export async function GET() {
     .where(eq(media.type, MediaType.GALLERY))
     .orderBy(desc(media.createdAt));
 
-  const galleryMap = new Map<string, {
-    id: string;
-    title: string | null;
-    description: string | null;
-    featured: boolean;
-    imageUrl: string;
-    createdAt: Date;
-    tags: string[];
-  }>();
+  const galleryMap = new Map<
+    string,
+    {
+      id: string;
+      title: string | null;
+      description: string | null;
+      featured: boolean;
+      imageUrl: string;
+      createdAt: Date;
+      tags: string[];
+    }
+  >();
   for (const r of galleryRows) {
     let item = galleryMap.get(r.id);
     if (!item) {

@@ -12,38 +12,32 @@ import {
   mediaTags,
   settings,
   friendLinks,
-  backupRecords,
-  backupAuditLogs,
   users,
   sessions,
   accounts,
   verifications,
-} from "@/db/schema";
-import {
-  decryptIfAvailable,
-  encryptIfAvailable,
-  isEncryptionAvailable,
-} from "@/lib/crypto/server";
+} from '@/db/schema';
+import { decryptIfAvailable, encryptIfAvailable, isEncryptionAvailable } from '@/lib/crypto/server';
 
 /** 需要备份的表（按依赖顺序排列，恢复时按此顺序清空和插入） */
 export const BACKUP_TABLES = [
-  "users",
-  "sessions",
-  "accounts",
-  "verifications",
-  "posts",
-  "tags",
-  "postTags",
-  "media",
-  "mediaTags",
-  "settings",
-  "friendLinks",
+  'users',
+  'sessions',
+  'accounts',
+  'verifications',
+  'posts',
+  'tags',
+  'postTags',
+  'media',
+  'mediaTags',
+  'settings',
+  'friendLinks',
 ] as const;
 
 export type BackupTableName = (typeof BACKUP_TABLES)[number];
 
 /** 表名到 schema 的映射（用 any 绕过类型检查，因为不同表结构不同） */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 export const TABLE_SCHEMA_MAP: Record<BackupTableName, any> = {
   users,
   sessions,
@@ -60,10 +54,10 @@ export const TABLE_SCHEMA_MAP: Record<BackupTableName, any> = {
 
 /** accounts 表中的敏感字段（GitHub OAuth token、密码等） */
 export const ACCOUNT_SENSITIVE_FIELDS = [
-  "accessToken",
-  "refreshToken",
-  "idToken",
-  "password",
+  'accessToken',
+  'refreshToken',
+  'idToken',
+  'password',
 ] as const;
 
 /**
@@ -90,7 +84,11 @@ export function sanitizeAccountRow(row: Record<string, unknown>): Record<string,
 export function restoreAccountRow(row: Record<string, unknown>): Record<string, unknown> {
   const result = { ...row };
   for (const field of ACCOUNT_SENSITIVE_FIELDS) {
-    if (result[field] !== null && result[field] !== undefined && typeof result[field] === "string") {
+    if (
+      result[field] !== null &&
+      result[field] !== undefined &&
+      typeof result[field] === 'string'
+    ) {
       result[field] = decryptIfAvailable(result[field] as string);
     }
   }
@@ -110,7 +108,7 @@ export function restoreAccountRow(row: Record<string, unknown>): Record<string, 
 export function convertDateFields(row: Record<string, unknown>): Record<string, unknown> {
   const result = { ...row };
   for (const [key, value] of Object.entries(result)) {
-    if (typeof value === "string" && key.endsWith("At")) {
+    if (typeof value === 'string' && key.endsWith('At')) {
       const date = new Date(value);
       if (!isNaN(date.getTime())) {
         result[key] = date;
