@@ -5,7 +5,7 @@
  */
 import { NextResponse } from "next/server";
 import { requireAdmin, adminDenied } from "@/lib/auth/server/guard";
-import { listSystemJobsStatus } from "@/lib/cron";
+import { listSystemJobsStatus } from "@/lib/cron/server";
 import { getDeployPlatform } from "@/lib/settings/server";
 import { getCronSettings, getSiteSettings } from "@/lib/settings/server";
 import { CronDeployPlatform } from "@/lib/types/settings";

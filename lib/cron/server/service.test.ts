@@ -2,12 +2,12 @@ import { describe, expect, it, vi, beforeEach } from "vitest";
 import { RequestMethod, type CronJob } from "@/lib/types/cron";
 
 // mock client 适配器：service 测试不触网
-vi.mock("@/lib/cron/client", () => ({
+vi.mock("./cron-job-api", () => ({
   createCronJob: vi.fn(),
   listCronJobs: vi.fn(),
 }));
 
-import { createCronJob, listCronJobs } from "@/lib/cron/client";
+import { createCronJob, listCronJobs } from "./cron-job-api";
 import {
   createGlobalPublishJob,
   createSystemJob,

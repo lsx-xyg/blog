@@ -9,7 +9,7 @@
  */
 import { useState } from "react";
 import { useToast } from "@/components/ui/toast";
-import { DEFAULT_FORM, formToConfig, jobToForm, formatScheduleArray, type FormState } from "@/lib/cron/form";
+import { DEFAULT_FORM, formToConfig, jobToForm, formatScheduleArray, type FormState } from "@/lib/cron/shared";
 import type { CronJob } from "@/lib/types/cron";
 
 export function useCronForm({ onSaved }: { onSaved?: () => void }) {

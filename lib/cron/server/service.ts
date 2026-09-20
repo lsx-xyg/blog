@@ -7,8 +7,8 @@
  * 依赖方向：service.ts → client.ts / system-jobs.ts（单向）
  */
 import type { CronJob } from "@/lib/types/cron";
-import { SYSTEM_JOB_PRESETS, getPresetKeyFromTitle, getSystemJobPreset } from "@/lib/cron/system-jobs";
-import { createCronJob, listCronJobs } from "@/lib/cron/client";
+import { SYSTEM_JOB_PRESETS, getPresetKeyFromTitle, getSystemJobPreset } from "../shared/system-jobs";
+import { createCronJob, listCronJobs } from "./cron-job-api";
 
 /**
  * 创建系统定时任务（按预设创建）

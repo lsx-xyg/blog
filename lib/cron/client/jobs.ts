@@ -11,8 +11,8 @@ import {
   matchPresetByUrl,
   matchSystemJob,
   type SystemJobPreset,
-} from "@/lib/cron/system-jobs";
-import { REQUEST_METHODS } from "@/lib/cron/form";
+} from "../shared/system-jobs";
+import { REQUEST_METHODS } from "../shared/form";
 
 /** 任务分类：system=命中系统预设（标题或 URL），orphan=疑似系统任务但匹配不到预设，custom=普通任务 */
 export type JobKind = "system" | "orphan" | "custom";

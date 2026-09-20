@@ -3,7 +3,7 @@
  */
 import { NextResponse } from "next/server";
 import { requireAdmin, adminDenied } from "@/lib/auth/server/guard";
-import { getJobHistoryDetail } from "@/lib/cron";
+import { getJobHistoryDetail } from "@/lib/cron/server";
 
 export const dynamic = "force-dynamic";
 

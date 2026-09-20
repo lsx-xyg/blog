@@ -5,10 +5,10 @@
  */
 import { NextResponse } from "next/server";
 import { requireAdmin, adminDenied } from "@/lib/auth/server/guard";
-import { findSystemJob, updateCronJob } from "@/lib/cron";
+import { findSystemJob, updateCronJob } from "@/lib/cron/server";
 import { getDeployPlatform } from "@/lib/settings/server";
 import { CronDeployPlatform } from "@/lib/types/settings";
-import { getSystemJobPreset } from "@/lib/cron/system-jobs";
+import { getSystemJobPreset } from "@/lib/cron/shared";
 
 export const dynamic = "force-dynamic";
 

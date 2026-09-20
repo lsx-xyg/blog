@@ -6,7 +6,7 @@ import {
   systemTagColor,
   methodLabel,
   availableActions,
-} from "@/lib/cron/jobs";
+} from "./jobs";
 
 function makeJob(overrides: Partial<CronJob> = {}): CronJob {
   return {

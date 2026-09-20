@@ -45,7 +45,7 @@ import {
   methodLabel,
   availableActions,
   type JobClassification,
-} from "@/lib/cron/jobs";
+} from "@/lib/cron/client";
 
 type CronStatus = {
   platform: CronDeployPlatform;

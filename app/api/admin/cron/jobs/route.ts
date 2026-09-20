@@ -4,7 +4,7 @@
  */
 import { NextResponse } from "next/server";
 import { requireAdmin, adminDenied } from "@/lib/auth/server/guard";
-import { listCronJobs, createCronJob } from "@/lib/cron";
+import { listCronJobs, createCronJob } from "@/lib/cron/server";
 import type { CronJobConfig } from "@/lib/types/cron";
 
 export const dynamic = "force-dynamic";
