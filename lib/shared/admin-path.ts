@@ -6,7 +6,9 @@
  * - 用户表为空 → 显示引导页（创建第一个管理员）
  * - 用户表不为空 → 显示登录页或后台首页
  */
-import { getEnv, ENV_KEYS } from "@/lib/env";
+import { ENV_KEYS } from "@/lib/env/shared";
+import { getEnv } from "@/lib/env/server";
+
 import { getSetting } from "@/lib/settings";
 
 /** 异步版本：env 优先 → DB settings.admin_path 覆盖 → 兜底 admin */

@@ -1,8 +1,9 @@
 // 引导配置 seed 脚本
 // 使用方式：npx tsx scripts/seed-guides.ts
 // 幂等：guideKey 已存在则跳过（改版换新 guideKey 版本号）
-import "@/lib/env/load-env";
-import { getEnv, ENV_KEYS } from "@/lib/env";
+import "@/lib/env/server/load";
+import { getEnv } from "@/lib/env/server";
+import { ENV_KEYS } from "@/lib/env/shared";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { eq } from "drizzle-orm";
 import postgres from "postgres";

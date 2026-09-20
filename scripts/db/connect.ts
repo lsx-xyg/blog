@@ -2,8 +2,9 @@
  * 数据库连通性测试：npm run db:test
  * 验证 DATABASE_URL 可用并返回数据库信息
  */
-import "@/lib/env/load";
-import { getEnv, ENV_KEYS} from "@/lib/env";
+import "@/lib/env/server/load";
+import { ENV_KEYS } from "@/lib/env/shared";
+import { getEnv } from "@/lib/env/server";
 import postgres from "postgres";
 
 async function main() {

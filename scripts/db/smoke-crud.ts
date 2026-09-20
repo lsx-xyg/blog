@@ -1,4 +1,4 @@
-import "@/lib/env/load";
+import "@/lib/env/server/load";
 import { eq } from "drizzle-orm";
 import { db, sql } from "@/db";
 import { tags } from "@/db/schema";

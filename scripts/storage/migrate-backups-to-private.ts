@@ -20,13 +20,14 @@
  * - 本脚本假设公开存储可通过 HTTP 访问（如 GITHUB），LOCAL 驱动可能不适用
  */
 
-import "@/lib/env/load";
+import "@/lib/env/server/load";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { eq } from "drizzle-orm";
 import postgres from "postgres";
 import { backupRecords } from "@/db/schema";
 import { getPublicStorageDriver, getPrivateStorageDriver } from "@/lib/storage";
-import { ENV_KEYS, getEnv } from "@/lib/env";
+import { ENV_KEYS } from "@/lib/env/shared";
+import { getEnv } from "@/lib/env/server";
 
 type MigrationResult = {
   id: string;

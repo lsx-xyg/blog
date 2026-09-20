@@ -1,6 +1,7 @@
-import "@/lib/env/load";
+import "@/lib/env/server/load";
 import postgres from "postgres";
-import { getEnv, ENV_KEYS } from "@/lib/env";
+import { ENV_KEYS } from "@/lib/env/shared";
+import { getEnv } from "@/lib/env/server";
 
 async function main() {
 

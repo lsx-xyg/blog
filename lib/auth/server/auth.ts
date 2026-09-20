@@ -7,7 +7,7 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { eq, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { getEnv } from "@/lib/env/utils";
+import { getEnv } from "@/lib/env/server";
 import { users, sessions, accounts, verifications } from "@/db/schema";
 
 export const auth = betterAuth({

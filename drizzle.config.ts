@@ -1,7 +1,7 @@
 // 与 Next.js 加载规则对齐：.env → .env.local → .env.<NODE_ENV> → .env.<NODE_ENV>.local
-import "@/lib/env/load";
+import "@/lib/env/server/load";
 import { defineConfig } from "drizzle-kit";
-import { getEnv } from "@/lib/env/utils";
+import { getEnv } from "@/lib/env/server";
 
 // 迁移必须走非池化（direct）连接串（neon-postgres skill：pooled 不支持 session 级操作）
 export default defineConfig({

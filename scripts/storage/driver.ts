@@ -12,7 +12,7 @@
  * 4. 读取 getUrl
  * 5. 删除文件
  */
-import "@/lib/env/load";
+import "@/lib/env/server/load";
 import { getPublicStorageDriver, resetStorageDriver, STORAGE_DRIVER_VALUES, validateImage } from "@/lib/storage";
 
 async function main() {

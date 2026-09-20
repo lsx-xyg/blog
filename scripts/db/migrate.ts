@@ -2,8 +2,9 @@
 // 使用方式：npx tsx scripts/migrate.ts
 // 优势：迁移失败时会显示真实错误，不会像 drizzle-kit CLI 那样静默吞错
 
-import "@/lib/env/load";
-import { ENV_KEYS, getEnv } from "@/lib/env";
+import "@/lib/env/server/load";
+import { ENV_KEYS } from "@/lib/env/shared";
+import { getEnv } from "@/lib/env/server";
 import { drizzle } from "drizzle-orm/postgres-js";
 import { migrate } from "drizzle-orm/postgres-js/migrator";
 import postgres from "postgres";

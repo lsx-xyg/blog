@@ -10,7 +10,7 @@ import { auth } from "@/lib/auth/server/auth";
 import { getAdminPathAsync } from "@/lib/shared/admin-path";
 import { isAdminUser } from "@/lib/shared/utils";
 import { formatDate } from "@/lib/shared/utils";
-import { getEnv } from "@/lib/env/utils";
+import { getEnv } from "@/lib/env/server/utils";
 import { AdminLogin } from "@/components/auth/admin-login";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { SetupWizard } from "@/components/auth/setup-wizard";
