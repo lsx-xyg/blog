@@ -25,7 +25,7 @@
 
 import { db } from "@/db";
 import { backupRecords } from "@/db/schema";
-import { getPrivateStorageDriver } from "@/lib/storage";
+import { getPrivateStorageDriver } from "@/lib/storage/server";
 import type { StorageDriverInterface } from "@/lib/types/storage";
 import { BackupTrigger, BackupAuditAction } from "@/lib/types/backup";
 import { StorageDriverType } from "@/lib/types/storage";

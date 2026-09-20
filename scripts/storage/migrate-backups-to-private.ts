@@ -25,7 +25,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import { eq } from "drizzle-orm";
 import postgres from "postgres";
 import { backupRecords } from "@/db/schema";
-import { getPublicStorageDriver, getPrivateStorageDriver } from "@/lib/storage";
+import { getPublicStorageDriver, getPrivateStorageDriver } from "@/lib/storage/server";
 import { ENV_KEYS } from "@/lib/env/shared";
 import { getEnv } from "@/lib/env/server";
 

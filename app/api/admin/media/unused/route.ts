@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth/server/auth";
 import { headers } from "next/headers";
 import { isAdminUser } from "@/lib/shared/utils";
 import { findUnusedMedia, batchDeleteMedia } from "@/lib/media";
-import { getPublicStorageDriver } from "@/lib/storage";
+import { getPublicStorageDriver } from "@/lib/storage/server";
 
 /**
  * 未使用图片清理 API

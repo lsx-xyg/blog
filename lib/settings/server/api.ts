@@ -30,7 +30,7 @@ import type {
   PrivateStorageSettings,
   StorageSettings,
 } from "@/lib/types/settings";
-import { STORAGE_DRIVER_VALUES } from "@/lib/storage";
+import { STORAGE_DRIVER_VALUES } from "@/lib/types/storage";
 
 /* ---------------- GET：敏感字段裁剪（纯） ---------------- */
 

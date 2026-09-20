@@ -30,7 +30,7 @@ driver 的配置来自 `getStorageSettings()`（内部走 `getConfigGroup("stora
 
 ```ts
 import { type StorageDriverInterface, StorageDriverType } from "@/lib/types/storage";
-import { getStorageSettings } from "@/lib/settings/server";
+import { getStorageSettings } from "@/lib/settings";
 import { LocalStorageDriver, GithubStorageDriver, S3StorageDriver } from "@/lib/storage/drivers";
 
 export * from "@/lib/types/storage";

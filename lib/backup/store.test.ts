@@ -1,12 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // mock 存储层：驱动解析测试不触网不触库
-vi.mock("@/lib/storage", () => ({
+vi.mock("@/lib/storage/server", () => ({
   getPrivateStorageDriver: vi.fn(),
   getPrivateStorageDriverByType: vi.fn(),
 }));
 
-import { getPrivateStorageDriver, getPrivateStorageDriverByType } from "@/lib/storage";
+import { getPrivateStorageDriver, getPrivateStorageDriverByType } from "@/lib/storage/server";
 import { resolveBackupStorageDriver } from "./store";
 
 const mockGetCurrent = vi.mocked(getPrivateStorageDriver);

@@ -5,7 +5,7 @@ import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { media, posts, mediaTags, tags } from "@/db/schema";
 import { MediaType } from "@/lib/types/media";
-import { StorageDriverType } from "@/lib/storage";
+import { StorageDriverType } from "@/lib/types/storage";
 import { getOrCreateTags } from "@/lib/tags";
 import { PostStatus } from "@/lib/types/posts";
 

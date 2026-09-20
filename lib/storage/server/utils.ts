@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { extname } from "path";
-import { ALLOWED_IMAGE_MIME_TYPES, MAX_IMAGE_SIZE } from "../types/storage";
+import { ALLOWED_IMAGE_MIME_TYPES, MAX_IMAGE_SIZE } from "@/lib/types/storage";
 
 /** 生成存储键：YYYY/MM/uuid.ext
  * 按日期分目录，UUID 文件名避免冲突，保留原扩展名

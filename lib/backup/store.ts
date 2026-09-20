@@ -7,7 +7,7 @@
 import {
   getPrivateStorageDriver,
   getPrivateStorageDriverByType,
-} from "@/lib/storage";
+} from "@/lib/storage/server";
 import type { StorageDriverInterface, StorageDriverType } from "@/lib/types/storage";
 
 /**

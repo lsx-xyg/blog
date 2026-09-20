@@ -1,10 +1,6 @@
 import  { type StorageDriverInterface, StorageDriverType } from "@/lib/types/storage";
 import { getStorageSettings, getPrivateStorageSettings } from "@/lib/settings/server";
-import { LocalStorageDriver, GithubStorageDriver, S3StorageDriver } from "@/lib/storage/drivers";
-
-export * from "@/lib/types/storage";
-export * from "@/lib/storage/drivers";
-export * from "@/lib/storage/utils";
+import { LocalStorageDriver, GithubStorageDriver, S3StorageDriver } from "./drivers";
 
 /** 缓存驱动实例（按 driver 类型缓存，避免重复创建） */
 const publicCached = new Map<StorageDriverType, StorageDriverInterface>();

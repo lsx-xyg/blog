@@ -13,7 +13,8 @@
  * 5. 删除文件
  */
 import "@/lib/env/server/load";
-import { getPublicStorageDriver, resetStorageDriver, STORAGE_DRIVER_VALUES, validateImage } from "@/lib/storage";
+import { getPublicStorageDriver, resetStorageDriver, validateImage } from "@/lib/storage/server";
+import { STORAGE_DRIVER_VALUES } from "@/lib/types/storage";
 
 async function main() {
   console.log("=== 存储驱动测试 ===\n");

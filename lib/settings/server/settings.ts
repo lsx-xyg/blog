@@ -1,4 +1,4 @@
-import { StorageDriverType } from "@/lib/storage";
+import { StorageDriverType } from "@/lib/types/storage";
 import type { SiteSettings, SocialLinks, FooterSettings, GiscusSettings, CronSettings, StorageSettings, PrivateStorageSettings, CronDeployPlatform } from "@/lib/types/settings";
 import { getConfig } from "./get-config";
 import { getConfigGroup } from "./get-config-groups";
