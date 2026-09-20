@@ -1,7 +1,7 @@
 /** 后台文章管理：动态路径（/[adminSlug]/posts），未匹配/未授权一律 404 伪装 */
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth/auth";
+import { auth } from "@/lib/auth/server/auth";
 import { getAdminPathAsync } from "@/lib/shared/admin-path";
 import { isAdminUser } from "@/lib/shared/utils";
 import { ManagePosts } from "@/components/manage/manage-posts";

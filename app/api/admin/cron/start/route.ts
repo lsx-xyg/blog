@@ -4,7 +4,7 @@
  * 不存在 → 按预设创建
  */
 import { NextResponse } from "next/server";
-import { requireAdmin, adminDenied } from "@/lib/auth/auth-guard";
+import { requireAdmin, adminDenied } from "@/lib/auth/server/guard";
 import { createSystemJob, findSystemJob, listCronJobs, updateCronJob } from "@/lib/cron";
 import { getDeployPlatform } from "@/lib/settings";
 import { getCronSettings, getSiteSettings } from "@/lib/settings/index";

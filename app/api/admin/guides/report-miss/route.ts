@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth/auth";
+import { auth } from "@/lib/auth/server/auth";
 import { isAdminUser } from "@/lib/shared/utils";
 import { db } from "@/db";
 import { guideStepEvents } from "@/db/schema";

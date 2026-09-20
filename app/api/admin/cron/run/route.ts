@@ -6,7 +6,7 @@
  */
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { requireAdmin, adminDenied } from "@/lib/auth/auth-guard";
+import { requireAdmin, adminDenied } from "@/lib/auth/server/guard";
 import { publishScheduledPosts } from "@/lib/posts";
 import { createBackup } from "@/lib/backup";
 import { BackupTrigger } from "@/lib/types/backup";

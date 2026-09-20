@@ -9,7 +9,7 @@
 
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth/auth";
+import { auth } from "@/lib/auth/server/auth";
 import { isAdminUser } from "@/lib/shared/utils";
 import { importBackup, type BackupData } from "@/lib/backup";
 

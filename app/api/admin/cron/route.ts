@@ -4,7 +4,7 @@
  * 系统任务状态通过一次 listCronJobs 获取全部任务后按预设匹配（1 个 API）
  */
 import { NextResponse } from "next/server";
-import { requireAdmin, adminDenied } from "@/lib/auth/auth-guard";
+import { requireAdmin, adminDenied } from "@/lib/auth/server/guard";
 import { listSystemJobsStatus } from "@/lib/cron";
 import { getDeployPlatform } from "@/lib/settings";
 import { getCronSettings, getSiteSettings } from "@/lib/settings/index";

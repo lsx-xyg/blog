@@ -4,7 +4,7 @@
  * 彻底删除请到任务列表操作（DELETE /api/admin/cron/jobs/[id]）
  */
 import { NextResponse } from "next/server";
-import { requireAdmin, adminDenied } from "@/lib/auth/auth-guard";
+import { requireAdmin, adminDenied } from "@/lib/auth/server/guard";
 import { findSystemJob, updateCronJob } from "@/lib/cron";
 import { getDeployPlatform } from "@/lib/settings";
 import { CronDeployPlatform } from "@/lib/types/settings";

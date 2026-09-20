@@ -5,7 +5,7 @@
  */
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth/auth";
+import { auth } from "@/lib/auth/server/auth";
 import { isAdminUser } from "@/lib/shared/utils";
 
 /** 统一错误响应（所有后台 API 同构） */

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth/auth";
+import { auth } from "@/lib/auth/server/auth";
 import { headers } from "next/headers";
 import { isAdminUser } from "@/lib/shared/utils";
 import { getMediaTags, setMediaTags } from "@/lib/media";

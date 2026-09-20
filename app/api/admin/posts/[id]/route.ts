@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { posts } from "@/db/schema";
 import { setPostTags } from "@/lib/posts";
-import { requireAdmin, adminDenied } from "@/lib/auth/auth-guard";
+import { requireAdmin, adminDenied } from "@/lib/auth/server/guard";
 import { POST_STATUS_VALUES, PostStatus } from "@/lib/types/posts";
 
 export const dynamic = "force-dynamic";

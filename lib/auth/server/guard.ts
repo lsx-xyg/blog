@@ -1,6 +1,6 @@
 /** 后台 API 鉴权：未登录 / 非管理员一律 404 伪装（防探测，SPEC §6） */
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth/auth";
+import { auth } from "@/lib/auth/server/auth";
 import { isAdminUser } from "@/lib/shared/utils";
 
 export async function requireAdmin(req: Request) {

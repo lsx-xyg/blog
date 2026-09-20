@@ -3,7 +3,7 @@
  * PUT /api/admin/dashboard/order - 保存排序（跨设备持久化到 settings 表）
  */
 import { NextResponse } from "next/server";
-import { requireAdmin, adminDenied } from "@/lib/auth/auth-guard";
+import { requireAdmin, adminDenied } from "@/lib/auth/server/guard";
 import { getSetting, setSetting } from "@/lib/settings/store";
 import {
   DASHBOARD_ORDER_KEY,

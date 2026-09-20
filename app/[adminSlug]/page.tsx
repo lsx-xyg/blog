@@ -6,7 +6,7 @@ import { sql, desc, eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { users, posts, tags, media, friendLinks } from "@/db/schema";
 import { PostStatus } from "@/lib/types/posts";
-import { auth } from "@/lib/auth/auth";
+import { auth } from "@/lib/auth/server/auth";
 import { getAdminPathAsync } from "@/lib/shared/admin-path";
 import { isAdminUser } from "@/lib/shared/utils";
 import { formatDate } from "@/lib/shared/utils";

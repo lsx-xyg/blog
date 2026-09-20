@@ -71,7 +71,7 @@ export async function DELETE(request: Request) {
 }
 
 /** 复用 requireAdmin 的会话（薄壳内取一次 userId） */
-import { auth } from "@/lib/auth/auth";
+import { auth } from "@/lib/auth/server/auth";
 import { headers } from "next/headers";
 async function getSessionUserId(): Promise<string | null> {
   const session = await auth.api.getSession({ headers: await headers() });
