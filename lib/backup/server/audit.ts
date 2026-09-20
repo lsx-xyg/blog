@@ -3,10 +3,10 @@
  *
  * 职责：审计记录的写入与查询。审计失败不影响主流程（只记错误）。
  */
-import { db } from "@/db";
-import { backupAuditLogs } from "@/db/schema";
-import { desc } from "drizzle-orm";
-import { BackupAuditAction } from "@/lib/types/backup";
+import { db } from '@/db';
+import { backupAuditLogs } from '@/db/schema';
+import { desc } from 'drizzle-orm';
+import { BackupAuditAction } from '@/lib/types/backup';
 
 /**
  * 记录备份审计日志
@@ -37,7 +37,7 @@ export async function logBackupAudit(
     });
   } catch (e) {
     // 审计日志记录失败不影响主流程，只记录错误
-    console.error("[backup] 记录审计日志失败：", e);
+    console.error('[backup] 记录审计日志失败：', e);
   }
 }
 

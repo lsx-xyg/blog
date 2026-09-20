@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 通用确认对话框（管理端 CRUD 骨架·最小共享单元）
@@ -8,8 +8,8 @@
  * - danger 变体：危险按钮红色样式（删除/清空等不可逆操作）
  * - loading：确认中的异步状态（防重复点击）
  */
-import type { ReactNode } from "react";
-import { AlertTriangle, X } from "lucide-react";
+import type { ReactNode } from 'react';
+import { AlertTriangle, X } from 'lucide-react';
 
 export type ConfirmDialogProps = {
   open: boolean;
@@ -33,8 +33,8 @@ export function ConfirmDialog({
   open,
   title,
   description,
-  confirmLabel = "确认",
-  cancelLabel = "取消",
+  confirmLabel = '确认',
+  cancelLabel = '取消',
   danger = true,
   loading = false,
   onConfirm,
@@ -43,11 +43,17 @@ export function ConfirmDialog({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4"
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="w-full max-w-md rounded-xl bg-background shadow-2xl">
         <div className="flex items-start justify-between gap-4 border-b border-border p-4">
           <div className="flex items-center gap-2">
-            <AlertTriangle className={`h-5 w-5 ${danger ? "text-red-500" : "text-muted-foreground"}`} />
+            <AlertTriangle
+              className={`h-5 w-5 ${danger ? 'text-red-500' : 'text-muted-foreground'}`}
+            />
             <h3 className="text-base font-semibold">{title}</h3>
           </div>
           <button
@@ -78,12 +84,10 @@ export function ConfirmDialog({
             onClick={onConfirm}
             disabled={loading}
             className={`rounded-lg px-4 py-2 text-sm font-medium text-white transition disabled:opacity-50 ${
-              danger
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-primary hover:bg-primary/90"
+              danger ? 'bg-red-600 hover:bg-red-700' : 'bg-primary hover:bg-primary/90'
             }`}
           >
-            {loading ? "处理中…" : confirmLabel}
+            {loading ? '处理中…' : confirmLabel}
           </button>
         </div>
       </div>

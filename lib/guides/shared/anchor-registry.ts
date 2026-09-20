@@ -20,22 +20,20 @@ export interface GuideEventAnchor {
 /** 已埋点锚点列表（新增埋点先在此登记） */
 export const GUIDE_EVENT_ANCHORS: GuideEventAnchor[] = [
   {
-    target: "reveal-view",
-    label: "敏感信息「查看」按钮（设置页）",
-    page: "/settings",
+    target: 'reveal-view',
+    label: '敏感信息「查看」按钮（设置页）',
+    page: '/settings',
   },
   {
-    target: "account-set-password",
-    label: "账号设置密码表单",
-    page: "/account",
+    target: 'account-set-password',
+    label: '账号设置密码表单',
+    page: '/account',
   },
 ];
 
 /** 触发事件类型（guide:trigger 的 detail.event 固定值） */
-export const GUIDE_TRIGGER_EVENT = "event_click";
+export const GUIDE_TRIGGER_EVENT = 'event_click';
 
 export function getAnchorLabel(target: string): string {
-  return (
-    GUIDE_EVENT_ANCHORS.find((a) => a.target === target)?.label ?? target
-  );
+  return GUIDE_EVENT_ANCHORS.find((a) => a.target === target)?.label ?? target;
 }

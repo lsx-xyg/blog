@@ -1,3 +1,3 @@
-export * from "./utils";
-export * from "./toc";
-export * from "./favicon-font";
+export * from './utils';
+export * from './toc';
+export * from './favicon-font';

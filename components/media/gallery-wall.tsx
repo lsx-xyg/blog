@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
-import type { GalleryMeta } from "@/lib/types/gallery";
-import { Filter, Sparkles, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import type { GalleryMeta } from '@/lib/types/gallery';
+import { Filter, Sparkles, Clock, ChevronDown, ChevronUp } from 'lucide-react';
 
 /**
  * 相册瀑布流组件
@@ -35,7 +35,7 @@ export function GalleryWall() {
     setLoading(true);
     setError(null);
 
-    fetch("/api/search-index")
+    fetch('/api/search-index')
       .then((r) => {
         if (!r.ok) {
           throw new Error(`HTTP ${r.status}`);
@@ -45,15 +45,15 @@ export function GalleryWall() {
       .then((data) => {
         if (cancelled) return;
         const gallery = data.gallery || [];
-        console.log("[GalleryWall] 获取到相册数据:", gallery.length, "条");
-        console.log("[GalleryWall] 完整响应:", data);
+        console.log('[GalleryWall] 获取到相册数据:', gallery.length, '条');
+        console.log('[GalleryWall] 完整响应:', data);
         setItems(gallery);
         setLoading(false);
       })
       .catch((err) => {
         if (cancelled) return;
-        console.error("[GalleryWall] 获取数据失败:", err);
-        setError(err instanceof Error ? err.message : "未知错误");
+        console.error('[GalleryWall] 获取数据失败:', err);
+        setError(err instanceof Error ? err.message : '未知错误');
         setLoading(false);
       });
 
@@ -97,7 +97,7 @@ export function GalleryWall() {
           setVisibleCount((c) => c + 9);
         }
       },
-      { rootMargin: "200px" },
+      { rootMargin: '200px' },
     );
 
     observer.observe(sentinel);
@@ -145,13 +145,10 @@ export function GalleryWall() {
         {/* 瀑布流骨架（跟首页一致的卡片骨架） */}
         <div className="columns-1 gap-4 sm:columns-2 lg:columns-3 xl:columns-4">
           {Array.from({ length: 8 }).map((_, i) => (
-            <div
-              key={i}
-              className="mb-4 break-inside-avoid"
-            >
+            <div key={i} className="mb-4 break-inside-avoid">
               <div
                 className={`animate-pulse rounded-lg border border-border bg-card ${
-                  i % 3 === 0 ? "h-64" : i % 3 === 1 ? "h-48" : "h-56"
+                  i % 3 === 0 ? 'h-64' : i % 3 === 1 ? 'h-48' : 'h-56'
                 }`}
               />
             </div>
@@ -192,9 +189,7 @@ export function GalleryWall() {
               type="button"
               onClick={() => setOnlyFeatured(false)}
               className={`flex items-center gap-1.5 px-4 py-2 text-sm transition-colors ${
-                !onlyFeatured
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-accent"
+                !onlyFeatured ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'
               }`}
             >
               <Clock className="h-4 w-4" />
@@ -204,9 +199,7 @@ export function GalleryWall() {
               type="button"
               onClick={() => setOnlyFeatured(true)}
               className={`flex items-center gap-1.5 px-4 py-2 text-sm transition-colors ${
-                onlyFeatured
-                  ? "bg-primary text-primary-foreground"
-                  : "hover:bg-accent"
+                onlyFeatured ? 'bg-primary text-primary-foreground' : 'hover:bg-accent'
               }`}
             >
               <Sparkles className="h-4 w-4" />
@@ -218,7 +211,7 @@ export function GalleryWall() {
         {/* 标签筛选面板（展开/收缩动画） */}
         <div
           className={`grid transition-all duration-300 ${
-            showTagFilter ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"
+            showTagFilter ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'
           }`}
         >
           <div className="overflow-hidden">
@@ -233,8 +226,8 @@ export function GalleryWall() {
                     onClick={() => toggleTag(tag)}
                     className={`rounded-full px-3 py-1 text-sm transition-colors ${
                       selectedTags.includes(tag)
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted hover:bg-muted/80"
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted hover:bg-muted/80'
                     }`}
                   >
                     {tag}
@@ -259,12 +252,12 @@ export function GalleryWall() {
       {visibleItems.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-12 text-center text-sm text-muted-foreground">
           {selectedTags.length || onlyFeatured
-            ? "没有符合条件的图片，换个筛选试试。"
-            : "还没有图片，去后台上传第一张吧。"}
+            ? '没有符合条件的图片，换个筛选试试。'
+            : '还没有图片，去后台上传第一张吧。'}
         </div>
       ) : (
         <div
-          key={`${onlyFeatured ? "featured" : "latest"}-${selectedTags.join(",")}`}
+          key={`${onlyFeatured ? 'featured' : 'latest'}-${selectedTags.join(',')}`}
           className="columns-1 gap-4 sm:columns-2 lg:columns-3 xl:columns-4 animate-fade-in-up"
         >
           {visibleItems.map((item) => (
@@ -283,28 +276,26 @@ export function GalleryWall() {
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={item.imageUrl}
-                  alt={item.title || "相册图片"}
+                  alt={item.title || '相册图片'}
                   loading="lazy"
                   decoding="async"
                   className="w-full h-auto transition-all duration-500 group-hover:scale-105 opacity-0"
                   onClick={() => setPreviewImage(item.imageUrl)}
                   onLoad={(e) => {
                     // 图片加载完成后淡入显示
-                    (e.target as HTMLImageElement).style.opacity = "1";
+                    (e.target as HTMLImageElement).style.opacity = '1';
                   }}
                   onError={(e) => {
-                    console.error("[GalleryWall] 图片加载失败:", item.imageUrl);
-                    (e.target as HTMLImageElement).style.opacity = "0.3";
+                    console.error('[GalleryWall] 图片加载失败:', item.imageUrl);
+                    (e.target as HTMLImageElement).style.opacity = '0.3';
                     // 显示一个占位符
-                    (e.target as HTMLImageElement).style.background = "hsl(var(--muted))";
+                    (e.target as HTMLImageElement).style.background = 'hsl(var(--muted))';
                   }}
                 />
                 {/* 悬浮信息 */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                   <div className="absolute bottom-0 left-0 right-0 p-3">
-                    {item.title && (
-                      <p className="text-sm font-medium text-white">{item.title}</p>
-                    )}
+                    {item.title && <p className="text-sm font-medium text-white">{item.title}</p>}
                     {item.tags.length > 0 && (
                       <div className="mt-1 flex flex-wrap gap-1">
                         {item.tags.slice(0, 3).map((tag) => (

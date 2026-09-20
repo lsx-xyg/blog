@@ -1,20 +1,17 @@
 /**
  * 文章数据访问层（T4：列表/详情/浏览量；T7：全量轻量元数据 + 服务端过滤预留）
  */
-import { and, desc, eq, or, sql } from "drizzle-orm";
-import { db } from "@/db";
-import { posts, tags, postTags } from "@/db/schema";
-import { getOrCreateTags } from "@/lib/tags/server";
-import { PostMeta, PostStatus } from "@/lib/types/posts";
+import { and, desc, eq, or, sql } from 'drizzle-orm';
+import { db } from '@/db';
+import { posts, tags, postTags } from '@/db/schema';
+import { getOrCreateTags } from '@/lib/tags/server';
+import { PostMeta, PostStatus } from '@/lib/types/posts';
 
 /** 数据库事务类型（用于 setPostTags 支持在事务内执行，与文章创建/更新原子提交） */
 type PgTx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
 /** 已发布文章列表（按发布时间倒序，publishedAt 为空用 createdAt 兜底；支持分页） */
-export async function listPublishedPosts(opts?: {
-  limit?: number;
-  offset?: number;
-}) {
+export async function listPublishedPosts(opts?: { limit?: number; offset?: number }) {
   const { limit, offset } = opts ?? {};
   const query = db
     .select()
@@ -29,19 +26,14 @@ export async function listPublishedPosts(opts?: {
 /** 按 slug 或 id（slug 留空时用 ID 兜底）查已发布文章 */
 export async function getPublishedPostBySlugOrId(slugOrId: string) {
   // 非 uuid 参数只匹配 slug，避免 PG 对 uuid 列做非法类型转换（22P02）
-  const isUuid =
-    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-      slugOrId,
-    );
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(slugOrId);
   const rows = await db
     .select()
     .from(posts)
     .where(
       and(
         eq(posts.status, PostStatus.PUBLISHED),
-        isUuid
-          ? or(eq(posts.slug, slugOrId), eq(posts.id, slugOrId))
-          : eq(posts.slug, slugOrId),
+        isUuid ? or(eq(posts.slug, slugOrId), eq(posts.id, slugOrId)) : eq(posts.slug, slugOrId),
       ),
     )
     .limit(1);
@@ -72,10 +64,7 @@ export async function listAllPosts() {
     .leftJoin(tags, eq(tags.id, postTags.tagId))
     .orderBy(desc(posts.createdAt));
 
-  const map = new Map<
-    string,
-    Omit<(typeof rows)[number], "tagName"> & { tags: string[] }
-  >();
+  const map = new Map<string, Omit<(typeof rows)[number], 'tagName'> & { tags: string[] }>();
   for (const r of rows) {
     let item = map.get(r.id);
     if (!item) {
@@ -90,11 +79,7 @@ export async function listAllPosts() {
 
 /** 后台：按 ID 获取文章（含草稿/定时，用于编辑），附带标签名数组 */
 export async function getPostById(id: string) {
-  const rows = await db
-    .select()
-    .from(posts)
-    .where(eq(posts.id, id))
-    .limit(1);
+  const rows = await db.select().from(posts).where(eq(posts.id, id)).limit(1);
   const post = rows[0];
   if (!post) return null;
   const tagNames = await getPostTags(id);
@@ -130,10 +115,7 @@ export async function setPostTags(postId: string, tagNames: string[], tx?: PgTx)
 
   // 插入新的关联
   for (const tagId of tagIds) {
-    await client
-      .insert(postTags)
-      .values({ postId, tagId })
-      .onConflictDoNothing();
+    await client.insert(postTags).values({ postId, tagId }).onConflictDoNothing();
   }
 }
 
@@ -216,9 +198,10 @@ export async function listPublishedPostsFiltered(opts?: {
     where.push(
       sql`(${sql.join(
         tagNames.map(
-          (name) => sql`exists (select 1 from ${postTags} pt join ${tags} t on t.id = pt.tag_id where pt.post_id = ${posts.id} and t.name = ${name})`,
+          (name) =>
+            sql`exists (select 1 from ${postTags} pt join ${tags} t on t.id = pt.tag_id where pt.post_id = ${posts.id} and t.name = ${name})`,
         ),
-        sql.raw(" or "),
+        sql.raw(' or '),
       )})`,
     );
   }
@@ -269,12 +252,7 @@ export async function publishScheduledPosts(): Promise<Array<{ id: string; slug:
   const scheduledPosts = await db
     .select({ id: posts.id, slug: posts.slug })
     .from(posts)
-    .where(
-      and(
-        eq(posts.status, PostStatus.SCHEDULED),
-        sql`${posts.scheduledAt} <= ${nowIso}`,
-      ),
-    );
+    .where(and(eq(posts.status, PostStatus.SCHEDULED), sql`${posts.scheduledAt} <= ${nowIso}`));
 
   if (scheduledPosts.length === 0) {
     return [];

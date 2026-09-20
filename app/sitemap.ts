@@ -1,5 +1,5 @@
-import type { MetadataRoute } from "next";
-import { getAllPostsForSitemap } from "@/lib/posts/server";
+import type { MetadataRoute } from 'next';
+import { getAllPostsForSitemap } from '@/lib/posts/server';
 
 /**
  * sitemap.xml
@@ -12,7 +12,7 @@ import { getAllPostsForSitemap } from "@/lib/posts/server";
  * 每次构建时自动生成，也可以在运行时动态生成
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
   // 获取所有已发布文章
   const posts = await getAllPostsForSitemap();
@@ -22,25 +22,25 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     {
       url: `${baseUrl}/`,
       lastModified: new Date(),
-      changeFrequency: "daily",
+      changeFrequency: 'daily',
       priority: 1,
     },
     {
       url: `${baseUrl}/about`,
       lastModified: new Date(),
-      changeFrequency: "monthly",
+      changeFrequency: 'monthly',
       priority: 0.5,
     },
     {
       url: `${baseUrl}/friends`,
       lastModified: new Date(),
-      changeFrequency: "weekly",
+      changeFrequency: 'weekly',
       priority: 0.5,
     },
     {
       url: `${baseUrl}/gallery`,
       lastModified: new Date(),
-      changeFrequency: "weekly",
+      changeFrequency: 'weekly',
       priority: 0.6,
     },
   ];
@@ -49,7 +49,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const postPages: MetadataRoute.Sitemap = posts.map((post) => ({
     url: `${baseUrl}/posts/${post.slug || post.id}`,
     lastModified: new Date(post.updatedAt || post.publishedAt || post.createdAt),
-    changeFrequency: "monthly",
+    changeFrequency: 'monthly',
     priority: 0.8,
   }));
 

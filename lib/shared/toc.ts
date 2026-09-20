@@ -9,33 +9,33 @@ export type TocItem = {
 function slugify(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[^\w\u4e00-\u9fa5\s-]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/-+/g, "-")
+    .replace(/[^\w\u4e00-\u9fa5\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
     .trim();
 }
 
 /** 清理标题中的 markdown 语法，只保留纯文本 */
 function cleanMarkdown(text: string): string {
   return text
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // [链接](url) → 链接
-    .replace(/\*\*([^*]+)\*\*/g, "$1") // **加粗** → 加粗
-    .replace(/\*([^*]+)\*/g, "$1") // *斜体* → 斜体
-    .replace(/`([^`]+)`/g, "$1") // `代码` → 代码
-    .replace(/~~([^~]+)~~/g, "$1") // ~~删除线~~ → 删除线
+    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // [链接](url) → 链接
+    .replace(/\*\*([^*]+)\*\*/g, '$1') // **加粗** → 加粗
+    .replace(/\*([^*]+)\*/g, '$1') // *斜体* → 斜体
+    .replace(/`([^`]+)`/g, '$1') // `代码` → 代码
+    .replace(/~~([^~]+)~~/g, '$1') // ~~删除线~~ → 删除线
     .trim();
 }
 
 /** 从 Markdown 原文提取标题（# ## ###），跳过代码块 */
 export function extractToc(markdown: string): TocItem[] {
-  const lines = markdown.split("\n");
+  const lines = markdown.split('\n');
   const items: TocItem[] = [];
   const idCount = new Map<string, number>();
   let inCodeBlock = false;
 
   for (const line of lines) {
     // 检测代码块边界（``` 或 ~~~）
-    if (line.trim().startsWith("```") || line.trim().startsWith("~~~")) {
+    if (line.trim().startsWith('```') || line.trim().startsWith('~~~')) {
       inCodeBlock = !inCodeBlock;
       continue;
     }

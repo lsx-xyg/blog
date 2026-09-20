@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 管理页列表骨架（组合式，C6）
@@ -10,10 +10,10 @@
  * 约定：按钮顺序「新建在前、刷新在后」由调用方在 actions 中按序放置；
  * 搜索框在前、筛选在后由 search / filters 插槽天然保证。
  */
-import type { ReactNode } from "react";
-import { AdminPageHeader } from "@/components/admin/page-header";
-import { AdminSearchInput } from "@/components/admin/search-input";
-import { AdminLoadingState, AdminEmptyState } from "@/components/admin/status";
+import type { ReactNode } from 'react';
+import { AdminPageHeader } from '@/components/admin/page-header';
+import { AdminSearchInput } from '@/components/admin/search-input';
+import { AdminLoadingState, AdminEmptyState } from '@/components/admin/status';
 
 export interface AdminListPageProps {
   title: string;
@@ -82,11 +82,7 @@ export function AdminListPage({
       {loading ? (
         <AdminLoadingState />
       ) : empty ? (
-        <AdminEmptyState
-          icon={empty.icon}
-          title={empty.title}
-          description={empty.description}
-        />
+        <AdminEmptyState icon={empty.icon} title={empty.title} description={empty.description} />
       ) : (
         children
       )}

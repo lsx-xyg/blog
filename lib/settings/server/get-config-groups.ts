@@ -10,8 +10,8 @@
  * 调用方赋值时会编译报错，起到「registry ↔ 类型」同步检查的作用。
  */
 
-import { getConfig } from "./get-config";
-import { registry, type RegistryKey } from "../shared/registry";
+import { getConfig } from './get-config';
+import { registry, type RegistryKey } from '../shared/registry';
 
 /* ---------------- 类型工具：把扁平键组装成嵌套类型 ---------------- */
 
@@ -21,9 +21,7 @@ type NestPath<P extends string, V> = P extends `${infer Head}.${infer Rest}`
   : { [K in P]: V };
 
 /** 把多个交叉对象合并成一个（{ a: X } & { b: Y } → { a: X; b: Y }） */
-type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
-  k: infer I,
-) => void
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void
   ? I
   : never;
 
@@ -31,7 +29,7 @@ type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
 export type GroupOf<P extends string> = UnionToIntersection<
   {
     [K in RegistryKey]: K extends `${P}.${infer Rest}`
-      ? NestPath<Rest, (typeof registry)[K]["default"]>
+      ? NestPath<Rest, (typeof registry)[K]['default']>
       : never;
   }[RegistryKey]
 >;
@@ -58,14 +56,10 @@ export type GroupOf<P extends string> = UnionToIntersection<
  * @param prefix 前缀（不含结尾的点号），如 "storage"
  * @returns 组装后的嵌套对象
  */
-export async function getConfigGroup<P extends string>(
-  prefix: P,
-): Promise<GroupOf<P>> {
+export async function getConfigGroup<P extends string>(prefix: P): Promise<GroupOf<P>> {
   const prefixDot = `${prefix}.`;
 
-  const keys = (Object.keys(registry) as RegistryKey[]).filter((k) =>
-    k.startsWith(prefixDot),
-  );
+  const keys = (Object.keys(registry) as RegistryKey[]).filter((k) => k.startsWith(prefixDot));
 
   const entries = await Promise.all(
     keys.map(async (k) => {
@@ -83,18 +77,14 @@ export async function getConfigGroup<P extends string>(
 }
 
 /** 把 "github.owner" 这样的点号路径塞进嵌套对象 */
-function setNested(
-  target: Record<string, unknown>,
-  path: string,
-  value: unknown,
-): void {
-  const parts = path.split(".");
+function setNested(target: Record<string, unknown>, path: string, value: unknown): void {
+  const parts = path.split('.');
   let cursor: Record<string, unknown> = target;
 
   for (let i = 0; i < parts.length - 1; i++) {
     const key = parts[i];
     const next = cursor[key];
-    if (typeof next !== "object" || next === null) {
+    if (typeof next !== 'object' || next === null) {
       cursor[key] = {};
     }
     cursor = cursor[key] as Record<string, unknown>;

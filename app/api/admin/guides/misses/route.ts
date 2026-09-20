@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth/server";
-import { isAdminUser } from "@/lib/shared";
-import { db } from "@/db";
-import { guideStepEvents } from "@/db/schema";
-import { count, desc, max } from "drizzle-orm";
+import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth/server';
+import { isAdminUser } from '@/lib/shared';
+import { db } from '@/db';
+import { guideStepEvents } from '@/db/schema';
+import { count, desc, max } from 'drizzle-orm';
 
 /**
  * 引导步骤失效汇总 API（#29 失效监控）
@@ -16,7 +16,7 @@ import { count, desc, max } from "drizzle-orm";
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session || !isAdminUser(session.user)) {
-    return NextResponse.json({ error: "未授权" }, { status: 401 });
+    return NextResponse.json({ error: '未授权' }, { status: 401 });
   }
 
   const rows = await db
@@ -35,7 +35,7 @@ export async function GET() {
       guideStepEvents.stepId,
       guideStepEvents.selector,
       guideStepEvents.selectorSource,
-      guideStepEvents.page
+      guideStepEvents.page,
     )
     .orderBy(desc(max(guideStepEvents.createdAt)))
     .limit(100);
@@ -46,7 +46,7 @@ export async function GET() {
 export async function DELETE() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session || !isAdminUser(session.user)) {
-    return NextResponse.json({ error: "未授权" }, { status: 401 });
+    return NextResponse.json({ error: '未授权' }, { status: 401 });
   }
 
   await db.delete(guideStepEvents);

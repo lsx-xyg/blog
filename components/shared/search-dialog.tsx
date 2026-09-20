@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { Search, X, CalendarDays } from "lucide-react";
-import { useRouter } from "next/navigation";
-import MiniSearch from "minisearch";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { Search, X, CalendarDays } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import MiniSearch from 'minisearch';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 /** minisearch 中文分词：拉丁词按词，中文按单字 + 连续双字（bigram）索引 */
 function cjkTokenize(text: string): string[] {
@@ -43,17 +43,17 @@ type SearchPost = {
  */
 export function SearchDialog() {
   const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [posts, setPosts] = useState<SearchPost[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
 
   // 搜索防抖：输入实时显示，检索延迟 200ms 执行（合并连续输入，避免频繁检索与动画闪烁）
   useEffect(() => {
-    if (query.trim() === "") {
+    if (query.trim() === '') {
       // 清空输入时立即清空结果，不等防抖
-      setDebouncedQuery("");
+      setDebouncedQuery('');
       return;
     }
     const t = setTimeout(() => setDebouncedQuery(query), 200);
@@ -63,9 +63,9 @@ export function SearchDialog() {
   // 初始化 minisearch 索引
   const index = useMemo(() => {
     return new MiniSearch({
-      idField: "id",
-      fields: ["title", "summary", "tags"],
-      storeFields: ["title", "summary", "slug", "id", "publishedAt", "tags"],
+      idField: 'id',
+      fields: ['title', 'summary', 'tags'],
+      storeFields: ['title', 'summary', 'slug', 'id', 'publishedAt', 'tags'],
       tokenize: cjkTokenize,
     });
   }, []);
@@ -76,7 +76,7 @@ export function SearchDialog() {
     let cancelled = false;
     (async () => {
       try {
-        const r = await fetch("/api/search-index");
+        const r = await fetch('/api/search-index');
         if (!r.ok) throw new Error();
         const d = await r.json();
         if (!cancelled && d.posts?.length) {
@@ -106,20 +106,20 @@ export function SearchDialog() {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 50);
     } else {
-      setQuery("");
+      setQuery('');
     }
   }, [open]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if (e.key === 'Escape') setOpen(false);
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
         setOpen(true);
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, []);
 
   const goPost = (post: { id: string; slug: string | null }) => {
@@ -128,11 +128,11 @@ export function SearchDialog() {
   };
 
   const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "";
-    return new Date(dateStr).toLocaleDateString("zh-CN", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
+    if (!dateStr) return '';
+    return new Date(dateStr).toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
     });
   };
 
@@ -159,100 +159,99 @@ export function SearchDialog() {
       {open &&
         createPortal(
           <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh]">
-          {/* 半透明虚化遮罩（淡入） */}
-          <div
-            className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-search-backdrop"
-            onClick={() => setOpen(false)}
-          />
+            {/* 半透明虚化遮罩（淡入） */}
+            <div
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-search-backdrop"
+              onClick={() => setOpen(false)}
+            />
 
-          {/* 搜索面板（从顶部下滑淡入） */}
-          <div className="relative w-full max-w-2xl mx-4 rounded-2xl border bg-popover shadow-2xl overflow-hidden animate-search-panel">
-            {/* 搜索输入框 */}
-            <div className="flex items-center gap-3 p-4 border-b">
-              <Search className="h-5 w-5 text-muted-foreground shrink-0" strokeWidth={2.5} />
-              <Input
-                ref={inputRef}
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="搜索文章标题、摘要、标签…"
-                className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent text-lg"
-              />
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-9 w-9 shrink-0 rounded-full"
-                onClick={() => setOpen(false)}
-                aria-label="关闭"
-              >
-                <X className="h-5 w-5" />
-              </Button>
-            </div>
+            {/* 搜索面板（从顶部下滑淡入） */}
+            <div className="relative w-full max-w-2xl mx-4 rounded-2xl border bg-popover shadow-2xl overflow-hidden animate-search-panel">
+              {/* 搜索输入框 */}
+              <div className="flex items-center gap-3 p-4 border-b">
+                <Search className="h-5 w-5 text-muted-foreground shrink-0" strokeWidth={2.5} />
+                <Input
+                  ref={inputRef}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="搜索文章标题、摘要、标签…"
+                  className="border-0 focus-visible:ring-0 focus-visible:ring-offset-0 bg-transparent text-lg"
+                />
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-9 w-9 shrink-0 rounded-full"
+                  onClick={() => setOpen(false)}
+                  aria-label="关闭"
+                >
+                  <X className="h-5 w-5" />
+                </Button>
+              </div>
 
-            {/* 搜索结果列表 */}
-            <div className="max-h-[50vh] overflow-y-auto">
-              {debouncedQuery.trim() === "" ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  <p className="text-sm">输入关键词开始搜索</p>
-                  <p className="text-xs mt-2">支持标题、摘要、标签搜索</p>
-                </div>
-              ) : results.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground">
-                  <p className="text-sm">没有找到相关文章</p>
-                </div>
-              ) : (
-                <ul key={debouncedQuery} className="divide-y">
-                  {results.map((r, i) => (
-                    <li
-                      key={r.id}
-                      style={{ animationDelay: `${Math.min(i * 20, 200)}ms` }}
-                      className="animate-fade-in-up"
-                    >
-                      <button
-                        type="button"
-                        onClick={() => goPost(r as unknown as SearchPost)}
-                        className="w-full text-left p-4 hover:bg-accent/50 transition-colors"
+              {/* 搜索结果列表 */}
+              <div className="max-h-[50vh] overflow-y-auto">
+                {debouncedQuery.trim() === '' ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    <p className="text-sm">输入关键词开始搜索</p>
+                    <p className="text-xs mt-2">支持标题、摘要、标签搜索</p>
+                  </div>
+                ) : results.length === 0 ? (
+                  <div className="p-8 text-center text-muted-foreground">
+                    <p className="text-sm">没有找到相关文章</p>
+                  </div>
+                ) : (
+                  <ul key={debouncedQuery} className="divide-y">
+                    {results.map((r, i) => (
+                      <li
+                        key={r.id}
+                        style={{ animationDelay: `${Math.min(i * 20, 200)}ms` }}
+                        className="animate-fade-in-up"
                       >
-                        <div className="flex items-center justify-between gap-4">
-                          <h4 className="font-semibold text-foreground truncate">
-                            {r.title}
-                          </h4>
-                          <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                            <CalendarDays className="h-3 w-3" />
-                            {formatDate(r.publishedAt ?? null)}
-                          </span>
-                        </div>
-                        {r.summary && (
-                          <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
-                            {r.summary}
-                          </p>
-                        )}
-                        {r.tags && r.tags.length > 0 && (
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {r.tags.slice(0, 3).map((tag: string) => (
-                              <span
-                                key={tag}
-                                className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
-                              >
-                                {tag}
-                              </span>
-                            ))}
+                        <button
+                          type="button"
+                          onClick={() => goPost(r as unknown as SearchPost)}
+                          className="w-full text-left p-4 hover:bg-accent/50 transition-colors"
+                        >
+                          <div className="flex items-center justify-between gap-4">
+                            <h4 className="font-semibold text-foreground truncate">{r.title}</h4>
+                            <span className="flex items-center gap-1 text-xs text-muted-foreground shrink-0">
+                              <CalendarDays className="h-3 w-3" />
+                              {formatDate(r.publishedAt ?? null)}
+                            </span>
                           </div>
-                        )}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+                          {r.summary && (
+                            <p className="mt-1 text-sm text-muted-foreground line-clamp-2">
+                              {r.summary}
+                            </p>
+                          )}
+                          {r.tags && r.tags.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {r.tags.slice(0, 3).map((tag: string) => (
+                                <span
+                                  key={tag}
+                                  className="rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
 
-            {/* 底部提示 */}
-            <div className="p-3 border-t text-xs text-muted-foreground flex items-center justify-between">
-              <span>Esc 关闭</span>
-              <span>共 {posts.length} 篇文章</span>
+              {/* 底部提示 */}
+              <div className="p-3 border-t text-xs text-muted-foreground flex items-center justify-between">
+                <span>Esc 关闭</span>
+                <span>共 {posts.length} 篇文章</span>
+              </div>
             </div>
-          </div>
-        </div>
-      , document.body)}
+          </div>,
+          document.body,
+        )}
     </>
   );
 }

@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import dynamic from "next/dynamic";
+import dynamic from 'next/dynamic';
 
 /**
  * 引导管理器外层（懒加载入口）
@@ -10,8 +10,8 @@ import dynamic from "next/dynamic";
  * 内层负责 Provider + 引导引擎，children 为后台页面内容。
  */
 const GuideManagerInner = dynamic(
-  () => import("./guide-manager-inner").then((m) => m.GuideManagerInner),
-  { ssr: false, loading: () => null }
+  () => import('./guide-manager-inner').then((m) => m.GuideManagerInner),
+  { ssr: false, loading: () => null },
 );
 
 export function GuideManager({ children }: { children: React.ReactNode }) {

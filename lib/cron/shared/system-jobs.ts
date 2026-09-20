@@ -8,7 +8,7 @@
  * - 新创建的任务 title 使用固定格式 `[系统] <名称>（<周期>）`
  * - 匹配历史任务（旧 title "博客定时发布扫描（每分钟）"）通过名称包含判断，保证平滑兼容
  */
-import { RequestMethod, type CronJob, type CronJobConfig } from "@/lib/types/cron";
+import { RequestMethod, type CronJob, type CronJobConfig } from '@/lib/types/cron';
 
 export type SystemJobPreset = {
   /** 预设唯一键 */
@@ -25,22 +25,22 @@ export type SystemJobPreset = {
 
 export const SYSTEM_JOB_PRESETS: SystemJobPreset[] = [
   {
-    key: "publish_scheduled",
-    name: "定时发布扫描",
-    description: "每分钟扫描一次，自动发布所有到期的定时文章",
+    key: 'publish_scheduled',
+    name: '定时发布扫描',
+    description: '每分钟扫描一次，自动发布所有到期的定时文章',
     supportsRun: true,
     createConfig: ({ siteUrl, cronSecret }) => ({
-      title: "[blog:publish_scheduled] 定时发布扫描（每分钟）",
+      title: '[blog:publish_scheduled] 定时发布扫描（每分钟）',
       url: `${siteUrl}/api/cron/publish-scheduled`,
       enabled: true,
       saveResponses: false,
       requestMethod: RequestMethod.GET,
       requestTimeout: 30,
       extendedData: {
-        headers: { "X-Cron-Secret": cronSecret },
+        headers: { 'X-Cron-Secret': cronSecret },
       },
       schedule: {
-        timezone: "Asia/Shanghai",
+        timezone: 'Asia/Shanghai',
         expiresAt: 0,
         hours: [-1],
         mdays: [-1],
@@ -51,22 +51,22 @@ export const SYSTEM_JOB_PRESETS: SystemJobPreset[] = [
     }),
   },
   {
-    key: "backup",
-    name: "自动备份",
-    description: "每天凌晨 03:00 自动备份全部业务数据，上传到配置的存储驱动",
+    key: 'backup',
+    name: '自动备份',
+    description: '每天凌晨 03:00 自动备份全部业务数据，上传到配置的存储驱动',
     supportsRun: true,
     createConfig: ({ siteUrl, cronSecret }) => ({
-      title: "[blog:backup] 自动备份（每天 03:00）",
+      title: '[blog:backup] 自动备份（每天 03:00）',
       url: `${siteUrl}/api/cron/backup`,
       enabled: true,
       saveResponses: false,
       requestMethod: RequestMethod.GET,
       requestTimeout: 60,
       extendedData: {
-        headers: { "X-Cron-Secret": cronSecret },
+        headers: { 'X-Cron-Secret': cronSecret },
       },
       schedule: {
-        timezone: "Asia/Shanghai",
+        timezone: 'Asia/Shanghai',
         expiresAt: 0,
         hours: [3],
         mdays: [-1],
@@ -79,7 +79,7 @@ export const SYSTEM_JOB_PRESETS: SystemJobPreset[] = [
 ];
 
 /** 系统任务标题项目名前缀（唯一标识空间，防止与其他应用任务冲突） */
-export const SYS_TITLE_TAG = "blog";
+export const SYS_TITLE_TAG = 'blog';
 
 /**
  * 从任务标题解析预设 key（唯一对应，不依赖名称文本）
@@ -87,9 +87,7 @@ export const SYS_TITLE_TAG = "blog";
  * 非该格式返回 null
  */
 export function getPresetKeyFromTitle(title: string): string | null {
-  const m = title.match(
-    new RegExp("^\\[" + SYS_TITLE_TAG + ":([a-z0-9_]+)\\]"),
-  );
+  const m = title.match(new RegExp('^\\[' + SYS_TITLE_TAG + ':([a-z0-9_]+)\\]'));
   return m ? m[1] : null;
 }
 
@@ -109,8 +107,8 @@ export function matchSystemJob(job: CronJob): SystemJobPreset | null {
 export function matchPresetByUrl(job: CronJob): SystemJobPreset | null {
   return (
     SYSTEM_JOB_PRESETS.find((p) => {
-      const cfg = p.createConfig({ siteUrl: "https://placeholder.invalid", cronSecret: "" });
-      const route = cfg.url.split("/api/cron/")[1];
+      const cfg = p.createConfig({ siteUrl: 'https://placeholder.invalid', cronSecret: '' });
+      const route = cfg.url.split('/api/cron/')[1];
       return route ? job.url.includes(`/api/cron/${route}`) : false;
     }) || null
   );

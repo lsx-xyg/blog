@@ -5,14 +5,14 @@
  * - 未登录但是后台首页 → 直接渲染（后台首页自己显示登录表单）
  * - 非管理员 → 404 伪装
  */
-import { notFound, redirect } from "next/navigation";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth/server";
-import { getAdminPathAsync } from "@/lib/admin/server";
-import { isAdminUser } from "@/lib/shared";
-import { GuideManager } from "@/components/guides/guide-manager";
+import { notFound, redirect } from 'next/navigation';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth/server';
+import { getAdminPathAsync } from '@/lib/admin/server';
+import { isAdminUser } from '@/lib/shared';
+import { GuideManager } from '@/components/guides/guide-manager';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export default async function AdminLayout({
   children,
@@ -31,16 +31,16 @@ export default async function AdminLayout({
   // Next.js 可能使用不同的请求头来传递路径，这里尝试多种可能
   const headersList = await headers();
   const pathname =
-    headersList.get("x-next-pathname") ||
-    headersList.get("x-pathname") ||
-    headersList.get("x-invoke-path") ||
-    headersList.get("referer")?.split("/").slice(3).join("/") ||
-    "";
+    headersList.get('x-next-pathname') ||
+    headersList.get('x-pathname') ||
+    headersList.get('x-invoke-path') ||
+    headersList.get('referer')?.split('/').slice(3).join('/') ||
+    '';
   const isAdminHome =
     pathname === `/${adminPath}` ||
     pathname === `/${adminPath}/` ||
     pathname === adminPath ||
-    pathname === "";
+    pathname === '';
 
   // 检查登录状态
   const session = await auth.api.getSession({ headers: headersList });

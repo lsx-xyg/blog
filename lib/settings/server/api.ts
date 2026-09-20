@@ -7,11 +7,7 @@
  *
  * 纯函数（buildSettingsOps / to*ForClient）可独立单测，加密函数注入便于测试。
  */
-import {
-  getSetting,
-  setSettingsBatch,
-  deleteSetting,
-} from "./store";
+import { getSetting, setSettingsBatch, deleteSetting } from './store';
 import {
   getSiteSettings,
   getSocialLinks,
@@ -21,29 +17,23 @@ import {
   getGiscusSettings,
   getCronSettings,
   getStorageSettings,
-  getPrivateStorageSettings
-} from "./settings";
-import { encryptIfAvailable } from "@/lib/crypto/server";
-import { CronDeployPlatform } from "@/lib/types/settings";
-import type {
-  CronSettings,
-  PrivateStorageSettings,
-  StorageSettings,
-} from "@/lib/types/settings";
-import { STORAGE_DRIVER_VALUES } from "@/lib/types/storage";
+  getPrivateStorageSettings,
+} from './settings';
+import { encryptIfAvailable } from '@/lib/crypto/server';
+import { CronDeployPlatform } from '@/lib/types/settings';
+import type { CronSettings, PrivateStorageSettings, StorageSettings } from '@/lib/types/settings';
+import { STORAGE_DRIVER_VALUES } from '@/lib/types/storage';
 
 /* ---------------- GET：敏感字段裁剪（纯） ---------------- */
 
 /** 存储配置 → 客户端视图（token/accessKey/secretKey 只出 configured 布尔） */
-export function toStorageForClient(
-  storage: StorageSettings
-): ReturnType<typeof shapeStorage> {
+export function toStorageForClient(storage: StorageSettings): ReturnType<typeof shapeStorage> {
   return shapeStorage(storage);
 }
 
 /** 私有存储配置 → 客户端视图（结构与公开存储一致） */
 export function toPrivateStorageForClient(
-  storage: PrivateStorageSettings
+  storage: PrivateStorageSettings,
 ): ReturnType<typeof shapeStorage> {
   return shapeStorage(storage);
 }
@@ -91,7 +81,7 @@ export async function getSettingsBundle() {
       getSocialLinks(),
       getFooterSettings(),
       getAboutContent(),
-      getSetting<string>("admin.path"),
+      getSetting<string>('admin.path'),
       getStorageSettings(),
       getPrivateStorageSettings(),
       getGiscusSettings(),
@@ -103,7 +93,7 @@ export async function getSettingsBundle() {
     social,
     footer,
     aboutContent,
-    adminPath: adminPath ?? "",
+    adminPath: adminPath ?? '',
     storage: toStorageForClient(storage),
     privateStorage: toPrivateStorageForClient(privateStorage),
     giscus,
@@ -134,7 +124,7 @@ export type SettingsEncrypt = (value: string) => string | null;
  */
 export function buildSettingsOps(
   body: Record<string, unknown>,
-  encrypt: SettingsEncrypt = encryptIfAvailable
+  encrypt: SettingsEncrypt = encryptIfAvailable,
 ): SettingsOps {
   const update: SettingsUpdate[] = [];
   const del: string[] = [];
@@ -147,17 +137,17 @@ export function buildSettingsOps(
   };
   const handleSecret = (rawValue: unknown, dbKey: string) => {
     if (rawValue === undefined || rawValue === null) return;
-    if (rawValue === "") {
+    if (rawValue === '') {
       del.push(dbKey);
       return;
     }
-    if (typeof rawValue !== "string") return;
+    if (typeof rawValue !== 'string') return;
     const encrypted = encrypt(rawValue);
     if (encrypted) update.push({ key: dbKey, value: encrypted });
   };
   const handleOptionalText = (rawValue: unknown, dbKey: string) => {
     if (rawValue === undefined || rawValue === null) return;
-    if (rawValue === "") {
+    if (rawValue === '') {
       del.push(dbKey);
       return;
     }
@@ -166,30 +156,30 @@ export function buildSettingsOps(
 
   const site = body.site as Record<string, unknown> | undefined;
   if (site) {
-    addSetting("site.name", site.name);
-    addSetting("site.description", site.description);
-    addSetting("site.seo_description", site.seoDescription);
-    addSetting("site.logo_url", site.logoUrl);
-    addSetting("site.favicon_url", site.faviconUrl);
-    addSetting("site.site_url", site.siteUrl);
+    addSetting('site.name', site.name);
+    addSetting('site.description', site.description);
+    addSetting('site.seo_description', site.seoDescription);
+    addSetting('site.logo_url', site.logoUrl);
+    addSetting('site.favicon_url', site.faviconUrl);
+    addSetting('site.site_url', site.siteUrl);
   }
 
   const social = body.social as Record<string, unknown> | undefined;
   if (social) {
-    addSetting("social.github", social.github);
-    addSetting("social.twitter", social.twitter);
-    addSetting("social.email", social.email);
-    addSetting("social.rss", social.rss);
+    addSetting('social.github', social.github);
+    addSetting('social.twitter', social.twitter);
+    addSetting('social.email', social.email);
+    addSetting('social.rss', social.rss);
   }
 
   const footer = body.footer as Record<string, unknown> | undefined;
   if (footer) {
-    addSetting("footer.copyright", footer.copyright);
-    addSetting("footer.icp", footer.icp);
+    addSetting('footer.copyright', footer.copyright);
+    addSetting('footer.icp', footer.icp);
   }
 
   // 高级设置（admin_path）：有值更新，放空删除（回退环境变量/兜底 admin）
-  handleOptionalText(body.adminPath, "admin.path");
+  handleOptionalText(body.adminPath, 'admin.path');
 
   const storage = body.storage as Record<string, unknown> | undefined;
   if (storage) {
@@ -200,27 +190,27 @@ export function buildSettingsOps(
       local?: Record<string, unknown>;
     };
     if (driver && (STORAGE_DRIVER_VALUES as string[]).includes((driver as string).toUpperCase())) {
-      addSetting("storage.driver", (driver as string).toUpperCase());
+      addSetting('storage.driver', (driver as string).toUpperCase());
     }
     if (github) {
-      addSetting("storage.github.owner", github.owner);
-      addSetting("storage.github.repo", github.repo);
-      addSetting("storage.github.branch", github.branch);
-      addSetting("storage.github.cdn_base", github.cdnBase);
-      addSetting("storage.github.directory", github.directory);
-      handleSecret(github.token, "storage.github.token");
+      addSetting('storage.github.owner', github.owner);
+      addSetting('storage.github.repo', github.repo);
+      addSetting('storage.github.branch', github.branch);
+      addSetting('storage.github.cdn_base', github.cdnBase);
+      addSetting('storage.github.directory', github.directory);
+      handleSecret(github.token, 'storage.github.token');
     }
     if (s3) {
-      addSetting("storage.s3.endpoint", s3.endpoint);
-      addSetting("storage.s3.bucket", s3.bucket);
-      addSetting("storage.s3.region", s3.region);
-      addSetting("storage.s3.directory", s3.directory);
-      handleSecret(s3.accessKey, "storage.s3.access_key");
-      handleSecret(s3.secretKey, "storage.s3.secret_key");
+      addSetting('storage.s3.endpoint', s3.endpoint);
+      addSetting('storage.s3.bucket', s3.bucket);
+      addSetting('storage.s3.region', s3.region);
+      addSetting('storage.s3.directory', s3.directory);
+      handleSecret(s3.accessKey, 'storage.s3.access_key');
+      handleSecret(s3.secretKey, 'storage.s3.secret_key');
     }
     if (local) {
-      addSetting("storage.local.upload_dir", local.uploadDir);
-      addSetting("storage.local.directory", local.directory);
+      addSetting('storage.local.upload_dir', local.uploadDir);
+      addSetting('storage.local.directory', local.directory);
     }
   }
 
@@ -233,39 +223,39 @@ export function buildSettingsOps(
       local?: Record<string, unknown>;
     };
     if (driver && (STORAGE_DRIVER_VALUES as string[]).includes((driver as string).toUpperCase())) {
-      addSetting("storage_private.driver", (driver as string).toUpperCase());
+      addSetting('storage_private.driver', (driver as string).toUpperCase());
     }
     if (github) {
-      addSetting("storage_private.github.owner", github.owner);
-      addSetting("storage_private.github.repo", github.repo);
-      addSetting("storage_private.github.branch", github.branch);
-      addSetting("storage_private.github.cdn_base", github.cdnBase);
-      addSetting("storage_private.github.directory", github.directory);
-      handleSecret(github.token, "storage_private.github.token");
+      addSetting('storage_private.github.owner', github.owner);
+      addSetting('storage_private.github.repo', github.repo);
+      addSetting('storage_private.github.branch', github.branch);
+      addSetting('storage_private.github.cdn_base', github.cdnBase);
+      addSetting('storage_private.github.directory', github.directory);
+      handleSecret(github.token, 'storage_private.github.token');
     }
     if (s3) {
-      addSetting("storage_private.s3.endpoint", s3.endpoint);
-      addSetting("storage_private.s3.bucket", s3.bucket);
-      addSetting("storage_private.s3.region", s3.region);
-      addSetting("storage_private.s3.directory", s3.directory);
-      handleSecret(s3.accessKey, "storage_private.s3.access_key");
-      handleSecret(s3.secretKey, "storage_private.s3.secret_key");
+      addSetting('storage_private.s3.endpoint', s3.endpoint);
+      addSetting('storage_private.s3.bucket', s3.bucket);
+      addSetting('storage_private.s3.region', s3.region);
+      addSetting('storage_private.s3.directory', s3.directory);
+      handleSecret(s3.accessKey, 'storage_private.s3.access_key');
+      handleSecret(s3.secretKey, 'storage_private.s3.secret_key');
     }
     if (local) {
-      addSetting("storage_private.local.upload_dir", local.uploadDir);
-      addSetting("storage_private.local.directory", local.directory);
+      addSetting('storage_private.local.upload_dir', local.uploadDir);
+      addSetting('storage_private.local.directory', local.directory);
     }
   }
 
   const giscus = body.giscus as Record<string, unknown> | undefined;
   if (giscus) {
     const { repo, repoId, category, categoryId, enabled } = giscus as Record<string, unknown>;
-    if (repo !== undefined) addSetting("giscus.repo", repo);
-    if (repoId !== undefined) addSetting("giscus.repo_id", repoId);
-    if (category !== undefined) addSetting("giscus.category", category);
-    if (categoryId !== undefined) addSetting("giscus.category_id", categoryId);
+    if (repo !== undefined) addSetting('giscus.repo', repo);
+    if (repoId !== undefined) addSetting('giscus.repo_id', repoId);
+    if (category !== undefined) addSetting('giscus.category', category);
+    if (categoryId !== undefined) addSetting('giscus.category_id', categoryId);
     if (enabled !== undefined) {
-      addSetting("giscus.enabled", enabled ? "true" : "false");
+      addSetting('giscus.enabled', enabled ? 'true' : 'false');
     }
   }
 
@@ -274,13 +264,13 @@ export function buildSettingsOps(
     const { deployPlatform, secret, jobApiKey } = cron as Record<string, unknown>;
     if (deployPlatform !== undefined && deployPlatform !== null) {
       const normalized =
-        (deployPlatform as string).toUpperCase() === "SERVER"
+        (deployPlatform as string).toUpperCase() === 'SERVER'
           ? CronDeployPlatform.SERVER
           : CronDeployPlatform.VERCEL;
-      addSetting("cron.deploy_platform", normalized);
+      addSetting('cron.deploy_platform', normalized);
     }
-    handleSecret(secret, "cron.secret");
-    handleSecret(jobApiKey, "cron.job_api_key");
+    handleSecret(secret, 'cron.secret');
+    handleSecret(jobApiKey, 'cron.job_api_key');
   }
 
   const aboutContent = body.aboutContent;

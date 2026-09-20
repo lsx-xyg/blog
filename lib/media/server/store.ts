@@ -1,13 +1,13 @@
 /**
  * 媒体库数据访问层（统一管理文章图片 + 相册图片）
  */
-import { and, desc, eq, ilike, inArray, or, sql } from "drizzle-orm";
-import { db } from "@/db";
-import { media, posts, mediaTags, tags } from "@/db/schema";
-import { MediaType } from "@/lib/types/media";
-import { StorageDriverType } from "@/lib/types/storage";
-import { getOrCreateTags } from "@/lib/tags/server";
-import { PostStatus } from "@/lib/types/posts";
+import { and, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
+import { db } from '@/db';
+import { media, posts, mediaTags, tags } from '@/db/schema';
+import { MediaType } from '@/lib/types/media';
+import { StorageDriverType } from '@/lib/types/storage';
+import { getOrCreateTags } from '@/lib/tags/server';
+import { PostStatus } from '@/lib/types/posts';
 
 /** 创建媒体记录 */
 export async function createMedia(data: {
@@ -46,11 +46,7 @@ export async function createMedia(data: {
 
 /** 按 id 查询媒体 */
 export async function getMediaById(id: string) {
-  const rows = await db
-    .select()
-    .from(media)
-    .where(eq(media.id, id))
-    .limit(1);
+  const rows = await db.select().from(media).where(eq(media.id, id)).limit(1);
   return rows[0] ?? null;
 }
 
@@ -77,10 +73,7 @@ export async function listMedia(opts?: {
 
   const where = conditions.length > 0 ? and(...conditions) : undefined;
 
-  const query = db
-    .select()
-    .from(media)
-    .orderBy(desc(media.createdAt));
+  const query = db.select().from(media).orderBy(desc(media.createdAt));
 
   if (where) query.where(where);
   if (limit != null) query.limit(limit);
@@ -125,11 +118,7 @@ export async function updateMedia(
     featured?: boolean;
   },
 ) {
-  const rows = await db
-    .update(media)
-    .set(data)
-    .where(eq(media.id, id))
-    .returning();
+  const rows = await db.update(media).set(data).where(eq(media.id, id)).returning();
   return rows[0] ?? null;
 }
 
@@ -173,13 +162,13 @@ export async function findUnusedMedia() {
     // 匹配 Markdown 图片
     const mdMatches = post.content.match(/!\[[^\]]*\]\(([^)]+)\)/g) || [];
     for (const match of mdMatches) {
-      const url = match.replace(/!\[[^\]]*\]\(([^)]+)\)/, "$1");
+      const url = match.replace(/!\[[^\]]*\]\(([^)]+)\)/, '$1');
       usedUrls.add(url);
     }
     // 匹配 HTML img
     const htmlMatches = post.content.match(/<img[^>]+src=["']([^"']+)["']/g) || [];
     for (const match of htmlMatches) {
-      const url = match.replace(/<img[^>]+src=["']([^"']+)["']/, "$1");
+      const url = match.replace(/<img[^>]+src=["']([^"']+)["']/, '$1');
       usedUrls.add(url);
     }
   }
@@ -187,9 +176,7 @@ export async function findUnusedMedia() {
   // 过滤未使用的媒体：
   // - 相册图片（type=GALLERY）默认就是被使用的
   // - 文章图片（type=ARTICLE）未被文章内容引用的就是未使用的
-  const unusedMedia = allMedia.filter(
-    (m) => m.type !== MediaType.GALLERY && !usedUrls.has(m.url),
-  );
+  const unusedMedia = allMedia.filter((m) => m.type !== MediaType.GALLERY && !usedUrls.has(m.url));
 
   return unusedMedia;
 }
@@ -197,10 +184,7 @@ export async function findUnusedMedia() {
 /** 批量删除媒体 */
 export async function batchDeleteMedia(ids: string[]) {
   if (ids.length === 0) return [];
-  const items = await db
-    .select()
-    .from(media)
-    .where(inArray(media.id, ids));
+  const items = await db.select().from(media).where(inArray(media.id, ids));
 
   await db.delete(media).where(inArray(media.id, ids));
 
@@ -232,10 +216,7 @@ export async function setMediaTags(mediaId: string, tagNames: string[]) {
 
   // 插入新的关联
   for (const tagId of tagIds) {
-    await db
-      .insert(mediaTags)
-      .values({ mediaId, tagId })
-      .onConflictDoNothing();
+    await db.insert(mediaTags).values({ mediaId, tagId }).onConflictDoNothing();
   }
 
   return getMediaTags(mediaId);

@@ -4,7 +4,7 @@
  * 数据模型 / 默认值 / 步骤元数据 / payload 构造 / 校验全部纯函数化，
  * usePostForm hook 只做状态编排，组件只做 JSX。
  */
-import { PostStatus } from "@/lib/types/posts";
+import { PostStatus } from '@/lib/types/posts';
 
 export type PostFormData = {
   title: string;
@@ -19,21 +19,21 @@ export type PostFormData = {
 };
 
 export const emptyForm: PostFormData = {
-  title: "",
-  slug: "",
-  summary: "",
-  content: "",
-  coverUrl: "",
+  title: '',
+  slug: '',
+  summary: '',
+  content: '',
+  coverUrl: '',
   status: PostStatus.DRAFT,
   featured: false,
-  scheduledAt: "",
+  scheduledAt: '',
   tags: [],
 };
 
 /** 步骤条元数据（label + 图标由组件注入） */
 export const EDITOR_STEPS = [
-  { id: 1, label: "正文编辑" },
-  { id: 2, label: "基本信息" },
+  { id: 1, label: '正文编辑' },
+  { id: 2, label: '基本信息' },
 ] as const;
 
 /**
@@ -41,7 +41,7 @@ export const EDITOR_STEPS = [
  * @returns 错误消息；通过时返回 null
  */
 export function validatePostForm(form: PostFormData): string | null {
-  if (!form.title.trim()) return "标题必填";
+  if (!form.title.trim()) return '标题必填';
   return null;
 }
 
@@ -50,10 +50,7 @@ export function validatePostForm(form: PostFormData): string | null {
  * - 定时发布：scheduledAt 空串 → null
  * - 编辑且内容留空 → 不传 content（服务端保持原值）
  */
-export function buildPostPayload(
-  form: PostFormData,
-  isNewPost: boolean
-): Record<string, unknown> {
+export function buildPostPayload(form: PostFormData, isNewPost: boolean): Record<string, unknown> {
   const payload: Record<string, unknown> = {
     ...form,
     scheduledAt: form.scheduledAt || null,

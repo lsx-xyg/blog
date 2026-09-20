@@ -1,4 +1,4 @@
-import type { MetadataRoute } from "next";
+import type { MetadataRoute } from 'next';
 
 /**
  * robots.txt
@@ -8,18 +8,14 @@ import type { MetadataRoute } from "next";
  * 禁止爬取后台路径（动态路径，用通配符）
  */
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
   return {
     rules: [
       {
-        userAgent: "*",
-        allow: "/",
-        disallow: [
-          "/api/",
-          "/dashboard",
-          "/admin",
-        ],
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/api/', '/dashboard', '/admin'],
       },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,

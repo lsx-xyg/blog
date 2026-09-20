@@ -2,18 +2,18 @@
 // 使用方式：npx tsx scripts/migrate.ts
 // 优势：迁移失败时会显示真实错误，不会像 drizzle-kit CLI 那样静默吞错
 
-import "@/lib/env/server/load";
-import { ENV_KEYS } from "@/lib/env/shared";
-import { getEnv } from "@/lib/env/server";
-import { drizzle } from "drizzle-orm/postgres-js";
-import { migrate } from "drizzle-orm/postgres-js/migrator";
-import postgres from "postgres";
+import '@/lib/env/server/load';
+import { ENV_KEYS } from '@/lib/env/shared';
+import { getEnv } from '@/lib/env/server';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
+import postgres from 'postgres';
 
 const run = async () => {
   // 迁移必须走非池化（direct）连接串
   const databaseUrl = getEnv(ENV_KEYS.DATABASE_URL_UNPOOLED) ?? getEnv(ENV_KEYS.DATABASE_URL);
   if (!databaseUrl) {
-    console.error("❌ DATABASE_URL 或 DATABASE_URL_UNPOOLED 未配置");
+    console.error('❌ DATABASE_URL 或 DATABASE_URL_UNPOOLED 未配置');
     process.exit(1);
   }
 
@@ -21,11 +21,11 @@ const run = async () => {
   const db = drizzle(sql);
 
   try {
-    console.log("⏳ migrating...");
-    await migrate(db, { migrationsFolder: "./db/drizzle" });
-    console.log("✅ done");
+    console.log('⏳ migrating...');
+    await migrate(db, { migrationsFolder: './db/drizzle' });
+    console.log('✅ done');
   } catch (e) {
-    console.error("❌ failed:", e);
+    console.error('❌ failed:', e);
     process.exit(1);
   } finally {
     await sql.end();

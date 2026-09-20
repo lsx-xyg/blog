@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { createContext, useContext, useState, useCallback, useEffect } from "react";
-import { CheckCircle, XCircle, Info, X } from "lucide-react";
+import { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import { CheckCircle, XCircle, Info, X } from 'lucide-react';
 
-type ToastType = "success" | "error" | "info";
+type ToastType = 'success' | 'error' | 'info';
 
 type Toast = {
   id: number;
@@ -51,22 +51,22 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) =
 
   const bgColors = {
     // 三类统一实心色底 + 白字，风格一致、高对比可读
-    success: "bg-green-600 border-green-700 shadow-green-600/30",
-    error: "bg-red-600 border-red-700 shadow-red-600/30",
-    info: "bg-blue-600 border-blue-700 shadow-blue-600/30",
+    success: 'bg-green-600 border-green-700 shadow-green-600/30',
+    error: 'bg-red-600 border-red-700 shadow-red-600/30',
+    info: 'bg-blue-600 border-blue-700 shadow-blue-600/30',
   };
 
   const textColors = {
-    success: "text-white",
-    error: "text-white",
-    info: "text-white",
+    success: 'text-white',
+    error: 'text-white',
+    info: 'text-white',
   };
 
   return (
     <div
       className={`pointer-events-auto flex items-center gap-3 rounded-xl border px-4 py-3 shadow-lg backdrop-blur-sm transition-all duration-300 ease-out ${
         bgColors[toast.type]
-      } ${visible ? "opacity-100 translate-x-0" : "opacity-0 translate-x-4"}`}
+      } ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}`}
       role="alert"
     >
       {icons[toast.type]}
@@ -90,7 +90,7 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) =
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
-  const showToast = useCallback((message: string, type: ToastType = "info") => {
+  const showToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = Date.now() + Math.random();
     setToasts((prev) => [...prev, { id, type, message }]);
   }, []);
@@ -111,7 +111,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 export function useToast() {
   const context = useContext(ToastContext);
   if (!context) {
-    throw new Error("useToast must be used within a ToastProvider");
+    throw new Error('useToast must be used within a ToastProvider');
   }
   return context;
 }

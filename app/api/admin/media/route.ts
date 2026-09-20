@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth/server";
-import { headers } from "next/headers";
-import { isAdminUser } from "@/lib/shared";
-import { listMedia, countMedia, createMedia } from "@/lib/media/server";
-import { getPublicStorageDriver } from "@/lib/storage/server";
-import { MediaType } from "@/lib/types/media";
-import { StorageDriverType } from "@/lib/types/storage";
+import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/server';
+import { headers } from 'next/headers';
+import { isAdminUser } from '@/lib/shared';
+import { listMedia, countMedia, createMedia } from '@/lib/media/server';
+import { getPublicStorageDriver } from '@/lib/storage/server';
+import { MediaType } from '@/lib/types/media';
+import { StorageDriverType } from '@/lib/types/storage';
 
 /**
  * 后台媒体库 API
@@ -16,14 +16,14 @@ import { StorageDriverType } from "@/lib/types/storage";
 export async function GET(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session || !isAdminUser(session.user)) {
-    return NextResponse.json({ error: "未授权" }, { status: 401 });
+    return NextResponse.json({ error: '未授权' }, { status: 401 });
   }
 
   const { searchParams } = new URL(request.url);
-  const typeParam = searchParams.get("type");
-  const search = searchParams.get("search") || undefined;
-  const page = parseInt(searchParams.get("page") || "1", 10);
-  const pageSize = parseInt(searchParams.get("pageSize") || "20", 10);
+  const typeParam = searchParams.get('type');
+  const search = searchParams.get('search') || undefined;
+  const page = parseInt(searchParams.get('page') || '1', 10);
+  const pageSize = parseInt(searchParams.get('pageSize') || '20', 10);
 
   // 验证 type 参数
   let type: MediaType | undefined;
@@ -52,16 +52,16 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session || !isAdminUser(session.user)) {
-    return NextResponse.json({ error: "未授权" }, { status: 401 });
+    return NextResponse.json({ error: '未授权' }, { status: 401 });
   }
 
   try {
     const formData = await request.formData();
-    const file = formData.get("file");
-    const typeParam = formData.get("type") as string | null;
+    const file = formData.get('file');
+    const typeParam = formData.get('type') as string | null;
 
     if (!file || !(file instanceof File)) {
-      return NextResponse.json({ error: "未找到上传文件" }, { status: 400 });
+      return NextResponse.json({ error: '未找到上传文件' }, { status: 400 });
     }
 
     // 验证 type 参数，默认 ARTICLE
@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       url: uploadResult.url,
       storageDriver: driver.name.toUpperCase() as StorageDriverType,
       storageKey: uploadResult.key,
-      title: file.name.replace(/\.[^.]+$/, ""),
+      title: file.name.replace(/\.[^.]+$/, ''),
       mimeType: file.type,
       size: file.size,
       uploadedBy: session.user.id,
@@ -94,8 +94,8 @@ export async function POST(request: Request) {
 
     return NextResponse.json(mediaRecord, { status: 201 });
   } catch (error) {
-    console.error("上传媒体失败：", error);
-    const message = error instanceof Error ? error.message : "上传失败";
+    console.error('上传媒体失败：', error);
+    const message = error instanceof Error ? error.message : '上传失败';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

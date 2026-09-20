@@ -2,12 +2,11 @@ import {
   GuideProgressStatus,
   GUIDE_SKIP_COOLDOWN_DAYS,
   normalizeTargetCondition,
-  type Guide, type GuideProgress, type GuideStep
-} from "@/lib/types/guides";
-import {
-  evaluateTargetCondition,
-  needsServerData,
-} from "./conditions";
+  type Guide,
+  type GuideProgress,
+  type GuideStep,
+} from '@/lib/types/guides';
+import { evaluateTargetCondition, needsServerData } from './conditions';
 
 /**
  * Guide 触发决策模块（深模块：小接口 + 全部触发规则）
@@ -69,18 +68,16 @@ const NO_TRIGGER = (fromEvent: boolean): TriggerDecision => ({
 /** 行为触发（guide:trigger 事件）：本地按 event_click + page 条件粗筛 */
 export function evaluateEventTrigger(
   guide: Guide,
-  ctx: Pick<TriggerContext, "page" | "event" | "target">
+  ctx: Pick<TriggerContext, 'page' | 'event' | 'target'>,
 ): boolean {
   const tc = normalizeTargetCondition(guide.targetCondition);
   if (!tc) return false;
   // 本地可判条件（event_click / page）先过一遍；服务端条件不影响粗筛
-  const local = tc.conditions.filter(
-    (c) => c.field === "event_click" || c.field === "page"
-  );
+  const local = tc.conditions.filter((c) => c.field === 'event_click' || c.field === 'page');
   if (local.length === 0) return false;
   return evaluateTargetCondition(
     { logic: tc.logic, conditions: local },
-    { event: ctx.event, target: ctx.target, page: ctx.page }
+    { event: ctx.event, target: ctx.target, page: ctx.page },
   );
 }
 
@@ -88,34 +85,27 @@ export function evaluateEventTrigger(
 export function evaluateAutoTrigger(guide: Guide, page: string): boolean {
   const tc = normalizeTargetCondition(guide.targetCondition);
   const conditions = tc?.conditions ?? [];
-  const hasEventClick = conditions.some((c) => c.field === "event_click");
+  const hasEventClick = conditions.some((c) => c.field === 'event_click');
   // and 逻辑含 event_click：必须点击才触发，不自动弹出
-  if (hasEventClick && tc?.logic !== "or") return false;
+  if (hasEventClick && tc?.logic !== 'or') return false;
   if (hasEventClick && tc) {
     // or 逻辑：去掉 event_click 后用剩余条件评估（任一满足即自动触发）
-    const local = conditions.filter((c) => c.field !== "event_click");
+    const local = conditions.filter((c) => c.field !== 'event_click');
     if (local.length === 0) return false;
-    return evaluateTargetCondition(
-      { logic: tc.logic, conditions: local },
-      { page }
-    );
+    return evaluateTargetCondition({ logic: tc.logic, conditions: local }, { page });
   }
   // 无 event_click：页面匹配（guide.page 字段 或 page 条件）
   const tcPages = conditions
-    .filter((c) => c.field === "page")
+    .filter((c) => c.field === 'page')
     .map((c) => String(c.value))
     .filter(Boolean);
   return [guide.page, ...tcPages].filter(Boolean).includes(page);
 }
 
 /** 综合决策：进度抑制 → 触发条件评估 → 续接步骤 */
-export function decideTrigger(
-  guide: Guide,
-  ctx: TriggerContext
-): TriggerDecision {
+export function decideTrigger(guide: Guide, ctx: TriggerContext): TriggerDecision {
   const progress = ctx.progress ?? null;
-  const fromEvent =
-    typeof ctx.event === "string" && Boolean(ctx.event) && Boolean(ctx.target);
+  const fromEvent = typeof ctx.event === 'string' && Boolean(ctx.event) && Boolean(ctx.target);
   const force = ctx.force === true;
 
   // 进度抑制：completed 永久、skipped 冷却期内；force（用户主动点击锚点要求重新引导）时全部忽略
@@ -123,26 +113,25 @@ export function decideTrigger(
     !force &&
     progress &&
     (progress.status === GuideProgressStatus.COMPLETED ||
-      (progress.status === GuideProgressStatus.SKIPPED &&
-        !isSkippedExpired(progress)))
+      (progress.status === GuideProgressStatus.SKIPPED && !isSkippedExpired(progress)))
   ) {
     return NO_TRIGGER(fromEvent);
   }
 
   const matched = fromEvent
     ? evaluateEventTrigger(guide, {
-      page: ctx.page,
-      event: ctx.event,
-      target: ctx.target,
-    })
+        page: ctx.page,
+        event: ctx.event,
+        target: ctx.target,
+      })
     : evaluateAutoTrigger(guide, ctx.page);
   if (!matched) return NO_TRIGGER(fromEvent);
 
   const resumeStep =
     ctx.resumeIfInProgress &&
-      progress?.status === GuideProgressStatus.IN_PROGRESS &&
-      typeof progress.currentStep === "number" &&
-      progress.currentStep > 0
+    progress?.status === GuideProgressStatus.IN_PROGRESS &&
+    typeof progress.currentStep === 'number' &&
+    progress.currentStep > 0
       ? progress.currentStep
       : 0;
 

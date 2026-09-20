@@ -2,35 +2,41 @@
  * 引导向导（client）：SETUP_SECRET 校验 → 密码注册 / GitHub 登录
  * 首个创建用户由 lib/auth.ts databaseHooks 自动置为 isAdmin
  */
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth/client";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { authClient } from '@/lib/auth/client';
 
-export function SetupWizard({ needsSecret, adminPath }: { needsSecret: boolean; adminPath: string }) {
+export function SetupWizard({
+  needsSecret,
+  adminPath,
+}: {
+  needsSecret: boolean;
+  adminPath: string;
+}) {
   const router = useRouter();
-  const [secret, setSecret] = useState("");
+  const [secret, setSecret] = useState('');
   const [secretOk, setSecretOk] = useState(!needsSecret);
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   const verifySecret = async () => {
     setBusy(true);
-    setError("");
+    setError('');
     try {
-      const r = await fetch("/api/admin/setup-verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const r = await fetch('/api/admin/setup-verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ secret }),
       });
-      if (!r.ok) throw new Error("密钥不正确");
+      if (!r.ok) throw new Error('密钥不正确');
       setSecretOk(true);
     } catch (e) {
-      setError(e instanceof Error ? e.message : "验证失败");
+      setError(e instanceof Error ? e.message : '验证失败');
     } finally {
       setBusy(false);
     }
@@ -39,39 +45,35 @@ export function SetupWizard({ needsSecret, adminPath }: { needsSecret: boolean; 
   const signUp = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    setError("");
+    setError('');
     try {
       const { error } = await authClient.signUp.email({
         name,
         email,
         password,
         callbackURL: `/${adminPath}`,
-        
-
       });
-      if (error) throw new Error(error.message ?? "注册失败");
+      if (error) throw new Error(error.message ?? '注册失败');
       router.push(`/${adminPath}`);
       router.refresh();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "注册失败");
+      setError(e instanceof Error ? e.message : '注册失败');
       setBusy(false);
     }
   };
 
   const githubLogin = async () => {
     setBusy(true);
-    setError("");
+    setError('');
     await authClient.signIn.social({
-      provider: "github",
+      provider: 'github',
       callbackURL: `/${adminPath}`,
-        
-
     });
   };
 
   const input =
-    "rounded-lg border border-border bg-secondary px-3 py-2 text-sm outline-none focus:border-ring";
-  const label = "text-xs font-medium text-muted-foreground";
+    'rounded-lg border border-border bg-secondary px-3 py-2 text-sm outline-none focus:border-ring';
+  const label = 'text-xs font-medium text-muted-foreground';
 
   if (!secretOk) {
     return (
@@ -96,7 +98,7 @@ export function SetupWizard({ needsSecret, adminPath }: { needsSecret: boolean; 
           disabled={busy}
           className="mt-4 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
         >
-          {busy ? "验证中…" : "验证密钥"}
+          {busy ? '验证中…' : '验证密钥'}
         </button>
       </form>
     );
@@ -104,10 +106,7 @@ export function SetupWizard({ needsSecret, adminPath }: { needsSecret: boolean; 
 
   return (
     <div className="space-y-4">
-      <form
-        onSubmit={signUp}
-        className="rounded-xl border border-border bg-card p-6"
-      >
+      <form onSubmit={signUp} className="rounded-xl border border-border bg-card p-6">
         <h2 className="mb-4 text-sm font-semibold">创建管理员账号</h2>
         <div className="space-y-3">
           <div>
@@ -147,7 +146,7 @@ export function SetupWizard({ needsSecret, adminPath }: { needsSecret: boolean; 
           disabled={busy}
           className="mt-4 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
         >
-          {busy ? "创建中…" : "创建账号"}
+          {busy ? '创建中…' : '创建账号'}
         </button>
       </form>
 

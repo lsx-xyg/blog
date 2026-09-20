@@ -1,26 +1,26 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import { Laptop, Sun, Moon, Eye } from "lucide-react";
-import { type ThemeMode } from "@/lib/theme/shared";
-import { getStoredTheme, applyTheme } from "@/lib/theme/client";
+import { useEffect, useRef, useState } from 'react';
+import { Laptop, Sun, Moon, Eye } from 'lucide-react';
+import { type ThemeMode } from '@/lib/theme/shared';
+import { getStoredTheme, applyTheme } from '@/lib/theme/client';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
 
 const OPTIONS: { value: ThemeMode; label: string; icon: typeof Sun }[] = [
-  { value: "system", label: "跟随系统", icon: Laptop },
-  { value: "light", label: "浅色系统", icon: Sun },
-  { value: "dark", label: "深色系统", icon: Moon },
+  { value: 'system', label: '跟随系统', icon: Laptop },
+  { value: 'light', label: '浅色系统', icon: Sun },
+  { value: 'dark', label: '深色系统', icon: Moon },
 ];
 
 const WARM_OPTION: { value: ThemeMode; label: string; icon: typeof Sun } = {
-  value: "warm",
-  label: "护眼系统",
+  value: 'warm',
+  label: '护眼系统',
   icon: Eye,
 };
 
@@ -72,8 +72,9 @@ export function ThemeToggle() {
         onClick={() => select(o.value)}
         onMouseEnter={clearCloseTimer}
         onMouseLeave={handleLeave}
-        className={`flex items-center gap-2.5 cursor-pointer py-2.5 ${active ? "text-foreground font-medium" : "text-muted-foreground"
-          }`}
+        className={`flex items-center gap-2.5 cursor-pointer py-2.5 ${
+          active ? 'text-foreground font-medium' : 'text-muted-foreground'
+        }`}
       >
         <Icon className="h-4 w-4 shrink-0" />
         <span className="flex-1">{o.label}</span>

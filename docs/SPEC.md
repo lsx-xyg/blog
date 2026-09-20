@@ -18,27 +18,27 @@
 
 ## 2. 技术栈
 
-| 层 | 选型 | 说明 |
-|---|---|---|
-| 框架 | Next.js 15（App Router）+ TypeScript | 用户对 Next.js 零基础，从零搭建 |
-| 样式 | Tailwind CSS + CSS 变量三主题 | |
-| ORM | Drizzle ORM | schema 即代码，轻量 |
-| 数据库 | Neon (PostgreSQL) | 前期免费起步，后期可迁自有服务器 |
-| 认证 | Better Auth | 密码 + GitHub OAuth + 账号关联（Auth.js 已并入，官方推荐新项目用 Better Auth） |
-| MDX 渲染 | next-mdx-remote-client | 正文存 Markdown 原文，渲染走 MDX 管道 |
-| 代码高亮 | Shiki | |
-| 后台编辑器 | Milkdown | WYSIWYG Markdown，ProseMirror 内核，活跃维护 |
-| 搜索 | minisearch | 纯客户端搜索 |
-| 评论 | giscus | GitHub Discussions 驱动，零后端 |
-| 定时任务 | cron-job.org + node-cron | 按 DEPLOY_PLATFORM 双实现 |
+| 层         | 选型                                 | 说明                                                                           |
+| ---------- | ------------------------------------ | ------------------------------------------------------------------------------ |
+| 框架       | Next.js 15（App Router）+ TypeScript | 用户对 Next.js 零基础，从零搭建                                                |
+| 样式       | Tailwind CSS + CSS 变量三主题        |                                                                                |
+| ORM        | Drizzle ORM                          | schema 即代码，轻量                                                            |
+| 数据库     | Neon (PostgreSQL)                    | 前期免费起步，后期可迁自有服务器                                               |
+| 认证       | Better Auth                          | 密码 + GitHub OAuth + 账号关联（Auth.js 已并入，官方推荐新项目用 Better Auth） |
+| MDX 渲染   | next-mdx-remote-client               | 正文存 Markdown 原文，渲染走 MDX 管道                                          |
+| 代码高亮   | Shiki                                |                                                                                |
+| 后台编辑器 | Milkdown                             | WYSIWYG Markdown，ProseMirror 内核，活跃维护                                   |
+| 搜索       | minisearch                           | 纯客户端搜索                                                                   |
+| 评论       | giscus                               | GitHub Discussions 驱动，零后端                                                |
+| 定时任务   | cron-job.org + node-cron             | 按 DEPLOY_PLATFORM 双实现                                                      |
 
 ---
 
 ## 3. 仓库结构（双公开仓库）
 
-| 仓库 | 用途 |
-|---|---|
-| Repo A（公开） | 博客代码 + giscus 评论（Discussions） |
+| 仓库           | 用途                                                                             |
+| -------------- | -------------------------------------------------------------------------------- |
+| Repo A（公开） | 博客代码 + giscus 评论（Discussions）                                            |
 | Repo B（公开） | 纯图床：图片资产，jsDelivr CDN 加速；GitHub token 仅授 Repo B 的 Contents 写权限 |
 
 ---
@@ -46,88 +46,96 @@
 ## 4. 数据库设计（Neon PostgreSQL，枚举全大写）
 
 ### 4.1 `users`（Better Auth 核心表扩展）
+
 Better Auth 自动创建 `user` / `session` / `account` / `verification` 表。
 `user` 表扩展字段：`is_admin boolean DEFAULT false`（管理员标记）。
 
 > **实施记录（T1，2026-09-11）**：`is_admin` 列实现为 **`isAdmin`**（camelCase），与 Better Auth drizzle 适配器列名约定对齐——M4 接入认证时无需字段映射。若未来改用其他 ORM/适配器需注意此命名。
 
 ### 4.2 `posts` 文章表
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `id` | uuid PK | |
-| `slug` | text UNIQUE | URL 别名，手动填，留空用 ID 兜底 |
-| `title` | text | |
-| `summary` | text | 摘要，列表页展示 |
-| `content` | text | Markdown 原文 |
-| `cover_url` | text NULL | 封面图，可选 |
-| `status` | text CHECK ∈ {DRAFT, SCHEDULED, PUBLISHED} | 三态 |
-| `scheduled_at` | timestamptz NULL | 定时发布时间 |
-| `featured` | boolean DEFAULT false | 精选 |
-| `view_count` | integer DEFAULT 0 | 浏览量 |
-| `created_at` / `updated_at` / `published_at` | timestamptz | |
+
+| 字段                                         | 类型                                       | 说明                             |
+| -------------------------------------------- | ------------------------------------------ | -------------------------------- |
+| `id`                                         | uuid PK                                    |                                  |
+| `slug`                                       | text UNIQUE                                | URL 别名，手动填，留空用 ID 兜底 |
+| `title`                                      | text                                       |                                  |
+| `summary`                                    | text                                       | 摘要，列表页展示                 |
+| `content`                                    | text                                       | Markdown 原文                    |
+| `cover_url`                                  | text NULL                                  | 封面图，可选                     |
+| `status`                                     | text CHECK ∈ {DRAFT, SCHEDULED, PUBLISHED} | 三态                             |
+| `scheduled_at`                               | timestamptz NULL                           | 定时发布时间                     |
+| `featured`                                   | boolean DEFAULT false                      | 精选                             |
+| `view_count`                                 | integer DEFAULT 0                          | 浏览量                           |
+| `created_at` / `updated_at` / `published_at` | timestamptz                                |                                  |
 
 ### 4.3 `tags` 全局标签表（文章 + 相册共用一套）
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `id` | uuid PK | |
-| `name` | text UNIQUE | **原样存储**（大小写敏感，`Nextjs` ≠ `nextjs`） |
-| `slug` | text UNIQUE | 由 name 自动生成，冲突加后缀 |
-| `created_at` | timestamptz | |
+
+| 字段         | 类型        | 说明                                            |
+| ------------ | ----------- | ----------------------------------------------- |
+| `id`         | uuid PK     |                                                 |
+| `name`       | text UNIQUE | **原样存储**（大小写敏感，`Nextjs` ≠ `nextjs`） |
+| `slug`       | text UNIQUE | 由 name 自动生成，冲突加后缀                    |
+| `created_at` | timestamptz |                                                 |
 
 ### 4.4 `post_tags` 关联表
+
 `post_id` FK → posts.id（ON DELETE CASCADE）、`tag_id` FK → tags.id（ON DELETE CASCADE），复合主键 (post_id, tag_id)
 
 ### 4.5 `media` 媒体库表（统一管理文章图片 + 相册图片）
 
 > **设计决策（2026-09-13 最终版）**：所有图片（文章图片 + 相册图片）统一在 `media` 表管理，通过 `type` 字段（枚举 `ARTICLE` | `GALLERY`）区分。**已彻底删除 `gallery_items` 表**，精选字段（`featured`）直接放在 `media` 表中。相册图片 = `media` 表中 `type=GALLERY` 的记录。标签通过 `media_tags` 关联表管理。
 
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `id` | uuid PK | |
-| `type` | enum ∈ {ARTICLE, GALLERY} | 图片类型（枚举，禁止硬编码字符串） |
-| `url` | text | 访问 URL（存储驱动返回的公开 URL，GitHub 驱动为 jsDelivr 形态） |
-| `storage_driver` | text ∈ {LOCAL, GITHUB, S3} | 存储平台（小写转大写兜底校验） |
-| `storage_key` | text NULL | 存储键（用于删除，如 2026/09/uuid.jpg） |
-| `title` | text NULL | 图片标题/名称（可用于 alt 文本、搜索） |
-| `description` | text NULL | 图片描述 |
-| `mime_type` | text NULL | MIME 类型，如 image/jpeg |
-| `size` | integer NULL | 文件大小（字节） |
-| `width` / `height` | integer NULL | 图片宽高（可空） |
-| `featured` | boolean DEFAULT false | 精选（仅 GALLERY 类型有意义，ARTICLE 类型忽略） |
-| `uploaded_by` | text NULL | 上传者 user_id（Better Auth 用 text 类型 id） |
-| `created_at` | timestamptz | |
+| 字段               | 类型                       | 说明                                                            |
+| ------------------ | -------------------------- | --------------------------------------------------------------- |
+| `id`               | uuid PK                    |                                                                 |
+| `type`             | enum ∈ {ARTICLE, GALLERY}  | 图片类型（枚举，禁止硬编码字符串）                              |
+| `url`              | text                       | 访问 URL（存储驱动返回的公开 URL，GitHub 驱动为 jsDelivr 形态） |
+| `storage_driver`   | text ∈ {LOCAL, GITHUB, S3} | 存储平台（小写转大写兜底校验）                                  |
+| `storage_key`      | text NULL                  | 存储键（用于删除，如 2026/09/uuid.jpg）                         |
+| `title`            | text NULL                  | 图片标题/名称（可用于 alt 文本、搜索）                          |
+| `description`      | text NULL                  | 图片描述                                                        |
+| `mime_type`        | text NULL                  | MIME 类型，如 image/jpeg                                        |
+| `size`             | integer NULL               | 文件大小（字节）                                                |
+| `width` / `height` | integer NULL               | 图片宽高（可空）                                                |
+| `featured`         | boolean DEFAULT false      | 精选（仅 GALLERY 类型有意义，ARTICLE 类型忽略）                 |
+| `uploaded_by`      | text NULL                  | 上传者 user_id（Better Auth 用 text 类型 id）                   |
+| `created_at`       | timestamptz                |                                                                 |
 
 索引：`type`、`storage_driver`、`created_at`、`featured`
 
 ### 4.6 `media_tags` 关联表
+
 `media_id` FK → media.id（ON DELETE CASCADE）、`tag_id` FK → tags.id（ON DELETE CASCADE），复合主键 (media_id, tag_id)
 
 > **重构记录（2026-09-13）**：原 `gallery_item_tags` 表已删除，替换为 `media_tags`，统一管理所有媒体（文章图片 + 相册图片）的标签关联。
 
 ### 4.7 `settings` 键值配置表
+
 `key` text PK、`value` jsonb
 内置键：`site_title` / `site_description` / `footer_text` / `about_content`（Markdown）/ `admin_path`（后台路径覆盖）/ 社交链接等
 
 ### 4.8 `friend_links` 友链表
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `id` | uuid PK | |
-| `name` | text | |
-| `url` | text | 对方博客/链接 |
-| `avatar_url` | text NULL | 缺省用 favicon 服务 |
-| `description` | text DEFAULT '' | |
-| `tags` | text[] DEFAULT '{}' | 友链标签，直接存数组，不建关联表 |
-| `sort_order` | integer DEFAULT 0 | |
-| `created_at` | timestamptz | |
+
+| 字段          | 类型                | 说明                             |
+| ------------- | ------------------- | -------------------------------- |
+| `id`          | uuid PK             |                                  |
+| `name`        | text                |                                  |
+| `url`         | text                | 对方博客/链接                    |
+| `avatar_url`  | text NULL           | 缺省用 favicon 服务              |
+| `description` | text DEFAULT ''     |                                  |
+| `tags`        | text[] DEFAULT '{}' | 友链标签，直接存数组，不建关联表 |
+| `sort_order`  | integer DEFAULT 0   |                                  |
+| `created_at`  | timestamptz         |                                  |
 
 ### 4.9 `backup_records` 备份记录表
-| 字段 | 类型 | 说明 |
-|---|---|---|
-| `id` | uuid PK | |
-| `file_key` | text | 存储中的备份文件 key |
-| `size` | bigint | |
-| `triggered_by` | text ∈ {MANUAL, AUTO} | |
-| `created_at` | timestamptz | |
+
+| 字段           | 类型                  | 说明                 |
+| -------------- | --------------------- | -------------------- |
+| `id`           | uuid PK               |                      |
+| `file_key`     | text                  | 存储中的备份文件 key |
+| `size`         | bigint                |                      |
+| `triggered_by` | text ∈ {MANUAL, AUTO} |                      |
+| `created_at`   | timestamptz           |                      |
 
 ---
 
@@ -167,6 +175,7 @@ interface StorageDriver {
 - 评论区的 giscus GitHub 登录与后台登录**完全隔离**（iframe 内独立 OAuth App，互不影响）
 
 > **实施记录（T8，2026-09-11）**：
+>
 > - 首个管理员产生机制按用户确认方案：**非白名单**。`databaseHooks.user.create.after` 中当用户表 `count <= 1` 时将该用户置 `isAdmin = true`——即第一个创建/登录的用户自动成为管理员（密码注册与 GitHub 登录均触发），引导完成后再创建的用户为普通用户。
 > - 后台路径解析 `getAdminPath()`：`ADMIN_PATH` env 优先，去首尾斜杠，无则兜底 `"admin"`；**DB settings 覆盖（T2 时实现，SPEC 已规划）**。当前本地 env 配置 `ADMIN_PATH=dashboard`。
 > - 守卫逻辑：`app/[adminSlug]/*` 路由不匹配 → `notFound()`（404 伪装）；匹配但未登录 → 渲染登录页（仅根路径，posts 等子页 404）；登录但非管理员 → `notFound()`。后台 API（`/api/admin/*`）统一 `requireAdmin(req)`，未登录/非管理员返回 404。
@@ -180,22 +189,24 @@ interface StorageDriver {
 
 导航菜单：**首页 | 相册 | 关于 | 友链**
 
-| 路由 | 内容 |
-|---|---|
-| `/` | 首页：文章瀑布流 + 无限滚动 + 顶部标签多选筛选（横排，照参考站样式）+ "最新/精选"切换 + 搜索框 |
-| `/posts/[slug]` | 文章页：TOC、Shiki 高亮 + 复制按钮、懒加载图、浏览量、giscus 评论；文章卡片样式照参考站（日期/标题/摘要/标签/封面/"更多阅读"） |
-| `/gallery` | 相册：瀑布流 + 无限滚动 + **隐藏式**标签筛选面板（多选）+ 最新/精选切换 |
-| `/about` | 关于页：渲染 settings.about_content（Markdown） |
-| `/friends` | 友链页：friend_links 卡片展示 |
-| `/sitemap.xml` `/robots.txt` `/rss.xml` | SEO 三件套 |
+| 路由                                    | 内容                                                                                                                           |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| `/`                                     | 首页：文章瀑布流 + 无限滚动 + 顶部标签多选筛选（横排，照参考站样式）+ "最新/精选"切换 + 搜索框                                 |
+| `/posts/[slug]`                         | 文章页：TOC、Shiki 高亮 + 复制按钮、懒加载图、浏览量、giscus 评论；文章卡片样式照参考站（日期/标题/摘要/标签/封面/"更多阅读"） |
+| `/gallery`                              | 相册：瀑布流 + 无限滚动 + **隐藏式**标签筛选面板（多选）+ 最新/精选切换                                                        |
+| `/about`                                | 关于页：渲染 settings.about_content（Markdown）                                                                                |
+| `/friends`                              | 友链页：friend_links 卡片展示                                                                                                  |
+| `/sitemap.xml` `/robots.txt` `/rss.xml` | SEO 三件套                                                                                                                     |
 
 **筛选架构（方案 A，纯客户端）**：
+
 - 首页/相册启动时拉取**全量轻量元数据**（`/api/search-index`：文章标题/摘要/封面/标签/日期/精选 + 相册元数据）
 - 前端负责：瀑布流分批渲染、无限滚动、标签多选筛选、最新/精选排序、搜索
 - **URL 不变**（与参考站一致，筛选状态为前端 state）
 - `SEARCH_MODE=DATABASE` 时切换服务端过滤（开关预留，默认 CLIENT）
 
 > **实施记录（T7，2026-09-11）**：
+>
 > - `/api/search-index`：文章已实现（含标签数组，join post_tags+tags）；相册返回结构就位（gallery 表数据为空，T5 闭环后自动有数据）。
 > - 首页：SSR 首屏 9 条（SEO 保底）→ `PostWall` 挂载后拉 `/api/search-index` 全量替换数据源；CSS columns 瀑布流（卡片高度自适应错落）+ IntersectionObserver 每次 +9 条；筛选/搜索全前端 state（URL 不变）。
 > - 标签多选 = **OR 语义**（命中任一选中标签即显示；2026-09-11 由 AND 调整为 OR，与参考站一致）；"最新/精选"切换；空结果有引导文案。
@@ -207,41 +218,41 @@ interface StorageDriver {
 
 ## 8. 后台功能（/[adminSlug]）
 
-| 页面 | 功能 |
-|---|---|
-| 文章管理 | 三态筛选（草稿/定时/发布）、新建/编辑/删除、精选标记 |
-| 编辑器 | Milkdown WYSIWYG；标签输入 = **可搜索下拉 combobox**（列出已有标签可搜可选，输入不存在时回车自动创建）；图片拖拽/粘贴上传 |
-| 相册管理 | 图片上传/编辑/删除、精选标记、标签 |
-| 友链管理 | CRUD |
-| 标签管理 | 编辑/删除（删除时自动清除文章/相册上的关联） |
-| 备份 | 见 §11 |
-| 设置 | site_title / description / footer / about_content / admin_path / 社交链接 |
+| 页面     | 功能                                                                                                                      |
+| -------- | ------------------------------------------------------------------------------------------------------------------------- |
+| 文章管理 | 三态筛选（草稿/定时/发布）、新建/编辑/删除、精选标记                                                                      |
+| 编辑器   | Milkdown WYSIWYG；标签输入 = **可搜索下拉 combobox**（列出已有标签可搜可选，输入不存在时回车自动创建）；图片拖拽/粘贴上传 |
+| 相册管理 | 图片上传/编辑/删除、精选标记、标签                                                                                        |
+| 友链管理 | CRUD                                                                                                                      |
+| 标签管理 | 编辑/删除（删除时自动清除文章/相册上的关联）                                                                              |
+| 备份     | 见 §11                                                                                                                    |
+| 设置     | site_title / description / footer / about_content / admin_path / 社交链接                                                 |
 
 **标签录入逻辑**：combobox 打开显示已有标签 → 选择或输入新建 → 服务端按 name 精确匹配（大小写敏感）复用已有 tag_id，不存在则新建（name 原样存储 + 生成 slug）。
 
 ### 8.1 引导系统（Onboarding Guide，2026-09-16 实施 ✅）
 
-| 项 | 说明 |
-|---|---|
-| 定位 | 后台可配置交互引导，帮助管理员完成特定流程（如无密码账号设置密码） |
-| 数据表 | `guiders`（引导配置）、`user_guide_progress`（用户进度）、`user_events`（行为埋点，click_count 条件数据源） |
-| 前端引擎 | onborda + GuideManager（懒加载，仅挂载 admin layout）；页面只声明 data-guide 锚点，不直接操作引导逻辑 |
-| 锚点标识 | `data-guide` 属性统一：元素定位 = 埋点上报 target = 条件配置 value，同一值（注册表 lib/guide-events.ts） |
+| 项       | 说明                                                                                                                                                                                           |
+| -------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 定位     | 后台可配置交互引导，帮助管理员完成特定流程（如无密码账号设置密码）                                                                                                                             |
+| 数据表   | `guiders`（引导配置）、`user_guide_progress`（用户进度）、`user_events`（行为埋点，click_count 条件数据源）                                                                                    |
+| 前端引擎 | onborda + GuideManager（懒加载，仅挂载 admin layout）；页面只声明 data-guide 锚点，不直接操作引导逻辑                                                                                          |
+| 锚点标识 | `data-guide` 属性统一：元素定位 = 埋点上报 target = 条件配置 value，同一值（注册表 lib/guide-events.ts）                                                                                       |
 | 触发条件 | `target_condition` JSONB：`{logic: and/or, conditions: [{field, op, value}]}`；field ∈ `event_click` / `page` / `click_count.<target>` / `user_age_days`；op ∈ `eq` / `gte` / `lte` / `exists` |
-| 进度管理 | 完成（completed）永久抑制；跳过（skipped）7 天冷却期后可重新触发；管理页可手动重置当前账号进度 |
-| 管理页 | `/[adminSlug]/guides`：CRUD + 发布/归档 + 步骤卡片编辑器（自动组装 JSON）+ 触发条件行式表单 + 重置进度 |
+| 进度管理 | 完成（completed）永久抑制；跳过（skipped）7 天冷却期后可重新触发；管理页可手动重置当前账号进度                                                                                                 |
+| 管理页   | `/[adminSlug]/guides`：CRUD + 发布/归档 + 步骤卡片编辑器（自动组装 JSON）+ 触发条件行式表单 + 重置进度                                                                                         |
 
 > **实施记录（2026-09-16）**：三表 + 迁移 0009（guiders / user_guide_progress）/ 0010（user_events + 存量 target_condition 归一化）；API：`GET/POST /api/admin/guides`、`PUT/DELETE /api/admin/guides/[id]`、`GET/POST/DELETE /api/admin/guides/progress`、`POST /api/admin/guides/track`、`POST /api/admin/guides/evaluate`；seed：`scripts/seed-guides.ts`（reveal_password_setup_v1）。完整使用说明见 `docs/adr/0010-onborda-guide-system.md` 附录 A。
 
 ### 8.2 敏感信息查看（Sensitive Setting Reveal，#18，2026-09-16 实施 ✅）
 
-| 项 | 说明 |
-|---|---|
-| 输入框显隐 | 敏感字段输入框内 👁 切换输入内容显示/隐藏（type=password 语义），不抢占空间 |
-| 查看已配置 | 「查看」按钮在 label 行（「✓ 已配置」旁），不在输入框内（防误触） |
-| 有密码账号 | 点击 → 管理员密码二次验证弹窗 → 明文展示 30 秒倒计时自动隐藏 |
-| 无密码账号 | 点击 → 触发 onborda 引导（说明 + 引导跳转设置密码页）→ 设置成功标记完成 |
-| 覆盖字段 | storage：github.token / s3.access_key / s3.secret_key；cron：secret / job_api_key |
+| 项         | 说明                                                                              |
+| ---------- | --------------------------------------------------------------------------------- |
+| 输入框显隐 | 敏感字段输入框内 👁 切换输入内容显示/隐藏（type=password 语义），不抢占空间        |
+| 查看已配置 | 「查看」按钮在 label 行（「✓ 已配置」旁），不在输入框内（防误触）                 |
+| 有密码账号 | 点击 → 管理员密码二次验证弹窗 → 明文展示 30 秒倒计时自动隐藏                      |
+| 无密码账号 | 点击 → 触发 onborda 引导（说明 + 引导跳转设置密码页）→ 设置成功标记完成           |
+| 覆盖字段   | storage：github.token / s3.access_key / s3.secret_key；cron：secret / job_api_key |
 
 > **实施记录**：`components/secret-reveal-dialog.tsx`（验证弹窗）+ `/api/admin/account/reveal`（解密接口，AES-256-GCM）；无密码分支派发 `guide:trigger` 事件接入引导系统；设置密码成功派发 `guide:complete`。
 
@@ -251,11 +262,11 @@ interface StorageDriver {
 
 三色主题（CSS 变量，一套组件）：
 
-| 主题 | 背景 | 前景 |
-|---|---|---|
-| light（白） | `rgb(255,255,255)` | `rgb(9,9,11)` |
-| dark（黑） | `rgb(9,9,11)` | `rgb(250,250,250)` |
-| sepia（护眼） | `rgb(250,247,240)` | `rgb(56,51,46)` |
+| 主题          | 背景               | 前景               |
+| ------------- | ------------------ | ------------------ |
+| light（白）   | `rgb(255,255,255)` | `rgb(9,9,11)`      |
+| dark（黑）    | `rgb(9,9,11)`      | `rgb(250,250,250)` |
+| sepia（护眼） | `rgb(250,247,240)` | `rgb(56,51,46)`    |
 
 > **2026-09-11 配色全面对齐参考站 czhlove.cn（shadcn 体系）**：不仅背景/前景，surface/card、surface-strong/secondary、border、fg-muted/muted-foreground、selection、accent/primary 全部按参考站三主题变量（light/:root、.theme-warm→sepia、.dark）迁移（HSL→RGB 已换算）。详见 globals.css。
 
@@ -264,6 +275,7 @@ interface StorageDriver {
 - 移动端/PC 端响应式
 
 > **实施记录（T7，2026-09-11）**：
+>
 > - 实现为 `html.dark` / `html.sepia` class（globals.css tokens 已按此定义），**未用 data-theme**（SPEC 原描述调整——class 与 CSS 变量方案一致、实现更简）。
 > - `lib/theme.ts`：`applyTheme(mode)`（system 时按 matchMedia 判断）+ `getStoredTheme()`；layout.tsx `<head>` 内联 `THEME_INIT_SCRIPT` 首屏防 FOUC（渲染前同步应用）。
 > - 切换组件 `components/theme-toggle.tsx`：跟随系统/深色/护眼三态胶囊按钮，激活态反色。
@@ -271,6 +283,7 @@ interface StorageDriver {
 > - **滚动条**：全局隐藏（`*{scrollbar-width:none}` + `::-webkit-scrollbar{display:none}`），避免滚动条出现/消失引起布局跳动。
 
 > **T7.1 视觉精修（2026-09-11，commit a9e0b19）**：
+>
 > - **shadcn 裸 HSL 变量体系**：globals.css 重构为标准 shadcn 变量（`:root`/`html.dark`/`html.sepia` 三套**裸 HSL 三元组**如 `--background: 46 48% 96%`，body 用 `hsl(var(--background))` 包裹），`@theme inline` 映射 `--color-*: hsl(var(--*))`，保留旧变量名（`--bg`/`--fg`/`--surface` 等）作为兼容别名。**关键坑**：裸 HSL 三元组必须用 `hsl(var())` 包裹，直接 `background: var(--background)` 会被浏览器当成现代 RGB 语法解析成深蓝紫。
 > - **字体**：引入 **LXGW WenKai Screen（霞鹜文楷屏显）**，参考站 czhlove.cn 同款。layout.tsx `<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lxgw-wenkai-screen-webfont@1.7.0/style.css">`，包已做 unicode-range 子集化按需加载。`--font-sans` 优先该字体，fallback 系统字体。**注意**：字体 `@import` 不能放在 `@import "tailwindcss"` 之前，会破坏 Tailwind 编译——必须用 `<link>` 标签。
 > - **组件类名迁移**：`bg-accent`→`bg-primary`、`text-accent`→`text-primary`、`focus:border-accent`→`focus:border-ring`、`accent-[--accent]`→`accent-primary`，对齐 shadcn 语义。
@@ -459,37 +472,37 @@ NEXT_PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOUVJQps4DFcnk
 
 ## 13. API 清单
 
-| 路由 | 鉴权 | 用途 |
-|---|---|---|
-| `/api/auth/*` | Better Auth | 登录（密码/GitHub/账号关联） |
-| `/api/search-index` | 公开 | 全量轻量元数据（文章+相册），驱动筛选/搜索/瀑布流 |
-| `/api/posts/[slug]/views` | 公开 | 浏览量 +1（客户端上报） |
-| `/api/storage/upload-url` | admin | 上传凭证（图片） |
-| `/api/admin/posts*` | admin | 文章 CRUD / 发布（含定时） |
-| `/api/admin/gallery*` | admin | 相册 CRUD |
-| `/api/admin/tags*` | admin | 标签 CRUD |
-| `/api/admin/friend-links*` | admin | 友链 CRUD |
-| `/api/admin/settings` | admin | 设置读写 |
-| `/api/admin/backup` | admin | 备份列表 / 创建备份 |
-| `/api/admin/backup/[id]` | admin | 下载备份 / 删除备份 |
-| `/api/admin/backup/restore` | admin | 上传恢复备份 |
-| `/api/cron/publish-scheduled` | CRON_SECRET | 定时发布扫描 |
-| `/api/cron/backup` | CRON_SECRET | 定时全量备份 |
-| `/api/rss` | 公开 | RSS/Atom |
-| `/sitemap.ts` `/robots.ts` | — | SEO 静态输出 |
+| 路由                          | 鉴权        | 用途                                              |
+| ----------------------------- | ----------- | ------------------------------------------------- |
+| `/api/auth/*`                 | Better Auth | 登录（密码/GitHub/账号关联）                      |
+| `/api/search-index`           | 公开        | 全量轻量元数据（文章+相册），驱动筛选/搜索/瀑布流 |
+| `/api/posts/[slug]/views`     | 公开        | 浏览量 +1（客户端上报）                           |
+| `/api/storage/upload-url`     | admin       | 上传凭证（图片）                                  |
+| `/api/admin/posts*`           | admin       | 文章 CRUD / 发布（含定时）                        |
+| `/api/admin/gallery*`         | admin       | 相册 CRUD                                         |
+| `/api/admin/tags*`            | admin       | 标签 CRUD                                         |
+| `/api/admin/friend-links*`    | admin       | 友链 CRUD                                         |
+| `/api/admin/settings`         | admin       | 设置读写                                          |
+| `/api/admin/backup`           | admin       | 备份列表 / 创建备份                               |
+| `/api/admin/backup/[id]`      | admin       | 下载备份 / 删除备份                               |
+| `/api/admin/backup/restore`   | admin       | 上传恢复备份                                      |
+| `/api/cron/publish-scheduled` | CRON_SECRET | 定时发布扫描                                      |
+| `/api/cron/backup`            | CRON_SECRET | 定时全量备份                                      |
+| `/api/rss`                    | 公开        | RSS/Atom                                          |
+| `/sitemap.ts` `/robots.ts`    | —           | SEO 静态输出                                      |
 
 ---
 
 ## 14. 开发里程碑
 
-| 里程碑 | 内容 |
-|---|---|
-| M1 | 脚手架：Next 15 + TS + Tailwind + Drizzle + Neon 连通 |
-| M2 | 数据层：全部 schema + 存储三驱动（Blob/S3/GitHub） |
-| M3 | 前台：首页瀑布流、文章页、MDX 渲染、三色主题 |
-| M4 | 功能：筛选/搜索/精选/浏览量/评论/SEO/关于/友链 |
-| M5 | 后台：引导流程、认证、文章/相册/友链/标签/设置管理、Milkdown 编辑器 |
-| M6 | 定时发布 + 备份 + 部署 Vercel + Cloudflare 域名 |
+| 里程碑 | 内容                                                                |
+| ------ | ------------------------------------------------------------------- |
+| M1     | 脚手架：Next 15 + TS + Tailwind + Drizzle + Neon 连通               |
+| M2     | 数据层：全部 schema + 存储三驱动（Blob/S3/GitHub）                  |
+| M3     | 前台：首页瀑布流、文章页、MDX 渲染、三色主题                        |
+| M4     | 功能：筛选/搜索/精选/浏览量/评论/SEO/关于/友链                      |
+| M5     | 后台：引导流程、认证、文章/相册/友链/标签/设置管理、Milkdown 编辑器 |
+| M6     | 定时发布 + 备份 + 部署 Vercel + Cloudflare 域名                     |
 
 ---
 
@@ -507,10 +520,10 @@ NEXT_PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOUVJQps4DFcnk
 
 ## 16. 风险与注意记录
 
-| 项 | 说明 |
-|---|---|
-| 备份含账号数据 | GitHub 驱动上传公开 repo 会公开账号信息，部署时权衡 |
-| cron-job.org 无重试 | 定时接口幂等设计兜底，失败下次扫描自愈 |
-| Vercel Hobby 限制 | 自带 Cron 仅每日一次 → 必须用外部 cron-job.org（已定） |
-| 引导抢注窗口 | 部署后尽快完成引导，或设置 SETUP_SECRET |
-| GitHub 图床 | 单文件 ≤50MB，视频不走 GitHub；jsDelivr 有流量治理政策 |
+| 项                  | 说明                                                   |
+| ------------------- | ------------------------------------------------------ |
+| 备份含账号数据      | GitHub 驱动上传公开 repo 会公开账号信息，部署时权衡    |
+| cron-job.org 无重试 | 定时接口幂等设计兜底，失败下次扫描自愈                 |
+| Vercel Hobby 限制   | 自带 Cron 仅每日一次 → 必须用外部 cron-job.org（已定） |
+| 引导抢注窗口        | 部署后尽快完成引导，或设置 SETUP_SECRET                |
+| GitHub 图床         | 单文件 ≤50MB，视频不走 GitHub；jsDelivr 有流量治理政策 |

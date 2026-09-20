@@ -1,10 +1,10 @@
-import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth/server";
-import { isAdminUser } from "@/lib/shared";
-import { db } from "@/db";
-import { userEvents } from "@/db/schema";
-import { GUIDE_TRIGGER_EVENT } from "@/lib/guides/shared";
+import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth/server';
+import { isAdminUser } from '@/lib/shared';
+import { db } from '@/db';
+import { userEvents } from '@/db/schema';
+import { GUIDE_TRIGGER_EVENT } from '@/lib/guides/shared';
 
 /**
  * 用户行为事件上报 API（user_events 表）
@@ -17,28 +17,28 @@ import { GUIDE_TRIGGER_EVENT } from "@/lib/guides/shared";
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session || !isAdminUser(session.user)) {
-    return NextResponse.json({ error: "未授权" }, { status: 401 });
+    return NextResponse.json({ error: '未授权' }, { status: 401 });
   }
 
   let body: { event?: unknown; target?: unknown };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "请求格式错误" }, { status: 400 });
+    return NextResponse.json({ error: '请求格式错误' }, { status: 400 });
   }
 
   const event = body.event;
   const target = body.target;
-  if (typeof event !== "string" || !event.trim()) {
-    return NextResponse.json({ error: "event 必填" }, { status: 400 });
+  if (typeof event !== 'string' || !event.trim()) {
+    return NextResponse.json({ error: 'event 必填' }, { status: 400 });
   }
-  if (typeof target !== "string" || !target.trim()) {
-    return NextResponse.json({ error: "target 必填" }, { status: 400 });
+  if (typeof target !== 'string' || !target.trim()) {
+    return NextResponse.json({ error: 'target 必填' }, { status: 400 });
   }
 
   // 仅接受已知事件类型，防止行为表被任意写入
   if (event !== GUIDE_TRIGGER_EVENT) {
-    return NextResponse.json({ error: "不支持的事件类型" }, { status: 400 });
+    return NextResponse.json({ error: '不支持的事件类型' }, { status: 400 });
   }
 
   await db.insert(userEvents).values({

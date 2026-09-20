@@ -10,40 +10,36 @@
  *
  * 依赖方向：client.ts ← service.ts（业务层调适配器，方向单向）
  */
-import { getCronJobApiKey } from "@/lib/settings/server";
+import { getCronJobApiKey } from '@/lib/settings/server';
 import type {
   CronJobConfig,
   CronJob,
   CronJobDetailed,
   CronJobHistoryItem,
   CronJobExecutionDetail,
-} from "@/lib/types/cron";
-import { RequestMethod } from "@/lib/types/cron";
+} from '@/lib/types/cron';
+import { RequestMethod } from '@/lib/types/cron';
 
-const CRON_JOB_API_BASE = "https://api.cron-job.org";
+const CRON_JOB_API_BASE = 'https://api.cron-job.org';
 
 /** 发起 API 请求 */
-async function apiRequest<T>(
-  method: string,
-  path: string,
-  body?: unknown,
-): Promise<T> {
+async function apiRequest<T>(method: string, path: string, body?: unknown): Promise<T> {
   const apiKey = await getCronJobApiKey();
   if (!apiKey) {
-    throw new Error("CRON_JOB_API_KEY 未配置");
+    throw new Error('CRON_JOB_API_KEY 未配置');
   }
 
   const res = await fetch(`${CRON_JOB_API_BASE}${path}`, {
     method,
     headers: {
-      "Content-Type": "application/json",
+      'Content-Type': 'application/json',
       Authorization: `Bearer ${apiKey}`,
     },
     body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
   if (!res.ok) {
-    const text = await res.text().catch(() => "");
+    const text = await res.text().catch(() => '');
     throw new Error(`cron-job.org API 请求失败: ${res.status} ${res.statusText} ${text}`);
   }
 
@@ -57,9 +53,9 @@ async function apiRequest<T>(
  * @returns 任务 ID
  */
 export async function createCronJob(config: CronJobConfig): Promise<number> {
-  const result = await apiRequest<{ jobId: number }>("PUT", "/jobs", {
+  const result = await apiRequest<{ jobId: number }>('PUT', '/jobs', {
     job: {
-      title: config.title ?? "",
+      title: config.title ?? '',
       url: config.url,
       enabled: config.enabled ?? false,
       saveResponses: config.saveResponses ?? false,
@@ -80,17 +76,14 @@ export async function createCronJob(config: CronJobConfig): Promise<number> {
  * @param jobId 任务 ID
  */
 export async function deleteCronJob(jobId: number): Promise<void> {
-  await apiRequest("DELETE", `/jobs/${jobId}`);
+  await apiRequest('DELETE', `/jobs/${jobId}`);
 }
 
 /**
  * 列出所有定时任务
  */
 export async function listCronJobs(): Promise<CronJob[]> {
-  const result = await apiRequest<{ jobs: CronJob[]; someFailed: boolean }>(
-    "GET",
-    "/jobs",
-  );
+  const result = await apiRequest<{ jobs: CronJob[]; someFailed: boolean }>('GET', '/jobs');
   return result.jobs;
 }
 
@@ -99,10 +92,7 @@ export async function listCronJobs(): Promise<CronJob[]> {
  * @param jobId 任务 ID
  */
 export async function getCronJob(jobId: number): Promise<CronJobDetailed> {
-  const result = await apiRequest<{ jobDetails: CronJobDetailed }>(
-    "GET",
-    `/jobs/${jobId}`,
-  );
+  const result = await apiRequest<{ jobDetails: CronJobDetailed }>('GET', `/jobs/${jobId}`);
   return result.jobDetails;
 }
 
@@ -111,11 +101,8 @@ export async function getCronJob(jobId: number): Promise<CronJobDetailed> {
  * @param jobId 任务 ID
  * @param delta 要修改的字段
  */
-export async function updateCronJob(
-  jobId: number,
-  delta: Partial<CronJobConfig>,
-): Promise<void> {
-  await apiRequest("PATCH", `/jobs/${jobId}`, { job: delta });
+export async function updateCronJob(jobId: number, delta: Partial<CronJobConfig>): Promise<void> {
+  await apiRequest('PATCH', `/jobs/${jobId}`, { job: delta });
 }
 
 /**
@@ -124,7 +111,7 @@ export async function updateCronJob(
  */
 export async function getJobHistory(jobId: number): Promise<CronJobHistoryItem[]> {
   const result = await apiRequest<{ history: CronJobHistoryItem[] }>(
-    "GET",
+    'GET',
     `/jobs/${jobId}/history`,
   );
   return result.history || [];
@@ -140,7 +127,7 @@ export async function getJobHistoryDetail(
   identifier: string,
 ): Promise<CronJobExecutionDetail> {
   const result = await apiRequest<{ jobHistoryDetails: CronJobExecutionDetail }>(
-    "GET",
+    'GET',
     `/jobs/${jobId}/history/${identifier}`,
   );
   return result.jobHistoryDetails;

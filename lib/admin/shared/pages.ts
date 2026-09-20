@@ -14,17 +14,17 @@ export interface AdminPageOption {
 }
 
 export const ADMIN_PAGES: AdminPageOption[] = [
-  { path: "/", label: "首页（仪表盘）" },
-  { path: "/account", label: "账号设置" },
-  { path: "/backup", label: "备份管理" },
-  { path: "/cron", label: "定时任务" },
-  { path: "/friend-links", label: "友链管理" },
-  { path: "/guides", label: "引导管理" },
-  { path: "/media", label: "媒体库" },
-  { path: "/posts", label: "文章管理" },
-  { path: "/posts/new", label: "新建文章" },
-  { path: "/settings", label: "站点设置" },
-  { path: "/tags", label: "标签管理" },
+  { path: '/', label: '首页（仪表盘）' },
+  { path: '/account', label: '账号设置' },
+  { path: '/backup', label: '备份管理' },
+  { path: '/cron', label: '定时任务' },
+  { path: '/friend-links', label: '友链管理' },
+  { path: '/guides', label: '引导管理' },
+  { path: '/media', label: '媒体库' },
+  { path: '/posts', label: '文章管理' },
+  { path: '/posts/new', label: '新建文章' },
+  { path: '/settings', label: '站点设置' },
+  { path: '/tags', label: '标签管理' },
 ];
 
 export function getAdminPages(): AdminPageOption[] {

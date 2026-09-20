@@ -1,17 +1,17 @@
-import type { Metadata } from "next";
-import { notFound } from "next/navigation";
-import { getPublishedPostBySlugOrId, listPublishedPosts } from "@/lib/posts/server";
-import { renderMdx } from "@/lib/mdx/server";
-import { formatDate } from "@/lib/shared";
-import { CodeCopy } from "@/components/posts/code-copy";
-import { ViewCounter } from "@/components/posts/view-counter";
-import { ArticleToc } from "@/components/posts/article-toc";
-import { ArticleFloatButtons } from "@/components/posts/article-float-buttons";
-import { ArticleProgress } from "@/components/posts/article-progress";
-import { ScrollToTop } from "@/components/layout/scroll-to-top";
-import { CommentsLazy } from "@/components/posts/comments-lazy";
-import { getGiscusSettings } from "@/lib/settings/server";
-import { CalendarDays, Clock } from "lucide-react";
+import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
+import { getPublishedPostBySlugOrId, listPublishedPosts } from '@/lib/posts/server';
+import { renderMdx } from '@/lib/mdx/server';
+import { formatDate } from '@/lib/shared';
+import { CodeCopy } from '@/components/posts/code-copy';
+import { ViewCounter } from '@/components/posts/view-counter';
+import { ArticleToc } from '@/components/posts/article-toc';
+import { ArticleFloatButtons } from '@/components/posts/article-float-buttons';
+import { ArticleProgress } from '@/components/posts/article-progress';
+import { ScrollToTop } from '@/components/layout/scroll-to-top';
+import { CommentsLazy } from '@/components/posts/comments-lazy';
+import { getGiscusSettings } from '@/lib/settings/server';
+import { CalendarDays, Clock } from 'lucide-react';
 
 export const dynamicParams = true;
 
@@ -32,9 +32,9 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { slug } = await params;
   const post = await getPublishedPostBySlugOrId(slug);
-  if (!post) return { title: "文章不存在" };
+  if (!post) return { title: '文章不存在' };
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
   const url = `${siteUrl}/posts/${post.slug || post.id}`;
 
   return {
@@ -44,14 +44,14 @@ export async function generateMetadata({
       canonical: url,
     },
     openGraph: {
-      type: "article",
-      locale: "zh_CN",
+      type: 'article',
+      locale: 'zh_CN',
       url,
       title: post.title,
       description: post.summary ?? undefined,
       publishedTime: post.publishedAt?.toISOString(),
       modifiedTime: post.updatedAt?.toISOString(),
-      authors: ["林圣轩"],
+      authors: ['林圣轩'],
       images: post.coverUrl
         ? [
             {
@@ -64,7 +64,7 @@ export async function generateMetadata({
         : undefined,
     },
     twitter: {
-      card: "summary_large_image",
+      card: 'summary_large_image',
       title: post.title,
       description: post.summary ?? undefined,
       images: post.coverUrl ? [post.coverUrl] : undefined,
@@ -72,11 +72,7 @@ export async function generateMetadata({
   };
 }
 
-export default async function PostPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
+export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
   const post = await getPublishedPostBySlugOrId(slug);
   if (!post) notFound();

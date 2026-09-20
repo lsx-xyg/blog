@@ -16,12 +16,12 @@
  * - 已发布的文章不会重复发布
  * - 双重检查（WHERE status = SCHEDULED）防止并发重复发布
  */
-import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
-import { publishScheduledPosts } from "@/lib/posts/server";
-import { getCronSettings } from "@/lib/settings/server";
+import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
+import { publishScheduledPosts } from '@/lib/posts/server';
+import { getCronSettings } from '@/lib/settings/server';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 /** 校验 CRON_SECRET（支持环境变量和 DB 动态配置） */
 async function verifyCronSecret(req: Request): Promise<boolean> {
@@ -32,17 +32,14 @@ async function verifyCronSecret(req: Request): Promise<boolean> {
   }
 
   // 从请求头或 query 参数中获取 secret
-  const headerSecret = req.headers.get("X-Cron-Secret");
+  const headerSecret = req.headers.get('X-Cron-Secret');
   return headerSecret === cronSecret;
 }
 
 export async function GET(req: Request) {
   // 鉴权
   if (!(await verifyCronSecret(req))) {
-    return NextResponse.json(
-      { error: "未授权：CRON_SECRET 校验失败" },
-      { status: 403 },
-    );
+    return NextResponse.json({ error: '未授权：CRON_SECRET 校验失败' }, { status: 403 });
   }
 
   try {
@@ -51,7 +48,7 @@ export async function GET(req: Request) {
 
     // 失效缓存（首页 + 所有发布的文章页）
     if (published.length > 0) {
-      revalidatePath("/");
+      revalidatePath('/');
       for (const post of published) {
         revalidatePath(`/posts/${post.slug ?? post.id}`);
       }
@@ -64,10 +61,7 @@ export async function GET(req: Request) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    console.error("定时发布扫描失败：", error);
-    return NextResponse.json(
-      { error: "定时发布扫描失败", detail: String(error) },
-      { status: 500 },
-    );
+    console.error('定时发布扫描失败：', error);
+    return NextResponse.json({ error: '定时发布扫描失败', detail: String(error) }, { status: 500 });
   }
 }

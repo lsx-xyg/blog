@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 文章编辑器组件（独立页面使用）——C10 精简后只做 JSX 装配
@@ -13,14 +13,14 @@
  * 数据模型 / payload / 校验在 lib/posts/form.ts（纯函数）。
  */
 
-import { useState } from "react";
-import dynamic from "next/dynamic";
-import { ChevronLeft, ChevronRight, FileText, ImagePlus, Settings, X } from "lucide-react";
-import { TagInput } from "@/components/shared/tag-input";
-import { MediaPicker } from "@/components/media/media-picker";
-import { usePostForm } from "@/components/posts/use-post-form";
-import { EDITOR_STEPS, type PostFormData } from "@/lib/posts/shared";
-import { PostStatus } from "@/lib/types/posts";
+import { useState } from 'react';
+import dynamic from 'next/dynamic';
+import { ChevronLeft, ChevronRight, FileText, ImagePlus, Settings, X } from 'lucide-react';
+import { TagInput } from '@/components/shared/tag-input';
+import { MediaPicker } from '@/components/media/media-picker';
+import { usePostForm } from '@/components/posts/use-post-form';
+import { EDITOR_STEPS, type PostFormData } from '@/lib/posts/shared';
+import { PostStatus } from '@/lib/types/posts';
 
 /**
  * MarkdownEditor 动态导入（Bundle 优化）
@@ -29,7 +29,7 @@ import { PostStatus } from "@/lib/types/posts";
  * 使用 dynamic import + ssr: false 延迟加载。
  */
 const MarkdownEditor = dynamic(
-  () => import("@/components/posts/markdown-editor").then((mod) => mod.MarkdownEditor),
+  () => import('@/components/posts/markdown-editor').then((mod) => mod.MarkdownEditor),
   {
     ssr: false, // ByteMD 编辑器只能在客户端渲染
     loading: () => (
@@ -58,17 +58,15 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
   const [showCoverPicker, setShowCoverPicker] = useState(false);
 
   const input =
-    "rounded-lg border border-border bg-secondary px-3 py-2 text-base outline-none focus:border-ring";
-  const label = "text-sm font-medium text-muted-foreground";
+    'rounded-lg border border-border bg-secondary px-3 py-2 text-base outline-none focus:border-ring';
+  const label = 'text-sm font-medium text-muted-foreground';
 
   return (
     <div className="animate-page-enter">
       <header className="mb-6">
-        <h1 className="text-xl font-semibold md:text-2xl">
-          {postId ? "编辑文章" : "新建文章"}
-        </h1>
+        <h1 className="text-xl font-semibold md:text-2xl">{postId ? '编辑文章' : '新建文章'}</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {postId ? "修改文章内容和基本信息" : "创建一篇新的博客文章"}
+          {postId ? '修改文章内容和基本信息' : '创建一篇新的博客文章'}
         </p>
       </header>
 
@@ -78,10 +76,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
         </p>
       )}
 
-      <form
-        onSubmit={save}
-        className="mb-10 rounded-xl border border-border bg-card p-6"
-      >
+      <form onSubmit={save} className="mb-10 rounded-xl border border-border bg-card p-6">
         {/* 步骤条 */}
         <div className="mb-6 flex items-center">
           {EDITOR_STEPS.map((step, index) => {
@@ -95,21 +90,17 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                   onClick={() => goToStep(step.id)}
                   className={`flex items-center gap-2 rounded-full px-4 py-2 text-base transition-colors ${
                     isActive
-                      ? "bg-primary text-primary-foreground"
+                      ? 'bg-primary text-primary-foreground'
                       : isCompleted
-                        ? "bg-primary/10 text-primary"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
+                        ? 'bg-primary/10 text-primary'
+                        : 'bg-muted text-muted-foreground hover:bg-muted/80'
                   }`}
                 >
                   <Icon className="h-4 w-4" />
                   <span>{step.label}</span>
                 </button>
                 {index < EDITOR_STEPS.length - 1 && (
-                  <div
-                    className={`mx-2 h-px w-8 ${
-                      isCompleted ? "bg-primary" : "bg-border"
-                    }`}
-                  />
+                  <div className={`mx-2 h-px w-8 ${isCompleted ? 'bg-primary' : 'bg-border'}`} />
                 )}
               </div>
             );
@@ -126,10 +117,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                   正文（Markdown）* — 支持粘贴/拖拽图片自动上传，左右分屏实时预览
                 </label>
                 <div className="mt-1">
-                  <MarkdownEditor
-                    value={form.content}
-                    onChange={(v) => set("content", v)}
-                  />
+                  <MarkdownEditor value={form.content} onChange={(v) => set('content', v)} />
                 </div>
               </div>
             </div>
@@ -144,7 +132,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                   <input
                     className={`${input} mt-1 w-full`}
                     value={form.title}
-                    onChange={(e) => set("title", e.target.value)}
+                    onChange={(e) => set('title', e.target.value)}
                     required
                   />
                 </div>
@@ -153,7 +141,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                   <input
                     className={`${input} mt-1 w-full font-mono`}
                     value={form.slug}
-                    onChange={(e) => set("slug", e.target.value)}
+                    onChange={(e) => set('slug', e.target.value)}
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -161,7 +149,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                   <input
                     className={`${input} mt-1 w-full`}
                     value={form.summary}
-                    onChange={(e) => set("summary", e.target.value)}
+                    onChange={(e) => set('summary', e.target.value)}
                   />
                 </div>
                 <div className="md:col-span-2">
@@ -170,7 +158,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                     <input
                       className={`${input} w-full font-mono`}
                       value={form.coverUrl}
-                      onChange={(e) => set("coverUrl", e.target.value)}
+                      onChange={(e) => set('coverUrl', e.target.value)}
                       placeholder="https://… 或点击右侧从图库选择 / 上传"
                     />
                     <button
@@ -195,7 +183,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                       </div>
                       <button
                         type="button"
-                        onClick={() => set("coverUrl", "")}
+                        onClick={() => set('coverUrl', '')}
                         className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-red-600"
                         title="移除封面图"
                       >
@@ -221,7 +209,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                   <select
                     className={`${input} mt-1 w-full`}
                     value={form.status}
-                    onChange={(e) => set("status", e.target.value)}
+                    onChange={(e) => set('status', e.target.value)}
                   >
                     <option value={PostStatus.DRAFT}>草稿</option>
                     <option value={PostStatus.SCHEDULED}>定时</option>
@@ -234,7 +222,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                     type="datetime-local"
                     className={`${input} mt-1 w-full font-mono`}
                     value={form.scheduledAt}
-                    onChange={(e) => set("scheduledAt", e.target.value)}
+                    onChange={(e) => set('scheduledAt', e.target.value)}
                   />
                   <p className="mt-1 text-xs text-muted-foreground">
                     定时任务每分钟扫描一次，到时间自动发布。需配置 CRON_SECRET 并启动定时任务。
@@ -245,7 +233,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                 <input
                   type="checkbox"
                   checked={form.featured}
-                  onChange={(e) => set("featured", e.target.checked)}
+                  onChange={(e) => set('featured', e.target.checked)}
                   className="accent-primary"
                 />
                 精选
@@ -258,7 +246,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
         <MediaPicker
           open={showCoverPicker}
           onClose={() => setShowCoverPicker(false)}
-          onSelect={(url) => set("coverUrl", url)}
+          onSelect={(url) => set('coverUrl', url)}
         />
 
         {/* 底部按钮：上一步左下角，下一步/保存右下角 */}
@@ -311,7 +299,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                 disabled={loading}
                 className="rounded-lg bg-primary px-4 py-2 text-base font-medium text-primary-foreground disabled:opacity-50 hover:bg-primary/90 transition-colors"
               >
-                {loading ? "保存中…" : postId ? "保存修改" : "创建文章"}
+                {loading ? '保存中…' : postId ? '保存修改' : '创建文章'}
               </button>
             )}
           </div>

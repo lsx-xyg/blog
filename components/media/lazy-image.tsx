@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import Image from "next/image";
-import { cn } from "@/lib/shared";
+import { useState } from 'react';
+import Image from 'next/image';
+import { cn } from '@/lib/shared';
 
 /**
  * 通用懒加载图片组件（基于 Next.js Image）
@@ -43,7 +43,7 @@ interface LazyImageProps {
   /** 图片加载失败的回调 */
   onError?: () => void;
   /** 图片对象适配方式（默认 cover） */
-  objectFit?: "cover" | "contain" | "fill" | "none" | "scale-down";
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
 }
 
 export function LazyImage({
@@ -57,7 +57,7 @@ export function LazyImage({
   onClick,
   onLoad,
   onError,
-  objectFit = "cover",
+  objectFit = 'cover',
 }: LazyImageProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -80,9 +80,9 @@ export function LazyImage({
 
   return (
     <div
-      className={cn("relative overflow-hidden", className)}
+      className={cn('relative overflow-hidden', className)}
       style={{
-        backgroundColor: placeholderColor || "hsl(var(--muted))",
+        backgroundColor: placeholderColor || 'hsl(var(--muted))',
       }}
       onClick={onClick}
     >
@@ -113,7 +113,7 @@ export function LazyImage({
           style={{
             objectFit,
             opacity: isLoaded ? 1 : 0,
-            transition: "opacity 0.5s ease-in-out",
+            transition: 'opacity 0.5s ease-in-out',
           }}
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />

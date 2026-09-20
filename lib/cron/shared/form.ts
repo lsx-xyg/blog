@@ -7,8 +7,8 @@
  *
  * 依赖方向：form.ts → lib/types/cron.ts（单向，只读类型）
  */
-import { RequestMethod } from "@/lib/types/cron";
-import type { CronJob, CronJobConfig } from "@/lib/types/cron";
+import { RequestMethod } from '@/lib/types/cron';
+import type { CronJob, CronJobConfig } from '@/lib/types/cron';
 
 /** 任务表单视图模型（字符串化调度、KV 头数组，与 API 域模型形态不同） */
 export type FormState = {
@@ -46,27 +46,27 @@ export type FormState = {
 
 /** 新建任务的默认表单值 */
 export const DEFAULT_FORM: FormState = {
-  title: "",
-  url: "",
+  title: '',
+  url: '',
   enabled: true,
   saveResponses: false,
   requestMethod: RequestMethod.GET,
   requestTimeout: -1,
   redirectSuccess: false,
   headers: [],
-  body: "",
+  body: '',
   schedule: {
-    timezone: "Asia/Shanghai",
-    minutes: "-1",
-    hours: "-1",
-    mdays: "-1",
-    months: "-1",
-    wdays: "-1",
+    timezone: 'Asia/Shanghai',
+    minutes: '-1',
+    hours: '-1',
+    mdays: '-1',
+    months: '-1',
+    wdays: '-1',
   },
   auth: {
     enable: false,
-    user: "",
-    password: "",
+    user: '',
+    password: '',
   },
   notification: {
     onFailure: false,
@@ -80,47 +80,47 @@ export const DEFAULT_FORM: FormState = {
 
 /** HTTP 方法下拉选项（值 = RequestMethod 枚举） */
 export const REQUEST_METHODS = [
-  { value: RequestMethod.GET, label: "GET" },
-  { value: RequestMethod.POST, label: "POST" },
-  { value: RequestMethod.PUT, label: "PUT" },
-  { value: RequestMethod.DELETE, label: "DELETE" },
-  { value: RequestMethod.PATCH, label: "PATCH" },
-  { value: RequestMethod.HEAD, label: "HEAD" },
-  { value: RequestMethod.OPTIONS, label: "OPTIONS" },
+  { value: RequestMethod.GET, label: 'GET' },
+  { value: RequestMethod.POST, label: 'POST' },
+  { value: RequestMethod.PUT, label: 'PUT' },
+  { value: RequestMethod.DELETE, label: 'DELETE' },
+  { value: RequestMethod.PATCH, label: 'PATCH' },
+  { value: RequestMethod.HEAD, label: 'HEAD' },
+  { value: RequestMethod.OPTIONS, label: 'OPTIONS' },
 ];
 
 /** 时区下拉选项 */
 export const TIMEZONES = [
-  "Asia/Shanghai",
-  "UTC",
-  "America/New_York",
-  "Europe/London",
-  "Europe/Berlin",
-  "Asia/Tokyo",
-  "Asia/Singapore",
-  "Australia/Sydney",
+  'Asia/Shanghai',
+  'UTC',
+  'America/New_York',
+  'Europe/London',
+  'Europe/Berlin',
+  'Asia/Tokyo',
+  'Asia/Singapore',
+  'Australia/Sydney',
 ];
 
 /** 表单调度字符串 → 数字数组（空串 / "-1" → [-1]，非法数字过滤） */
 export function parseScheduleArray(value: string): number[] {
-  if (value.trim() === "" || value.trim() === "-1") return [-1];
+  if (value.trim() === '' || value.trim() === '-1') return [-1];
   return value
-    .split(",")
+    .split(',')
     .map((v) => parseInt(v.trim(), 10))
     .filter((v) => !isNaN(v));
 }
 
 /** 数字数组 → 表单调度字符串（空/undefined → "-1"，单 -1 → "-1"） */
 export function formatScheduleArray(arr: number[] | undefined): string {
-  if (!arr || arr.length === 0) return "-1";
-  if (arr.length === 1 && arr[0] === -1) return "-1";
-  return arr.join(", ");
+  if (!arr || arr.length === 0) return '-1';
+  if (arr.length === 1 && arr[0] === -1) return '-1';
+  return arr.join(', ');
 }
 
 /** API 域模型 → 表单视图模型（列表接口不返回 extendedData，headers/body 留空待详情回填） */
 export function jobToForm(job: CronJob): FormState {
   return {
-    title: job.title || "",
+    title: job.title || '',
     url: job.url,
     enabled: job.enabled,
     saveResponses: job.saveResponses,
@@ -128,9 +128,9 @@ export function jobToForm(job: CronJob): FormState {
     requestTimeout: job.requestTimeout,
     redirectSuccess: job.redirectSuccess,
     headers: [], // 列表接口不返回 extendedData，编辑时需要单独获取
-    body: "",
+    body: '',
     schedule: {
-      timezone: job.schedule?.timezone || "Asia/Shanghai",
+      timezone: job.schedule?.timezone || 'Asia/Shanghai',
       minutes: formatScheduleArray(job.schedule?.minutes),
       hours: formatScheduleArray(job.schedule?.hours),
       mdays: formatScheduleArray(job.schedule?.mdays),
@@ -139,8 +139,8 @@ export function jobToForm(job: CronJob): FormState {
     },
     auth: {
       enable: false,
-      user: "",
-      password: "",
+      user: '',
+      password: '',
     },
     notification: {
       onFailure: false,
@@ -160,7 +160,7 @@ export function formToConfig(form: FormState): CronJobConfig {
     url: form.url,
     enabled: form.enabled,
     saveResponses: form.saveResponses,
-    requestMethod: form.requestMethod as CronJobConfig["requestMethod"],
+    requestMethod: form.requestMethod as CronJobConfig['requestMethod'],
     requestTimeout: form.requestTimeout,
     redirectSuccess: form.redirectSuccess,
     schedule: {

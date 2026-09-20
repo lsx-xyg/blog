@@ -6,9 +6,9 @@
  * - 首屏防 FOUC：layout.tsx head 内联 script（双端一致逻辑）+ SSR 服务端 class + /theme-init.js 兜底
  * - 默认主题：跟随系统（systemDark→dark，否则→light）
  */
-export type ThemeMode = "light" | "dark" | "warm" | "system";
+export type ThemeMode = 'light' | 'dark' | 'warm' | 'system';
 
-export const THEME_KEY = "site-theme";
+export const THEME_KEY = 'site-theme';
 
 export const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('${THEME_KEY}');var c=document.documentElement.classList;if(t==='dark'){c.add('dark');c.remove('theme-warm');}else if(t==='warm'){c.add('theme-warm');c.remove('dark');}else if(t==='light'){c.remove('dark');c.remove('theme-warm');}else{c.remove('dark');c.remove('theme-warm');if(window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches){c.add('dark');}}if(t){document.cookie='${THEME_KEY}='+t+'; path=/; max-age=31536000; samesite=lax';}}catch(e){}})();`;
 
@@ -20,7 +20,7 @@ export const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('${
  * 而 <script src> 形式的脚本会被浏览器正常加载执行，用作兜底。
  * 逻辑与 THEME_INIT_SCRIPT 保持一致，修改需同步 public/theme-init.js。
  */
-export const THEME_INIT_SCRIPT_SRC = "/theme-init.js";
+export const THEME_INIT_SCRIPT_SRC = '/theme-init.js';
 
 /**
  * 服务端：根据 cookie 计算 html 上应渲染的主题 class
@@ -28,8 +28,8 @@ export const THEME_INIT_SCRIPT_SRC = "/theme-init.js";
  * - light/未设置 → ""（默认浅色，脚本按需修正）
  */
 export function getThemeClassFromValue(value: string | undefined): string {
-  if (value === "dark") return "dark";
-  if (value === "warm") return "theme-warm";
-  if (value === "system") return "theme-system";
-  return "";
+  if (value === 'dark') return 'dark';
+  if (value === 'warm') return 'theme-warm';
+  if (value === 'system') return 'theme-system';
+  return '';
 }

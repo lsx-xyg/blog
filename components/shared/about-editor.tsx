@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 关于页面编辑器组件（独立组件，用于动态导入）
@@ -13,9 +13,9 @@
  * - 使用动态导入可以减少站点设置页的首屏体积
  * - ByteMD 编辑器体积较大（约 200+ kB），延迟加载可以提升首屏加载速度
  */
-import { Editor } from "@bytemd/react";
-import gfm from "@bytemd/plugin-gfm";
-import "bytemd/dist/index.css";
+import { Editor } from '@bytemd/react';
+import gfm from '@bytemd/plugin-gfm';
+import 'bytemd/dist/index.css';
 
 const plugins = [gfm()];
 
@@ -29,12 +29,7 @@ interface AboutEditorProps {
 export function AboutEditor({ value, onChange }: AboutEditorProps) {
   return (
     <div className="bytemd-wrapper">
-      <Editor
-        value={value}
-        onChange={onChange}
-        plugins={plugins}
-        mode="split"
-      />
+      <Editor value={value} onChange={onChange} plugins={plugins} mode="split" />
     </div>
   );
 }

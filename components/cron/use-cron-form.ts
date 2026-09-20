@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 定时任务表单状态机 hook（C11：manage-cron-jobs 交互拆分）。
@@ -7,10 +7,16 @@
  * 数据模型 / 转换函数在 lib/cron/form.ts（jobToForm/formToConfig/DEFAULT_FORM）。
  * 保存成功后通过 onSaved 通知父组件刷新列表（避免 hook 依赖列表加载）。
  */
-import { useState } from "react";
-import { useToast } from "@/components/ui/toast";
-import { DEFAULT_FORM, formToConfig, jobToForm, formatScheduleArray, type FormState } from "@/lib/cron/shared";
-import type { CronJob } from "@/lib/types/cron";
+import { useState } from 'react';
+import { useToast } from '@/components/ui/toast';
+import {
+  DEFAULT_FORM,
+  formToConfig,
+  jobToForm,
+  formatScheduleArray,
+  type FormState,
+} from '@/lib/cron/shared';
+import type { CronJob } from '@/lib/types/cron';
 
 export function useCronForm({ onSaved }: { onSaved?: () => void }) {
   const { showToast } = useToast();
@@ -57,7 +63,7 @@ export function useCronForm({ onSaved }: { onSaved?: () => void }) {
             redirectSuccess: detailed.redirectSuccess ?? prev.redirectSuccess,
             schedule: detailed.schedule
               ? {
-                  timezone: detailed.schedule.timezone || "Asia/Shanghai",
+                  timezone: detailed.schedule.timezone || 'Asia/Shanghai',
                   minutes: formatScheduleArray(detailed.schedule.minutes),
                   hours: formatScheduleArray(detailed.schedule.hours),
                   mdays: formatScheduleArray(detailed.schedule.mdays),
@@ -71,12 +77,12 @@ export function useCronForm({ onSaved }: { onSaved?: () => void }) {
                   value: value as string,
                 }))
               : [],
-            body: detailed.extendedData?.body || "",
+            body: detailed.extendedData?.body || '',
             auth: detailed.auth
               ? {
                   enable: detailed.auth.enable ?? false,
-                  user: detailed.auth.user || "",
-                  password: detailed.auth.password || "",
+                  user: detailed.auth.user || '',
+                  password: detailed.auth.password || '',
                 }
               : prev.auth,
             notification: detailed.notification
@@ -93,43 +99,41 @@ export function useCronForm({ onSaved }: { onSaved?: () => void }) {
         }
       }
     } catch (e) {
-      console.error("获取任务详情失败：", e);
+      console.error('获取任务详情失败：', e);
     }
   };
 
   /** 保存任务（新建 POST / 编辑 PATCH），成功后通知父组件刷新 */
   const saveJob = async () => {
     if (!form.url.trim()) {
-      showToast("任务 URL 是必填项", "error");
+      showToast('任务 URL 是必填项', 'error');
       return;
     }
 
     setSaving(true);
     try {
       const config = formToConfig(form);
-      const url = editingJobId
-        ? `/api/admin/cron/jobs/${editingJobId}`
-        : "/api/admin/cron/jobs";
-      const method = editingJobId ? "PATCH" : "POST";
+      const url = editingJobId ? `/api/admin/cron/jobs/${editingJobId}` : '/api/admin/cron/jobs';
+      const method = editingJobId ? 'PATCH' : 'POST';
 
       const res = await fetch(url, {
         method,
-        headers: { "Content-Type": "application/json" },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ job: config }),
       });
 
       if (res.ok) {
-        showToast(editingJobId ? "任务更新成功" : "任务创建成功", "success");
+        showToast(editingJobId ? '任务更新成功' : '任务创建成功', 'success');
         setShowForm(false);
         setEditingJobId(null);
         setTimeout(() => onSaved?.(), 500);
       } else {
         const data = await res.json();
-        showToast(data.error || "保存失败", "error");
+        showToast(data.error || '保存失败', 'error');
       }
     } catch (e) {
-      console.error("保存任务失败：", e);
-      showToast("保存失败，请重试", "error");
+      console.error('保存任务失败：', e);
+      showToast('保存失败，请重试', 'error');
     } finally {
       setSaving(false);
     }

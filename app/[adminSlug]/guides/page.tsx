@@ -1,14 +1,14 @@
 /** 后台引导管理：动态路径（/[adminSlug]/guides），未匹配/未授权一律 404 伪装 */
-import { notFound } from "next/navigation";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth/server";
-import { getAdminPathAsync } from "@/lib/admin/server";
-import { getAdminPages } from "@/lib/admin/shared";
-import { isAdminUser } from "@/lib/shared";
-import { ManageGuides } from "@/components/manage/manage-guides";
-import { AdminBreadcrumb } from "@/components/admin/admin-breadcrumb";
+import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth/server';
+import { getAdminPathAsync } from '@/lib/admin/server';
+import { getAdminPages } from '@/lib/admin/shared';
+import { isAdminUser } from '@/lib/shared';
+import { ManageGuides } from '@/components/manage/manage-guides';
+import { AdminBreadcrumb } from '@/components/admin/admin-breadcrumb';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export default async function AdminGuidesPage({
   params,

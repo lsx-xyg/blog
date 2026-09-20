@@ -1,16 +1,16 @@
-import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { eq, and, count } from "drizzle-orm";
-import { auth } from "@/lib/auth/server";
-import { isAdminUser } from "@/lib/shared";
-import { db } from "@/db";
-import { guiders, userEvents, users } from "@/db/schema";
+import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
+import { eq, and, count } from 'drizzle-orm';
+import { auth } from '@/lib/auth/server';
+import { isAdminUser } from '@/lib/shared';
+import { db } from '@/db';
+import { guiders, userEvents, users } from '@/db/schema';
 import {
   evaluateTargetCondition,
   needsServerData,
   type GuideConditionContext,
-} from "@/lib/guides/shared";
-import { normalizeTargetCondition } from "@/lib/types/guides";
+} from '@/lib/guides/shared';
+import { normalizeTargetCondition } from '@/lib/types/guides';
 
 /**
  * 引导条件服务端精筛 API
@@ -26,7 +26,7 @@ import { normalizeTargetCondition } from "@/lib/types/guides";
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session || !isAdminUser(session.user)) {
-    return NextResponse.json({ error: "未授权" }, { status: 401 });
+    return NextResponse.json({ error: '未授权' }, { status: 401 });
   }
 
   let body: {
@@ -38,33 +38,30 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "请求格式错误" }, { status: 400 });
+    return NextResponse.json({ error: '请求格式错误' }, { status: 400 });
   }
 
   const guideKey = body.guideKey;
-  if (typeof guideKey !== "string" || !guideKey.trim()) {
-    return NextResponse.json({ error: "guideKey 必填" }, { status: 400 });
+  if (typeof guideKey !== 'string' || !guideKey.trim()) {
+    return NextResponse.json({ error: 'guideKey 必填' }, { status: 400 });
   }
 
-  const [guide] = await db
-    .select()
-    .from(guiders)
-    .where(eq(guiders.guideKey, guideKey.trim()));
+  const [guide] = await db.select().from(guiders).where(eq(guiders.guideKey, guideKey.trim()));
   if (!guide) {
-    return NextResponse.json({ error: "引导不存在" }, { status: 404 });
+    return NextResponse.json({ error: '引导不存在' }, { status: 404 });
   }
 
   const tc = normalizeTargetCondition(guide.targetCondition as never);
   const ctx: GuideConditionContext = {
-    event: typeof body.event === "string" ? body.event : undefined,
-    target: typeof body.target === "string" ? body.target : undefined,
-    page: typeof body.page === "string" ? body.page : undefined,
+    event: typeof body.event === 'string' ? body.event : undefined,
+    target: typeof body.target === 'string' ? body.target : undefined,
+    page: typeof body.page === 'string' ? body.page : undefined,
   };
 
   // click_count.<target>：查 user_events 累计次数
   const clickFields = tc?.conditions
-    .filter((c) => c.field.startsWith("click_count."))
-    .map((c) => c.field.slice("click_count.".length))
+    .filter((c) => c.field.startsWith('click_count.'))
+    .map((c) => c.field.slice('click_count.'.length))
     .filter(Boolean);
   if (clickFields && clickFields.length > 0) {
     const clickCounts: Record<string, number> = {};
@@ -75,9 +72,9 @@ export async function POST(request: Request) {
         .where(
           and(
             eq(userEvents.userId, session.user.id),
-            eq(userEvents.event, "event_click"),
-            eq(userEvents.target, anchor)
-          )
+            eq(userEvents.event, 'event_click'),
+            eq(userEvents.target, anchor),
+          ),
         );
       clickCounts[anchor] = row?.n ?? 0;
     }
@@ -90,9 +87,7 @@ export async function POST(request: Request) {
     .from(users)
     .where(eq(users.id, session.user.id));
   if (user?.createdAt) {
-    ctx.userAgeDays = Math.floor(
-      (Date.now() - new Date(user.createdAt).getTime()) / 86_400_000
-    );
+    ctx.userAgeDays = Math.floor((Date.now() - new Date(user.createdAt).getTime()) / 86_400_000);
   }
 
   const matched = needsServerData(tc) ? evaluateTargetCondition(tc, ctx) : true;

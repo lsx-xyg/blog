@@ -1,11 +1,11 @@
-import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
-import { auth } from "@/lib/auth/server";
-import { isAdminUser } from "@/lib/shared";
-import { getSetting } from "@/lib/settings/server";
-import { decryptIfAvailable } from "@/lib/crypto/server";
-import { db } from "@/db";
-import { accounts } from "@/db/schema";
+import { NextResponse } from 'next/server';
+import { and, eq } from 'drizzle-orm';
+import { auth } from '@/lib/auth/server';
+import { isAdminUser } from '@/lib/shared';
+import { getSetting } from '@/lib/settings/server';
+import { decryptIfAvailable } from '@/lib/crypto/server';
+import { db } from '@/db';
+import { accounts } from '@/db/schema';
 
 /**
  * 敏感信息查看 API（#18：二次验证）
@@ -28,59 +28,57 @@ import { accounts } from "@/db/schema";
 
 /** 可查看的敏感字段白名单（前端 key → DB setting key） */
 const SECRET_KEYS: Record<string, string> = {
-  "storage.github.token": "storage.github.token",
-  "storage.s3.accessKey": "storage.s3.access_key",
-  "storage.s3.secretKey": "storage.s3.secret_key",
-  "storage_private.github.token": "storage_private.github.token",
-  "storage_private.s3.accessKey": "storage_private.s3.access_key",
-  "storage_private.s3.secretKey": "storage_private.s3.secret_key",
-  "cron.secret": "cron.secret",
-  "cron.jobApiKey": "cron.job_api_key",
+  'storage.github.token': 'storage.github.token',
+  'storage.s3.accessKey': 'storage.s3.access_key',
+  'storage.s3.secretKey': 'storage.s3.secret_key',
+  'storage_private.github.token': 'storage_private.github.token',
+  'storage_private.s3.accessKey': 'storage_private.s3.access_key',
+  'storage_private.s3.secretKey': 'storage_private.s3.secret_key',
+  'cron.secret': 'cron.secret',
+  'cron.jobApiKey': 'cron.job_api_key',
 };
 
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session || !isAdminUser(session.user)) {
-    return NextResponse.json({ error: "未授权" }, { status: 401 });
+    return NextResponse.json({ error: '未授权' }, { status: 401 });
   }
 
   let body: { key?: unknown; password?: unknown };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "请求格式错误" }, { status: 400 });
+    return NextResponse.json({ error: '请求格式错误' }, { status: 400 });
   }
 
   const key = body.key;
   const password = body.password;
-  const dbKey = typeof key === "string" ? SECRET_KEYS[key] : undefined;
+  const dbKey = typeof key === 'string' ? SECRET_KEYS[key] : undefined;
   if (!dbKey) {
-    return NextResponse.json({ error: "不支持的字段" }, { status: 400 });
+    return NextResponse.json({ error: '不支持的字段' }, { status: 400 });
   }
-  if (typeof password !== "string" || password.length === 0) {
-    return NextResponse.json({ error: "请输入管理员密码" }, { status: 400 });
+  if (typeof password !== 'string' || password.length === 0) {
+    return NextResponse.json({ error: '请输入管理员密码' }, { status: 400 });
   }
 
   // 二次验证：校验管理员密码（用当前会话邮箱）
   const email = session.user.email;
   if (!email) {
-    return NextResponse.json({ error: "当前账号无邮箱，无法验证" }, { status: 400 });
+    return NextResponse.json({ error: '当前账号无邮箱，无法验证' }, { status: 400 });
   }
 
   // 纯 GitHub OAuth 账号没有密码：引导先设置密码，再使用密码二次验证
   const [credentialAccount] = await db
     .select({ password: accounts.password })
     .from(accounts)
-    .where(
-      and(
-        eq(accounts.userId, session.user.id),
-        eq(accounts.providerId, "credential")
-      )
-    );
+    .where(and(eq(accounts.userId, session.user.id), eq(accounts.providerId, 'credential')));
   if (!credentialAccount?.password) {
     return NextResponse.json(
-      { error: "当前账号未设置密码，请先在「账号设置」中设置密码后，再使用明文查看功能", code: "NO_PASSWORD" },
-      { status: 403 }
+      {
+        error: '当前账号未设置密码，请先在「账号设置」中设置密码后，再使用明文查看功能',
+        code: 'NO_PASSWORD',
+      },
+      { status: 403 },
     );
   }
 
@@ -90,23 +88,18 @@ export async function POST(request: Request) {
       body: { email, password },
     });
   } catch {
-    return NextResponse.json({ error: "管理员密码错误" }, { status: 401 });
+    return NextResponse.json({ error: '管理员密码错误' }, { status: 401 });
   }
 
   // 读取并解密目标字段
   const encrypted = await getSetting<string>(dbKey);
   if (!encrypted) {
-    return NextResponse.json({ error: "该字段尚未配置" }, { status: 404 });
+    return NextResponse.json({ error: '该字段尚未配置' }, { status: 404 });
   }
   const value = decryptIfAvailable(encrypted);
 
   // 查看日志（谁、何时、查看了哪个字段）
-  console.log(
-    `[SECRET-REVEAL] user=${email} key=${key} at=${new Date().toISOString()}`
-  );
+  console.log(`[SECRET-REVEAL] user=${email} key=${key} at=${new Date().toISOString()}`);
 
-  return NextResponse.json(
-    { value },
-    { headers: { "Cache-Control": "no-store" } }
-  );
+  return NextResponse.json({ value }, { headers: { 'Cache-Control': 'no-store' } });
 }

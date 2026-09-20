@@ -11,12 +11,12 @@
  * <AdminBreadcrumb current="文章管理" />
  * <AdminBreadcrumb current="编辑文章" parent={{ label: "文章管理", href: "/dashboard/posts" }} />
  */
-"use client";
+'use client';
 
-import { useEffect } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Home, ChevronRight, LayoutDashboard } from "lucide-react";
+import { useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Home, ChevronRight, LayoutDashboard } from 'lucide-react';
 
 interface BreadcrumbItem {
   label: string;
@@ -36,7 +36,7 @@ export function AdminBreadcrumb({ current, parent, adminPath }: AdminBreadcrumbP
   const pathname = usePathname();
 
   // 从路径中自动提取后台路径（第一段）
-  const extractedAdminPath = adminPath || pathname.split("/")[1] || "admin";
+  const extractedAdminPath = adminPath || pathname.split('/')[1] || 'admin';
 
   // 页面加载时滚动到顶部，避免 Next.js 滚动恢复或组件加载导致的位置偏移
   useEffect(() => {
@@ -44,7 +44,7 @@ export function AdminBreadcrumb({ current, parent, adminPath }: AdminBreadcrumbP
     const rafId = requestAnimationFrame(() => {
       // 先尝试 instant 滚动（现代浏览器支持），不支持则用 auto
       try {
-        window.scrollTo({ top: 0, left: 0, behavior: "instant" as ScrollBehavior });
+        window.scrollTo({ top: 0, left: 0, behavior: 'instant' as ScrollBehavior });
       } catch {
         window.scrollTo(0, 0);
       }
@@ -60,15 +60,9 @@ export function AdminBreadcrumb({ current, parent, adminPath }: AdminBreadcrumbP
   }, [pathname]);
 
   return (
-    <nav
-      className="mb-4 flex items-center gap-1 text-sm text-muted-foreground"
-      aria-label="面包屑"
-    >
+    <nav className="mb-4 flex items-center gap-1 text-sm text-muted-foreground" aria-label="面包屑">
       {/* 首页 */}
-      <Link
-        href="/"
-        className="flex items-center gap-1 hover:text-foreground transition-colors"
-      >
+      <Link href="/" className="flex items-center gap-1 hover:text-foreground transition-colors">
         <Home className="h-3.5 w-3.5" />
         <span className="hidden sm:inline">首页</span>
       </Link>
@@ -89,10 +83,7 @@ export function AdminBreadcrumb({ current, parent, adminPath }: AdminBreadcrumbP
         <div className="flex items-center gap-1">
           <ChevronRight className="h-3.5 w-3.5 shrink-0" />
           {parent.href ? (
-            <Link
-              href={parent.href}
-              className="hover:text-foreground transition-colors"
-            >
+            <Link href={parent.href} className="hover:text-foreground transition-colors">
               {parent.label}
             </Link>
           ) : (

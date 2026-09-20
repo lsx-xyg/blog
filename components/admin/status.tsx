@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 通用管理端状态组件（C4·CRUD 骨架第二单元）
@@ -8,7 +8,7 @@
  *
  * 统一 5 个管理页手写的加载/空态，页面只传文案与插槽。
  */
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
 /**
  * 加载骨架屏（统一后台列表加载样式）
@@ -19,14 +19,16 @@ import type { ReactNode } from "react";
  * 取代手写骨架屏与纯文字「加载中…」，视觉占位减少布局跳动。
  */
 export type AdminLoadingStateProps = {
-  variant?: "table" | "grid";
+  variant?: 'table' | 'grid';
   className?: string;
 };
 
-export function AdminLoadingState({ variant = "table", className = "" }: AdminLoadingStateProps) {
-  if (variant === "grid") {
+export function AdminLoadingState({ variant = 'table', className = '' }: AdminLoadingStateProps) {
+  if (variant === 'grid') {
     return (
-      <div className={`grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 ${className}`}>
+      <div
+        className={`grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 ${className}`}
+      >
         {Array.from({ length: 10 }).map((_, i) => (
           <div
             key={i}
@@ -109,7 +111,7 @@ export function AdminEmptyState({
   title,
   description,
   action,
-  className = "",
+  className = '',
 }: AdminEmptyStateProps) {
   return (
     <div

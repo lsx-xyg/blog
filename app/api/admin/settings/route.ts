@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { requireAdmin, apiError } from "@/lib/admin/server";
-import { getSettingsBundle, applySettingsPatch } from "@/lib/settings/server";
+import { NextResponse } from 'next/server';
+import { requireAdmin, apiError } from '@/lib/admin/server';
+import { getSettingsBundle, applySettingsPatch } from '@/lib/settings/server';
 
 /**
  * 站点设置 API（C9 薄壳：领域逻辑在 lib/settings/service.ts）
@@ -15,8 +15,8 @@ export async function GET() {
   try {
     return NextResponse.json(await getSettingsBundle());
   } catch (error) {
-    console.error("获取设置失败：", error);
-    return apiError("获取失败", 500);
+    console.error('获取设置失败：', error);
+    return apiError('获取失败', 500);
   }
 }
 
@@ -29,7 +29,7 @@ export async function PUT(request: Request) {
     await applySettingsPatch(body);
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("更新设置失败：", error);
-    return apiError("更新失败", 500);
+    console.error('更新设置失败：', error);
+    return apiError('更新失败', 500);
   }
 }

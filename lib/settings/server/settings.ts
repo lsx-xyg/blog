@@ -1,8 +1,16 @@
-import { StorageDriverType } from "@/lib/types/storage";
-import type { SiteSettings, SocialLinks, FooterSettings, GiscusSettings, CronSettings, StorageSettings, PrivateStorageSettings, CronDeployPlatform } from "@/lib/types/settings";
-import { getConfig } from "./get-config";
-import { getConfigGroup } from "./get-config-groups";
-
+import { StorageDriverType } from '@/lib/types/storage';
+import type {
+  SiteSettings,
+  SocialLinks,
+  FooterSettings,
+  GiscusSettings,
+  CronSettings,
+  StorageSettings,
+  PrivateStorageSettings,
+  CronDeployPlatform,
+} from '@/lib/types/settings';
+import { getConfig } from './get-config';
+import { getConfigGroup } from './get-config-groups';
 
 /**
  * 获取站点设置。
@@ -11,7 +19,7 @@ import { getConfigGroup } from "./get-config-groups";
  */
 
 export async function getSiteSettings(): Promise<SiteSettings> {
-  return (await getConfigGroup("site"));
+  return await getConfigGroup('site');
 }
 /**
  * 获取社交链接。
@@ -20,7 +28,7 @@ export async function getSiteSettings(): Promise<SiteSettings> {
  */
 
 export async function getSocialLinks(): Promise<SocialLinks> {
-  return (await getConfigGroup("social"));
+  return await getConfigGroup('social');
 }
 /**
  * 获取页脚设置。
@@ -31,8 +39,8 @@ export async function getSocialLinks(): Promise<SocialLinks> {
 
 export async function getFooterSettings(): Promise<FooterSettings> {
   const [copyright, icp] = await Promise.all([
-    getConfig("footer.copyright"),
-    getConfig("footer.icp"),
+    getConfig('footer.copyright'),
+    getConfig('footer.icp'),
   ]);
 
   const year = new Date().getFullYear();
@@ -46,7 +54,7 @@ export async function getFooterSettings(): Promise<FooterSettings> {
  */
 
 export async function getAboutContent(): Promise<string> {
-  return getConfig("about.content");
+  return getConfig('about.content');
 }
 /**
  * 设置关于页面内容（Markdown）。
@@ -55,8 +63,8 @@ export async function getAboutContent(): Promise<string> {
  */
 
 export async function setAboutContent(content: string): Promise<void> {
-  const { setSetting } = await import("@/lib/settings/server");
-  await setSetting("about.content", content);
+  const { setSetting } = await import('@/lib/settings/server');
+  await setSetting('about.content', content);
 }
 /**
  * 获取 giscus 评论配置。
@@ -66,7 +74,7 @@ export async function setAboutContent(content: string): Promise<void> {
  */
 
 export async function getGiscusSettings(): Promise<GiscusSettings> {
-  return (await getConfigGroup("giscus"));
+  return await getConfigGroup('giscus');
 }
 /**
  * 获取定时任务配置。
@@ -79,7 +87,7 @@ export async function getGiscusSettings(): Promise<GiscusSettings> {
  */
 
 export async function getCronSettings(): Promise<CronSettings> {
-  return (await getConfigGroup("cron"));
+  return await getConfigGroup('cron');
 }
 /**
  * 从 DB 读取存储配置（环境变量优先级最高，DB 次之，默认值兜底）
@@ -88,7 +96,7 @@ export async function getCronSettings(): Promise<CronSettings> {
  */
 
 export async function getStorageSettings(): Promise<StorageSettings> {
-  return (await getConfigGroup("storage"));
+  return await getConfigGroup('storage');
 }
 /**
  * 从 DB 读取私有存储配置（用于备份等敏感数据）
@@ -98,7 +106,7 @@ export async function getStorageSettings(): Promise<StorageSettings> {
  */
 
 export async function getPrivateStorageSettings(): Promise<PrivateStorageSettings> {
-  return (await getConfigGroup("storagePrivate"));
+  return await getConfigGroup('storagePrivate');
 }
 // ========================
 /**

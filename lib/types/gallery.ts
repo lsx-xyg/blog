@@ -5,8 +5,7 @@
  * - 被数据访问层、组件、API route 多处引用
  * - 避免类型层与实现层形成循环依赖
  */
-import { StorageDriverType } from "@/lib/types/storage";
-
+import { StorageDriverType } from '@/lib/types/storage';
 
 /** 相册项（即 media 表中 type=GALLERY 的记录） */
 export type GalleryItemWithMedia = {
@@ -35,4 +34,3 @@ export type GalleryMeta = {
   createdAt: Date;
   tags: string[];
 };
-

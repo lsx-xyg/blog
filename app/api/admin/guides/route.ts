@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { requireAdmin, apiError } from "@/lib/admin/server";
-import { listGuides, createGuide, parseGuideInput } from "@/lib/guides/server";
-import { GuideStatus } from "@/lib/types/guides";
+import { NextResponse } from 'next/server';
+import { requireAdmin, apiError } from '@/lib/admin/server';
+import { listGuides, createGuide, parseGuideInput } from '@/lib/guides/server';
+import { GuideStatus } from '@/lib/types/guides';
 
 /**
  * 引导配置 API（guiders 表）——C9 薄壳
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
   if (denied) return denied;
 
   const { searchParams } = new URL(request.url);
-  const status = searchParams.get("status");
+  const status = searchParams.get('status');
   const statusFilter =
     status && (Object.values(GuideStatus) as string[]).includes(status)
       ? (status as GuideStatus)
@@ -31,14 +31,14 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return apiError("请求格式错误", 400);
+    return apiError('请求格式错误', 400);
   }
 
   const parsed = parseGuideInput(body);
   if (!parsed.ok) return apiError(parsed.error, 400);
 
   const result = await createGuide(parsed.data);
-  if ("error" in result) return apiError(result.error, 409);
+  if ('error' in result) return apiError(result.error, 409);
 
   return NextResponse.json({ guide: result.guide }, { status: 201 });
 }

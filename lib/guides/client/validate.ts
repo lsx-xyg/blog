@@ -1,6 +1,6 @@
-import type { GuideCondition, GuideStep } from "@/lib/types/guides";
-import { GuideConditionOp, GuideStatus } from "@/lib/types/guides";
-import type { FormState } from "./form-meta";
+import type { GuideCondition, GuideStep } from '@/lib/types/guides';
+import { GuideConditionOp, GuideStatus } from '@/lib/types/guides';
+import type { FormState } from './form-meta';
 
 /**
  * 引导表单校验（纯函数，无 DOM/网络依赖，可单测）
@@ -15,16 +15,13 @@ import type { FormState } from "./form-meta";
 /** 条件行有效性（click_count 需有锚点；非 exists 需有 value） */
 export function isConditionValid(c: GuideCondition): boolean {
   if (!c.field) return false;
-  if (
-    c.field.startsWith("click_count.") &&
-    c.field.length <= "click_count.".length
-  ) {
+  if (c.field.startsWith('click_count.') && c.field.length <= 'click_count.'.length) {
     return false;
   }
-  if (c.field === "click_count.") return false;
+  if (c.field === 'click_count.') return false;
   if (
     c.op !== GuideConditionOp.EXISTS &&
-    (c.value === undefined || c.value === null || c.value === "")
+    (c.value === undefined || c.value === null || c.value === '')
   ) {
     return false;
   }
@@ -41,22 +38,18 @@ export interface GuideFormValidation {
 
 export function validateGuideForm(form: FormState): GuideFormValidation {
   if (!form.guideKey.trim() || !form.title.trim() || !form.page.trim()) {
-    return { ok: false, error: "请填写标题、guideKey、页面（必填项）" };
+    return { ok: false, error: '请填写标题、guideKey、页面（必填项）' };
   }
   if (form.status === GuideStatus.PUBLISHED && form.steps.length === 0) {
     return {
       ok: false,
-      error: "发布前至少需要一个步骤（可先保存草稿，再用拾取锚点补充）",
+      error: '发布前至少需要一个步骤（可先保存草稿，再用拾取锚点补充）',
     };
   }
   // steps 校验（结构化表单 → GuideStep[]）
   const steps: GuideStep[] = [];
   for (const [i, s] of form.steps.entries()) {
-    if (
-      (!s.target.trim() && !s.selector?.trim()) ||
-      !s.title.trim() ||
-      !s.content.trim()
-    ) {
+    if ((!s.target.trim() && !s.selector?.trim()) || !s.title.trim() || !s.content.trim()) {
       return {
         ok: false,
         error: `步骤 ${i + 1} 未填写完整：高亮元素（data-guide 或动态选择器）/ 标题 / 说明文字必填`,
@@ -67,7 +60,7 @@ export function validateGuideForm(form: FormState): GuideFormValidation {
       target: s.target.trim(),
       title: s.title.trim(),
       content: s.content.trim(),
-      placement: (s.placement as GuideStep["placement"]) || "bottom",
+      placement: (s.placement as GuideStep['placement']) || 'bottom',
       nextRoute: s.nextRoute.trim() || undefined,
       selector: s.selector?.trim() || undefined,
       selectorMeta: s.selectorMeta,
@@ -77,7 +70,7 @@ export function validateGuideForm(form: FormState): GuideFormValidation {
     return {
       ok: false,
       error:
-        "触发条件至少一条，且 click_count 需填锚点名、非 exists 条件需填 value（event_click 可先留空，保存后拾取回填）",
+        '触发条件至少一条，且 click_count 需填锚点名、非 exists 条件需填 value（event_click 可先留空，保存后拾取回填）',
     };
   }
   return { ok: true, error: null, steps };

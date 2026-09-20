@@ -12,27 +12,27 @@
  * 说明：ENCRYPTION_KEY 是自举信任根，只能在环境变量配置（不能存库自举），
  * 本接口仅做状态检测与有效性验证，不提供在线修改。
  */
-import { NextResponse } from "next/server";
-import { requireAdmin, adminDenied } from "@/lib/auth/server";
-import { db } from "@/db";
-import { settings } from "@/db/schema";
-import { inArray } from "drizzle-orm";
-import { decryptIfAvailable, isEncryptionAvailable } from "@/lib/crypto/server";
+import { NextResponse } from 'next/server';
+import { requireAdmin, adminDenied } from '@/lib/auth/server';
+import { db } from '@/db';
+import { settings } from '@/db/schema';
+import { inArray } from 'drizzle-orm';
+import { decryptIfAvailable, isEncryptionAvailable } from '@/lib/crypto/server';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 /** 库中已知的敏感配置键（用于取密文样本验证密钥） */
 const SECRET_SETTING_KEYS = [
-  "cron.job_api_key",
-  "cron.secret",
-  "storage.github.token",
-  "storage.s3.access_key",
-  "storage.s3.secret_key",
+  'cron.job_api_key',
+  'cron.secret',
+  'storage.github.token',
+  'storage.s3.access_key',
+  'storage.s3.secret_key',
 ];
 
 /** 是否是加密密文格式（iv:data:authTag，三段 base64） */
 function isCipherFormat(value: string): boolean {
-  const parts = value.split(":");
+  const parts = value.split(':');
   return parts.length === 3;
 }
 
@@ -70,10 +70,7 @@ export async function GET(req: Request) {
       hasSample: !!rawValue,
     });
   } catch (error) {
-    console.error("检测加密状态失败：", error);
-    return NextResponse.json(
-      { error: "检测加密状态失败", detail: String(error) },
-      { status: 500 },
-    );
+    console.error('检测加密状态失败：', error);
+    return NextResponse.json({ error: '检测加密状态失败', detail: String(error) }, { status: 500 });
   }
 }

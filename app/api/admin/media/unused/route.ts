@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth/server";
-import { headers } from "next/headers";
-import { isAdminUser } from "@/lib/shared";
-import { findUnusedMedia, batchDeleteMedia } from "@/lib/media/server";
-import { getPublicStorageDriver } from "@/lib/storage/server";
+import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/server';
+import { headers } from 'next/headers';
+import { isAdminUser } from '@/lib/shared';
+import { findUnusedMedia, batchDeleteMedia } from '@/lib/media/server';
+import { getPublicStorageDriver } from '@/lib/storage/server';
 
 /**
  * 未使用图片清理 API
@@ -14,7 +14,7 @@ import { getPublicStorageDriver } from "@/lib/storage/server";
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session || !isAdminUser(session.user)) {
-    return NextResponse.json({ error: "未授权" }, { status: 401 });
+    return NextResponse.json({ error: '未授权' }, { status: 401 });
   }
 
   try {
@@ -24,15 +24,15 @@ export async function GET() {
       total: unusedMedia.length,
     });
   } catch (error) {
-    console.error("获取未使用图片失败：", error);
-    return NextResponse.json({ error: "获取失败" }, { status: 500 });
+    console.error('获取未使用图片失败：', error);
+    return NextResponse.json({ error: '获取失败' }, { status: 500 });
   }
 }
 
 export async function DELETE(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session || !isAdminUser(session.user)) {
-    return NextResponse.json({ error: "未授权" }, { status: 401 });
+    return NextResponse.json({ error: '未授权' }, { status: 401 });
   }
 
   try {
@@ -51,7 +51,7 @@ export async function DELETE(request: Request) {
     }
 
     if (mediaToDelete.length === 0) {
-      return NextResponse.json({ success: true, deleted: 0, message: "没有需要删除的图片" });
+      return NextResponse.json({ success: true, deleted: 0, message: '没有需要删除的图片' });
     }
 
     // 删除公开存储中的文件
@@ -76,7 +76,7 @@ export async function DELETE(request: Request) {
       ids: deletedIds,
     });
   } catch (error) {
-    console.error("删除未使用图片失败：", error);
-    return NextResponse.json({ error: "删除失败" }, { status: 500 });
+    console.error('删除未使用图片失败：', error);
+    return NextResponse.json({ error: '删除失败' }, { status: 500 });
   }
 }

@@ -12,9 +12,9 @@ export type PostMeta = {
 };
 
 export const PostStatus = {
-  DRAFT: "DRAFT",
-  SCHEDULED: "SCHEDULED",
-  PUBLISHED: "PUBLISHED",
+  DRAFT: 'DRAFT',
+  SCHEDULED: 'SCHEDULED',
+  PUBLISHED: 'PUBLISHED',
 } as const;
 
 export type PostStatus = (typeof PostStatus)[keyof typeof PostStatus];

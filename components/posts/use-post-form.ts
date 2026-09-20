@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 文章编辑表单状态机 hook（C10）。
@@ -6,15 +6,10 @@
  * 收口：form 状态、步骤导航、标签加载、保存编排（新建/编辑分支 + toast + 跳转）。
  * 组件层只做 JSX 装配。payload 构造/校验在 lib/posts/shared/form.ts（纯函数）。
  */
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useToast } from "@/components/ui/toast";
-import {
-  PostFormData,
-  emptyForm,
-  buildPostPayload,
-  validatePostForm,
-} from "@/lib/posts/shared";
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useToast } from '@/components/ui/toast';
+import { PostFormData, emptyForm, buildPostPayload, validatePostForm } from '@/lib/posts/shared';
 
 export function usePostForm({
   postId,
@@ -29,7 +24,7 @@ export function usePostForm({
   const { showToast } = useToast();
   const [form, setForm] = useState<PostFormData>(initialData ?? emptyForm);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [currentStep, setCurrentStep] = useState(1);
   // 全部已有标签（供 TagInput 下拉提示）
   const [allTags, setAllTags] = useState<{ id: string; name: string; slug: string }[]>([]);
@@ -37,8 +32,8 @@ export function usePostForm({
   // 加载已有标签
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/admin/tags")
-      .then((r) => (r.ok ? r.json() : Promise.reject(new Error("加载标签失败"))))
+    fetch('/api/admin/tags')
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error('加载标签失败'))))
       .then((d) => {
         if (!cancelled) setAllTags(d.tags || []);
       })
@@ -50,8 +45,7 @@ export function usePostForm({
     };
   }, []);
 
-  const set = (k: keyof PostFormData, v: string | boolean) =>
-    setForm((f) => ({ ...f, [k]: v }));
+  const set = (k: keyof PostFormData, v: string | boolean) => setForm((f) => ({ ...f, [k]: v }));
 
   const goToStep = (step: number) => {
     if (step >= 1 && step <= 2) {
@@ -64,12 +58,12 @@ export function usePostForm({
     const invalid = validatePostForm(form);
     if (invalid) {
       setError(invalid);
-      showToast(`保存失败：${invalid}`, "error");
+      showToast(`保存失败：${invalid}`, 'error');
       return;
     }
 
     setLoading(true);
-    setError("");
+    setError('');
     try {
       // 判断是新建还是编辑
       const isNewPost = postId === null;
@@ -77,9 +71,9 @@ export function usePostForm({
 
       if (isNewPost) {
         // 新建文章
-        const r = await fetch("/api/admin/posts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        const r = await fetch('/api/admin/posts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
         if (!r.ok) {
@@ -89,8 +83,8 @@ export function usePostForm({
       } else {
         // 编辑文章
         const r = await fetch(`/api/admin/posts/${postId}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),
         });
         if (!r.ok) {
@@ -101,14 +95,14 @@ export function usePostForm({
 
       // 保存成功后返回文章列表页
       showToast(
-        `文章「${form.title.trim() || "未命名"}」${isNewPost ? "创建成功" : "保存成功"}`,
-        "success",
+        `文章「${form.title.trim() || '未命名'}」${isNewPost ? '创建成功' : '保存成功'}`,
+        'success',
       );
       router.push(`/${adminPath}/posts`);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "操作失败";
+      const msg = err instanceof Error ? err.message : '操作失败';
       setError(msg);
-      showToast(`保存失败：${msg}`, "error");
+      showToast(`保存失败：${msg}`, 'error');
     } finally {
       setLoading(false);
     }

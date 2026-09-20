@@ -10,7 +10,7 @@
  * 所有候选都经过「页面唯一性」校验（querySelectorAll 恰好 1 个），避免误定位。
  */
 
-export type SelectorSource = "id" | "semantic" | "class" | "path";
+export type SelectorSource = 'id' | 'semantic' | 'class' | 'path';
 
 export interface GeneratedSelector {
   /** 可直接用于 document.querySelector 的选择器字符串 */
@@ -21,12 +21,12 @@ export interface GeneratedSelector {
 
 /** 语义属性优先级列表（值非空且唯一时采用） */
 const SEMANTIC_ATTRS = [
-  "aria-label",
-  "data-testid",
-  "name",
-  "placeholder",
-  "title",
-  "role",
+  'aria-label',
+  'data-testid',
+  'name',
+  'placeholder',
+  'title',
+  'role',
 ] as const;
 
 /** 类路径兜底的最大深度（限制选择器长度，避免过长） */
@@ -34,12 +34,12 @@ const MAX_PATH_DEPTH = 8;
 
 /** 转义属性值中的引号与反斜杠 */
 function escapeAttrValue(value: string): string {
-  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  return value.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
 }
 
 /** 转义 CSS 标识符（类名 / id），无 CSS.escape 时退化为基础替换 */
 function escapeIdent(token: string): string {
-  if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
+  if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
     return CSS.escape(token);
   }
   return token.replace(/[^a-zA-Z0-9_-]/g, (ch) => `\\${ch}`);
@@ -62,10 +62,10 @@ export function generateSelector(el: Element): GeneratedSelector | null {
   const doc = el.ownerDocument;
 
   // 1. id：唯一 id 最稳
-  const id = el.getAttribute("id");
+  const id = el.getAttribute('id');
   if (id) {
     const sel = `#${escapeIdent(id)}`;
-    if (isUnique(doc, sel)) return { selector: sel, source: "id" };
+    if (isUnique(doc, sel)) return { selector: sel, source: 'id' };
   }
 
   // 2. 语义属性
@@ -73,7 +73,7 @@ export function generateSelector(el: Element): GeneratedSelector | null {
     const value = el.getAttribute(attr);
     if (value && value.trim()) {
       const sel = `[${attr}="${escapeAttrValue(value)}"]`;
-      if (isUnique(doc, sel)) return { selector: sel, source: "semantic" };
+      if (isUnique(doc, sel)) return { selector: sel, source: 'semantic' };
     }
   }
 
@@ -85,15 +85,15 @@ export function generateSelector(el: Element): GeneratedSelector | null {
       const combo = classes
         .slice(0, i)
         .map((c) => `.${escapeIdent(c)}`)
-        .join("");
+        .join('');
       const sel = `${tag}${combo}`;
-      if (isUnique(doc, sel)) return { selector: sel, source: "class" };
+      if (isUnique(doc, sel)) return { selector: sel, source: 'class' };
     }
   }
 
   // 4. 类路径 + nth-child 兜底
   const path = buildPath(el, doc);
-  if (path) return { selector: path, source: "path" };
+  if (path) return { selector: path, source: 'path' };
 
   return null;
 }
@@ -111,17 +111,13 @@ function buildPath(el: Element, doc: Document): string | null {
     const classes = Array.from(node.classList)
       .slice(0, 2)
       .map((c) => `.${escapeIdent(c)}`)
-      .join("");
+      .join('');
     const parent = node.parentElement;
-    let nth = "";
+    let nth = '';
     if (parent) {
-      const siblings = Array.from(parent.children).filter(
-        (s) => s.tagName === node.tagName,
-      );
+      const siblings = Array.from(parent.children).filter((s) => s.tagName === node.tagName);
       if (siblings.length > 1) {
-        nth = `:nth-child(${
-          Array.from(parent.children).indexOf(node) + 1
-        })`;
+        nth = `:nth-child(${Array.from(parent.children).indexOf(node) + 1})`;
       }
     }
     parts.unshift(`${tag}${classes}${nth}`);
@@ -129,6 +125,6 @@ function buildPath(el: Element, doc: Document): string | null {
     depth++;
   }
 
-  const selector = parts.join(" > ");
+  const selector = parts.join(' > ');
   return isUnique(doc, selector) ? selector : null;
 }

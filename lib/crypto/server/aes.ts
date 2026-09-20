@@ -14,10 +14,10 @@
  * - 即使数据库泄露，没有密钥也解不开密文
  * - 解密后的明文只在内存中使用，不返回给前端
  */
-import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
+import { createCipheriv, createDecipheriv, randomBytes } from 'crypto';
 
 /** 算法：AES-256-GCM */
-const ALGORITHM = "aes-256-gcm";
+const ALGORITHM = 'aes-256-gcm';
 
 /** IV 长度：12 字节（GCM 推荐） */
 const IV_LENGTH = 12;
@@ -30,10 +30,10 @@ function getEncryptionKey(): Buffer {
   const keyBase64 = process.env.ENCRYPTION_KEY;
   if (!keyBase64) {
     throw new Error(
-      "ENCRYPTION_KEY 环境变量未设置。请生成：node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\""
+      "ENCRYPTION_KEY 环境变量未设置。请生成：node -e \"console.log(require('crypto').randomBytes(32).toString('base64'))\"",
     );
   }
-  const key = Buffer.from(keyBase64, "base64");
+  const key = Buffer.from(keyBase64, 'base64');
   if (key.length !== 32) {
     throw new Error(`ENCRYPTION_KEY 必须是 32 字节（当前 ${key.length} 字节），请重新生成`);
   }
@@ -50,11 +50,11 @@ export function encrypt(plaintext: string): string {
   const iv = randomBytes(IV_LENGTH);
   const cipher = createCipheriv(ALGORITHM, key, iv);
 
-  const encrypted = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
+  const encrypted = Buffer.concat([cipher.update(plaintext, 'utf8'), cipher.final()]);
   const authTag = cipher.getAuthTag();
 
   // 格式：iv:encryptedData:authTag（全部 Base64）
-  return `${iv.toString("base64")}:${encrypted.toString("base64")}:${authTag.toString("base64")}`;
+  return `${iv.toString('base64')}:${encrypted.toString('base64')}:${authTag.toString('base64')}`;
 }
 
 /**
@@ -65,20 +65,20 @@ export function encrypt(plaintext: string): string {
 export function decrypt(ciphertext: string): string {
   const key = getEncryptionKey();
 
-  const parts = ciphertext.split(":");
+  const parts = ciphertext.split(':');
   if (parts.length !== 3) {
-    throw new Error("密文格式错误，应为 iv:encryptedData:authTag");
+    throw new Error('密文格式错误，应为 iv:encryptedData:authTag');
   }
 
-  const iv = Buffer.from(parts[0], "base64");
-  const encrypted = Buffer.from(parts[1], "base64");
-  const authTag = Buffer.from(parts[2], "base64");
+  const iv = Buffer.from(parts[0], 'base64');
+  const encrypted = Buffer.from(parts[1], 'base64');
+  const authTag = Buffer.from(parts[2], 'base64');
 
   const decipher = createDecipheriv(ALGORITHM, key, iv);
   decipher.setAuthTag(authTag);
 
   const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
-  return decrypted.toString("utf8");
+  return decrypted.toString('utf8');
 }
 
 /**
@@ -92,11 +92,11 @@ export function isEncryptionAvailable(): boolean {
  * 安全地加密值（如果值为空或未配置密钥，返回原值）
  */
 export function encryptIfAvailable(value: string | null | undefined): string | null {
-  if (value === null || value === undefined || value === "") {
+  if (value === null || value === undefined || value === '') {
     return value ?? null;
   }
   if (!isEncryptionAvailable()) {
-    console.warn("[crypto] ENCRYPTION_KEY 未配置，敏感信息将明文存储！");
+    console.warn('[crypto] ENCRYPTION_KEY 未配置，敏感信息将明文存储！');
     return value;
   }
   return encrypt(value);
@@ -106,24 +106,24 @@ export function encryptIfAvailable(value: string | null | undefined): string | n
  * 安全地解密值（如果值为空或不是加密格式，返回原值）
  */
 export function decryptIfAvailable(value: string | null | undefined): string | null {
-  if (value === null || value === undefined || value === "") {
+  if (value === null || value === undefined || value === '') {
     return value ?? null;
   }
   // 检查是否是加密格式（iv:encryptedData:authTag，三段 Base64）
-  const parts = value.split(":");
+  const parts = value.split(':');
   if (parts.length !== 3) {
     // 不是加密格式，可能是旧的明文数据，直接返回
     return value;
   }
   if (!isEncryptionAvailable()) {
-    console.warn("[crypto] ENCRYPTION_KEY 未配置，无法解密敏感信息！");
+    console.warn('[crypto] ENCRYPTION_KEY 未配置，无法解密敏感信息！');
     return value;
   }
   try {
     return decrypt(value);
   } catch (e) {
     // 解密失败，可能是旧的明文数据，直接返回
-    console.error("[crypto] 解密失败（将返回原值，这可能导致敏感字段被误用）：", e);
+    console.error('[crypto] 解密失败（将返回原值，这可能导致敏感字段被误用）：', e);
     return value;
   }
 }

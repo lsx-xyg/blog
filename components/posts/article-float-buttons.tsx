@@ -1,8 +1,8 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import { ArrowUp, X } from "lucide-react";
-import { scrollToTop } from "@/lib/shared/client";
+import { useRouter } from 'next/navigation';
+import { ArrowUp, X } from 'lucide-react';
+import { scrollToTop } from '@/lib/shared/client';
 
 /** 文章详情页悬浮按钮（对齐参考站 czhlove.cn）：
  * - 回到顶部按钮：hover 展示'回到顶部'中文文字提示
@@ -20,7 +20,7 @@ export function ArticleFloatButtons() {
   };
 
   const closeArticle = () => {
-    router.push("/");
+    router.push('/');
   };
 
   return (

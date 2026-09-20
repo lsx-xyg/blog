@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth/server";
-import { headers } from "next/headers";
-import { isAdminUser } from "@/lib/shared";
-import { listFriendLinks, createFriendLink } from "@/lib/friend-links/server";
+import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/server';
+import { headers } from 'next/headers';
+import { isAdminUser } from '@/lib/shared';
+import { listFriendLinks, createFriendLink } from '@/lib/friend-links/server';
 
 /**
  * 友链 API
@@ -13,22 +13,22 @@ import { listFriendLinks, createFriendLink } from "@/lib/friend-links/server";
 export async function GET() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session || !isAdminUser(session.user)) {
-    return NextResponse.json({ error: "未授权" }, { status: 401 });
+    return NextResponse.json({ error: '未授权' }, { status: 401 });
   }
 
   try {
     const links = await listFriendLinks();
     return NextResponse.json({ links });
   } catch (error) {
-    console.error("获取友链失败：", error);
-    return NextResponse.json({ error: "获取失败" }, { status: 500 });
+    console.error('获取友链失败：', error);
+    return NextResponse.json({ error: '获取失败' }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session || !isAdminUser(session.user)) {
-    return NextResponse.json({ error: "未授权" }, { status: 401 });
+    return NextResponse.json({ error: '未授权' }, { status: 401 });
   }
 
   try {
@@ -36,21 +36,21 @@ export async function POST(request: Request) {
     const { name, url, avatarUrl, description, tags, sortOrder } = body;
 
     if (!name || !url) {
-      return NextResponse.json({ error: "名称和链接不能为空" }, { status: 400 });
+      return NextResponse.json({ error: '名称和链接不能为空' }, { status: 400 });
     }
 
     const link = await createFriendLink({
       name,
       url,
       avatarUrl: avatarUrl ?? null,
-      description: description ?? "",
+      description: description ?? '',
       tags: tags ?? [],
       sortOrder: sortOrder ?? 0,
     });
 
     return NextResponse.json({ link }, { status: 201 });
   } catch (error) {
-    console.error("创建友链失败：", error);
-    return NextResponse.json({ error: "创建失败" }, { status: 500 });
+    console.error('创建友链失败：', error);
+    return NextResponse.json({ error: '创建失败' }, { status: 500 });
   }
 }

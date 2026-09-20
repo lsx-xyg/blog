@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies } from 'next/headers';
 
 /**
  * 动态站点图标（favicon）：「林」字 + 主题配色。
@@ -13,24 +13,24 @@ import { cookies } from "next/headers";
  * 无需在构建/运行时内置字体文件，Vercel 上零额外开销。
  */
 export const size = { width: 64, height: 64 };
-export const contentType = "image/svg+xml";
+export const contentType = 'image/svg+xml';
 
 type ThemeColors = { bg: string; fg: string; ring: string };
 
 const THEME_COLORS: Record<string, ThemeColors> = {
   // 对齐 globals.css：light 背景 0 0% 100% / 前景 240 10% 3.9%
-  light: { bg: "#ffffff", fg: "#18181b", ring: "#e4e4e7" },
+  light: { bg: '#ffffff', fg: '#18181b', ring: '#e4e4e7' },
   // dark 背景 240 10% 3.9% / 前景 0 0% 98%
-  dark: { bg: "#0a0a0b", fg: "#fafafa", ring: "#27272a" },
+  dark: { bg: '#0a0a0b', fg: '#fafafa', ring: '#27272a' },
   // warm 背景 46 48% 96% / 前景 30 10% 20%
-  warm: { bg: "#f7f1e3", fg: "#3a332b", ring: "#e6dcc3" },
+  warm: { bg: '#f7f1e3', fg: '#3a332b', ring: '#e6dcc3' },
   // system：中性深灰，浅/深系统下对比都稳
-  system: { bg: "#1f1f23", fg: "#ffffff", ring: "#3f3f46" },
+  system: { bg: '#1f1f23', fg: '#ffffff', ring: '#3f3f46' },
 };
 
 export default async function Icon() {
   const cookieStore = await cookies();
-  const theme = cookieStore.get("site-theme")?.value ?? "system";
+  const theme = cookieStore.get('site-theme')?.value ?? 'system';
   const c = THEME_COLORS[theme] ?? THEME_COLORS.system;
 
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
@@ -40,9 +40,9 @@ export default async function Icon() {
 
   return new Response(svg, {
     headers: {
-      "Content-Type": "image/svg+xml",
+      'Content-Type': 'image/svg+xml',
       // 动态内容按 cookie 主题输出，用 no-cache 让浏览器每次回源验证
-      "Cache-Control": "no-cache",
+      'Cache-Control': 'no-cache',
     },
   });
 }

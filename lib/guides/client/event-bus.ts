@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useRef } from "react";
-import { GUIDE_TRIGGER_EVENT } from "../shared/anchor-registry";
+import { useEffect, useRef } from 'react';
+import { GUIDE_TRIGGER_EVENT } from '../shared/anchor-registry';
 
 /**
  * guide:trigger 类型化事件总线（行为触发契约）
@@ -10,7 +10,7 @@ import { GUIDE_TRIGGER_EVENT } from "../shared/anchor-registry";
  * 监听方只吃 GuideTriggerPayload（类型安全解包）。
  */
 
-export const GUIDE_TRIGGER_EVENT_NAME = "guide:trigger";
+export const GUIDE_TRIGGER_EVENT_NAME = 'guide:trigger';
 
 /** 行为触发负载：event 固定 event_click，target = data-guide 锚点名或拾取选择器 */
 export interface GuideTriggerPayload {
@@ -29,24 +29,18 @@ export function emitGuideTrigger(payload: GuideTriggerPayload): void {
   window.dispatchEvent(
     new CustomEvent<GuideTriggerPayload>(GUIDE_TRIGGER_EVENT_NAME, {
       detail: payload,
-    })
+    }),
   );
 }
 
 /** 监听行为触发事件（监听方唯一入口，类型安全解包；handler 变化不会重挂监听） */
-export function useGuideTrigger(
-  handler: (payload: GuideTriggerPayload) => void
-): void {
+export function useGuideTrigger(handler: (payload: GuideTriggerPayload) => void): void {
   const handlerRef = useRef(handler);
   handlerRef.current = handler;
   useEffect(() => {
     const on = (e: Event) => {
       const detail = (e as CustomEvent<GuideTriggerPayload>).detail;
-      if (
-        detail &&
-        typeof detail.event === "string" &&
-        typeof detail.target === "string"
-      ) {
+      if (detail && typeof detail.event === 'string' && typeof detail.target === 'string') {
         handlerRef.current(detail);
       }
     };

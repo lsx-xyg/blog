@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
 /**
  * 定时任务创建/编辑表单弹窗（C11：manage-cron-jobs 拆分）。
  * 纯展示组件：表单状态由 useCronForm hook 持有，本组件只做渲染与回填。
  */
-import { useState } from "react";
-import { ChevronDown, ChevronUp, X } from "lucide-react";
-import { REQUEST_METHODS, TIMEZONES, type FormState } from "@/lib/cron/shared";
+import { useState } from 'react';
+import { ChevronDown, ChevronUp, X } from 'lucide-react';
+import { REQUEST_METHODS, TIMEZONES, type FormState } from '@/lib/cron/shared';
 
 export function CronJobFormDialog({
   form,
@@ -34,7 +34,7 @@ export function CronJobFormDialog({
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-xl bg-background p-6 shadow-2xl">
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold">
-            {editingJobId ? "编辑定时任务" : "创建定时任务"}
+            {editingJobId ? '编辑定时任务' : '创建定时任务'}
           </h2>
           <button
             type="button"
@@ -91,13 +91,14 @@ export function CronJobFormDialog({
               <input
                 type="number"
                 value={form.requestTimeout}
-                onChange={(e) => setForm({ ...form, requestTimeout: parseInt(e.target.value, 10) || -1 })}
+                onChange={(e) =>
+                  setForm({ ...form, requestTimeout: parseInt(e.target.value, 10) || -1 })
+                }
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 placeholder="-1 表示使用默认"
               />
             </div>
           </div>
-
 
           <div className="flex items-center gap-6">
             <label className="flex items-center gap-2 text-sm">
@@ -155,7 +156,9 @@ export function CronJobFormDialog({
               </div>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                 <div>
-                  <label className="mb-1 block text-xs text-muted-foreground">分钟 (0-59, -1=每分)</label>
+                  <label className="mb-1 block text-xs text-muted-foreground">
+                    分钟 (0-59, -1=每分)
+                  </label>
                   <input
                     type="text"
                     value={form.schedule.minutes}
@@ -167,7 +170,9 @@ export function CronJobFormDialog({
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs text-muted-foreground">小时 (0-23, -1=每时)</label>
+                  <label className="mb-1 block text-xs text-muted-foreground">
+                    小时 (0-23, -1=每时)
+                  </label>
                   <input
                     type="text"
                     value={form.schedule.hours}
@@ -179,7 +184,9 @@ export function CronJobFormDialog({
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs text-muted-foreground">日 (1-31, -1=每天)</label>
+                  <label className="mb-1 block text-xs text-muted-foreground">
+                    日 (1-31, -1=每天)
+                  </label>
                   <input
                     type="text"
                     value={form.schedule.mdays}
@@ -191,7 +198,9 @@ export function CronJobFormDialog({
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs text-muted-foreground">月 (1-12, -1=每月)</label>
+                  <label className="mb-1 block text-xs text-muted-foreground">
+                    月 (1-12, -1=每月)
+                  </label>
                   <input
                     type="text"
                     value={form.schedule.months}
@@ -203,7 +212,9 @@ export function CronJobFormDialog({
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs text-muted-foreground">周几 (0-6, -1=每天)</label>
+                  <label className="mb-1 block text-xs text-muted-foreground">
+                    周几 (0-6, -1=每天)
+                  </label>
                   <input
                     type="text"
                     value={form.schedule.wdays}
@@ -229,7 +240,11 @@ export function CronJobFormDialog({
               className="flex w-full items-center justify-between text-left font-medium"
             >
               <span>通知设置</span>
-              {showNotification ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {showNotification ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
             </button>
 
             {showNotification && (
@@ -338,7 +353,8 @@ export function CronJobFormDialog({
                   </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  通知通过 cron-job.org 发送到账号绑定的邮箱/渠道。失败多次通知需先开启「失败时通知」。
+                  通知通过 cron-job.org
+                  发送到账号绑定的邮箱/渠道。失败多次通知需先开启「失败时通知」。
                 </p>
               </div>
             )}
@@ -352,7 +368,11 @@ export function CronJobFormDialog({
               className="flex w-full items-center justify-between text-left font-medium"
             >
               <span>高级配置（请求头 / 请求体）</span>
-              {showAdvanced ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              {showAdvanced ? (
+                <ChevronUp className="h-4 w-4" />
+              ) : (
+                <ChevronDown className="h-4 w-4" />
+              )}
             </button>
 
             {showAdvanced && (
@@ -363,7 +383,7 @@ export function CronJobFormDialog({
                     <button
                       type="button"
                       onClick={() =>
-                        setForm({ ...form, headers: [...form.headers, { key: "", value: "" }] })
+                        setForm({ ...form, headers: [...form.headers, { key: '', value: '' }] })
                       }
                       className="text-xs text-primary hover:underline"
                     >
@@ -461,7 +481,8 @@ export function CronJobFormDialog({
                     </div>
                   )}
                   <p className="mt-2 text-xs text-muted-foreground">
-                    启用后请求会携带 Authorization: Basic 头。密码仅保存于 cron-job.org，用于执行时认证。
+                    启用后请求会携带 Authorization: Basic 头。密码仅保存于
+                    cron-job.org，用于执行时认证。
                   </p>
                 </div>
               </div>
@@ -484,7 +505,7 @@ export function CronJobFormDialog({
             disabled={saving}
             className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {saving ? "保存中..." : editingJobId ? "保存修改" : "创建任务"}
+            {saving ? '保存中...' : editingJobId ? '保存修改' : '创建任务'}
           </button>
         </div>
       </div>

@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useState, useRef, useEffect } from "react";
-import { X, Plus } from "lucide-react";
+import { useState, useRef, useEffect } from 'react';
+import { X, Plus } from 'lucide-react';
 
 type Tag = {
   id: string;
@@ -23,8 +23,13 @@ type TagInputProps = {
  * - 已选标签显示为胶囊，可点击 X 删除
  * - 支持中文标签
  */
-export function TagInput({ value, onChange, placeholder = "输入标签后回车添加", allTags = [] }: TagInputProps) {
-  const [inputValue, setInputValue] = useState("");
+export function TagInput({
+  value,
+  onChange,
+  placeholder = '输入标签后回车添加',
+  allTags = [],
+}: TagInputProps) {
+  const [inputValue, setInputValue] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [highlightIndex, setHighlightIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -34,7 +39,7 @@ export function TagInput({ value, onChange, placeholder = "输入标签后回车
   const filteredTags = allTags.filter(
     (tag) =>
       !value.includes(tag.name) &&
-      (inputValue === "" || tag.name.toLowerCase().includes(inputValue.toLowerCase())),
+      (inputValue === '' || tag.name.toLowerCase().includes(inputValue.toLowerCase())),
   );
 
   // 点击外部关闭下拉
@@ -44,8 +49,8 @@ export function TagInput({ value, onChange, placeholder = "输入标签后回车
         setShowDropdown(false);
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   // 添加标签
@@ -53,11 +58,11 @@ export function TagInput({ value, onChange, placeholder = "输入标签后回车
     const trimmed = tagName.trim();
     if (!trimmed) return;
     if (value.includes(trimmed)) {
-      setInputValue("");
+      setInputValue('');
       return;
     }
     onChange([...value, trimmed]);
-    setInputValue("");
+    setInputValue('');
     setHighlightIndex(-1);
   };
 
@@ -68,24 +73,24 @@ export function TagInput({ value, onChange, placeholder = "输入标签后回车
 
   // 处理键盘事件
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter") {
+    if (e.key === 'Enter') {
       e.preventDefault();
       if (highlightIndex >= 0 && highlightIndex < filteredTags.length) {
         addTag(filteredTags[highlightIndex].name);
       } else if (inputValue.trim()) {
         addTag(inputValue);
       }
-    } else if (e.key === "Backspace" && inputValue === "" && value.length > 0) {
+    } else if (e.key === 'Backspace' && inputValue === '' && value.length > 0) {
       // 输入框为空时按退格，删除最后一个标签
       removeTag(value[value.length - 1]);
-    } else if (e.key === "ArrowDown") {
+    } else if (e.key === 'ArrowDown') {
       e.preventDefault();
       setShowDropdown(true);
       setHighlightIndex((prev) => Math.min(prev + 1, filteredTags.length - 1));
-    } else if (e.key === "ArrowUp") {
+    } else if (e.key === 'ArrowUp') {
       e.preventDefault();
       setHighlightIndex((prev) => Math.max(prev - 1, -1));
-    } else if (e.key === "Escape") {
+    } else if (e.key === 'Escape') {
       setShowDropdown(false);
     }
   };
@@ -126,7 +131,7 @@ export function TagInput({ value, onChange, placeholder = "输入标签后回车
           }}
           onKeyDown={handleKeyDown}
           onFocus={() => setShowDropdown(true)}
-          placeholder={value.length === 0 ? placeholder : ""}
+          placeholder={value.length === 0 ? placeholder : ''}
           className="min-w-[120px] flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
         />
       </div>
@@ -141,7 +146,7 @@ export function TagInput({ value, onChange, placeholder = "输入标签后回车
               onClick={() => addTag(tag.name)}
               onMouseEnter={() => setHighlightIndex(index)}
               className={`flex w-full items-center justify-between px-3 py-2 text-left text-sm transition-colors ${
-                index === highlightIndex ? "bg-accent" : "hover:bg-accent/50"
+                index === highlightIndex ? 'bg-accent' : 'hover:bg-accent/50'
               }`}
             >
               <span>{tag.name}</span>

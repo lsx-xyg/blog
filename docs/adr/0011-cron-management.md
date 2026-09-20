@@ -4,12 +4,15 @@
 - Date: 2026-09-16
 
 ## Context
+
 cron-job.org 免费版每日仅 100 次 API 请求，后台定时任务管理页此前存在三方面问题：
+
 1. **配额浪费**：页面打开自动加载状态（每进一次页面就消耗 1-2 次 API）
 2. **能力缺失**：无执行历史、无响应查看、任务表单缺认证/通知等官方能力（#19-#23）
 3. **结构重复**：「全局定时任务发布」区块与任务列表展示同一任务；且发布任务可能不止一个（备份/清理等），命名与结构都不合理；`stop` 语义为直接删除任务，执行历史随之丢失
 
 ## Decision
+
 - **配额约束设计**（贯穿所有 cron 页面）：
   - 页面打开**零 API 请求**，由「加载状态 / 加载任务列表」按钮按需触发（一按钮一 API）
   - 「刷新全部」一次性触发全部（当前 2 个 API）
@@ -27,6 +30,7 @@ cron-job.org 免费版每日仅 100 次 API 请求，后台定时任务管理页
 - **文档**：使用说明并入本文档附录 A（原 docs/cron-management.md 优化合并）
 
 ## Consequences
+
 - 配额可控：日常操作每次点击最多消耗 1 次 API，刷新全部 2 次；文档给出各操作消耗参考
 - 系统任务扩展 = 往 `SYSTEM_JOB_PRESETS` 追加预设（名称/描述/创建配置），总览与启动逻辑自动适配
 - 停止不再删除任务，历史可回溯；语义与 cron-job.org 官方「启用/禁用」一致
@@ -34,6 +38,7 @@ cron-job.org 免费版每日仅 100 次 API 请求，后台定时任务管理页
 - SERVER 模式（node-cron）不受影响：内置任务随应用启动自动运行
 
 ## Alternatives considered
+
 - 「全局定时任务发布」区块保留 + 只改 stop 语义：被否（区块与任务列表重复展示未解决，命名无法覆盖多系统任务）
 - 系统任务配置落数据库表：暂缓（当前仅 1 个预设，代码预设足够；未来系统任务增多再配置化，避免过度设计）
 - 页面保持自动加载：被否（免费配额每天 100 次，自动加载每次进页消耗）
@@ -44,16 +49,16 @@ cron-job.org 免费版每日仅 100 次 API 请求，后台定时任务管理页
 
 ## A.1 API 清单（前缀 /api/admin/cron，全部需管理员 session）
 
-| 方法 | 路径 | 说明 | lib/cron 函数 |
-|---|---|---|---|
-| GET | /cron | 总览（平台/密钥/系统任务状态列表/接口地址） | listSystemJobsStatus |
-| POST | /cron/start | 启动系统任务（存在则启用，不存在则创建；body `{key}`） | findSystemJob / createSystemJob / updateCronJob |
-| POST | /cron/stop | 停止系统任务（PATCH enabled=false；body `{key}`） | findSystemJob / updateCronJob |
-| POST | /cron/run | 手动触发定时发布扫描 | — |
-| GET/POST | /cron/jobs | 任务列表 / 创建（url 必填） | listCronJobs / createCronJob |
-| GET/PATCH/DELETE | /cron/jobs/[id] | 详情（含 auth/notification/extendedData）/ 更新 / 删除 | getCronJob / updateCronJob / deleteCronJob |
-| GET | /cron/jobs/[id]/history | 执行历史列表 | getJobHistory |
-| GET | /cron/jobs/[id]/history/[identifier] | 单次执行详情（响应头/体/性能统计） | getJobHistoryDetail |
+| 方法             | 路径                                 | 说明                                                   | lib/cron 函数                                   |
+| ---------------- | ------------------------------------ | ------------------------------------------------------ | ----------------------------------------------- |
+| GET              | /cron                                | 总览（平台/密钥/系统任务状态列表/接口地址）            | listSystemJobsStatus                            |
+| POST             | /cron/start                          | 启动系统任务（存在则启用，不存在则创建；body `{key}`） | findSystemJob / createSystemJob / updateCronJob |
+| POST             | /cron/stop                           | 停止系统任务（PATCH enabled=false；body `{key}`）      | findSystemJob / updateCronJob                   |
+| POST             | /cron/run                            | 手动触发定时发布扫描                                   | —                                               |
+| GET/POST         | /cron/jobs                           | 任务列表 / 创建（url 必填）                            | listCronJobs / createCronJob                    |
+| GET/PATCH/DELETE | /cron/jobs/[id]                      | 详情（含 auth/notification/extendedData）/ 更新 / 删除 | getCronJob / updateCronJob / deleteCronJob      |
+| GET              | /cron/jobs/[id]/history              | 执行历史列表                                           | getJobHistory                                   |
+| GET              | /cron/jobs/[id]/history/[identifier] | 单次执行详情（响应头/体/性能统计）                     | getJobHistoryDetail                             |
 
 ## A.2 配额约束与消耗参考
 

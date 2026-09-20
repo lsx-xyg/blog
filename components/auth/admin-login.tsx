@@ -2,30 +2,30 @@
  * 后台登录（client）：密码登录 / GitHub 登录
  * 账号关联（登录后绑定 GitHub）在 T10 设置页提供
  */
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth/client";
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { authClient } from '@/lib/auth/client';
 
 export function AdminLogin({ adminPath }: { adminPath: string }) {
   const router = useRouter();
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
 
   const signIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setBusy(true);
-    setError("");
+    setError('');
     const { error } = await authClient.signIn.email({
       email,
       password,
       callbackURL: `/${adminPath}`,
     });
     if (error) {
-      setError(error.message ?? "登录失败");
+      setError(error.message ?? '登录失败');
       setBusy(false);
     } else {
       router.push(`/${adminPath}`);
@@ -36,14 +36,14 @@ export function AdminLogin({ adminPath }: { adminPath: string }) {
   const githubLogin = async () => {
     setBusy(true);
     await authClient.signIn.social({
-      provider: "github",
+      provider: 'github',
       callbackURL: `/${adminPath}`,
     });
   };
 
   const input =
-    "rounded-lg border border-border bg-secondary px-3 py-2 text-sm outline-none focus:border-ring";
-  const label = "text-xs font-medium text-muted-foreground";
+    'rounded-lg border border-border bg-secondary px-3 py-2 text-sm outline-none focus:border-ring';
+  const label = 'text-xs font-medium text-muted-foreground';
 
   return (
     <div className="mx-auto flex min-h-screen max-w-sm flex-col px-6 pt-16 pb-12 md:pt-24">
@@ -51,10 +51,7 @@ export function AdminLogin({ adminPath }: { adminPath: string }) {
         <h1 className="text-xl font-semibold">后台登录</h1>
         <p className="mt-2 text-sm text-muted-foreground">仅管理员可访问</p>
       </header>
-      <form
-        onSubmit={signIn}
-        className="rounded-xl border border-border bg-card p-6"
-      >
+      <form onSubmit={signIn} className="rounded-xl border border-border bg-card p-6">
         <div className="space-y-3">
           <div>
             <label className={label}>邮箱</label>
@@ -84,7 +81,7 @@ export function AdminLogin({ adminPath }: { adminPath: string }) {
           disabled={busy}
           className="mt-4 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50"
         >
-          {busy ? "登录中…" : "密码登录"}
+          {busy ? '登录中…' : '密码登录'}
         </button>
       </form>
 

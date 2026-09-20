@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useRouter } from "next/navigation";
-import { authClient } from "@/lib/auth/client";
+import { useRouter } from 'next/navigation';
+import { authClient } from '@/lib/auth/client';
 
 export function SignOutButton() {
   const router = useRouter();
@@ -9,7 +9,7 @@ export function SignOutButton() {
     <button
       onClick={async () => {
         await authClient.signOut();
-        router.push("/");
+        router.push('/');
         router.refresh();
       }}
       className="rounded-lg border border-border px-3 py-1.5 text-xs text-muted-foreground hover:bg-secondary"

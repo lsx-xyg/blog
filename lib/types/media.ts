@@ -4,9 +4,9 @@
  * ARTICLE: 文章图片（从文章编辑器上传）
  * GALLERY: 相册图片（从相册管理页上传）
  */
-export const MediaType= {
-  ARTICLE: "ARTICLE",
-  GALLERY: "GALLERY",
+export const MediaType = {
+  ARTICLE: 'ARTICLE',
+  GALLERY: 'GALLERY',
 } as const;
 
 export type MediaType = (typeof MediaType)[keyof typeof MediaType];
@@ -15,6 +15,6 @@ export const MEDIA_TYPE_VALUES = Object.values(MediaType) as MediaType[];
 
 /** 媒体类型显示名称 */
 export const MEDIA_TYPE_LABELS: Record<MediaType, string> = {
-  [MediaType.ARTICLE]: "文章图片",
-  [MediaType.GALLERY]: "相册图片",
+  [MediaType.ARTICLE]: '文章图片',
+  [MediaType.GALLERY]: '相册图片',
 };

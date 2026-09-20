@@ -1,17 +1,13 @@
 /**
  * 标签数据访问层（全局标签表，文章 + 相册共用）
  */
-import { eq, inArray, sql, desc } from "drizzle-orm";
-import { db } from "@/db";
-import { tags, postTags, mediaTags } from "@/db/schema";
+import { eq, inArray, sql, desc } from 'drizzle-orm';
+import { db } from '@/db';
+import { tags, postTags, mediaTags } from '@/db/schema';
 
 /** 按名称查找标签 */
 export async function getTagByName(name: string) {
-  const rows = await db
-    .select()
-    .from(tags)
-    .where(eq(tags.name, name))
-    .limit(1);
+  const rows = await db.select().from(tags).where(eq(tags.name, name)).limit(1);
   return rows[0] ?? null;
 }
 
@@ -19,8 +15,8 @@ export async function getTagByName(name: string) {
 export function generateSlug(name: string): string {
   return name
     .toLowerCase()
-    .replace(/\s+/g, "-")
-    .replace(/[^\w\u4e00-\u9fa5-]/g, "");
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\u4e00-\u9fa5-]/g, '');
 }
 
 /** 生成不冲突的 slug（冲突时追加 -1、-2…后缀，排除指定 id） */
@@ -28,11 +24,7 @@ async function uniqueSlug(base: string, excludeId?: string) {
   let slug = base;
   let suffix = 1;
   while (true) {
-    const existing = await db
-      .select()
-      .from(tags)
-      .where(eq(tags.slug, slug))
-      .limit(1);
+    const existing = await db.select().from(tags).where(eq(tags.slug, slug)).limit(1);
     if (existing.length === 0 || (excludeId && existing[0].id === excludeId)) break;
     slug = `${base}-${suffix}`;
     suffix++;
@@ -43,21 +35,14 @@ async function uniqueSlug(base: string, excludeId?: string) {
 /** 创建标签（slug 由 name 自动生成，冲突加后缀） */
 export async function createTag(name: string) {
   const slug = await uniqueSlug(generateSlug(name));
-  const rows = await db
-    .insert(tags)
-    .values({ name, slug })
-    .returning();
+  const rows = await db.insert(tags).values({ name, slug }).returning();
   return rows[0];
 }
 
 /** 更新标签名称（slug 跟随重新生成，冲突加后缀） */
 export async function updateTag(id: string, name: string) {
   const slug = await uniqueSlug(generateSlug(name), id);
-  const rows = await db
-    .update(tags)
-    .set({ name, slug })
-    .where(eq(tags.id, id))
-    .returning();
+  const rows = await db.update(tags).set({ name, slug }).where(eq(tags.id, id)).returning();
   return rows[0] ?? null;
 }
 
@@ -96,11 +81,7 @@ export async function getTagsByIds(ids: string[]) {
 
 /** 按 ID 查找单个标签 */
 export async function getTagById(id: string) {
-  const rows = await db
-    .select()
-    .from(tags)
-    .where(eq(tags.id, id))
-    .limit(1);
+  const rows = await db.select().from(tags).where(eq(tags.id, id)).limit(1);
   return rows[0] ?? null;
 }
 

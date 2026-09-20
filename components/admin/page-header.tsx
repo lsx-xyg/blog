@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 通用管理端页头（C4·CRUD 骨架）
@@ -6,7 +6,7 @@
  * 统一后台列表页标题区：h1 标题 + description 描述行 + 右侧 actions 操作区。
  * 以 manage-tags 的标准形态为基准，消除各页页头 h1/h2 层级与间距不一致。
  */
-import type { ReactNode } from "react";
+import type { ReactNode } from 'react';
 
 export type AdminPageHeaderProps = {
   title: string;

@@ -1,8 +1,8 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth/server";
-import { headers } from "next/headers";
-import { isAdminUser } from "@/lib/shared";
-import { createTag, getTagByName, listAllTags, listTagsWithCount } from "@/lib/tags/server";
+import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/server';
+import { headers } from 'next/headers';
+import { isAdminUser } from '@/lib/shared';
+import { createTag, getTagByName, listAllTags, listTagsWithCount } from '@/lib/tags/server';
 
 /**
  * 标签 API
@@ -15,12 +15,12 @@ import { createTag, getTagByName, listAllTags, listTagsWithCount } from "@/lib/t
 export async function GET(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session || !isAdminUser(session.user)) {
-    return NextResponse.json({ error: "未授权" }, { status: 401 });
+    return NextResponse.json({ error: '未授权' }, { status: 401 });
   }
 
   try {
     const { searchParams } = new URL(request.url);
-    const withCount = searchParams.get("withCount") === "true";
+    const withCount = searchParams.get('withCount') === 'true';
 
     if (withCount) {
       const tags = await listTagsWithCount();
@@ -30,8 +30,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ tags });
     }
   } catch (error) {
-    console.error("获取标签列表失败：", error);
-    return NextResponse.json({ error: "获取失败" }, { status: 500 });
+    console.error('获取标签列表失败：', error);
+    return NextResponse.json({ error: '获取失败' }, { status: 500 });
   }
 }
 
@@ -39,25 +39,25 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session || !isAdminUser(session.user)) {
-    return NextResponse.json({ error: "未授权" }, { status: 401 });
+    return NextResponse.json({ error: '未授权' }, { status: 401 });
   }
 
   try {
     const body = await request.json();
-    const name = typeof body.name === "string" ? body.name.trim() : "";
+    const name = typeof body.name === 'string' ? body.name.trim() : '';
     if (!name) {
-      return NextResponse.json({ error: "标签名称不能为空" }, { status: 400 });
+      return NextResponse.json({ error: '标签名称不能为空' }, { status: 400 });
     }
 
     const existing = await getTagByName(name);
     if (existing) {
-      return NextResponse.json({ error: "同名标签已存在" }, { status: 409 });
+      return NextResponse.json({ error: '同名标签已存在' }, { status: 409 });
     }
 
     const tag = await createTag(name);
     return NextResponse.json({ tag });
   } catch (error) {
-    console.error("创建标签失败：", error);
-    return NextResponse.json({ error: "创建失败" }, { status: 500 });
+    console.error('创建标签失败：', error);
+    return NextResponse.json({ error: '创建失败' }, { status: 500 });
   }
 }

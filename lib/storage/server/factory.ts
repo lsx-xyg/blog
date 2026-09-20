@@ -1,6 +1,6 @@
-import  { type StorageDriverInterface, StorageDriverType } from "@/lib/types/storage";
-import { getStorageSettings, getPrivateStorageSettings } from "@/lib/settings/server";
-import { LocalStorageDriver, GithubStorageDriver, S3StorageDriver } from "./drivers";
+import { type StorageDriverInterface, StorageDriverType } from '@/lib/types/storage';
+import { getStorageSettings, getPrivateStorageSettings } from '@/lib/settings/server';
+import { LocalStorageDriver, GithubStorageDriver, S3StorageDriver } from './drivers';
 
 /** 缓存驱动实例（按 driver 类型缓存，避免重复创建） */
 const publicCached = new Map<StorageDriverType, StorageDriverInterface>();
@@ -11,7 +11,7 @@ const privateCached = new Map<StorageDriverType, StorageDriverInterface>();
  */
 function createDriverInstance(
   driverType: StorageDriverType,
-  settings: { github: any; s3: any; local: any }
+  settings: { github: any; s3: any; local: any },
 ): StorageDriverInterface {
   switch (driverType) {
     case StorageDriverType.GITHUB:
@@ -87,7 +87,7 @@ export async function getStorageDriverInstance(): Promise<StorageDriverInterface
  * @returns 驱动实例，或 null（配置不可用时）
  */
 export async function getPrivateStorageDriverByType(
-  driverType: StorageDriverType
+  driverType: StorageDriverType,
 ): Promise<StorageDriverInterface | null> {
   // 先检查缓存
   const cached = privateCached.get(driverType);

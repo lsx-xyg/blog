@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 媒体上传状态机 hook（C12：manage-media 上传流程收口）。
@@ -7,9 +7,9 @@
  * 上传执行 / 目标校验在 lib/media/client/index.ts（纯函数 + 共享 API 调用）。
  * 上传完成通过 onUploaded 通知父组件刷新列表。
  */
-import { useState } from "react";
-import { uploadMediaFiles, UPLOAD_TARGET_OPTIONS, type UploadTarget } from "@/lib/media/client";
-import { MediaType } from "@/lib/types/media";
+import { useState } from 'react';
+import { uploadMediaFiles, UPLOAD_TARGET_OPTIONS, type UploadTarget } from '@/lib/media/client';
+import { MediaType } from '@/lib/types/media';
 
 export function useMediaUpload({ onUploaded }: { onUploaded?: () => void }) {
   const [uploading, setUploading] = useState(false);
@@ -49,16 +49,16 @@ export function useMediaUpload({ onUploaded }: { onUploaded?: () => void }) {
       if (failed > 0) {
         window.alert(
           failed === uploadFiles.length
-            ? `上传失败：${firstError || "全部失败"}`
-            : `部分成功（${success} 张），${failed} 张失败：${firstError || "未知原因"}`,
+            ? `上传失败：${firstError || '全部失败'}`
+            : `部分成功（${success} 张），${failed} 张失败：${firstError || '未知原因'}`,
         );
       }
       onUploaded?.();
       setUploadFiles([]);
       setUploadOpen(false);
     } catch (e) {
-      console.error("上传失败：", e);
-      window.alert("上传失败，请重试");
+      console.error('上传失败：', e);
+      window.alert('上传失败，请重试');
     } finally {
       setUploading(false);
     }

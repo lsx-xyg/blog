@@ -1,8 +1,8 @@
-import { getAboutContent, getSiteSettings } from "@/lib/settings/server";
-import { renderMdx } from "@/lib/mdx/server";
-import type { Metadata } from "next";
+import { getAboutContent, getSiteSettings } from '@/lib/settings/server';
+import { renderMdx } from '@/lib/mdx/server';
+import type { Metadata } from 'next';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 /** 动态生成关于页面 metadata */
 export async function generateMetadata(): Promise<Metadata> {
@@ -21,10 +21,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export const revalidate = 300;
 
 export default async function AboutPage() {
-  const [site, content] = await Promise.all([
-    getSiteSettings(),
-    getAboutContent(),
-  ]);
+  const [site, content] = await Promise.all([getSiteSettings(), getAboutContent()]);
 
   const { content: mdxContent } = await renderMdx(content);
 
@@ -35,9 +32,7 @@ export default async function AboutPage() {
         <p className="mt-3 text-muted-foreground">{site.name}</p>
       </header>
 
-      <article className="prose prose-neutral dark:prose-invert max-w-none">
-        {mdxContent}
-      </article>
+      <article className="prose prose-neutral dark:prose-invert max-w-none">{mdxContent}</article>
     </div>
   );
 }

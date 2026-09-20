@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * 浏览量：初始值来自服务端渲染，挂载后客户端上报 +1。
@@ -10,13 +10,7 @@ import { useEffect, useRef, useState } from "react";
  *   导致的多次上报（同浏览器会话内每篇文章只计 1 次）
  * 局限：同会话刷新不重复计数；生产级 IP+日期去重留待后续服务端方案
  */
-export function ViewCounter({
-  initial,
-  slugOrId,
-}: {
-  initial: number;
-  slugOrId: string;
-}) {
+export function ViewCounter({ initial, slugOrId }: { initial: number; slugOrId: string }) {
   const [count, setCount] = useState(initial);
   const countedRef = useRef(false);
 
@@ -27,13 +21,13 @@ export function ViewCounter({
     const key = `blog:viewed:${slugOrId}`;
     try {
       if (sessionStorage.getItem(key)) return;
-      sessionStorage.setItem(key, "1");
+      sessionStorage.setItem(key, '1');
     } catch {
       /* 隐私模式等场景不可用则跳过会话去重 */
     }
 
     let cancelled = false;
-    fetch(`/api/posts/${slugOrId}/views`, { method: "POST" })
+    fetch(`/api/posts/${slugOrId}/views`, { method: 'POST' })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!cancelled && d?.viewCount != null) setCount(d.viewCount);

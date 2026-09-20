@@ -15,22 +15,22 @@ export interface PickParams {
 export function buildGuidePickUrl(
   adminPath: string,
   page: string,
-  params: PickParams
+  params: PickParams,
 ): string | null {
   const pagePath = page.trim();
   if (!pagePath) return null; // 未选择页面 → 不生成跳转链接
 
-  const base = `/${adminPath.replace(/^\/+|\/+$/g, "")}${
-    pagePath.startsWith("/") ? pagePath : `/${pagePath}`
+  const base = `/${adminPath.replace(/^\/+|\/+$/g, '')}${
+    pagePath.startsWith('/') ? pagePath : `/${pagePath}`
   }`;
 
   const query = new URLSearchParams({
-    "guide-pick": "1",
+    'guide-pick': '1',
     guide_id: params.guideId,
   });
-  if (params.stepId !== undefined) query.set("step_id", params.stepId);
+  if (params.stepId !== undefined) query.set('step_id', params.stepId);
   if (params.conditionIndex !== undefined) {
-    query.set("cond_idx", String(params.conditionIndex));
+    query.set('cond_idx', String(params.conditionIndex));
   }
   return `${base}?${query.toString()}`;
 }

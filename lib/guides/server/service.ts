@@ -8,16 +8,16 @@
  *
  * 校验/归一化是纯函数（可单测），db 封装集中 upsert/唯一性分支逻辑。
  */
-import { desc, eq, and } from "drizzle-orm";
-import { db } from "@/db";
-import { guiders, userGuideProgress } from "@/db/schema";
+import { desc, eq, and } from 'drizzle-orm';
+import { db } from '@/db';
+import { guiders, userGuideProgress } from '@/db/schema';
 import {
   GuideStatus,
   GuideProgressStatus,
   GUIDE_PROGRESS_STATUS_VALUES,
   isValidTargetCondition,
-} from "@/lib/types/guides";
-import type { GuideStep, GuideTargetCondition } from "@/lib/types/guides";
+} from '@/lib/types/guides';
+import type { GuideStep, GuideTargetCondition } from '@/lib/types/guides';
 
 /* ---------------- 纯校验 / 归一化 ---------------- */
 
@@ -38,10 +38,10 @@ export function isValidStepList(steps: unknown): steps is GuideStep[] {
   if (!Array.isArray(steps)) return false;
   return steps.every(
     (s) =>
-      typeof s.id === "string" &&
-      typeof s.target === "string" &&
-      typeof s.title === "string" &&
-      typeof s.content === "string"
+      typeof s.id === 'string' &&
+      typeof s.target === 'string' &&
+      typeof s.title === 'string' &&
+      typeof s.content === 'string',
   );
 }
 
@@ -54,31 +54,31 @@ export function validatePublishedSteps(steps: GuideStep[] | null | undefined): b
 export function parseGuideInput(body: Record<string, unknown>): ParseResult<GuideInput> {
   const { guideKey, title, page, steps, status, targetCondition, priority } = body;
 
-  if (typeof guideKey !== "string" || !guideKey.trim()) {
-    return { ok: false, error: "guideKey 必填" };
+  if (typeof guideKey !== 'string' || !guideKey.trim()) {
+    return { ok: false, error: 'guideKey 必填' };
   }
-  if (typeof title !== "string" || !title.trim()) {
-    return { ok: false, error: "title 必填" };
+  if (typeof title !== 'string' || !title.trim()) {
+    return { ok: false, error: 'title 必填' };
   }
-  if (typeof page !== "string" || !page.trim()) {
-    return { ok: false, error: "page 必填" };
+  if (typeof page !== 'string' || !page.trim()) {
+    return { ok: false, error: 'page 必填' };
   }
   if (!isValidStepList(steps)) {
-    return { ok: false, error: "steps 每项需包含 id/target/title/content 字符串字段" };
+    return { ok: false, error: 'steps 每项需包含 id/target/title/content 字符串字段' };
   }
   if (status === GuideStatus.PUBLISHED && !validatePublishedSteps(steps)) {
-    return { ok: false, error: "发布（published）引导必须包含至少一个步骤" };
+    return { ok: false, error: '发布（published）引导必须包含至少一个步骤' };
   }
 
   const normalizedStatus = Object.values(GuideStatus).includes(status as GuideStatus)
     ? (status as GuideStatus)
     : GuideStatus.DRAFT;
   const normalizedPriority =
-    typeof priority === "number" && Number.isFinite(priority) ? Math.trunc(priority) : 0;
+    typeof priority === 'number' && Number.isFinite(priority) ? Math.trunc(priority) : 0;
   const normalizedTargetCondition =
     targetCondition !== undefined && targetCondition !== null ? targetCondition : null;
   if (normalizedTargetCondition !== null && !isValidTargetCondition(normalizedTargetCondition)) {
-    return { ok: false, error: "targetCondition 结构非法（需 {logic, conditions[]}）" };
+    return { ok: false, error: 'targetCondition 结构非法（需 {logic, conditions[]}）' };
   }
 
   return {
@@ -110,45 +110,45 @@ export function parseGuidePatch(body: Record<string, unknown>): ParseResult<Guid
   const patch: GuidePatch = {};
 
   if (body.guideKey !== undefined) {
-    if (typeof body.guideKey !== "string" || !body.guideKey.trim()) {
-      return { ok: false, error: "guideKey 必填" };
+    if (typeof body.guideKey !== 'string' || !body.guideKey.trim()) {
+      return { ok: false, error: 'guideKey 必填' };
     }
     patch.guideKey = body.guideKey.trim();
   }
   if (body.title !== undefined) {
-    if (typeof body.title !== "string" || !body.title.trim()) {
-      return { ok: false, error: "title 必填" };
+    if (typeof body.title !== 'string' || !body.title.trim()) {
+      return { ok: false, error: 'title 必填' };
     }
     patch.title = body.title.trim();
   }
   if (body.page !== undefined) {
-    if (typeof body.page !== "string" || !body.page.trim()) {
-      return { ok: false, error: "page 必填" };
+    if (typeof body.page !== 'string' || !body.page.trim()) {
+      return { ok: false, error: 'page 必填' };
     }
     patch.page = body.page.trim();
   }
   if (body.steps !== undefined) {
     if (!isValidStepList(body.steps)) {
-      return { ok: false, error: "steps 每项需包含 id/target/title/content 字符串字段" };
+      return { ok: false, error: 'steps 每项需包含 id/target/title/content 字符串字段' };
     }
     patch.steps = body.steps as GuideStep[];
   }
   if (body.status !== undefined) {
     if (!Object.values(GuideStatus).includes(body.status as GuideStatus)) {
-      return { ok: false, error: "status 非法" };
+      return { ok: false, error: 'status 非法' };
     }
     patch.status = body.status as GuideStatus;
   }
   if (body.priority !== undefined) {
-    if (typeof body.priority !== "number" || !Number.isFinite(body.priority)) {
-      return { ok: false, error: "priority 非法" };
+    if (typeof body.priority !== 'number' || !Number.isFinite(body.priority)) {
+      return { ok: false, error: 'priority 非法' };
     }
     patch.priority = Math.trunc(body.priority);
   }
   if (body.targetCondition !== undefined) {
     const tc = body.targetCondition !== null ? body.targetCondition : null;
     if (tc !== null && !isValidTargetCondition(tc)) {
-      return { ok: false, error: "targetCondition 结构非法（需 {logic, conditions[]}）" };
+      return { ok: false, error: 'targetCondition 结构非法（需 {logic, conditions[]}）' };
     }
     patch.targetCondition = tc as GuideTargetCondition | null;
   }
@@ -158,25 +158,32 @@ export function parseGuidePatch(body: Record<string, unknown>): ParseResult<Guid
 
 /** 进度上报输入校验 + 归一化（POST /api/admin/guides/progress） */
 export function parseProgressInput(
-  body: Record<string, unknown>
+  body: Record<string, unknown>,
 ): ParseResult<{ guideKey: string; status?: GuideProgressStatus; currentStep?: number }> {
   const { guideKey, status, currentStep } = body;
-  if (typeof guideKey !== "string" || !guideKey.trim()) {
-    return { ok: false, error: "guideKey 必填" };
+  if (typeof guideKey !== 'string' || !guideKey.trim()) {
+    return { ok: false, error: 'guideKey 必填' };
   }
   const normalizedStatus =
     status !== undefined && GUIDE_PROGRESS_STATUS_VALUES.includes(status as GuideProgressStatus)
       ? (status as GuideProgressStatus)
       : undefined;
   const normalizedCurrentStep =
-    typeof currentStep === "number" && Number.isFinite(currentStep)
+    typeof currentStep === 'number' && Number.isFinite(currentStep)
       ? Math.trunc(Math.max(0, currentStep))
       : undefined;
 
   if (!normalizedStatus && normalizedCurrentStep === undefined) {
-    return { ok: false, error: "status 或 currentStep 至少提供一个" };
+    return { ok: false, error: 'status 或 currentStep 至少提供一个' };
   }
-  return { ok: true, data: { guideKey: guideKey.trim(), status: normalizedStatus, currentStep: normalizedCurrentStep } };
+  return {
+    ok: true,
+    data: {
+      guideKey: guideKey.trim(),
+      status: normalizedStatus,
+      currentStep: normalizedCurrentStep,
+    },
+  };
 }
 
 /* ---------------- db 封装 ---------------- */
@@ -203,19 +210,14 @@ export async function getGuideById(id: string) {
 }
 
 /** 写操作统一返回：创建/更新（error 分支供路由层直接映射状态码） */
-export type GuideWriteResult =
-  | { error: string }
-  | { guide: typeof guiders.$inferSelect };
+export type GuideWriteResult = { error: string } | { guide: typeof guiders.$inferSelect };
 
 /** 删除操作返回 */
 export type GuideDeleteResult = { error: string } | { success: true };
 
 /** guideKey 唯一性检查（excludeId 用于更新时排除自身） */
 export async function guideKeyExists(key: string, excludeId?: string) {
-  const rows = await db
-    .select({ id: guiders.id })
-    .from(guiders)
-    .where(eq(guiders.guideKey, key));
+  const rows = await db.select({ id: guiders.id }).from(guiders).where(eq(guiders.guideKey, key));
   if (excludeId) return rows.length > 0 && rows[0].id !== excludeId;
   return rows.length > 0;
 }
@@ -223,7 +225,7 @@ export async function guideKeyExists(key: string, excludeId?: string) {
 /** 创建引导（内部做唯一键冲突检查） */
 export async function createGuide(data: GuideInput): Promise<GuideWriteResult> {
   if (await guideKeyExists(data.guideKey)) {
-    return { error: "guideKey 已存在（改版请使用新版本号，如 _v2）" } as const;
+    return { error: 'guideKey 已存在（改版请使用新版本号，如 _v2）' } as const;
   }
   const [created] = await db
     .insert(guiders)
@@ -244,16 +246,16 @@ export async function createGuide(data: GuideInput): Promise<GuideWriteResult> {
 export async function updateGuide(id: string, patch: GuidePatch): Promise<GuideWriteResult> {
   const existing = await getGuideById(id);
   if (!existing) {
-    return { error: "引导不存在" } as const;
+    return { error: '引导不存在' } as const;
   }
   if (patch.guideKey && (await guideKeyExists(patch.guideKey, id))) {
-    return { error: "guideKey 已存在（改版请使用新版本号，如 _v2）" } as const;
+    return { error: 'guideKey 已存在（改版请使用新版本号，如 _v2）' } as const;
   }
   // 发布校验：最终步骤（本次提交 ∪ 已存步骤）不能为空
   if (patch.status === GuideStatus.PUBLISHED) {
     const finalSteps = patch.steps ?? (existing.steps as GuideStep[] | null) ?? [];
     if (!validatePublishedSteps(finalSteps)) {
-      return { error: "发布（published）引导必须包含至少一个步骤" } as const;
+      return { error: '发布（published）引导必须包含至少一个步骤' } as const;
     }
   }
   const [updated] = await db
@@ -268,7 +270,7 @@ export async function updateGuide(id: string, patch: GuidePatch): Promise<GuideW
 export async function deleteGuideById(id: string): Promise<GuideDeleteResult> {
   const existing = await getGuideById(id);
   if (!existing) {
-    return { error: "引导不存在" } as const;
+    return { error: '引导不存在' } as const;
   }
   await db.delete(guiders).where(eq(guiders.id, id));
   return { success: true } as const;
@@ -276,10 +278,7 @@ export async function deleteGuideById(id: string): Promise<GuideDeleteResult> {
 
 /** 当前用户全部引导进度 */
 export async function getProgress(userId: string) {
-  return db
-    .select()
-    .from(userGuideProgress)
-    .where(eq(userGuideProgress.userId, userId));
+  return db.select().from(userGuideProgress).where(eq(userGuideProgress.userId, userId));
 }
 
 /** guideKey 必须存在于 guiders 表（防止脏数据） */
@@ -295,7 +294,7 @@ export async function guideExistsByKey(guideKey: string) {
 export async function upsertProgress(
   userId: string,
   guideKey: string,
-  input: { status?: GuideProgressStatus; currentStep?: number }
+  input: { status?: GuideProgressStatus; currentStep?: number },
 ) {
   const { status, currentStep } = input;
   const [existing] = await db

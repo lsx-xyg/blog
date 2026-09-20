@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import Giscus from "@giscus/react";
+import { useEffect, useState } from 'react';
+import Giscus from '@giscus/react';
 
 /**
  * giscus 评论组件
@@ -31,39 +31,39 @@ type CommentsProps = {
 };
 
 export function Comments({ config }: CommentsProps) {
-  const [theme, setTheme] = useState<string>("light");
+  const [theme, setTheme] = useState<string>('light');
 
   // 从 localStorage 读取当前主题（与 lib/theme.ts 的存储 key 一致）
   useEffect(() => {
-    const storedTheme = localStorage.getItem("site-theme") || "light";
+    const storedTheme = localStorage.getItem('site-theme') || 'light';
     setTheme(storedTheme);
 
     // 监听主题变化
     const handleStorage = (e: StorageEvent) => {
-      if (e.key === "site-theme") {
-        setTheme(e.newValue || "light");
+      if (e.key === 'site-theme') {
+        setTheme(e.newValue || 'light');
       }
     };
-    window.addEventListener("storage", handleStorage);
+    window.addEventListener('storage', handleStorage);
 
     // 监听自定义主题切换事件
     const handleThemeChange = () => {
-      const currentTheme = localStorage.getItem("site-theme") || "light";
+      const currentTheme = localStorage.getItem('site-theme') || 'light';
       setTheme(currentTheme);
     };
-    window.addEventListener("themechange", handleThemeChange as EventListener);
+    window.addEventListener('themechange', handleThemeChange as EventListener);
 
     return () => {
-      window.removeEventListener("storage", handleStorage);
-      window.removeEventListener("themechange", handleThemeChange as EventListener);
+      window.removeEventListener('storage', handleStorage);
+      window.removeEventListener('themechange', handleThemeChange as EventListener);
     };
   }, []);
 
   // 配置优先级：环境变量 > props > 默认值
-  const repo = process.env.NEXT_PUBLIC_GISCUS_REPO || config?.repo || "";
-  const repoId = process.env.NEXT_PUBLIC_GISCUS_REPO_ID || config?.repoId || "";
-  const category = process.env.NEXT_PUBLIC_GISCUS_CATEGORY || config?.category || "Announcements";
-  const categoryId = process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID || config?.categoryId || "";
+  const repo = process.env.NEXT_PUBLIC_GISCUS_REPO || config?.repo || '';
+  const repoId = process.env.NEXT_PUBLIC_GISCUS_REPO_ID || config?.repoId || '';
+  const category = process.env.NEXT_PUBLIC_GISCUS_CATEGORY || config?.category || 'Announcements';
+  const categoryId = process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID || config?.categoryId || '';
 
   // 未配置 giscus 时不渲染
   if (!repo || !repoId || !categoryId) {
@@ -76,13 +76,13 @@ export function Comments({ config }: CommentsProps) {
 
   // 根据当前主题切换 giscus 主题
   const giscusTheme =
-    theme === "dark"
-      ? "dark"
-      : theme === "warm"
-        ? "light"
-        : theme === "system"
-          ? "preferred_color_scheme"
-          : "light";
+    theme === 'dark'
+      ? 'dark'
+      : theme === 'warm'
+        ? 'light'
+        : theme === 'system'
+          ? 'preferred_color_scheme'
+          : 'light';
 
   return (
     <div className="mt-12">

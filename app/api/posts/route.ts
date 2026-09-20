@@ -1,7 +1,7 @@
-import { NextResponse } from "next/server";
-import { listPublishedPostsFiltered } from "@/lib/posts/server";
+import { NextResponse } from 'next/server';
+import { listPublishedPostsFiltered } from '@/lib/posts/server';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 const DEFAULT_PAGE_SIZE = 9;
 const MAX_PAGE_SIZE = 50;
@@ -13,14 +13,22 @@ const MAX_PAGE_SIZE = 50;
  */
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
-  const page = Math.max(1, Number.parseInt(searchParams.get("page") ?? "1", 10) || 1);
+  const page = Math.max(1, Number.parseInt(searchParams.get('page') ?? '1', 10) || 1);
   const pageSize = Math.min(
     MAX_PAGE_SIZE,
-    Math.max(1, Number.parseInt(searchParams.get("pageSize") ?? String(DEFAULT_PAGE_SIZE), 10) || DEFAULT_PAGE_SIZE),
+    Math.max(
+      1,
+      Number.parseInt(searchParams.get('pageSize') ?? String(DEFAULT_PAGE_SIZE), 10) ||
+        DEFAULT_PAGE_SIZE,
+    ),
   );
-  const tags = searchParams.get("tags")?.split(",").map((t) => t.trim()).filter(Boolean);
-  const featured = searchParams.get("featured") === "1";
-  const q = searchParams.get("q")?.trim() || undefined;
+  const tags = searchParams
+    .get('tags')
+    ?.split(',')
+    .map((t) => t.trim())
+    .filter(Boolean);
+  const featured = searchParams.get('featured') === '1';
+  const q = searchParams.get('q')?.trim() || undefined;
   const offset = (page - 1) * pageSize;
   // 多取 1 条用于判断是否还有下一页
   const rows = await listPublishedPostsFiltered({

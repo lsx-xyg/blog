@@ -1,5 +1,5 @@
-import type { StorageDriverInterface, UploadResult } from "@/lib/types/storage";
-import type { StorageSettings } from "@/lib/types/settings";
+import type { StorageDriverInterface, UploadResult } from '@/lib/types/storage';
+import type { StorageSettings } from '@/lib/types/settings';
 
 /** S3 兼容存储驱动（占位，后续实现）
  *
@@ -18,18 +18,18 @@ import type { StorageSettings } from "@/lib/types/settings";
  * 实现时建议使用 @aws-sdk/client-s3 或 minio 库。
  */
 export class S3StorageDriver implements StorageDriverInterface {
-  name = "s3" as const;
+  name = 's3' as const;
 
-  private config: StorageSettings["s3"];
+  private config: StorageSettings['s3'];
 
-  constructor(config?: StorageSettings["s3"]) {
+  constructor(config?: StorageSettings['s3']) {
     this.config = config || {
-      endpoint: process.env.S3_ENDPOINT || "",
-      bucket: process.env.S3_BUCKET || "",
-      region: process.env.S3_REGION || "auto",
-      directory: process.env.S3_DIRECTORY || "",
-      accessKey: process.env.S3_ACCESS_KEY || "",
-      secretKey: process.env.S3_SECRET_KEY || "",
+      endpoint: process.env.S3_ENDPOINT || '',
+      bucket: process.env.S3_BUCKET || '',
+      region: process.env.S3_REGION || 'auto',
+      directory: process.env.S3_DIRECTORY || '',
+      accessKey: process.env.S3_ACCESS_KEY || '',
+      secretKey: process.env.S3_SECRET_KEY || '',
     };
   }
 
@@ -42,7 +42,7 @@ export class S3StorageDriver implements StorageDriverInterface {
   }
 
   private get directory(): string {
-    return this.config.directory || "";
+    return this.config.directory || '';
   }
 
   /** 构建完整路径（包含子目录） */
@@ -52,25 +52,25 @@ export class S3StorageDriver implements StorageDriverInterface {
 
   async upload(_file: Buffer, _filename: string, _mimeType: string): Promise<UploadResult> {
     throw new Error(
-      "S3 存储驱动尚未实现。请设置 STORAGE_DRIVER=local 或 STORAGE_DRIVER=github，或实现 S3StorageDriver。"
+      'S3 存储驱动尚未实现。请设置 STORAGE_DRIVER=local 或 STORAGE_DRIVER=github，或实现 S3StorageDriver。',
     );
   }
 
   async delete(_key: string): Promise<void> {
     throw new Error(
-      "S3 存储驱动尚未实现。请设置 STORAGE_DRIVER=local 或 STORAGE_DRIVER=github，或实现 S3StorageDriver。"
+      'S3 存储驱动尚未实现。请设置 STORAGE_DRIVER=local 或 STORAGE_DRIVER=github，或实现 S3StorageDriver。',
     );
   }
 
   getUrl(_key: string): string {
     throw new Error(
-      "S3 存储驱动尚未实现。请设置 STORAGE_DRIVER=local 或 STORAGE_DRIVER=github，或实现 S3StorageDriver。"
+      'S3 存储驱动尚未实现。请设置 STORAGE_DRIVER=local 或 STORAGE_DRIVER=github，或实现 S3StorageDriver。',
     );
   }
 
   async download(_key: string): Promise<Buffer> {
     throw new Error(
-      "S3 存储驱动尚未实现。请设置 STORAGE_DRIVER=local 或 STORAGE_DRIVER=github，或实现 S3StorageDriver。"
+      'S3 存储驱动尚未实现。请设置 STORAGE_DRIVER=local 或 STORAGE_DRIVER=github，或实现 S3StorageDriver。',
     );
   }
 }

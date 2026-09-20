@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 文章阅读进度条组件
@@ -30,7 +30,7 @@
  * - 当 scrollY > articleBottom - viewportHeight 时，progress = 100
  */
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from 'react';
 
 interface ArticleProgressProps {
   /**
@@ -40,7 +40,7 @@ interface ArticleProgressProps {
   selector?: string;
 }
 
-export function ArticleProgress({ selector = "article" }: ArticleProgressProps) {
+export function ArticleProgress({ selector = 'article' }: ArticleProgressProps) {
   const [progress, setProgress] = useState(0);
   // 是否显示进度条（文章内容比视口还短时不显示，避免一直是满的横线影响美观）
   const [visible, setVisible] = useState(false);
@@ -113,8 +113,8 @@ export function ArticleProgress({ selector = "article" }: ArticleProgressProps) 
     calculateProgress();
 
     // 监听 scroll 事件
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll, { passive: true });
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll, { passive: true });
 
     // 使用 MutationObserver 监听文章内容高度变化
     // 比如图片加载完成、字体加载完成等，都会导致文章高度变化
@@ -131,17 +131,17 @@ export function ArticleProgress({ selector = "article" }: ArticleProgressProps) 
     });
 
     // 监听图片加载完成事件
-    const images = article.querySelectorAll("img");
+    const images = article.querySelectorAll('img');
     images.forEach((img) => {
       if (!img.complete) {
-        img.addEventListener("load", onScroll, { once: true });
-        img.addEventListener("error", onScroll, { once: true });
+        img.addEventListener('load', onScroll, { once: true });
+        img.addEventListener('error', onScroll, { once: true });
       }
     });
 
     return () => {
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
       if (rafRef.current) {
         cancelAnimationFrame(rafRef.current);
       }
@@ -149,8 +149,8 @@ export function ArticleProgress({ selector = "article" }: ArticleProgressProps) 
         mutationObserverRef.current.disconnect();
       }
       images.forEach((img) => {
-        img.removeEventListener("load", onScroll);
-        img.removeEventListener("error", onScroll);
+        img.removeEventListener('load', onScroll);
+        img.removeEventListener('error', onScroll);
       });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -159,7 +159,7 @@ export function ArticleProgress({ selector = "article" }: ArticleProgressProps) 
   return (
     <div
       className={`sticky top-0 left-0 right-0 z-[60] h-[3px] pointer-events-none -mt-[3px] transition-opacity duration-300 ${
-        visible ? "opacity-100" : "opacity-0"
+        visible ? 'opacity-100' : 'opacity-0'
       }`}
       aria-hidden="true"
     >
@@ -176,7 +176,7 @@ export function ArticleProgress({ selector = "article" }: ArticleProgressProps) 
         {/* 末端轻微 glow */}
         <div
           className="absolute right-0 top-0 bottom-0 w-4 bg-gradient-to-l from-[hsl(var(--ring))] to-transparent opacity-40"
-          style={{ filter: "blur(1px)" }}
+          style={{ filter: 'blur(1px)' }}
         />
       </div>
     </div>

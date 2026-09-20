@@ -1,7 +1,7 @@
-"use client";
+'use client';
 
-import { X } from "lucide-react";
-import { useOnborda, type CardComponentProps } from "onborda";
+import { X } from 'lucide-react';
+import { useOnborda, type CardComponentProps } from 'onborda';
 
 /**
  * 引导卡片（onborda 自定义 cardComponent）
@@ -10,26 +10,18 @@ import { useOnborda, type CardComponentProps } from "onborda";
  * - 底部：跳过 / 下一步（最后一步为「完成」）
  * - 通过自定义事件与 GuideManager 通信（完成/跳过 → 上报进度 + 关闭）
  */
-export function GuideCard({
-  step,
-  currentStep,
-  totalSteps,
-  nextStep,
-  arrow,
-}: CardComponentProps) {
+export function GuideCard({ step, currentStep, totalSteps, nextStep, arrow }: CardComponentProps) {
   const { currentTour } = useOnborda();
   const isLast = currentStep >= totalSteps - 1;
 
   const handleClose = () => {
-    window.dispatchEvent(
-      new CustomEvent("guide:skip", { detail: { guideKey: currentTour } })
-    );
+    window.dispatchEvent(new CustomEvent('guide:skip', { detail: { guideKey: currentTour } }));
   };
 
   const handleNext = () => {
     if (isLast) {
       window.dispatchEvent(
-        new CustomEvent("guide:complete", { detail: { guideKey: currentTour } })
+        new CustomEvent('guide:complete', { detail: { guideKey: currentTour } }),
       );
       return;
     }
@@ -47,9 +39,7 @@ export function GuideCard({
           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
             {currentStep + 1}
           </span>
-          <span className="text-xs font-medium tracking-wide text-muted-foreground">
-            引导提示
-          </span>
+          <span className="text-xs font-medium tracking-wide text-muted-foreground">引导提示</span>
         </div>
         <button
           type="button"
@@ -63,9 +53,7 @@ export function GuideCard({
 
       {/* 标题与内容 */}
       <div className="px-4 pt-2.5">
-        <div className="text-[15px] font-semibold leading-snug text-foreground">
-          {step.title}
-        </div>
+        <div className="text-[15px] font-semibold leading-snug text-foreground">{step.title}</div>
         <div className="mt-1.5 text-[13px] leading-relaxed text-muted-foreground">
           {step.content}
         </div>
@@ -94,7 +82,7 @@ export function GuideCard({
             onClick={handleNext}
             className="rounded-lg bg-primary px-3.5 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
           >
-            {isLast ? "完成" : "下一步"}
+            {isLast ? '完成' : '下一步'}
           </button>
         </div>
       </div>

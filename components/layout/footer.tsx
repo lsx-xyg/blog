@@ -1,4 +1,4 @@
-import Link from "next/link";
+import Link from 'next/link';
 
 /** 页脚（参考站 czhlove.cn 一比一还原）：
  * - bg-muted/30 背景，py-12

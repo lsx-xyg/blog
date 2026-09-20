@@ -1,4 +1,3 @@
-
 /** RequestMethod 枚举（官方文档） */
 
 export const RequestMethod = {

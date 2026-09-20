@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
 /**
  * 上传图片弹窗（C12：manage-media 拆分）。
  * 纯展示：类型单选切换 + 文件选择/暂存列表。状态与编排在 useMediaUpload hook。
  */
-import { useRef } from "react";
-import { Image as ImageIcon, X } from "lucide-react";
-import { AdminModal } from "@/components/admin/modal";
-import { MediaType, MEDIA_TYPE_LABELS } from "@/lib/types/media";
-import type { UploadTarget } from "@/lib/media/client";
+import { useRef } from 'react';
+import { Image as ImageIcon, X } from 'lucide-react';
+import { AdminModal } from '@/components/admin/modal';
+import { MediaType, MEDIA_TYPE_LABELS } from '@/lib/types/media';
+import type { UploadTarget } from '@/lib/media/client';
 
 export function UploadDialog({
   open,
@@ -56,7 +56,9 @@ export function UploadDialog({
             disabled={uploading || uploadFiles.length === 0}
             className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
-            {uploading ? `上传中（${uploadFiles.length} 张）…` : `开始上传（${uploadFiles.length} 张）`}
+            {uploading
+              ? `上传中（${uploadFiles.length} 张）…`
+              : `开始上传（${uploadFiles.length} 张）`}
           </button>
         </>
       }
@@ -67,26 +69,26 @@ export function UploadDialog({
           <label className="mb-1.5 block text-sm font-medium">上传到</label>
           <div className="grid grid-cols-2 gap-2">
             {([MediaType.ARTICLE, MediaType.GALLERY] as const).map((t) => {
-                const value: UploadTarget = t;
-                const active = uploadType === value;
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => onUploadTypeChange(value)}
-                    className={`rounded-lg border px-3 py-2.5 text-sm transition-all ${
-                      active
-                        ? "border-primary bg-primary/5 font-medium text-primary"
-                        : "border-input hover:bg-accent"
-                    }`}
-                  >
-                    {MEDIA_TYPE_LABELS[value as MediaType]}
-                    <span className="mt-0.5 block text-xs text-muted-foreground">
-                      {value === MediaType.ARTICLE ? "用作文章配图" : "加入相册"}
-                    </span>
-                  </button>
-                );
-              })}
+              const value: UploadTarget = t;
+              const active = uploadType === value;
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => onUploadTypeChange(value)}
+                  className={`rounded-lg border px-3 py-2.5 text-sm transition-all ${
+                    active
+                      ? 'border-primary bg-primary/5 font-medium text-primary'
+                      : 'border-input hover:bg-accent'
+                  }`}
+                >
+                  {MEDIA_TYPE_LABELS[value as MediaType]}
+                  <span className="mt-0.5 block text-xs text-muted-foreground">
+                    {value === MediaType.ARTICLE ? '用作文章配图' : '加入相册'}
+                  </span>
+                </button>
+              );
+            })}
           </div>
         </div>
 
@@ -101,7 +103,7 @@ export function UploadDialog({
             className="hidden"
             onChange={(e) => {
               onPick(e.target.files);
-              e.target.value = "";
+              e.target.value = '';
             }}
           />
           <button
@@ -118,7 +120,9 @@ export function UploadDialog({
                 <li key={`${file.name}-${index}`} className="flex items-center gap-2 text-xs">
                   <ImageIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                   <span className="truncate flex-1">{file.name}</span>
-                  <span className="shrink-0 text-muted-foreground">{(file.size / 1024).toFixed(0)} KB</span>
+                  <span className="shrink-0 text-muted-foreground">
+                    {(file.size / 1024).toFixed(0)} KB
+                  </span>
                   <button
                     type="button"
                     onClick={() => onRemove(index)}

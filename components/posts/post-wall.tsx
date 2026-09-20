@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "next/navigation";
-import MiniSearch from "minisearch";
-import { PostCard } from "@/components/posts/post-card";
-import { PostToolbar } from "@/components/posts/post-toolbar";
-import type { Post } from "@/db/schema";
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import MiniSearch from 'minisearch';
+import { PostCard } from '@/components/posts/post-card';
+import { PostToolbar } from '@/components/posts/post-toolbar';
+import type { Post } from '@/db/schema';
 
 /**
  * minisearch 中文分词：默认 tokenizer 按空白/标点切分，整段中文会成为一个 token，
@@ -59,27 +59,21 @@ function toSearchPost(p: Post): SearchPost {
   };
 }
 
-export function PostWall({
-  initialPosts,
-  pageSize,
-}: {
-  initialPosts: Post[];
-  pageSize: number;
-}) {
+export function PostWall({ initialPosts, pageSize }: { initialPosts: Post[]; pageSize: number }) {
   const searchParams = useSearchParams();
   // SSR 首屏数据（无标签）→ 拉全量后替换
   const [metas, setMetas] = useState<SearchPost[]>(() => initialPosts.map(toSearchPost));
   const [loading, setLoading] = useState(false);
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [onlyFeatured, setOnlyFeatured] = useState(false);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState('');
   const [visible, setVisible] = useState(Math.max(initialPosts.length, pageSize));
   const stateRef = useRef({ metasReady: false, loading: false });
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   // 监听 URL ?q= 变化（header 搜索对话框跳转，同路由也能触发）
   useEffect(() => {
-    const q = searchParams.get("q");
+    const q = searchParams.get('q');
     if (q) setQuery(q);
   }, [searchParams]);
 
@@ -88,8 +82,8 @@ export function PostWall({
     let cancelled = false;
     (async () => {
       try {
-        const r = await fetch("/api/search-index");
-        if (!r.ok) throw new Error("加载失败");
+        const r = await fetch('/api/search-index');
+        if (!r.ok) throw new Error('加载失败');
         const d = await r.json();
         if (!cancelled) {
           setMetas(d.posts?.length ? d.posts : metas);
@@ -110,8 +104,8 @@ export function PostWall({
   useEffect(() => {
     if (!metas.length) return;
     const ms = new MiniSearch<SearchPost>({
-      fields: ["title", "summary", "tags"],
-      storeFields: ["id"],
+      fields: ['title', 'summary', 'tags'],
+      storeFields: ['id'],
       tokenize: cjkTokenize,
       searchOptions: { prefix: true, fuzzy: 0.2 },
     });
@@ -180,7 +174,7 @@ export function PostWall({
       (entries) => {
         if (entries[0]?.isIntersecting) loadMore();
       },
-      { rootMargin: "400px 0px" }, // 提前 400px 预加载，滚动无感知
+      { rootMargin: '400px 0px' }, // 提前 400px 预加载，滚动无感知
     );
     io.observe(el);
     return () => io.disconnect();
@@ -199,12 +193,12 @@ export function PostWall({
       {visibleItems.length === 0 ? (
         <div className="rounded-xl border border-border bg-card p-12 text-center text-muted-foreground">
           {query || selectedTags.length || onlyFeatured
-            ? "没有符合条件的文章，换个筛选试试。"
-            : "还没有已发布的文章，去后台写第一篇吧。"}
+            ? '没有符合条件的文章，换个筛选试试。'
+            : '还没有已发布的文章，去后台写第一篇吧。'}
         </div>
       ) : (
         <div
-          key={`${onlyFeatured ? "featured" : "latest"}-${selectedTags.join(",")}`}
+          key={`${onlyFeatured ? 'featured' : 'latest'}-${selectedTags.join(',')}`}
           className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4 animate-fade-in-up"
         >
           {visibleItems.map((post) => (
@@ -217,14 +211,10 @@ export function PostWall({
       {hasMore && <div ref={sentinelRef} aria-hidden />}
 
       {loading && (
-        <p className="py-8 text-center font-mono text-xs text-muted-foreground">
-          加载中…
-        </p>
+        <p className="py-8 text-center font-mono text-xs text-muted-foreground">加载中…</p>
       )}
       {!hasMore && filtered.length > 0 && (
-        <p className="py-8 text-center font-mono text-xs text-muted-foreground">
-          · 已经到底啦 ·
-        </p>
+        <p className="py-8 text-center font-mono text-xs text-muted-foreground">· 已经到底啦 ·</p>
       )}
     </section>
   );

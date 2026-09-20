@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
-import { GalleryWall } from "@/components/media/gallery-wall";
+import type { Metadata } from 'next';
+import { GalleryWall } from '@/components/media/gallery-wall';
 
 export const metadata: Metadata = {
-  title: "相册",
-  description: "生活图片展示",
+  title: '相册',
+  description: '生活图片展示',
 };
 
 /**

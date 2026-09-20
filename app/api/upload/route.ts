@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth/server";
-import { isAdminUser } from "@/lib/shared";
-import { getPublicStorageDriver, validateImage } from "@/lib/storage/server";
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/server';
+import { isAdminUser } from '@/lib/shared';
+import { getPublicStorageDriver, validateImage } from '@/lib/storage/server';
 
 /** 上传图片 API
  *
@@ -22,15 +22,15 @@ export async function POST(request: NextRequest) {
     // 鉴权：仅管理员可上传
     const session = await auth.api.getSession({ headers: request.headers });
     if (!isAdminUser(session?.user)) {
-      return NextResponse.json({ error: "无权限上传" }, { status: 403 });
+      return NextResponse.json({ error: '无权限上传' }, { status: 403 });
     }
 
     // 解析 multipart/form-data
     const formData = await request.formData();
-    const file = formData.get("file");
+    const file = formData.get('file');
 
     if (!file || !(file instanceof File)) {
-      return NextResponse.json({ error: "未找到上传文件" }, { status: 400 });
+      return NextResponse.json({ error: '未找到上传文件' }, { status: 400 });
     }
 
     // 校验图片格式和大小
@@ -52,8 +52,8 @@ export async function POST(request: NextRequest) {
       storageDriver: driver.name.toUpperCase(),
     });
   } catch (error) {
-    console.error("[upload] 上传失败：", error);
-    const message = error instanceof Error ? error.message : "上传失败";
+    console.error('[upload] 上传失败：', error);
+    const message = error instanceof Error ? error.message : '上传失败';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
@@ -63,15 +63,15 @@ export async function DELETE(request: NextRequest) {
     // 鉴权：仅管理员可删除
     const session = await auth.api.getSession({ headers: request.headers });
     if (!isAdminUser(session?.user)) {
-      return NextResponse.json({ error: "无权限删除" }, { status: 403 });
+      return NextResponse.json({ error: '无权限删除' }, { status: 403 });
     }
 
     // 获取 key 参数
     const { searchParams } = new URL(request.url);
-    const key = searchParams.get("key");
+    const key = searchParams.get('key');
 
     if (!key) {
-      return NextResponse.json({ error: "缺少 key 参数" }, { status: 400 });
+      return NextResponse.json({ error: '缺少 key 参数' }, { status: 400 });
     }
 
     // 调用公开存储驱动删除
@@ -80,8 +80,8 @@ export async function DELETE(request: NextRequest) {
 
     return NextResponse.json({ success: true, key });
   } catch (error) {
-    console.error("[upload] 删除失败：", error);
-    const message = error instanceof Error ? error.message : "删除失败";
+    console.error('[upload] 删除失败：', error);
+    const message = error instanceof Error ? error.message : '删除失败';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

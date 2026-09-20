@@ -11,29 +11,27 @@ export interface SecretRevealState {
 }
 
 export type SecretRevealAction =
-  | { type: "reveal"; key: string; value: string }
-  | { type: "tick" }
-  | { type: "hide" };
+  { type: 'reveal'; key: string; value: string } | { type: 'tick' } | { type: 'hide' };
 
 /** 明文默认展示时长（秒），到期自动隐藏 */
 export const SECRET_REVEAL_SECONDS = 30;
 
 export function secretRevealReducer(
   state: SecretRevealState | null,
-  action: SecretRevealAction
+  action: SecretRevealAction,
 ): SecretRevealState | null {
   switch (action.type) {
-    case "reveal":
+    case 'reveal':
       return {
         key: action.key,
         value: action.value,
         countdown: SECRET_REVEAL_SECONDS,
       };
-    case "tick":
+    case 'tick':
       if (!state) return null;
       if (state.countdown <= 1) return null; // 归零 → 自动隐藏
       return { ...state, countdown: state.countdown - 1 };
-    case "hide":
+    case 'hide':
       return null;
     default:
       return state;

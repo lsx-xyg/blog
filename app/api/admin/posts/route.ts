@@ -1,13 +1,13 @@
-import { NextResponse } from "next/server";
-import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
-import { db } from "@/db";
-import { posts } from "@/db/schema";
-import { listAllPosts, setPostTags } from "@/lib/posts/server";
-import { requireAdmin, adminDenied } from "@/lib/auth/server";
-import { POST_STATUS_VALUES, PostStatus } from "@/lib/types/posts";
+import { NextResponse } from 'next/server';
+import { revalidatePath } from 'next/cache';
+import { eq } from 'drizzle-orm';
+import { db } from '@/db';
+import { posts } from '@/db/schema';
+import { listAllPosts, setPostTags } from '@/lib/posts/server';
+import { requireAdmin, adminDenied } from '@/lib/auth/server';
+import { POST_STATUS_VALUES, PostStatus } from '@/lib/types/posts';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 /** 后台：全部文章（含草稿/定时），最新在前 */
 export async function GET(req: Request) {
@@ -20,16 +20,14 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   if (!(await requireAdmin(req))) return adminDenied();
   const body = await req.json().catch(() => null);
-  if (!body || typeof body.title !== "string" || typeof body.content !== "string") {
-    return NextResponse.json({ error: "title 和 content 必填" }, { status: 400 });
+  if (!body || typeof body.title !== 'string' || typeof body.content !== 'string') {
+    return NextResponse.json({ error: 'title 和 content 必填' }, { status: 400 });
   }
 
-  const status = POST_STATUS_VALUES.includes(body.status)
-    ? body.status
-    : PostStatus.DRAFT;
-  const slug = typeof body.slug === "string" && body.slug.trim() ? body.slug.trim() : null;
+  const status = POST_STATUS_VALUES.includes(body.status) ? body.status : PostStatus.DRAFT;
+  const slug = typeof body.slug === 'string' && body.slug.trim() ? body.slug.trim() : null;
   const tags = Array.isArray(body.tags)
-    ? body.tags.filter((t: unknown) => typeof t === "string")
+    ? body.tags.filter((t: unknown) => typeof t === 'string')
     : [];
 
   // 创建文章 + 写入标签在同一个事务内，保证原子性
@@ -39,9 +37,9 @@ export async function POST(req: Request) {
       .values({
         title: body.title.trim(),
         slug,
-        summary: typeof body.summary === "string" ? body.summary : null,
+        summary: typeof body.summary === 'string' ? body.summary : null,
         content: body.content,
-        coverUrl: typeof body.coverUrl === "string" ? body.coverUrl : null,
+        coverUrl: typeof body.coverUrl === 'string' ? body.coverUrl : null,
         status,
         featured: Boolean(body.featured),
         scheduledAt:
@@ -67,6 +65,6 @@ export async function POST(req: Request) {
     return row;
   });
 
-  revalidatePath("/");
+  revalidatePath('/');
   return NextResponse.json({ post: created }, { status: 201 });
 }

@@ -6,9 +6,13 @@
  *
  * 依赖方向：service.ts → client.ts / system-jobs.ts（单向）
  */
-import type { CronJob } from "@/lib/types/cron";
-import { SYSTEM_JOB_PRESETS, getPresetKeyFromTitle, getSystemJobPreset } from "../shared/system-jobs";
-import { createCronJob, listCronJobs } from "./cron-job-api";
+import type { CronJob } from '@/lib/types/cron';
+import {
+  SYSTEM_JOB_PRESETS,
+  getPresetKeyFromTitle,
+  getSystemJobPreset,
+} from '../shared/system-jobs';
+import { createCronJob, listCronJobs } from './cron-job-api';
 
 /**
  * 创建系统定时任务（按预设创建）
@@ -29,11 +33,8 @@ export async function createSystemJob(
 }
 
 /** 兼容入口：创建定时发布扫描任务（旧调用方） */
-export async function createGlobalPublishJob(
-  siteUrl: string,
-  cronSecret: string,
-): Promise<number> {
-  return createSystemJob("publish_scheduled", { siteUrl, cronSecret });
+export async function createGlobalPublishJob(siteUrl: string, cronSecret: string): Promise<number> {
+  return createSystemJob('publish_scheduled', { siteUrl, cronSecret });
 }
 
 /**
@@ -41,27 +42,20 @@ export async function createGlobalPublishJob(
  * @param presetKey 预设键；缺省取第一个预设（兼容旧的全局发布查找）
  * @returns 任务详情，如果不存在返回 null
  */
-export async function findSystemJob(
-  presetKey?: string,
-): Promise<CronJob | null> {
+export async function findSystemJob(presetKey?: string): Promise<CronJob | null> {
   const jobs = await listCronJobs();
   if (presetKey) {
     const preset = getSystemJobPreset(presetKey);
     if (!preset) return null;
     // 仅按标题中的 [blog:key] 精确匹配（唯一对应）
-    return (
-      jobs.find((j) => getPresetKeyFromTitle(j.title) === presetKey) || null
-    );
+    return jobs.find((j) => getPresetKeyFromTitle(j.title) === presetKey) || null;
   }
-  return (
-    jobs.find((j) => getPresetKeyFromTitle(j.title) === "publish_scheduled") ||
-    null
-  );
+  return jobs.find((j) => getPresetKeyFromTitle(j.title) === 'publish_scheduled') || null;
 }
 
 /** 兼容入口：查找定时发布扫描任务 */
 export async function findGlobalPublishJob(): Promise<CronJob | null> {
-  return findSystemJob("publish_scheduled");
+  return findSystemJob('publish_scheduled');
 }
 
 /** 列出所有系统任务（含状态），供总览一次查询 */
@@ -78,8 +72,7 @@ export async function listSystemJobsStatus(): Promise<
 > {
   const jobs = await listCronJobs();
   return SYSTEM_JOB_PRESETS.map((preset) => {
-    const job =
-      jobs.find((j) => getPresetKeyFromTitle(j.title) === preset.key) || null;
+    const job = jobs.find((j) => getPresetKeyFromTitle(j.title) === preset.key) || null;
     return {
       key: preset.key,
       name: preset.name,

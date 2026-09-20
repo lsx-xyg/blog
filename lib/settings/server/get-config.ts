@@ -8,8 +8,8 @@
  * 缓存层可在本函数预留扩展点（本次不实现）。
  */
 
-import { getSetting } from "./store";
-import { registry, type RegistryKey, type ConfigDef } from "../shared/registry";
+import { getSetting } from './store';
+import { registry, type RegistryKey, type ConfigDef } from '../shared/registry';
 
 /**
  * 读取单个配置，按 env > DB > default 合并，并对敏感字段解密。
@@ -27,14 +27,14 @@ import { registry, type RegistryKey, type ConfigDef } from "../shared/registry";
  */
 export async function getConfig<K extends RegistryKey>(
   name: K,
-): Promise<(typeof registry)[K]["default"]> {
-  const def: ConfigDef<any> = registry[name]; 
+): Promise<(typeof registry)[K]['default']> {
+  const def: ConfigDef<any> = registry[name];
 
   const dbVal = await getSetting<string | boolean | number>(def.key);
 
   let dbResolved: string | boolean | number | null = dbVal;
-  if (def.secret && typeof dbVal === "string" && dbVal) {
-    const { decryptIfAvailable } = await import("@/lib/crypto/server");
+  if (def.secret && typeof dbVal === 'string' && dbVal) {
+    const { decryptIfAvailable } = await import('@/lib/crypto/server');
     dbResolved = decryptIfAvailable(dbVal);
   }
 
@@ -44,10 +44,7 @@ export async function getConfig<K extends RegistryKey>(
   // 注意 DB 值可能是 JSONB 反序列化出的布尔 false / 0 / 空串等 falsy 值，
   // 必须用 null 判断而不能用 || 兜底，否则 falsy 配置会静默落回默认值。
   const raw =
-    envVal ??
-    (dbResolved !== null && dbResolved !== undefined
-      ? dbResolved
-      : def.default);
+    envVal ?? (dbResolved !== null && dbResolved !== undefined ? dbResolved : def.default);
 
   return def.transform ? def.transform(String(raw)) : raw;
 }

@@ -1,32 +1,20 @@
-"use client";
+'use client';
 
-import { useCallback, useEffect, useRef, useState } from "react";
-import { usePathname } from "next/navigation";
-import {
-  OnbordaProvider,
-  Onborda,
-  useOnborda,
-  type Step,
-} from "onborda";
-import { GuideCard } from "./guide-card";
-import type { Guide, GuideProgress } from "@/lib/types/guides";
-import {
-  GuideProgressStatus,
-  normalizeTargetCondition,
-  type GuideStep,
-} from "@/lib/types/guides";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { OnbordaProvider, Onborda, useOnborda, type Step } from 'onborda';
+import { GuideCard } from './guide-card';
+import type { Guide, GuideProgress } from '@/lib/types/guides';
+import { GuideProgressStatus, normalizeTargetCondition, type GuideStep } from '@/lib/types/guides';
 import {
   decideTrigger,
   evaluateAutoTrigger,
   evaluateEventTrigger,
   resolveStepSelectors,
-} from "@/lib/guides/shared/trigger";
-import { buildTourSteps } from "@/lib/guides/shared";
-import {
-  emitGuideTrigger,
-  useGuideTrigger,
-} from "@/lib/guides/client";
-import { GUIDE_TRIGGER_EVENT } from "@/lib/guides/shared";
+} from '@/lib/guides/shared/trigger';
+import { buildTourSteps } from '@/lib/guides/shared';
+import { emitGuideTrigger, useGuideTrigger } from '@/lib/guides/client';
+import { GUIDE_TRIGGER_EVENT } from '@/lib/guides/shared';
 
 /** onborda Tour 结构（index.d.ts 未导出，按 types 目录定义） */
 interface Tour {
@@ -42,24 +30,18 @@ const MISS_THROTTLE_MS = 5 * 60 * 1000;
 const missThrottle = new Map<string, number>();
 
 /** 定位失败上报（前端节流：同 guideKey+stepId 5 分钟内不重复）。失败静默，不影响引导。 */
-async function reportMiss(
-  guideKey: string,
-  step: GuideStep,
-  page: string
-): Promise<void> {
+async function reportMiss(guideKey: string, step: GuideStep, page: string): Promise<void> {
   const sels = resolveStepSelectors(step);
   if (sels.length === 0) return;
   const key = `${guideKey}:${step.id}`;
   const last = missThrottle.get(key) ?? 0;
   if (Date.now() - last < MISS_THROTTLE_MS) return;
   missThrottle.set(key, Date.now());
-  const source = step.selector
-    ? (step.selectorMeta?.source ?? "unknown")
-    : "data-guide";
+  const source = step.selector ? (step.selectorMeta?.source ?? 'unknown') : 'data-guide';
   try {
-    await fetch("/api/admin/guides/report-miss", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    await fetch('/api/admin/guides/report-miss', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         guideKey,
         stepId: step.id,
@@ -96,10 +78,7 @@ function queryFirst(selectors: string[]): Element | null {
 }
 
 /** 等待元素出现（MutationObserver + 超时，不轮询）；超时返回 null */
-function waitForElement(
-  selectors: string[],
-  timeout = 5000,
-): Promise<Element | null> {
+function waitForElement(selectors: string[], timeout = 5000): Promise<Element | null> {
   const existing = queryFirst(selectors);
   if (existing) return Promise.resolve(existing);
   return new Promise((resolve) => {
@@ -131,15 +110,15 @@ function waitForElement(
  */
 
 function getAdminPath() {
-  if (typeof window === "undefined") return "dashboard";
-  return window.location.pathname.split("/")[1] || "dashboard";
+  if (typeof window === 'undefined') return 'dashboard';
+  return window.location.pathname.split('/')[1] || 'dashboard';
 }
 
 /** 从 pathname 取后台相对页面：/dashboard/cron → /cron；/dashboard → / */
 function adminPageFromPathname(pathname: string): string {
-  const parts = pathname.split("/").filter(Boolean);
-  if (parts.length <= 1) return "/";
-  return `/${parts.slice(1).join("/")}`;
+  const parts = pathname.split('/').filter(Boolean);
+  if (parts.length <= 1) return '/';
+  return `/${parts.slice(1).join('/')}`;
 }
 
 /** 安全 closest：非法选择器（如裸锚点名当作 tag）静默返回 null */
@@ -161,9 +140,7 @@ export function GuideManagerInner({ children }: { children: React.ReactNode }) {
 
 function GuideEngine({ children }: { children: React.ReactNode }) {
   const [guides, setGuides] = useState<Guide[]>([]);
-  const [progressMap, setProgressMap] = useState<
-    Record<string, GuideProgress>
-  >({});
+  const [progressMap, setProgressMap] = useState<Record<string, GuideProgress>>({});
   const [tourSteps, setTourSteps] = useState<Tour[]>([]);
   const { startOnborda, closeOnborda, setCurrentStep, currentTour, currentStep, isOnbordaVisible } =
     useOnborda();
@@ -175,15 +152,15 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
   /** 上报引导进度 */
   const reportProgress = useCallback(
     (guideKey: string, payload: { status?: GuideProgressStatus; currentStep?: number }) => {
-      fetch("/api/admin/guides/progress", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      fetch('/api/admin/guides/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ guideKey, ...payload }),
       }).catch(() => {
         /* 静默：上报失败不影响引导体验 */
       });
     },
-    []
+    [],
   );
 
   // 1. 加载引导配置与用户进度
@@ -192,8 +169,8 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
     (async () => {
       try {
         const [gRes, pRes] = await Promise.all([
-          fetch("/api/admin/guides?status=published"),
-          fetch("/api/admin/guides/progress"),
+          fetch('/api/admin/guides?status=published'),
+          fetch('/api/admin/guides/progress'),
         ]);
         if (!cancelled) {
           if (gRes.ok) {
@@ -203,9 +180,7 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
           if (pRes.ok) {
             const d = await pRes.json();
             setProgressMap(
-              Object.fromEntries(
-                (d.progress ?? []).map((p: GuideProgress) => [p.guideKey, p])
-              )
+              Object.fromEntries((d.progress ?? []).map((p: GuideProgress) => [p.guideKey, p])),
             );
           }
         }
@@ -230,7 +205,7 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
         resumeIfInProgress?: boolean;
         /** force：强制重新开始（无视进度抑制） */
         force?: boolean;
-      }
+      },
     ) => {
       // 已有引导在显示 → 不叠加
       if (isOnbordaVisible) return;
@@ -249,13 +224,13 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
       // 含服务端条件（click_count / user_age_days）→ 调 evaluate API 精筛
       if (decision.needsServer) {
         try {
-          const res = await fetch("/api/admin/guides/evaluate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
+          const res = await fetch('/api/admin/guides/evaluate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               guideKey: guide.guideKey,
-              event: ctx.event ?? "",
-              target: ctx.target ?? "",
+              event: ctx.event ?? '',
+              target: ctx.target ?? '',
               page: ctx.page,
             }),
           });
@@ -278,9 +253,7 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
 
       // 页面加载场景：首步未渲染则等待出现（事件触发的步骤按自身配置定位，不指向触发元素）
       if (!queryFirst(resolveStepSelectors(guide.steps[0]))) {
-        const firstEl = await waitForElement(
-          resolveStepSelectors(guide.steps[0])
-        );
+        const firstEl = await waitForElement(resolveStepSelectors(guide.steps[0]));
         if (!firstEl) {
           // 等待超时仍未出现 → 首步定位失败，记录
           void reportMiss(guide.guideKey, guide.steps[0], adminPath);
@@ -305,12 +278,12 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
         }, 120);
       }
     },
-    [isOnbordaVisible, reportProgress, setCurrentStep, startOnborda]
+    [isOnbordaVisible, reportProgress, setCurrentStep, startOnborda],
   );
 
   // 2. 监听触发事件（行为触发：点击带 data-guide 的元素）——类型化总线收口
   useGuideTrigger(async (payload) => {
-    const page = payload.page ?? "";
+    const page = payload.page ?? '';
     // 匹配 published 引导：本地先按 event_click + page 条件粗筛
     const candidates = guides
       .filter((g) =>
@@ -318,7 +291,7 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
           page,
           event: payload.event,
           target: payload.target,
-        })
+        }),
       )
       .sort((a, b) => a.priority - b.priority);
     const guide = candidates[0];
@@ -348,9 +321,7 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
 
     // 续接优先：有 in_progress 引导 → 恢复现场
     const inProgress = candidates.find(
-      (g) =>
-        progressRef.current[g.guideKey]?.status ===
-        GuideProgressStatus.IN_PROGRESS
+      (g) => progressRef.current[g.guideKey]?.status === GuideProgressStatus.IN_PROGRESS,
     );
     void maybeStartGuide(inProgress ?? candidates[0], {
       page,
@@ -368,13 +339,12 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
         const tc = normalizeTargetCondition(g.targetCondition);
         const conditions = tc?.conditions ?? [];
         for (const c of conditions) {
-          if (!c.field.startsWith("event_click")) continue;
-          const v = String(c.value ?? "");
+          if (!c.field.startsWith('event_click')) continue;
+          const v = String(c.value ?? '');
           if (!v) continue;
           // 两种都试：data-guide 锚点名（埋点）与任意 CSS 选择器（拾取生成）
           const matched =
-            safeClosest(el, `[data-guide="${v}"]`) !== null ||
-            safeClosest(el, v) !== null;
+            safeClosest(el, `[data-guide="${v}"]`) !== null || safeClosest(el, v) !== null;
           if (matched) {
             emitGuideTrigger({
               event: GUIDE_TRIGGER_EVENT,
@@ -386,8 +356,8 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
         }
       }
     };
-    document.addEventListener("click", onClickCapture, true);
-    return () => document.removeEventListener("click", onClickCapture, true);
+    document.addEventListener('click', onClickCapture, true);
+    return () => document.removeEventListener('click', onClickCapture, true);
   }, [guides, pathname, isOnbordaVisible]);
 
   // 3. 步骤变化上报进度（进入/切换步骤时）
@@ -405,8 +375,7 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const handleComplete = (e: Event) => {
       const guideKey =
-        ((e as CustomEvent).detail?.guideKey as string | undefined) ??
-        currentTourRef.current;
+        ((e as CustomEvent).detail?.guideKey as string | undefined) ?? currentTourRef.current;
       if (!guideKey) return;
       reportProgress(guideKey, { status: GuideProgressStatus.COMPLETED });
       setProgressMap((prev) => ({
@@ -417,27 +386,21 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
     };
     const handleSkip = (e: Event) => {
       const guideKey =
-        ((e as CustomEvent).detail?.guideKey as string | undefined) ??
-        currentTourRef.current;
+        ((e as CustomEvent).detail?.guideKey as string | undefined) ?? currentTourRef.current;
       if (!guideKey) return;
       reportProgress(guideKey, { status: GuideProgressStatus.SKIPPED });
       closeOnborda();
     };
-    window.addEventListener("guide:complete", handleComplete);
-    window.addEventListener("guide:skip", handleSkip);
+    window.addEventListener('guide:complete', handleComplete);
+    window.addEventListener('guide:skip', handleSkip);
     return () => {
-      window.removeEventListener("guide:complete", handleComplete);
-      window.removeEventListener("guide:skip", handleSkip);
+      window.removeEventListener('guide:complete', handleComplete);
+      window.removeEventListener('guide:skip', handleSkip);
     };
   }, [reportProgress, closeOnborda]);
 
   return (
-    <Onborda
-      steps={tourSteps}
-      cardComponent={GuideCard}
-      shadowRgb="0, 0, 0"
-      shadowOpacity="0.28"
-    >
+    <Onborda steps={tourSteps} cardComponent={GuideCard} shadowRgb="0, 0, 0" shadowOpacity="0.28">
       {children}
     </Onborda>
   );

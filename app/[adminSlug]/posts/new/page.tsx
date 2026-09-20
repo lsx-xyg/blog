@@ -13,21 +13,17 @@
  * - 这样文章列表页首屏不包含编辑器代码，加载速度更快
  * - 编辑器页面有独立的 URL，可以分享、刷新等
  */
-import { notFound } from "next/navigation";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth/server";
-import { getAdminPathAsync } from "@/lib/admin/server";
-import { isAdminUser } from "@/lib/shared";
-import { PostEditor } from "@/components/posts/post-editor";
-import { AdminBreadcrumb } from "@/components/admin/admin-breadcrumb";
+import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth/server';
+import { getAdminPathAsync } from '@/lib/admin/server';
+import { isAdminUser } from '@/lib/shared';
+import { PostEditor } from '@/components/posts/post-editor';
+import { AdminBreadcrumb } from '@/components/admin/admin-breadcrumb';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
-export default async function NewPostPage({
-  params,
-}: {
-  params: Promise<{ adminSlug: string }>;
-}) {
+export default async function NewPostPage({ params }: { params: Promise<{ adminSlug: string }> }) {
   const { adminSlug } = await params;
   const adminPath = await getAdminPathAsync();
   if (adminSlug !== adminPath) notFound();
@@ -40,7 +36,7 @@ export default async function NewPostPage({
       <AdminBreadcrumb
         current="新建文章"
         adminPath={adminPath}
-        parent={{ label: "文章管理", href: `/${adminPath}/posts` }}
+        parent={{ label: '文章管理', href: `/${adminPath}/posts` }}
       />
       <PostEditor postId={null} adminPath={adminPath} />
     </div>

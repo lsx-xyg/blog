@@ -1,5 +1,5 @@
-import type { NextConfig } from "next";
-import withBundleAnalyzer from "@next/bundle-analyzer";
+import type { NextConfig } from 'next';
+import withBundleAnalyzer from '@next/bundle-analyzer';
 
 /**
  * Bundle Analyzer 配置
@@ -17,7 +17,7 @@ import withBundleAnalyzer from "@next/bundle-analyzer";
  * 参考：https://www.npmjs.com/package/@next/bundle-analyzer
  */
 const bundleAnalyzer = withBundleAnalyzer({
-  enabled: process.env.ANALYZE === "true",
+  enabled: process.env.ANALYZE === 'true',
 });
 
 /**
@@ -35,10 +35,7 @@ const bundleAnalyzer = withBundleAnalyzer({
  * 注意：deploymentId 必须每次部署唯一，否则检测不到版本变化。
  * 参考：https://nextjs.org/docs/app/api-reference/config/next-config-js/deploymentId
  */
-const deploymentId =
-  process.env.VERCEL_DEPLOYMENT_ID ||
-  process.env.VERCEL_GIT_COMMIT_SHA ||
-  "dev";
+const deploymentId = process.env.VERCEL_DEPLOYMENT_ID || process.env.VERCEL_GIT_COMMIT_SHA || 'dev';
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -64,7 +61,7 @@ const nextConfig: NextConfig = {
      *
      * 参考：https://nextjs.org/docs/app/api-reference/next-config-js/optimizePackageImports
      */
-    optimizePackageImports: ["lucide-react"],
+    optimizePackageImports: ['lucide-react'],
   },
 
   /**
@@ -84,23 +81,23 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: "https",
-        hostname: "raw.githubusercontent.com",
-        pathname: "**",
+        protocol: 'https',
+        hostname: 'raw.githubusercontent.com',
+        pathname: '**',
       },
       {
-        protocol: "https",
-        hostname: "cdn.jsdelivr.net",
-        pathname: "**",
+        protocol: 'https',
+        hostname: 'cdn.jsdelivr.net',
+        pathname: '**',
       },
       {
-        protocol: "https",
-        hostname: "**",
-        pathname: "**",
+        protocol: 'https',
+        hostname: '**',
+        pathname: '**',
       },
     ],
     // 支持的图片格式，优先 AVIF，然后 WebP
-    formats: ["image/avif", "image/webp"],
+    formats: ['image/avif', 'image/webp'],
     // 设备尺寸，用于生成响应式图片
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     // 图片尺寸，用于生成固定尺寸的图片
@@ -126,42 +123,42 @@ const nextConfig: NextConfig = {
     return [
       {
         // HTML 页面：不缓存，确保用户总是能拿到最新的 HTML
-        source: "/:path*",
+        source: '/:path*',
         headers: [
           {
-            key: "Cache-Control",
-            value: "public, max-age=0, must-revalidate",
+            key: 'Cache-Control',
+            value: 'public, max-age=0, must-revalidate',
           },
         ],
       },
       {
         // 带哈希的静态资源（JS/CSS/字体等）：长期缓存 1 年，immutable
         // 因为文件名带哈希，内容变了文件名也会变，所以可以安全地长期缓存
-        source: "/_next/static/:path*",
+        source: '/_next/static/:path*',
         headers: [
           {
-            key: "Cache-Control",
-            value: "public, max-age=31536000, immutable",
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
           },
         ],
       },
       {
         // 图片资源：缓存 1 天
-        source: "/uploads/:path*",
+        source: '/uploads/:path*',
         headers: [
           {
-            key: "Cache-Control",
-            value: "public, max-age=86400",
+            key: 'Cache-Control',
+            value: 'public, max-age=86400',
           },
         ],
       },
       {
         // API 路由：不缓存
-        source: "/api/:path*",
+        source: '/api/:path*',
         headers: [
           {
-            key: "Cache-Control",
-            value: "no-store, no-cache, must-revalidate",
+            key: 'Cache-Control',
+            value: 'no-store, no-cache, must-revalidate',
           },
         ],
       },

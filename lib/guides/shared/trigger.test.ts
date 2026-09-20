@@ -1,25 +1,32 @@
-import { describe, expect, it } from "vitest";
-import type { Guide, GuideProgress } from "@/lib/types/guides";
-import { GuideProgressStatus } from "@/lib/types/guides";
+import { describe, expect, it } from 'vitest';
+import type { Guide, GuideProgress } from '@/lib/types/guides';
+import { GuideProgressStatus } from '@/lib/types/guides';
 import {
   decideTrigger,
   evaluateAutoTrigger,
   evaluateEventTrigger,
   isSkippedExpired,
   resolveStepSelectors,
-} from "./trigger";
+} from './trigger';
 
 function makeGuide(overrides: Partial<Guide> = {}): Guide {
   return {
-    id: "g1",
-    guideKey: "test_v1",
-    title: "测试引导",
-    page: "/cron",
+    id: 'g1',
+    guideKey: 'test_v1',
+    title: '测试引导',
+    page: '/cron',
     steps: [
-      { id: "s1", target: "cron-save", title: "步骤1", content: "内容1" },
-      { id: "s2", target: "", title: "步骤2", content: "内容2", selector: "button.save", selectorMeta: { source: "class", generatedAt: "2026-01-01" } },
+      { id: 's1', target: 'cron-save', title: '步骤1', content: '内容1' },
+      {
+        id: 's2',
+        target: '',
+        title: '步骤2',
+        content: '内容2',
+        selector: 'button.save',
+        selectorMeta: { source: 'class', generatedAt: '2026-01-01' },
+      },
     ],
-    status: "published",
+    status: 'published',
     targetCondition: null,
     priority: 0,
     createdAt: new Date(),
@@ -30,9 +37,9 @@ function makeGuide(overrides: Partial<Guide> = {}): Guide {
 
 function makeProgress(status: GuideProgressStatus, currentStep = 0): GuideProgress {
   return {
-    id: "p1",
-    userId: "u1",
-    guideKey: "test_v1",
+    id: 'p1',
+    userId: 'u1',
+    guideKey: 'test_v1',
     status,
     currentStep,
     startedAt: null,
@@ -41,155 +48,151 @@ function makeProgress(status: GuideProgressStatus, currentStep = 0): GuideProgre
   } as GuideProgress;
 }
 
-describe("resolveStepSelectors", () => {
-  it("data-guide 埋点优先，selector 兜底", () => {
-    expect(resolveStepSelectors(makeGuide().steps[0])).toEqual([
-      '[data-guide="cron-save"]',
-    ]);
-    expect(resolveStepSelectors(makeGuide().steps[1])).toEqual([
-      "button.save",
-    ]);
+describe('resolveStepSelectors', () => {
+  it('data-guide 埋点优先，selector 兜底', () => {
+    expect(resolveStepSelectors(makeGuide().steps[0])).toEqual(['[data-guide="cron-save"]']);
+    expect(resolveStepSelectors(makeGuide().steps[1])).toEqual(['button.save']);
   });
 });
 
-describe("evaluateEventTrigger（行为触发粗筛）", () => {
-  it("event_click + page 用 and 时两者都满足才触发", () => {
+describe('evaluateEventTrigger（行为触发粗筛）', () => {
+  it('event_click + page 用 and 时两者都满足才触发', () => {
     const g = makeGuide({
       targetCondition: {
-        logic: "and",
+        logic: 'and',
         conditions: [
-          { field: "event_click", op: "eq", value: "cron-save" },
-          { field: "page", op: "eq", value: "/cron" },
+          { field: 'event_click', op: 'eq', value: 'cron-save' },
+          { field: 'page', op: 'eq', value: '/cron' },
         ],
       },
     });
     expect(
-      evaluateEventTrigger(g, { page: "/cron", event: "event_click", target: "cron-save" })
+      evaluateEventTrigger(g, { page: '/cron', event: 'event_click', target: 'cron-save' }),
     ).toBe(true);
     expect(
-      evaluateEventTrigger(g, { page: "/posts", event: "event_click", target: "cron-save" })
+      evaluateEventTrigger(g, { page: '/posts', event: 'event_click', target: 'cron-save' }),
     ).toBe(false);
-    expect(
-      evaluateEventTrigger(g, { page: "/cron", event: "event_click", target: "other" })
-    ).toBe(false);
+    expect(evaluateEventTrigger(g, { page: '/cron', event: 'event_click', target: 'other' })).toBe(
+      false,
+    );
   });
 
-  it("or 逻辑任一满足即触发", () => {
+  it('or 逻辑任一满足即触发', () => {
     const g = makeGuide({
       targetCondition: {
-        logic: "or",
+        logic: 'or',
         conditions: [
-          { field: "event_click", op: "eq", value: "cron-save" },
-          { field: "page", op: "eq", value: "/settings" },
+          { field: 'event_click', op: 'eq', value: 'cron-save' },
+          { field: 'page', op: 'eq', value: '/settings' },
         ],
       },
     });
     // 点击匹配，即使页面不匹配
     expect(
-      evaluateEventTrigger(g, { page: "/cron", event: "event_click", target: "cron-save" })
+      evaluateEventTrigger(g, { page: '/cron', event: 'event_click', target: 'cron-save' }),
     ).toBe(true);
     // 页面匹配也会触发（粗筛阶段）
     expect(
-      evaluateEventTrigger(g, { page: "/settings", event: "event_click", target: "none" })
+      evaluateEventTrigger(g, { page: '/settings', event: 'event_click', target: 'none' }),
     ).toBe(true);
   });
 
-  it("无本地可判条件（只含 click_count）→ 不粗筛通过", () => {
+  it('无本地可判条件（只含 click_count）→ 不粗筛通过', () => {
     const g = makeGuide({
       targetCondition: {
-        logic: "and",
-        conditions: [{ field: "click_count.cron-save", op: "gte", value: 1 }],
+        logic: 'and',
+        conditions: [{ field: 'click_count.cron-save', op: 'gte', value: 1 }],
       },
     });
     expect(
-      evaluateEventTrigger(g, { page: "/cron", event: "event_click", target: "cron-save" })
+      evaluateEventTrigger(g, { page: '/cron', event: 'event_click', target: 'cron-save' }),
     ).toBe(false);
   });
 });
 
-describe("evaluateAutoTrigger（页面加载自动触发）", () => {
-  it("and 含 event_click → 不自动触发", () => {
+describe('evaluateAutoTrigger（页面加载自动触发）', () => {
+  it('and 含 event_click → 不自动触发', () => {
     const g = makeGuide({
       targetCondition: {
-        logic: "and",
+        logic: 'and',
         conditions: [
-          { field: "event_click", op: "eq", value: "cron-save" },
-          { field: "page", op: "eq", value: "/cron" },
+          { field: 'event_click', op: 'eq', value: 'cron-save' },
+          { field: 'page', op: 'eq', value: '/cron' },
         ],
       },
     });
-    expect(evaluateAutoTrigger(g, "/cron")).toBe(false);
+    expect(evaluateAutoTrigger(g, '/cron')).toBe(false);
   });
 
-  it("or 含 event_click → 去掉 event_click 后剩余条件任一满足即自动触发", () => {
+  it('or 含 event_click → 去掉 event_click 后剩余条件任一满足即自动触发', () => {
     const g = makeGuide({
       targetCondition: {
-        logic: "or",
+        logic: 'or',
         conditions: [
-          { field: "event_click", op: "eq", value: "cron-save" },
-          { field: "page", op: "eq", value: "/cron" },
+          { field: 'event_click', op: 'eq', value: 'cron-save' },
+          { field: 'page', op: 'eq', value: '/cron' },
         ],
       },
     });
-    expect(evaluateAutoTrigger(g, "/cron")).toBe(true);
-    expect(evaluateAutoTrigger(g, "/posts")).toBe(false);
+    expect(evaluateAutoTrigger(g, '/cron')).toBe(true);
+    expect(evaluateAutoTrigger(g, '/posts')).toBe(false);
   });
 
-  it("无 event_click → 按 guide.page 或 page 条件匹配", () => {
+  it('无 event_click → 按 guide.page 或 page 条件匹配', () => {
     const g = makeGuide({
       targetCondition: {
-        logic: "and",
-        conditions: [{ field: "page", op: "eq", value: "/settings" }],
+        logic: 'and',
+        conditions: [{ field: 'page', op: 'eq', value: '/settings' }],
       },
     });
     // guide.page = /cron 或 条件 page = /settings 任一命中即触发（原组件语义）
-    expect(evaluateAutoTrigger(g, "/settings")).toBe(true);
-    expect(evaluateAutoTrigger(g, "/cron")).toBe(true);
-    expect(evaluateAutoTrigger(g, "/posts")).toBe(false);
+    expect(evaluateAutoTrigger(g, '/settings')).toBe(true);
+    expect(evaluateAutoTrigger(g, '/cron')).toBe(true);
+    expect(evaluateAutoTrigger(g, '/posts')).toBe(false);
   });
 
-  it("无条件 → 按 guide.page 字段匹配", () => {
+  it('无条件 → 按 guide.page 字段匹配', () => {
     const g = makeGuide({ targetCondition: null });
-    expect(evaluateAutoTrigger(g, "/cron")).toBe(true);
-    expect(evaluateAutoTrigger(g, "/posts")).toBe(false);
+    expect(evaluateAutoTrigger(g, '/cron')).toBe(true);
+    expect(evaluateAutoTrigger(g, '/posts')).toBe(false);
   });
 });
 
-describe("decideTrigger（综合决策）", () => {
-  it("completed 永久抑制", () => {
+describe('decideTrigger（综合决策）', () => {
+  it('completed 永久抑制', () => {
     const g = makeGuide({ targetCondition: null });
     const d = decideTrigger(g, {
-      page: "/cron",
+      page: '/cron',
       progress: makeProgress(GuideProgressStatus.COMPLETED),
     });
     expect(d.shouldTrigger).toBe(false);
   });
 
-  it("skipped 冷却期内抑制、过期后放行", () => {
+  it('skipped 冷却期内抑制、过期后放行', () => {
     const g = makeGuide({ targetCondition: null });
     const fresh = makeProgress(GuideProgressStatus.SKIPPED);
     fresh.updatedAt = new Date(Date.now() - 1_000).toISOString(); // 1 秒前
-    expect(decideTrigger(g, { page: "/cron", progress: fresh }).shouldTrigger).toBe(false);
+    expect(decideTrigger(g, { page: '/cron', progress: fresh }).shouldTrigger).toBe(false);
 
     const old = makeProgress(GuideProgressStatus.SKIPPED);
     old.updatedAt = new Date(Date.now() - 8 * 86_400_000).toISOString(); // 8 天前
-    expect(decideTrigger(g, { page: "/cron", progress: old }).shouldTrigger).toBe(true);
+    expect(decideTrigger(g, { page: '/cron', progress: old }).shouldTrigger).toBe(true);
   });
 
-  it("事件触发：粗筛通过 + needsServer=false + resumeStep 0", () => {
+  it('事件触发：粗筛通过 + needsServer=false + resumeStep 0', () => {
     const g = makeGuide({
       targetCondition: {
-        logic: "and",
+        logic: 'and',
         conditions: [
-          { field: "event_click", op: "eq", value: "cron-save" },
-          { field: "page", op: "eq", value: "/cron" },
+          { field: 'event_click', op: 'eq', value: 'cron-save' },
+          { field: 'page', op: 'eq', value: '/cron' },
         ],
       },
     });
     const d = decideTrigger(g, {
-      page: "/cron",
-      event: "event_click",
-      target: "cron-save",
+      page: '/cron',
+      event: 'event_click',
+      target: 'cron-save',
     });
     expect(d.shouldTrigger).toBe(true);
     expect(d.needsServer).toBe(false);
@@ -197,10 +200,10 @@ describe("decideTrigger（综合决策）", () => {
     expect(d.resumeStep).toBe(0);
   });
 
-  it("页面加载：续接 in_progress 的 currentStep", () => {
+  it('页面加载：续接 in_progress 的 currentStep', () => {
     const g = makeGuide({ targetCondition: null });
     const d = decideTrigger(g, {
-      page: "/cron",
+      page: '/cron',
       resumeIfInProgress: true,
       progress: makeProgress(GuideProgressStatus.IN_PROGRESS, 1),
     });
@@ -208,26 +211,26 @@ describe("decideTrigger（综合决策）", () => {
     expect(d.resumeStep).toBe(1);
   });
 
-  it("含 click_count → needsServer=true", () => {
+  it('含 click_count → needsServer=true', () => {
     const g = makeGuide({
       targetCondition: {
-        logic: "and",
-        conditions: [{ field: "click_count.cron-save", op: "gte", value: 1 }],
+        logic: 'and',
+        conditions: [{ field: 'click_count.cron-save', op: 'gte', value: 1 }],
       },
     });
-    const d = decideTrigger(g, { page: "/cron" });
+    const d = decideTrigger(g, { page: '/cron' });
     // guide.page 命中 → 自动触发，但需服务端精筛 click_count
     expect(d.shouldTrigger).toBe(true);
     expect(d.needsServer).toBe(true);
   });
 
-  it("skipped 冷却期内：事件触发被抑制，force=true 时强制重新触发", () => {
+  it('skipped 冷却期内：事件触发被抑制，force=true 时强制重新触发', () => {
     const g = makeGuide({
       targetCondition: {
-        logic: "and",
+        logic: 'and',
         conditions: [
-          { field: "event_click", op: "eq", value: "reveal-view" },
-          { field: "page", op: "eq", value: "/settings" },
+          { field: 'event_click', op: 'eq', value: 'reveal-view' },
+          { field: 'page', op: 'eq', value: '/settings' },
         ],
       },
     });
@@ -235,37 +238,33 @@ describe("decideTrigger（综合决策）", () => {
     // 未 force：抑制
     expect(
       decideTrigger(g, {
-        page: "/settings",
-        event: "event_click",
-        target: "reveal-view",
+        page: '/settings',
+        event: 'event_click',
+        target: 'reveal-view',
         progress,
-      }).shouldTrigger
+      }).shouldTrigger,
     ).toBe(false);
     // force：强制触发
     const d = decideTrigger(g, {
-      page: "/settings",
-      event: "event_click",
-      target: "reveal-view",
+      page: '/settings',
+      event: 'event_click',
+      target: 'reveal-view',
       progress,
       force: true,
     });
     expect(d.shouldTrigger).toBe(true);
   });
 
-  it("completed：默认永久抑制，force=true 可重新触发", () => {
+  it('completed：默认永久抑制，force=true 可重新触发', () => {
     const g = makeGuide({ targetCondition: null });
     const progress = makeProgress(GuideProgressStatus.COMPLETED);
-    expect(
-      decideTrigger(g, { page: "/cron", progress }).shouldTrigger
-    ).toBe(false);
-    expect(
-      decideTrigger(g, { page: "/cron", progress, force: true }).shouldTrigger
-    ).toBe(true);
+    expect(decideTrigger(g, { page: '/cron', progress }).shouldTrigger).toBe(false);
+    expect(decideTrigger(g, { page: '/cron', progress, force: true }).shouldTrigger).toBe(true);
   });
 });
 
-describe("isSkippedExpired", () => {
-  it("非 skipped 或无记录返回 false", () => {
+describe('isSkippedExpired', () => {
+  it('非 skipped 或无记录返回 false', () => {
     expect(isSkippedExpired(undefined)).toBe(false);
     expect(isSkippedExpired(makeProgress(GuideProgressStatus.COMPLETED))).toBe(false);
   });

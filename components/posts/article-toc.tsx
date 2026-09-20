@@ -1,16 +1,10 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import { List, Copy, Check } from "lucide-react";
-import type { TocItem } from "remark-flexible-toc";
-import { scrollToElement } from "@/lib/shared/client";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { useEffect, useState } from 'react';
+import { List, Copy, Check } from 'lucide-react';
+import type { TocItem } from 'remark-flexible-toc';
+import { scrollToElement } from '@/lib/shared/client';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 /** 文章目录（TOC）组件：
  * - PC端：右侧固定目录（top-24 固定位置，不垂直居中），标题'目录'+复制图标
@@ -20,11 +14,11 @@ import {
  * - IntersectionObserver 跟踪当前阅读位置
  */
 export function ArticleToc({ items }: { items: TocItem[] }) {
-  const [activeId, setActiveId] = useState<string>("");
+  const [activeId, setActiveId] = useState<string>('');
   const [copied, setCopied] = useState(false);
 
   // 把 href 转成 id（去掉 # 前缀）
-  const getId = (item: TocItem) => item.href?.replace(/^#/, "") ?? "";
+  const getId = (item: TocItem) => item.href?.replace(/^#/, '') ?? '';
 
   useEffect(() => {
     if (items.length === 0) return;
@@ -38,7 +32,7 @@ export function ArticleToc({ items }: { items: TocItem[] }) {
           setActiveId(visible[0].target.id);
         }
       },
-      { rootMargin: "-20% 0px -70% 0px" }
+      { rootMargin: '-20% 0px -70% 0px' },
     );
 
     items.forEach((item) => {
@@ -75,11 +69,13 @@ export function ArticleToc({ items }: { items: TocItem[] }) {
             <button
               type="button"
               onClick={() => scrollTo(id)}
-              className={`text-left transition-colors leading-relaxed ${item.depth === 1 ? "pl-0" : item.depth === 2 ? "pl-4" : "pl-8"
-                } ${activeId === id
-                  ? "font-bold text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-                }`}
+              className={`text-left transition-colors leading-relaxed ${
+                item.depth === 1 ? 'pl-0' : item.depth === 2 ? 'pl-4' : 'pl-8'
+              } ${
+                activeId === id
+                  ? 'font-bold text-foreground'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
             >
               {item.value}
             </button>

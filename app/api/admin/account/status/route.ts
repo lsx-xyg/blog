@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
-import { auth } from "@/lib/auth/server";
-import { isAdminUser } from "@/lib/shared";
-import { db } from "@/db";
-import { accounts } from "@/db/schema";
+import { NextResponse } from 'next/server';
+import { and, eq } from 'drizzle-orm';
+import { auth } from '@/lib/auth/server';
+import { isAdminUser } from '@/lib/shared';
+import { db } from '@/db';
+import { accounts } from '@/db/schema';
 
 /**
  * 管理员账号密码状态查询
@@ -18,18 +18,13 @@ import { accounts } from "@/db/schema";
 export async function GET(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session || !isAdminUser(session.user)) {
-    return NextResponse.json({ error: "未授权" }, { status: 401 });
+    return NextResponse.json({ error: '未授权' }, { status: 401 });
   }
 
   const [credentialAccount] = await db
     .select({ password: accounts.password })
     .from(accounts)
-    .where(
-      and(
-        eq(accounts.userId, session.user.id),
-        eq(accounts.providerId, "credential")
-      )
-    );
+    .where(and(eq(accounts.userId, session.user.id), eq(accounts.providerId, 'credential')));
 
   return NextResponse.json({
     hasPassword: Boolean(credentialAccount?.password),

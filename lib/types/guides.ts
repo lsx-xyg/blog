@@ -6,23 +6,22 @@
  */
 
 export const GuideStatus = {
-  DRAFT: "draft",
-  PUBLISHED: "published",
-  ARCHIVED: "archived",
+  DRAFT: 'draft',
+  PUBLISHED: 'published',
+  ARCHIVED: 'archived',
 } as const;
 export type GuideStatus = (typeof GuideStatus)[keyof typeof GuideStatus];
 export const GUIDE_STATUS_VALUES = Object.values(GuideStatus) as GuideStatus[];
 
 export const GuideProgressStatus = {
-  NOT_STARTED: "not_started",
-  IN_PROGRESS: "in_progress",
-  COMPLETED: "completed",
-  SKIPPED: "skipped",
+  NOT_STARTED: 'not_started',
+  IN_PROGRESS: 'in_progress',
+  COMPLETED: 'completed',
+  SKIPPED: 'skipped',
 } as const;
-export type GuideProgressStatus =
-  (typeof GuideProgressStatus)[keyof typeof GuideProgressStatus];
+export type GuideProgressStatus = (typeof GuideProgressStatus)[keyof typeof GuideProgressStatus];
 export const GUIDE_PROGRESS_STATUS_VALUES = Object.values(
-  GuideProgressStatus
+  GuideProgressStatus,
 ) as GuideProgressStatus[];
 
 /** 引导跳过（skipped）后的冷却期（天），超过后允许重新触发；completed 永久抑制 */
@@ -35,7 +34,7 @@ export interface GuideStep {
   target: string;
   title: string;
   content: string;
-  placement?: "top" | "bottom" | "left" | "right";
+  placement?: 'top' | 'bottom' | 'left' | 'right';
   /** 下一步跳转路由（相对后台路径，如 /account），onborda 跨页步骤使用 */
   nextRoute?: string;
   /** 动态选择器（拾取生成）：data-guide 未命中时的兜底定位 */
@@ -43,7 +42,7 @@ export interface GuideStep {
   /** 选择器元信息（生成来源 + 时间，供失效监控/自动修复参考） */
   selectorMeta?: {
     /** 生成来源：id / semantic / class / path */
-    source: "id" | "semantic" | "class" | "path";
+    source: 'id' | 'semantic' | 'class' | 'path';
     /** 生成时间 ISO 字符串 */
     generatedAt: string;
   };
@@ -51,16 +50,13 @@ export interface GuideStep {
 
 /** 条件运算符 */
 export const GuideConditionOp = {
-  EQ: "eq",
-  GTE: "gte",
-  LTE: "lte",
-  EXISTS: "exists",
+  EQ: 'eq',
+  GTE: 'gte',
+  LTE: 'lte',
+  EXISTS: 'exists',
 } as const;
-export type GuideConditionOp =
-  (typeof GuideConditionOp)[keyof typeof GuideConditionOp];
-export const GUIDE_CONDITION_OPS = Object.values(
-  GuideConditionOp
-) as GuideConditionOp[];
+export type GuideConditionOp = (typeof GuideConditionOp)[keyof typeof GuideConditionOp];
+export const GUIDE_CONDITION_OPS = Object.values(GuideConditionOp) as GuideConditionOp[];
 
 /**
  * 触发条件表达式（target_condition JSONB）
@@ -90,13 +86,13 @@ export interface GuideCondition {
 
 export interface GuideTargetCondition {
   /** 条件组合逻辑：全部满足（and）或任一满足（or） */
-  logic: "and" | "or";
+  logic: 'and' | 'or';
   conditions: GuideCondition[];
 }
 
 /** v1 旧格式 {event, page} → 新表达式（数据迁移/读取兼容） */
 export function normalizeTargetCondition(
-  raw: GuideTargetCondition | null | undefined
+  raw: GuideTargetCondition | null | undefined,
 ): GuideTargetCondition | null {
   if (!raw) return null;
   // 新格式
@@ -107,37 +103,37 @@ export function normalizeTargetCondition(
   const legacy = raw as { event?: string; page?: string };
   const conditions: GuideCondition[] = [];
   if (legacy.event) {
-    conditions.push({ field: "event_click", op: GuideConditionOp.EQ, value: legacy.event });
+    conditions.push({ field: 'event_click', op: GuideConditionOp.EQ, value: legacy.event });
   }
   if (legacy.page) {
-    conditions.push({ field: "page", op: GuideConditionOp.EQ, value: legacy.page });
+    conditions.push({ field: 'page', op: GuideConditionOp.EQ, value: legacy.page });
   }
-  return conditions.length > 0 ? { logic: "and", conditions } : null;
+  return conditions.length > 0 ? { logic: 'and', conditions } : null;
 }
 
 /** target_condition 结构校验（服务端 API 用） */
 export function isValidTargetCondition(value: unknown): value is GuideTargetCondition {
-  if (!value || typeof value !== "object") return false;
+  if (!value || typeof value !== 'object') return false;
   const v = value as Record<string, unknown>;
-  if (v.logic !== "and" && v.logic !== "or") return false;
+  if (v.logic !== 'and' && v.logic !== 'or') return false;
   if (!Array.isArray(v.conditions) || v.conditions.length === 0) return false;
   return v.conditions.every((c) => {
-    if (!c || typeof c !== "object") return false;
+    if (!c || typeof c !== 'object') return false;
     const cond = c as Record<string, unknown>;
-    if (typeof cond.field !== "string" || !cond.field) return false;
+    if (typeof cond.field !== 'string' || !cond.field) return false;
     // click_count 需带锚点名
-    if (cond.field.startsWith("click_count.") && cond.field.length <= "click_count.".length) {
+    if (cond.field.startsWith('click_count.') && cond.field.length <= 'click_count.'.length) {
       return false;
     }
-    if (cond.field === "click_count.") return false;
-    if (typeof cond.op !== "string") return false;
+    if (cond.field === 'click_count.') return false;
+    if (typeof cond.op !== 'string') return false;
     if (!Object.values(GuideConditionOp).includes(cond.op as GuideConditionOp)) return false;
     // 非 exists 条件需有 value；event_click 除外（待拾取元素，允许保存后回填）
-    const isEventClick = cond.field.startsWith("event_click");
+    const isEventClick = cond.field.startsWith('event_click');
     if (
       cond.op !== GuideConditionOp.EXISTS &&
       !isEventClick &&
-      (cond.value === undefined || cond.value === null || cond.value === "")
+      (cond.value === undefined || cond.value === null || cond.value === '')
     ) {
       return false;
     }

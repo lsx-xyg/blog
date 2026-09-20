@@ -7,8 +7,8 @@
  *
  * 依赖方向：tour.ts → trigger.ts（resolveStepSelectors）/ types（单向）。
  */
-import type { Guide, GuideStep } from "@/lib/types/guides";
-import { resolveStepSelectors } from "./trigger";
+import type { Guide, GuideStep } from '@/lib/types/guides';
+import { resolveStepSelectors } from './trigger';
 
 export interface BuildTourOptions {
   /** 选择器命中检测（默认 document.querySelector，测试注入 fake） */
@@ -21,11 +21,8 @@ export interface BuildTourOptions {
  * 取第一个当前 DOM 命中的选择器；都不命中返回第一个（交给 onborda 兜底显示）。
  * 非法选择器（isHit 抛异常）跳过。
  */
-export function pickSelector(
-  selectors: string[],
-  isHit: (selector: string) => boolean
-): string {
-  if (selectors.length === 0) return "";
+export function pickSelector(selectors: string[], isHit: (selector: string) => boolean): string {
+  if (selectors.length === 0) return '';
   for (const sel of selectors) {
     try {
       if (isHit(sel)) return sel;
@@ -51,11 +48,7 @@ export function defaultIsHit(selector: string): boolean {
  * - side：placement 默认 bottom
  * - nextRoute：`/${adminPath}${nextRoute}` 拼接（如 adminPath=dashboard → /dashboard/settings）
  */
-export function buildTourSteps(
-  guide: Guide,
-  adminPath: string,
-  opts?: BuildTourOptions
-) {
+export function buildTourSteps(guide: Guide, adminPath: string, opts?: BuildTourOptions) {
   const isHit = opts?.isHit ?? defaultIsHit;
   const onMiss = opts?.onMiss;
   return guide.steps.map((s) => {
@@ -66,7 +59,7 @@ export function buildTourSteps(
       title: s.title,
       content: s.content,
       selector,
-      side: s.placement ?? "bottom",
+      side: s.placement ?? 'bottom',
       showControls: false,
       nextRoute: s.nextRoute ? `/${adminPath}${s.nextRoute}` : undefined,
     };

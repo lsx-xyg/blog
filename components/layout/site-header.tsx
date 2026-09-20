@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Settings } from "lucide-react";
-import { authClient } from "@/lib/auth/client";
-import { isAdminUser } from "@/lib/shared";
-import { ThemeToggle } from "@/components/layout/theme-toggle";
-import { SearchDialog } from "@/components/shared/search-dialog";
+import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Settings } from 'lucide-react';
+import { authClient } from '@/lib/auth/client';
+import { isAdminUser } from '@/lib/shared';
+import { ThemeToggle } from '@/components/layout/theme-toggle';
+import { SearchDialog } from '@/components/shared/search-dialog';
 
 const NAV_ITEMS = [
-  { href: "/", label: "首页" },
-  { href: "/gallery", label: "相册" },
-  { href: "/about", label: "关于" },
-  { href: "/links", label: "友链" },
+  { href: '/', label: '首页' },
+  { href: '/gallery', label: '相册' },
+  { href: '/about', label: '关于' },
+  { href: '/links', label: '友链' },
 ];
 
 /** 导航链接（参考站 czhlove.cn：底部 3px 下划线动画，当前页加粗+下划线满宽） */
@@ -26,14 +26,14 @@ function NavLink({ href, label }: { href: string; label: string }) {
       href={href}
       className={`group relative inline-flex items-center px-3 py-1 select-none transition-all duration-300 ease-in-out focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background ${
         isActive
-          ? "text-accent-foreground font-semibold text-[19px]"
-          : "text-foreground font-medium text-[17px] hover:text-accent-foreground"
+          ? 'text-accent-foreground font-semibold text-[19px]'
+          : 'text-foreground font-medium text-[17px] hover:text-accent-foreground'
       }`}
     >
       <span className="relative z-10">{label}</span>
       <span
         className={`absolute left-0 -bottom-[6px] h-[3px] rounded-full transition-all duration-300 ease-in-out bg-primary ${
-          isActive ? "w-full" : "w-0 group-hover:w-full"
+          isActive ? 'w-full' : 'w-0 group-hover:w-full'
         }`}
         aria-hidden="true"
       />
@@ -69,26 +69,30 @@ export function SiteHeader({
       }
       lastScrollY.current = currentScrollY;
     };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
   return (
     <header
       // 隐藏/显示动画用内联 style 控制 transform/opacity/transition，确保浏览器一定过渡
       style={{
-        transition: "transform 0.5s ease-in-out, opacity 0.5s ease-in-out",
-        transform: hidden ? "translateY(-100%)" : "translateY(0)",
+        transition: 'transform 0.5s ease-in-out, opacity 0.5s ease-in-out',
+        transform: hidden ? 'translateY(-100%)' : 'translateY(0)',
         opacity: hidden ? 0 : 1,
-        willChange: "transform",
+        willChange: 'transform',
       }}
       className={`sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 ${
-        hidden ? "shadow-none" : "shadow-sm"
+        hidden ? 'shadow-none' : 'shadow-sm'
       }`}
     >
       <div className="container mx-auto flex h-20 items-center justify-between px-4">
         {/* Logo */}
-        <Link href="/" className="flex items-center space-x-3 py-2 px-1 -ml-1 rounded-lg hover:bg-accent/50 transition-colors active:bg-accent" aria-label="返回首页">
+        <Link
+          href="/"
+          className="flex items-center space-x-3 py-2 px-1 -ml-1 rounded-lg hover:bg-accent/50 transition-colors active:bg-accent"
+          aria-label="返回首页"
+        >
           <span className="relative flex shrink-0 overflow-hidden rounded-full h-12 w-12">
             <span className="flex h-full w-full items-center justify-center rounded-full bg-muted text-xl font-bold">
               林

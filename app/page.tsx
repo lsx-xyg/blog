@@ -1,31 +1,25 @@
-import { Suspense } from "react";
-import dynamic from "next/dynamic";
-import { listPublishedPosts, listPublishedPostMeta } from "@/lib/posts/server";
-import { FileText, Tags, Star } from "lucide-react";
-import { getSiteSettings } from "@/lib/settings/server";
-import type { Metadata } from "next";
+import { Suspense } from 'react';
+import dynamic from 'next/dynamic';
+import { listPublishedPosts, listPublishedPostMeta } from '@/lib/posts/server';
+import { FileText, Tags, Star } from 'lucide-react';
+import { getSiteSettings } from '@/lib/settings/server';
+import type { Metadata } from 'next';
 
 // PostWall 组件代码分割（包含 minisearch，体积较大）
 // ssr: true - 保持服务端渲染，不影响首屏内容和 SEO
 // 打包成单独的 chunk，不影响首屏的其他代码加载
-const PostWall = dynamic(
-  () => import("@/components/posts/post-wall").then((mod) => mod.PostWall),
-  {
-    ssr: true,
-    loading: () => (
-      <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4">
-        {Array.from({ length: 9 }).map((_, i) => (
-          <div
-            key={i}
-            className="mb-6 h-48 animate-pulse rounded-xl border border-border bg-card"
-          />
-        ))}
-      </div>
-    ),
-  },
-);
+const PostWall = dynamic(() => import('@/components/posts/post-wall').then((mod) => mod.PostWall), {
+  ssr: true,
+  loading: () => (
+    <div className="columns-1 gap-6 sm:columns-2 lg:columns-3 xl:columns-4">
+      {Array.from({ length: 9 }).map((_, i) => (
+        <div key={i} className="mb-6 h-48 animate-pulse rounded-xl border border-border bg-card" />
+      ))}
+    </div>
+  ),
+});
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 /** 动态生成首页 metadata */
 export async function generateMetadata(): Promise<Metadata> {

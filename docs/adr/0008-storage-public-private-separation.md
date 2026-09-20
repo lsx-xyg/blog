@@ -39,11 +39,13 @@
 ### 环境变量命名
 
 **公开存储（保留原有命名）：**
+
 - `STORAGE_DRIVER` / `GITHUB_STORAGE_OWNER` / `GITHUB_STORAGE_REPO` / `GITHUB_STORAGE_BRANCH` / `GITHUB_STORAGE_CDN_BASE` / `GITHUB_STORAGE_DIRECTORY` / `GITHUB_STORAGE_TOKEN`
 - `S3_ENDPOINT` / `S3_BUCKET` / `S3_REGION` / `S3_DIRECTORY` / `S3_ACCESS_KEY` / `S3_SECRET_KEY`
 - `LOCAL_UPLOAD_DIR` / `LOCAL_STORAGE_DIRECTORY`
 
 **私有存储（新增）：**
+
 - `STORAGE_PRIVATE_DRIVER` / `GITHUB_PRIVATE_OWNER` / `GITHUB_PRIVATE_REPO` / `GITHUB_PRIVATE_BRANCH` / `GITHUB_PRIVATE_CDN_BASE` / `GITHUB_PRIVATE_DIRECTORY` / `GITHUB_PRIVATE_TOKEN`
 - `S3_PRIVATE_ENDPOINT` / `S3_PRIVATE_BUCKET` / `S3_PRIVATE_REGION` / `S3_PRIVATE_DIRECTORY` / `S3_PRIVATE_ACCESS_KEY` / `S3_PRIVATE_SECRET_KEY`
 - `LOCAL_PRIVATE_DIR` / `LOCAL_PRIVATE_SUBDIRECTORY`
@@ -61,9 +63,9 @@
 位置：`lib/storage/index.ts`
 
 ```ts
-import { type StorageDriverInterface, StorageDriverType } from "@/lib/types/storage";
-import { getStorageSettings, getPrivateStorageSettings } from "@/lib/settings";
-import { LocalStorageDriver, GithubStorageDriver, S3StorageDriver } from "@/lib/storage/drivers";
+import { type StorageDriverInterface, StorageDriverType } from '@/lib/types/storage';
+import { getStorageSettings, getPrivateStorageSettings } from '@/lib/settings';
+import { LocalStorageDriver, GithubStorageDriver, S3StorageDriver } from '@/lib/storage/drivers';
 
 /** 公开存储缓存 */
 const publicCached = new Map<StorageDriverType, StorageDriverInterface>();
@@ -73,7 +75,7 @@ const privateCached = new Map<StorageDriverType, StorageDriverInterface>();
 /** 根据配置创建驱动实例 */
 function createDriverInstance(
   driverType: StorageDriverType,
-  settings: { github: any; s3: any; local: any }
+  settings: { github: any; s3: any; local: any },
 ): StorageDriverInterface {
   switch (driverType) {
     case StorageDriverType.GITHUB:
@@ -160,7 +162,7 @@ export async function createBackup(...) {
 位置：`app/api/upload/route.ts`、`app/api/admin/media/*`
 
 ```ts
-import { getPublicStorageDriver } from "@/lib/storage";
+import { getPublicStorageDriver } from '@/lib/storage';
 
 const driver = await getPublicStorageDriver(); // 使用公开存储
 const result = await driver.upload(buffer, file.name, file.type);

@@ -1,6 +1,6 @@
-@import "tailwindcss";
-@import "tw-animate-css";
-@import "shadcn/tailwind.css";
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -9,55 +9,61 @@
 @custom-variant data-ending-style (&:where([data-ending-style]));
 
 /* === Sheet 组件动画（直接用 CSS 定义，确保动画生效） === */
-[data-slot="sheet-content"] {
-  transition: transform 0.3s ease-out, opacity 0.3s ease-out !important;
+[data-slot='sheet-content'] {
+  transition:
+    transform 0.3s ease-out,
+    opacity 0.3s ease-out !important;
 }
 
 /* 底部弹出：从下往上滑入 */
-[data-slot="sheet-content"][data-side="bottom"][data-starting-style],
-[data-slot="sheet-content"][data-side="bottom"][data-ending-style] {
+[data-slot='sheet-content'][data-side='bottom'][data-starting-style],
+[data-slot='sheet-content'][data-side='bottom'][data-ending-style] {
   transform: translateY(100%) !important;
   opacity: 0 !important;
 }
 
 /* 右侧弹出：从右往左滑入 */
-[data-slot="sheet-content"][data-side="right"][data-starting-style],
-[data-slot="sheet-content"][data-side="right"][data-ending-style] {
+[data-slot='sheet-content'][data-side='right'][data-starting-style],
+[data-slot='sheet-content'][data-side='right'][data-ending-style] {
   transform: translateX(100%) !important;
   opacity: 0 !important;
 }
 
 /* 左侧弹出：从左往右滑入 */
-[data-slot="sheet-content"][data-side="left"][data-starting-style],
-[data-slot="sheet-content"][data-side="left"][data-ending-style] {
+[data-slot='sheet-content'][data-side='left'][data-starting-style],
+[data-slot='sheet-content'][data-side='left'][data-ending-style] {
   transform: translateX(-100%) !important;
   opacity: 0 !important;
 }
 
 /* 顶部弹出：从上往下滑入 */
-[data-slot="sheet-content"][data-side="top"][data-starting-style],
-[data-slot="sheet-content"][data-side="top"][data-ending-style] {
+[data-slot='sheet-content'][data-side='top'][data-starting-style],
+[data-slot='sheet-content'][data-side='top'][data-ending-style] {
   transform: translateY(-100%) !important;
   opacity: 0 !important;
 }
 
 /* 遮罩层动画 */
-[data-slot="sheet-overlay"] {
+[data-slot='sheet-overlay'] {
   transition: opacity 0.3s ease-out !important;
 }
 
-[data-slot="sheet-overlay"][data-starting-style],
-[data-slot="sheet-overlay"][data-ending-style] {
+[data-slot='sheet-overlay'][data-starting-style],
+[data-slot='sheet-overlay'][data-ending-style] {
   opacity: 0 !important;
 }
 
 /* ===== 主题切换平滑过渡动画 ===== */
 html {
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 body {
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
 }
 
 /* 主要元素颜色过渡 */
@@ -155,10 +161,10 @@ video {
 
   --fg-faint: hsl(var(--muted-foreground) / 0.6);
   --selection: hsl(var(--foreground) / 0.1);
-  --font-sans: "LXGW WenKai Screen", system-ui, -apple-system, "PingFang SC", "HarmonyOS Sans SC",
-    "MiSans", "Microsoft YaHei", sans-serif;
-  --font-mono: ui-monospace, "JetBrains Mono", "SF Mono", Menlo, Consolas,
-    monospace;
+  --font-sans:
+    'LXGW WenKai Screen', system-ui, -apple-system, 'PingFang SC', 'HarmonyOS Sans SC', 'MiSans',
+    'Microsoft YaHei', sans-serif;
+  --font-mono: ui-monospace, 'JetBrains Mono', 'SF Mono', Menlo, Consolas, monospace;
 }
 
 html.dark {
@@ -297,7 +303,7 @@ html.theme-warm {
   --color-border: hsl(var(--border));
   --color-input: hsl(var(--input));
   --color-ring: hsl(var(--ring));
-  
+
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -342,7 +348,9 @@ body {
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
   font-family: var(--font-sans);
-  transition: background-color 250ms ease, color 250ms ease;
+  transition:
+    background-color 250ms ease,
+    color 250ms ease;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -866,8 +874,8 @@ body {
 }
 
 .bytemd-editor .CodeMirror-line::selection,
-.bytemd-editor .CodeMirror-line>span::selection,
-.bytemd-editor .CodeMirror-line>span>span::selection {
+.bytemd-editor .CodeMirror-line > span::selection,
+.bytemd-editor .CodeMirror-line > span > span::selection {
   background: var(--selection) !important;
 }
 
@@ -920,7 +928,6 @@ body {
 
 /* === ByteMD 编辑器移动端适配 === */
 @media (max-width: 768px) {
-
   /* 编辑器容器最小高度 */
   .bytemd-editor-wrapper .bytemd {
     min-height: 400px;

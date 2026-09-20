@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import { useEffect, useRef, useState } from "react";
-import { createPortal } from "react-dom";
-import { ChevronRight, Eye, Loader2, Lock, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { ChevronRight, Eye, Loader2, Lock, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 /**
  * 敏感信息二次验证弹窗（#18 方案 C：管理员密码验证）
@@ -36,17 +36,17 @@ export function SecretRevealDialog({
   onClose,
   onRevealed,
 }: SecretRevealDialogProps) {
-  const [password, setPassword] = useState("");
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState('');
   const [noPassword, setNoPassword] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // 打开时清空状态并聚焦密码框
   useEffect(() => {
     if (open) {
-      setPassword("");
-      setError("");
+      setPassword('');
+      setError('');
       setLoading(false);
       setNoPassword(false);
       // 延迟聚焦，等弹窗渲染完成
@@ -59,21 +59,21 @@ export function SecretRevealDialog({
   useEffect(() => {
     if (!open) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === 'Escape') onClose();
     };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, onClose]);
 
   // 锁定背景滚动
   useEffect(() => {
     if (open) {
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     }
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = '';
     };
   }, [open]);
 
@@ -82,28 +82,28 @@ export function SecretRevealDialog({
   const handleSubmit = async () => {
     if (!password.trim() || loading) return;
     setLoading(true);
-    setError("");
+    setError('');
     try {
-      const res = await fetch("/api/admin/settings/reveal", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+      const res = await fetch('/api/admin/settings/reveal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key: fieldKey, password }),
       });
       const data = await res.json();
       if (!res.ok) {
-        if (data.code === "NO_PASSWORD") {
+        if (data.code === 'NO_PASSWORD') {
           setNoPassword(true);
           setLoading(false);
           return;
         }
-        setError(data.error || "验证失败，请稍后重试");
+        setError(data.error || '验证失败，请稍后重试');
         setLoading(false);
         return;
       }
       onRevealed(data.value as string);
       onClose();
     } catch {
-      setError("网络错误，请稍后重试");
+      setError('网络错误，请稍后重试');
       setLoading(false);
     }
   };
@@ -135,7 +135,8 @@ export function SecretRevealDialog({
           <div className="flex-1">
             <h3 className="text-lg font-semibold text-foreground">验证管理员身份</h3>
             <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
-              查看 <span className="font-medium text-foreground">{fieldLabel}</span> 的明文需要输入管理员密码，验证通过后临时展示 30 秒。
+              查看 <span className="font-medium text-foreground">{fieldLabel}</span>{' '}
+              的明文需要输入管理员密码，验证通过后临时展示 30 秒。
             </p>
           </div>
         </div>
@@ -144,10 +145,11 @@ export function SecretRevealDialog({
         {noPassword ? (
           <div className="mt-5 rounded-lg border border-amber-500/30 bg-amber-500/5 p-3">
             <p className="text-sm text-amber-700 dark:text-amber-400">
-              当前账号未设置密码（通过 GitHub 登录创建）。请先在「账号设置」中设置密码，再使用明文查看功能。
+              当前账号未设置密码（通过 GitHub
+              登录创建）。请先在「账号设置」中设置密码，再使用明文查看功能。
             </p>
             <a
-              href={`/${window.location.pathname.split("/")[1] || "dashboard"}/account`}
+              href={`/${window.location.pathname.split('/')[1] || 'dashboard'}/account`}
               className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
             >
               前往账号设置
@@ -166,17 +168,15 @@ export function SecretRevealDialog({
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
-                if (error) setError("");
+                if (error) setError('');
               }}
               onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmit();
+                if (e.key === 'Enter') handleSubmit();
               }}
               placeholder="请输入管理员登录密码"
               className="w-full px-3 py-2 rounded-lg border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent transition-all"
             />
-            {error && (
-              <p className="mt-2 text-sm text-destructive">{error}</p>
-            )}
+            {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
           </div>
         )}
 
@@ -186,11 +186,7 @@ export function SecretRevealDialog({
             取消
           </Button>
           {!noPassword && (
-            <Button
-              type="button"
-              onClick={handleSubmit}
-              disabled={loading || !password.trim()}
-            >
+            <Button type="button" onClick={handleSubmit} disabled={loading || !password.trim()}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -207,6 +203,6 @@ export function SecretRevealDialog({
         </div>
       </div>
     </div>,
-    document.body
+    document.body,
   );
 }

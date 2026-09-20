@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 引导选择器失效监控面板（#29）
@@ -7,11 +7,11 @@
  * 本面板从 /api/admin/guides/misses 聚合展示：失效次数、最后失效时间、选择器来源。
  * class/path 来源提示「建议补 data-guide 锚点」（最稳定位）。
  */
-import { useCallback, useEffect, useState } from "react";
-import { Trash2, ShieldAlert } from "lucide-react";
-import { AdminLoadingState } from "@/components/admin/status";
-import { ConfirmDialog } from "@/components/shared/confirm-dialog";
-import { useToast } from "@/components/ui/toast";
+import { useCallback, useEffect, useState } from 'react';
+import { Trash2, ShieldAlert } from 'lucide-react';
+import { AdminLoadingState } from '@/components/admin/status';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { useToast } from '@/components/ui/toast';
 
 type MissRow = {
   guideKey: string;
@@ -24,26 +24,26 @@ type MissRow = {
 };
 
 const SOURCE_STYLE: Record<string, string> = {
-  id: "bg-green-500/10 text-green-600 dark:text-green-400",
-  semantic: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
-  class: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
-  path: "bg-red-500/10 text-red-600 dark:text-red-400",
-  "data-guide": "bg-purple-500/10 text-purple-600 dark:text-purple-400",
-  unknown: "bg-muted text-muted-foreground",
+  id: 'bg-green-500/10 text-green-600 dark:text-green-400',
+  semantic: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
+  class: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+  path: 'bg-red-500/10 text-red-600 dark:text-red-400',
+  'data-guide': 'bg-purple-500/10 text-purple-600 dark:text-purple-400',
+  unknown: 'bg-muted text-muted-foreground',
 };
 
 const SOURCE_LABEL: Record<string, string> = {
-  id: "id",
-  semantic: "语义属性",
-  class: "类名",
-  path: "DOM 路径",
-  "data-guide": "data-guide",
-  unknown: "未知",
+  id: 'id',
+  semantic: '语义属性',
+  class: '类名',
+  path: 'DOM 路径',
+  'data-guide': 'data-guide',
+  unknown: '未知',
 };
 
 function sourceAdvice(source: string): string | null {
-  if (source === "class" || source === "path") {
-    return "选择器依赖 DOM 结构，重构易失效——建议给目标元素补 data-guide 锚点";
+  if (source === 'class' || source === 'path') {
+    return '选择器依赖 DOM 结构，重构易失效——建议给目标元素补 data-guide 锚点';
   }
   return null;
 }
@@ -57,7 +57,7 @@ export function GuideMissesPanel() {
 
   const loadMisses = useCallback(async () => {
     try {
-      const res = await fetch("/api/admin/guides/misses");
+      const res = await fetch('/api/admin/guides/misses');
       if (!res.ok) return;
       const data = (await res.json()) as { misses: MissRow[] };
       setMisses(data.misses ?? []);
@@ -75,14 +75,14 @@ export function GuideMissesPanel() {
   const clearAll = async () => {
     setClearing(true);
     try {
-      const res = await fetch("/api/admin/guides/misses", {
-        method: "DELETE",
+      const res = await fetch('/api/admin/guides/misses', {
+        method: 'DELETE',
       });
-      if (!res.ok) throw new Error("clear failed");
+      if (!res.ok) throw new Error('clear failed');
       setMisses([]);
-      showToast("失效记录已清空", "success");
+      showToast('失效记录已清空', 'success');
     } catch {
-      showToast("清空失败，请重试", "error");
+      showToast('清空失败，请重试', 'error');
     } finally {
       setClearing(false);
       setConfirmClear(false);
@@ -126,19 +126,34 @@ export function GuideMissesPanel() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">引导</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">步骤</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">失效选择器</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">来源</th>
-                  <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">次数</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">最后失效</th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    引导
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    步骤
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    失效选择器
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    来源
+                  </th>
+                  <th className="px-4 py-3 text-center text-sm font-medium text-muted-foreground">
+                    次数
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    最后失效
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {misses.map((m, i) => {
                   const advice = sourceAdvice(m.selectorSource);
                   return (
-                    <tr key={`${m.guideKey}-${m.stepId}-${m.selector}-${i}`} className="hover:bg-muted/30">
+                    <tr
+                      key={`${m.guideKey}-${m.stepId}-${m.selector}-${i}`}
+                      className="hover:bg-muted/30"
+                    >
                       <td className="max-w-[160px] truncate px-4 py-3 font-mono text-xs text-foreground">
                         {m.guideKey}
                       </td>
@@ -146,11 +161,16 @@ export function GuideMissesPanel() {
                         {m.stepId}
                       </td>
                       <td className="max-w-[260px] px-4 py-3">
-                        <div className="truncate font-mono text-xs text-foreground" title={m.selector}>
+                        <div
+                          className="truncate font-mono text-xs text-foreground"
+                          title={m.selector}
+                        >
                           {m.selector}
                         </div>
                         {advice && (
-                          <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">{advice}</p>
+                          <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">
+                            {advice}
+                          </p>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -162,11 +182,11 @@ export function GuideMissesPanel() {
                           {SOURCE_LABEL[m.selectorSource] ?? m.selectorSource}
                         </span>
                       </td>
-                      <td className="px-4 py-3 text-center font-medium text-foreground">{m.count}</td>
+                      <td className="px-4 py-3 text-center font-medium text-foreground">
+                        {m.count}
+                      </td>
                       <td className="whitespace-nowrap px-4 py-3 text-xs text-muted-foreground">
-                        {m.lastMissAt
-                          ? new Date(m.lastMissAt).toLocaleString("zh-CN")
-                          : "—"}
+                        {m.lastMissAt ? new Date(m.lastMissAt).toLocaleString('zh-CN') : '—'}
                       </td>
                     </tr>
                   );
@@ -180,7 +200,10 @@ export function GuideMissesPanel() {
             {misses.map((m, i) => {
               const advice = sourceAdvice(m.selectorSource);
               return (
-                <div key={`${m.guideKey}-${m.stepId}-${m.selector}-${i}`} className="rounded-lg border border-border p-3">
+                <div
+                  key={`${m.guideKey}-${m.stepId}-${m.selector}-${i}`}
+                  className="rounded-lg border border-border p-3"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <span className="truncate font-mono text-xs font-medium">{m.guideKey}</span>
                     <span
@@ -191,15 +214,20 @@ export function GuideMissesPanel() {
                       {SOURCE_LABEL[m.selectorSource] ?? m.selectorSource}
                     </span>
                   </div>
-                  <div className="mt-1 truncate font-mono text-xs text-muted-foreground" title={m.selector}>
+                  <div
+                    className="mt-1 truncate font-mono text-xs text-muted-foreground"
+                    title={m.selector}
+                  >
                     {m.selector}
                   </div>
                   {advice && (
-                    <p className="mt-1.5 text-[11px] text-amber-600 dark:text-amber-400">{advice}</p>
+                    <p className="mt-1.5 text-[11px] text-amber-600 dark:text-amber-400">
+                      {advice}
+                    </p>
                   )}
                   <div className="mt-1.5 flex items-center gap-3 text-[11px] text-muted-foreground">
                     <span>失效 {m.count} 次</span>
-                    {m.lastMissAt && <span>{new Date(m.lastMissAt).toLocaleString("zh-CN")}</span>}
+                    {m.lastMissAt && <span>{new Date(m.lastMissAt).toLocaleString('zh-CN')}</span>}
                   </div>
                 </div>
               );

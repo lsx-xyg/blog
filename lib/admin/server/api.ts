@@ -3,10 +3,10 @@
  *
  * 目标：让每个 route.ts 只写「业务」，样板（鉴权、错误包装）收敛在这一处。
  */
-import { NextResponse } from "next/server";
-import { headers } from "next/headers";
-import { auth } from "@/lib/auth/server";
-import { isAdminUser } from "@/lib/shared";
+import { NextResponse } from 'next/server';
+import { headers } from 'next/headers';
+import { auth } from '@/lib/auth/server';
+import { isAdminUser } from '@/lib/shared';
 
 /** 统一错误响应（所有后台 API 同构） */
 export function apiError(message: string, status: number): NextResponse {
@@ -20,7 +20,7 @@ export function apiError(message: string, status: number): NextResponse {
 export async function requireAdmin(): Promise<NextResponse | null> {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session || !isAdminUser(session.user)) {
-    return apiError("未授权", 401);
+    return apiError('未授权', 401);
   }
   return null;
 }

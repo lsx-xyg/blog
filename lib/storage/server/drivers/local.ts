@@ -1,8 +1,8 @@
-import { mkdir, writeFile, unlink, readFile } from "fs/promises";
-import { join, dirname } from "path";
-import type { StorageDriverInterface, UploadResult } from "@/lib/types/storage";
-import { generateKey } from "../utils";
-import type { StorageSettings } from "@/lib/types/settings";
+import { mkdir, writeFile, unlink, readFile } from 'fs/promises';
+import { join, dirname } from 'path';
+import type { StorageDriverInterface, UploadResult } from '@/lib/types/storage';
+import { generateKey } from '../utils';
+import type { StorageSettings } from '@/lib/types/settings';
 
 /** 本地文件存储驱动（开发环境用）
  *
@@ -15,14 +15,14 @@ import type { StorageSettings } from "@/lib/types/settings";
  * 缺点：生产环境不适用（Vercel serverless 无持久化文件系统）
  */
 export class LocalStorageDriver implements StorageDriverInterface {
-  name = "local" as const;
+  name = 'local' as const;
 
   private uploadDirConfig: string;
   private directoryConfig: string;
 
-  constructor(config?: StorageSettings["local"]) {
-    this.uploadDirConfig = config?.uploadDir || "public/uploads";
-    this.directoryConfig = config?.directory || "";
+  constructor(config?: StorageSettings['local']) {
+    this.uploadDirConfig = config?.uploadDir || 'public/uploads';
+    this.directoryConfig = config?.directory || '';
   }
 
   /** 上传根目录 */

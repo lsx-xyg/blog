@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react';
 
 /**
  * 当前管理员账号是否已设置密码（客户端 Hook）
@@ -14,7 +14,7 @@ export function usePasswordStatus() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/admin/account/status")
+    fetch('/api/admin/account/status')
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
         if (!cancelled) setHasPassword(d?.hasPassword ?? true);
@@ -32,6 +32,6 @@ export function usePasswordStatus() {
 
 /** 从当前 URL 推导后台路径（如 /dashboard/settings → dashboard） */
 export function getAdminPathFromUrl() {
-  if (typeof window === "undefined") return "dashboard";
-  return window.location.pathname.split("/")[1] || "dashboard";
+  if (typeof window === 'undefined') return 'dashboard';
+  return window.location.pathname.split('/')[1] || 'dashboard';
 }

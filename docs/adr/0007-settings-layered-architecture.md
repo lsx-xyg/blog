@@ -22,6 +22,7 @@
 ## Core Implementation
 
 ### 1. 存储驱动工厂 + 单例缓存
+
 位置：`lib/storage/index.ts`
 
 工厂按 `driverType` 创建实例，`cached` 按类型缓存，避免重复 `new`。
@@ -29,13 +30,13 @@ driver 的配置来自 `getStorageSettings()`（内部走 `getConfigGroup("stora
 实例内部不再查 DB，`getUrl` 等同步接口不受影响。
 
 ```ts
-import { type StorageDriverInterface, StorageDriverType } from "@/lib/types/storage";
-import { getStorageSettings } from "@/lib/settings";
-import { LocalStorageDriver, GithubStorageDriver, S3StorageDriver } from "@/lib/storage/drivers";
+import { type StorageDriverInterface, StorageDriverType } from '@/lib/types/storage';
+import { getStorageSettings } from '@/lib/settings';
+import { LocalStorageDriver, GithubStorageDriver, S3StorageDriver } from '@/lib/storage/drivers';
 
-export * from "@/lib/types/storage";
-export * from "@/lib/storage/drivers";
-export * from "@/lib/storage/utils";
+export * from '@/lib/types/storage';
+export * from '@/lib/storage/drivers';
+export * from '@/lib/storage/utils';
 
 /** 缓存驱动实例（按 driver 类型缓存，避免重复创建） */
 const cached = new Map<StorageDriverType, StorageDriverInterface>();
@@ -83,21 +84,20 @@ export function resetStorageDriver(): void {
 - 配置不在 driver 内部查，一次查全后注入构造函数——保证 getUrl 同步、driver 可测试、职责单一
 
 ### 2. 常量定义：as const 对象 + 同名 type + 派生数组
+
 位置：`lib/types/storage.ts`
 
 ```ts
 export const StorageDriverType = {
-  LOCAL: "LOCAL",
-  GITHUB: "GITHUB",
-  S3: "S3",
+  LOCAL: 'LOCAL',
+  GITHUB: 'GITHUB',
+  S3: 'S3',
 } as const;
 
-export type StorageDriverType =
-  (typeof StorageDriverType)[keyof typeof StorageDriverType];
+export type StorageDriverType = (typeof StorageDriverType)[keyof typeof StorageDriverType];
 
 /** 所有驱动类型值（数组，供 .map / .includes 用） */
-export const STORAGE_DRIVER_VALUES =
-  Object.values(StorageDriverType) as StorageDriverType[];
+export const STORAGE_DRIVER_VALUES = Object.values(StorageDriverType) as StorageDriverType[];
 ```
 
 **要点**
@@ -109,6 +109,7 @@ export const STORAGE_DRIVER_VALUES =
 - 不用 enum：enum 生成运行时对象、tree-shaking 差、不接受裸字符串 "LOCAL"
 
 ### 3. getConfigGroup：按前缀聚合并自动推导类型
+
 位置：`lib/settings/get-config-group.ts`
 
 把扁平键（如 `storage.github.owner`）按前缀聚合为嵌套对象，**返回类型从 registry 自动推导**，调用方无需 `as` 断言。
@@ -126,8 +127,8 @@ export const STORAGE_DRIVER_VALUES =
  * 调用方赋值时会编译报错，起到「registry ↔ 类型」同步检查的作用。
  */
 
-import { getConfig } from "./get-config";
-import { registry, type RegistryKey } from "./registry";
+import { getConfig } from './get-config';
+import { registry, type RegistryKey } from './registry';
 
 /* ---------------- 类型工具：把扁平键组装成嵌套类型 ---------------- */
 
@@ -138,9 +139,7 @@ type NestPath<P extends string, V> = P extends `${infer Head}.${infer Rest}`
 
 /** 把多个交叉对象合并成一个（{ a: X } & { b: Y } → { a: X; b: Y }）
  *  原理：函数参数逆变位置推断 */
-type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
-  k: infer I,
-) => void
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void
   ? I
   : never;
 
@@ -148,19 +147,15 @@ type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (
 export type GroupOf<P extends string> = UnionToIntersection<
   {
     [K in RegistryKey]: K extends `${P}.${infer Rest}`
-      ? NestPath<Rest, (typeof registry)[K]["default"]>
+      ? NestPath<Rest, (typeof registry)[K]['default']>
       : never;
   }[RegistryKey]
 >;
 
-export async function getConfigGroup<P extends string>(
-  prefix: P,
-): Promise<GroupOf<P>> {
+export async function getConfigGroup<P extends string>(prefix: P): Promise<GroupOf<P>> {
   const prefixDot = `${prefix}.`;
 
-  const keys = (Object.keys(registry) as RegistryKey[]).filter((k) =>
-    k.startsWith(prefixDot),
-  );
+  const keys = (Object.keys(registry) as RegistryKey[]).filter((k) => k.startsWith(prefixDot));
 
   const entries = await Promise.all(
     keys.map(async (k) => {
@@ -178,18 +173,14 @@ export async function getConfigGroup<P extends string>(
 }
 
 /** 把 "github.owner" 这样的点号路径塞进嵌套对象 */
-function setNested(
-  target: Record<string, unknown>,
-  path: string,
-  value: unknown,
-): void {
-  const parts = path.split(".");
+function setNested(target: Record<string, unknown>, path: string, value: unknown): void {
+  const parts = path.split('.');
   let cursor: Record<string, unknown> = target;
 
   for (let i = 0; i < parts.length - 1; i++) {
     const key = parts[i];
     const next = cursor[key];
-    if (typeof next !== "object" || next === null) {
+    if (typeof next !== 'object' || next === null) {
       cursor[key] = {};
     }
     cursor = cursor[key] as Record<string, unknown>;
@@ -201,10 +192,10 @@ function setNested(
 
 **类型工具拆解**
 
-| 工具                     | 作用                           | 例子                                                         |
-| ------------------------ | ------------------------------ | ------------------------------------------------------------ |
-| `NestPath<P, V>`         | 把点号路径展开为嵌套类型       | `"github.owner"` + `string` → `{ github: { owner: string } }` |
-| `UnionToIntersection<U>` | 联合变交叉                     | `{a} \| {b}` → `{a} & {b}`                                   |
+| 工具                     | 作用                           | 例子                                                               |
+| ------------------------ | ------------------------------ | ------------------------------------------------------------------ |
+| `NestPath<P, V>`         | 把点号路径展开为嵌套类型       | `"github.owner"` + `string` → `{ github: { owner: string } }`      |
+| `UnionToIntersection<U>` | 联合变交叉                     | `{a} \| {b}` → `{a} & {b}`                                         |
 | `GroupOf<P>`             | 对 prefix 下所有键组装完整类型 | `"storage"` → `{ driver, github: {...}, s3: {...}, local: {...} }` |
 
 **执行流程**

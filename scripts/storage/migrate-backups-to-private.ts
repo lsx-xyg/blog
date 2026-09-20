@@ -20,31 +20,31 @@
  * - 本脚本假设公开存储可通过 HTTP 访问（如 GITHUB），LOCAL 驱动可能不适用
  */
 
-import "@/lib/env/server/load";
-import { drizzle } from "drizzle-orm/postgres-js";
-import { eq } from "drizzle-orm";
-import postgres from "postgres";
-import { backupRecords } from "@/db/schema";
-import { getPublicStorageDriver, getPrivateStorageDriver } from "@/lib/storage/server";
-import { ENV_KEYS } from "@/lib/env/shared";
-import { getEnv } from "@/lib/env/server";
+import '@/lib/env/server/load';
+import { drizzle } from 'drizzle-orm/postgres-js';
+import { eq } from 'drizzle-orm';
+import postgres from 'postgres';
+import { backupRecords } from '@/db/schema';
+import { getPublicStorageDriver, getPrivateStorageDriver } from '@/lib/storage/server';
+import { ENV_KEYS } from '@/lib/env/shared';
+import { getEnv } from '@/lib/env/server';
 
 type MigrationResult = {
   id: string;
   oldKey: string;
   newKey: string | null;
-  status: "success" | "failed";
+  status: 'success' | 'failed';
   error?: string;
 };
 
 async function main() {
-  const shouldDelete = process.argv.slice(2).includes("--delete");
+  const shouldDelete = process.argv.slice(2).includes('--delete');
 
-  console.log("========================================");
-  console.log("  旧备份数据迁移脚本");
-  console.log("========================================");
-  console.log(`删除旧文件: ${shouldDelete ? "是" : "否（仅复制）"}`);
-  console.log("");
+  console.log('========================================');
+  console.log('  旧备份数据迁移脚本');
+  console.log('========================================');
+  console.log(`删除旧文件: ${shouldDelete ? '是' : '否（仅复制）'}`);
+  console.log('');
 
   const databaseUrl = getEnv(ENV_KEYS.DATABASE_URL_UNPOOLED) ?? getEnv(ENV_KEYS.DATABASE_URL);
   if (!databaseUrl) {
@@ -57,30 +57,27 @@ async function main() {
 
   try {
     // 1. 从数据库读取所有备份记录
-    console.log("1. 从数据库读取备份记录...");
-    const records = await db
-      .select()
-      .from(backupRecords)
-      .orderBy(backupRecords.createdAt);
+    console.log('1. 从数据库读取备份记录...');
+    const records = await db.select().from(backupRecords).orderBy(backupRecords.createdAt);
     console.log(`   找到 ${records.length} 条备份记录`);
-    console.log("");
+    console.log('');
 
     if (records.length === 0) {
-      console.log("没有需要迁移的备份记录，退出。");
+      console.log('没有需要迁移的备份记录，退出。');
       return;
     }
 
     // 2. 获取存储驱动实例
-    console.log("2. 获取存储驱动实例...");
+    console.log('2. 获取存储驱动实例...');
     const publicDriver = await getPublicStorageDriver();
     const privateDriver = await getPrivateStorageDriver();
     console.log(`   公开存储: ${publicDriver.name}`);
     console.log(`   私有存储: ${privateDriver.name}`);
-    console.log("");
+    console.log('');
 
     // 3. 逐个迁移备份文件
-    console.log("3. 开始迁移备份文件...");
-    console.log("");
+    console.log('3. 开始迁移备份文件...');
+    console.log('');
 
     const results: MigrationResult[] = [];
 
@@ -106,7 +103,7 @@ async function main() {
 
         // 3.2 上传到私有存储（保持相同的 key）
         console.log(`   上传到私有存储...`);
-        const uploadResult = await privateDriver.upload(buffer, oldKey, "application/json");
+        const uploadResult = await privateDriver.upload(buffer, oldKey, 'application/json');
         const newKey = uploadResult.key;
         console.log(`   新 key: ${newKey}`);
 
@@ -131,7 +128,7 @@ async function main() {
           id: record.id,
           oldKey,
           newKey,
-          status: "success",
+          status: 'success',
         });
         console.log(`   ✓ 迁移成功`);
       } catch (error) {
@@ -141,48 +138,48 @@ async function main() {
           id: record.id,
           oldKey,
           newKey: null,
-          status: "failed",
+          status: 'failed',
           error: errorMessage,
         });
       }
-      console.log("");
+      console.log('');
     }
 
     // 4. 输出迁移结果汇总
-    console.log("========================================");
-    console.log("  迁移结果汇总");
-    console.log("========================================");
-    const successCount = results.filter((r) => r.status === "success").length;
-    const failedCount = results.filter((r) => r.status === "failed").length;
+    console.log('========================================');
+    console.log('  迁移结果汇总');
+    console.log('========================================');
+    const successCount = results.filter((r) => r.status === 'success').length;
+    const failedCount = results.filter((r) => r.status === 'failed').length;
 
     console.log(`总计: ${results.length}`);
     console.log(`成功: ${successCount}`);
     console.log(`失败: ${failedCount}`);
-    console.log("");
+    console.log('');
 
     if (failedCount > 0) {
-      console.log("失败的备份:");
+      console.log('失败的备份:');
       results
-        .filter((r) => r.status === "failed")
+        .filter((r) => r.status === 'failed')
         .forEach((r) => {
           console.log(`  - ${r.oldKey} (id: ${r.id}): ${r.error}`);
         });
-      console.log("");
+      console.log('');
     }
 
     if (!shouldDelete && successCount > 0) {
-      console.log("提示：本次运行未删除旧文件。验证迁移结果后，可以运行以下命令删除旧文件：");
-      console.log("  npx tsx scripts/migrate-backups-to-private.ts --delete");
-      console.log("");
+      console.log('提示：本次运行未删除旧文件。验证迁移结果后，可以运行以下命令删除旧文件：');
+      console.log('  npx tsx scripts/migrate-backups-to-private.ts --delete');
+      console.log('');
     }
 
-    console.log("迁移完成！");
+    console.log('迁移完成！');
   } finally {
     await sql.end();
   }
 }
 
 main().catch((error) => {
-  console.error("迁移脚本执行失败：", error);
+  console.error('迁移脚本执行失败：', error);
   process.exit(1);
 });

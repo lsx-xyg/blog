@@ -1,6 +1,6 @@
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth/server";
-import { isAdminUser } from "@/lib/shared";
+import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/server';
+import { isAdminUser } from '@/lib/shared';
 
 /**
  * 无密码账号设置密码 API
@@ -19,19 +19,19 @@ import { isAdminUser } from "@/lib/shared";
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: request.headers });
   if (!session || !isAdminUser(session.user)) {
-    return NextResponse.json({ error: "未授权" }, { status: 401 });
+    return NextResponse.json({ error: '未授权' }, { status: 401 });
   }
 
   let body: { newPassword?: unknown };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "请求格式错误" }, { status: 400 });
+    return NextResponse.json({ error: '请求格式错误' }, { status: 400 });
   }
 
   const newPassword = body.newPassword;
-  if (typeof newPassword !== "string" || newPassword.length < 8) {
-    return NextResponse.json({ error: "新密码至少 8 位" }, { status: 400 });
+  if (typeof newPassword !== 'string' || newPassword.length < 8) {
+    return NextResponse.json({ error: '新密码至少 8 位' }, { status: 400 });
   }
 
   try {
@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     });
     return NextResponse.json({ success: true });
   } catch (e) {
-    const message = e instanceof Error ? e.message : "设置失败";
+    const message = e instanceof Error ? e.message : '设置失败';
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

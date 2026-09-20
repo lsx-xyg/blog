@@ -1,7 +1,7 @@
-import Link from "next/link";
-import { formatDate } from "@/lib/shared";
-import { CalendarDays, Star } from "lucide-react";
-import { LazyImage } from "@/components/media/lazy-image";
+import Link from 'next/link';
+import { formatDate } from '@/lib/shared';
+import { CalendarDays, Star } from 'lucide-react';
+import { LazyImage } from '@/components/media/lazy-image';
 
 /** 卡片所需字段（兼容 db Post 与 search-index JSON 两种来源） */
 export type CardPost = {
@@ -17,7 +17,7 @@ export type CardPost = {
 };
 
 /** 精选徽标：星星 + 精选 胶囊（封面右上角叠加 / 无封面时标题行右侧） */
-function FeaturedBadge({ className = "" }: { className?: string }) {
+function FeaturedBadge({ className = '' }: { className?: string }) {
   return (
     <span
       className={`inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700 ring-1 ring-inset ring-amber-300/60 ${className}`}
@@ -69,9 +69,7 @@ export function PostCard({ post }: { post: CardPost }) {
         <h3 className="font-bold leading-tight text-xl text-foreground group-hover:text-primary transition-colors">
           {post.title}
         </h3>
-        {post.featured && !post.coverUrl ? (
-          <FeaturedBadge className="mt-0.5 shrink-0" />
-        ) : null}
+        {post.featured && !post.coverUrl ? <FeaturedBadge className="mt-0.5 shrink-0" /> : null}
       </div>
 
       {/* 摘要 */}

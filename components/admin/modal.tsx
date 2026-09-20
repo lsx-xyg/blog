@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 /**
  * 通用管理端弹窗外壳（C4·CRUD 骨架第三单元）
@@ -10,15 +10,15 @@
  *
  * 页面只注入 title / children / footer，不再手写 fixed 定位与标题行。
  */
-import type { ReactNode } from "react";
-import { X } from "lucide-react";
+import type { ReactNode } from 'react';
+import { X } from 'lucide-react';
 
 export type AdminModalProps = {
   open: boolean;
   title: string;
   onClose: () => void;
   /** 卡片最大宽度（默认 lg） */
-  maxWidth?: "md" | "lg" | "xl" | "3xl";
+  maxWidth?: 'md' | 'lg' | 'xl' | '3xl';
   /** 点击遮罩是否关闭（默认 true） */
   closeOnBackdrop?: boolean;
   /** 关闭按钮禁用（如保存中防误关） */
@@ -29,17 +29,17 @@ export type AdminModalProps = {
 };
 
 const WIDTH_MAP = {
-  md: "max-w-md",
-  lg: "max-w-lg",
-  xl: "max-w-xl",
-  "3xl": "max-w-3xl",
+  md: 'max-w-md',
+  lg: 'max-w-lg',
+  xl: 'max-w-xl',
+  '3xl': 'max-w-3xl',
 } as const;
 
 export function AdminModal({
   open,
   title,
   onClose,
-  maxWidth = "lg",
+  maxWidth = 'lg',
   closeOnBackdrop = true,
   closeDisabled = false,
   footer,
@@ -48,7 +48,11 @@ export function AdminModal({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div
+      className="fixed inset-0 z-[90] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+    >
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={closeOnBackdrop ? onClose : undefined}

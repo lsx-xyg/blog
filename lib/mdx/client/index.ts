@@ -1,2 +1,2 @@
-export * from "./locale";
-export * from "./shiki";
+export * from './locale';
+export * from './shiki';

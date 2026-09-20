@@ -1,14 +1,14 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Home, Image, User, Link2 } from "lucide-react";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Home, Image, User, Link2 } from 'lucide-react';
 
 const NAV_ITEMS = [
-  { href: "/", label: "首页", icon: Home },
-  { href: "/gallery", label: "相册", icon: Image },
-  { href: "/about", label: "关于", icon: User },
-  { href: "/links", label: "友链", icon: Link2 },
+  { href: '/', label: '首页', icon: Home },
+  { href: '/gallery', label: '相册', icon: Image },
+  { href: '/about', label: '关于', icon: User },
+  { href: '/links', label: '友链', icon: Link2 },
 ];
 
 /** 移动端底部固定导航栏（参考站 czhlove.cn 一比一还原）：
@@ -31,16 +31,14 @@ export function MobileNav() {
               key={item.href}
               href={item.href}
               aria-label={item.label}
-              aria-current={isActive ? "page" : undefined}
+              aria-current={isActive ? 'page' : undefined}
               className={`flex-1 flex flex-col items-center justify-center py-2 text-xs transition-all duration-300 min-h-[44px] touch-manipulation ${
-                isActive
-                  ? "text-indigo-600 dark:text-indigo-400"
-                  : "text-muted-foreground"
+                isActive ? 'text-indigo-600 dark:text-indigo-400' : 'text-muted-foreground'
               }`}
             >
               <div
                 className={`transition-transform duration-300 ${
-                  isActive ? "scale-110 -translate-y-0.5" : ""
+                  isActive ? 'scale-110 -translate-y-0.5' : ''
                 }`}
                 aria-hidden="true"
               >

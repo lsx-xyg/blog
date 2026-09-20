@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 /**
  * 代码块复制按钮（T4 最小实现：挂载后向 .mdx-content 内所有 pre 注入按钮）
@@ -8,34 +8,31 @@ import { useEffect } from "react";
  */
 export function CodeCopy() {
   useEffect(() => {
-    const root = document.querySelector(".mdx-content");
+    const root = document.querySelector('.mdx-content');
     if (!root) return;
 
-    const pres = root.querySelectorAll("pre");
+    const pres = root.querySelectorAll('pre');
     pres.forEach((pre) => {
       if (pre.dataset.copyDone) return;
-      pre.dataset.copyDone = "1";
+      pre.dataset.copyDone = '1';
 
-      const btn = document.createElement("button");
-      btn.textContent = "复制";
-      btn.type = "button";
-      btn.setAttribute(
-        "aria-label",
-        "复制代码",
-      );
+      const btn = document.createElement('button');
+      btn.textContent = '复制';
+      btn.type = 'button';
+      btn.setAttribute('aria-label', '复制代码');
       btn.className =
-        "absolute right-2 top-2 rounded-md border border-border bg-secondary px-2 py-0.5 font-mono text-xs text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-foreground focus:opacity-100 group-hover:opacity-100";
-      pre.classList.add("group", "relative");
+        'absolute right-2 top-2 rounded-md border border-border bg-secondary px-2 py-0.5 font-mono text-xs text-muted-foreground opacity-0 transition-opacity duration-150 hover:text-foreground focus:opacity-100 group-hover:opacity-100';
+      pre.classList.add('group', 'relative');
 
-      btn.addEventListener("click", async () => {
-        const code = pre.querySelector("code");
+      btn.addEventListener('click', async () => {
+        const code = pre.querySelector('code');
         if (!code) return;
         try {
-          await navigator.clipboard.writeText(code.textContent ?? "");
-          btn.textContent = "已复制";
-          setTimeout(() => (btn.textContent = "复制"), 1500);
+          await navigator.clipboard.writeText(code.textContent ?? '');
+          btn.textContent = '已复制';
+          setTimeout(() => (btn.textContent = '复制'), 1500);
         } catch {
-          btn.textContent = "复制失败";
+          btn.textContent = '复制失败';
         }
       });
 

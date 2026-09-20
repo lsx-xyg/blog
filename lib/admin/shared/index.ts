@@ -1,2 +1,2 @@
-export * from "./dashboard-order"
-export * from "./pages"
+export * from './dashboard-order';
+export * from './pages';

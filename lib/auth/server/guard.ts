@@ -1,7 +1,7 @@
 /** 后台 API 鉴权：未登录 / 非管理员一律 404 伪装（防探测，SPEC §6） */
-import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth/server";
-import { isAdminUser } from "@/lib/shared";
+import { NextResponse } from 'next/server';
+import { auth } from '@/lib/auth/server';
+import { isAdminUser } from '@/lib/shared';
 
 export async function requireAdmin(req: Request) {
   const session = await auth.api.getSession({ headers: req.headers });
@@ -9,5 +9,5 @@ export async function requireAdmin(req: Request) {
 }
 
 export function adminDenied(): NextResponse {
-  return NextResponse.json({ error: "Not Found" }, { status: 404 });
+  return NextResponse.json({ error: 'Not Found' }, { status: 404 });
 }
