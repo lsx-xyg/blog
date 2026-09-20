@@ -10,7 +10,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { createBackup } from "@/lib/backup";
+import { createBackup } from "@/lib/backup/server";
 import { getCronSettings } from "@/lib/settings/server";
 import { BackupTrigger } from "@/lib/types/backup";
 

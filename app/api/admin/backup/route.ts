@@ -9,7 +9,7 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth/server/auth";
 import { isAdminUser } from "@/lib/shared/utils";
-import { createBackup, listBackups } from "@/lib/backup";
+import { createBackup, listBackups } from "@/lib/backup/server";
 import { BackupTrigger } from "@/lib/types/backup";
 
 export const dynamic = "force-dynamic";

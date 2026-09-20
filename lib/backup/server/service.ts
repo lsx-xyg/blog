@@ -6,7 +6,7 @@
  * - schema.ts：表映射 + 行级敏感字段处理 + 日期还原
  * - store.ts：备份存储驱动解析（记录驱动优先，回退当前配置）
  * - audit.ts：审计日志
- * - index.ts：仅编排主流程（导出 / 导入 / 创建 / 下载 / 删除 / 列表）
+ * - service.ts：仅编排主流程（导出 / 导入 / 创建 / 下载 / 删除 / 列表）
  *
  * 功能：
  * 1. 手动导出 JSON 全量备份（下载到本地 / 上传到存储）
@@ -42,9 +42,6 @@ import { BACKUP_VERSION, encodeBackupContent, decodeBackupContent } from "./code
 import type { BackupData } from "./codec";
 import { resolveBackupStorageDriver } from "./store";
 import { logBackupAudit, listBackupAuditLogs } from "./audit";
-
-export type { BackupData };
-
 /* ---------- 导出 / 导入 ---------- */
 
 /**
@@ -275,7 +272,3 @@ export async function downloadBackup(id: string): Promise<{ buffer: Buffer; file
     mimeType: "application/json",
   };
 }
-
-/* ---------- 审计日志（re-export，供 API 路由使用） ---------- */
-
-export { logBackupAudit, listBackupAuditLogs } from "./audit";
