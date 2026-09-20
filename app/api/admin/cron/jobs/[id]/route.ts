@@ -4,7 +4,7 @@
  * DELETE /api/admin/cron/jobs/[id] - 删除定时任务
  */
 import { NextResponse } from "next/server";
-import { requireAdmin, adminDenied } from "@/lib/auth/server/guard";
+import { requireAdmin, adminDenied } from "@/lib/auth/server";
 import { getCronJob, updateCronJob, deleteCronJob } from "@/lib/cron/server";
 import type { CronJobConfig } from "@/lib/types/cron";
 

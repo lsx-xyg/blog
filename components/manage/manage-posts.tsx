@@ -31,7 +31,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { PostStatus } from "@/lib/types/posts";
-import { triggerNavigationStart } from "@/lib/shared/navigation";
+import { triggerNavigationStart } from "@/lib/shared/client";
 
 type PostRow = {
   id: string;

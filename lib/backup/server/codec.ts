@@ -8,7 +8,7 @@ import {
   decryptIfAvailable,
   encryptIfAvailable,
   isEncryptionAvailable,
-} from "@/lib/shared/crypto";
+} from "@/lib/crypto/server";
 
 /** 备份版本 */
 export const BACKUP_VERSION = "1.0";

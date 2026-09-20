@@ -23,7 +23,7 @@ import {
   decryptIfAvailable,
   encryptIfAvailable,
   isEncryptionAvailable,
-} from "@/lib/shared/crypto";
+} from "@/lib/crypto/server";
 
 /** 需要备份的表（按依赖顺序排列，恢复时按此顺序清空和插入） */
 export const BACKUP_TABLES = [

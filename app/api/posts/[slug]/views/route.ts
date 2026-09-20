@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getPublishedPostBySlugOrId, incrementViewCount } from "@/lib/posts";
+import { getPublishedPostBySlugOrId, incrementViewCount } from "@/lib/posts/server";
 
 export const dynamic = "force-dynamic";
 

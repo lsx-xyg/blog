@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { getEnv } from "@/lib/env/server/utils";
+import { getEnv } from "@/lib/env/server";
 import { ENV_KEYS } from "@/lib/env/shared";
 
 const url = getEnv(ENV_KEYS.DATABASE_URL);

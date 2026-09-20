@@ -18,7 +18,7 @@
  */
 import { NextResponse } from "next/server";
 import { revalidatePath } from "next/cache";
-import { publishScheduledPosts } from "@/lib/posts";
+import { publishScheduledPosts } from "@/lib/posts/server";
 import { getCronSettings } from "@/lib/settings/server";
 
 export const dynamic = "force-dynamic";

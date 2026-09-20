@@ -28,7 +28,7 @@ export async function register() {
       // 只在 SERVER 模式下启动 node-cron
       if (platform === CronDeployPlatform.SERVER) {
         const { schedule } = await import("node-cron");
-        const { publishScheduledPosts } = await import("@/lib/posts");
+        const { publishScheduledPosts } = await import("@/lib/posts/server");
         const { revalidatePath } = await import("next/cache");
 
         console.log("[cron] SERVER 模式：启动 node-cron 定时任务（每分钟执行一次）");

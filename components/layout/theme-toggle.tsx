@@ -2,7 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { Laptop, Sun, Moon, Eye } from "lucide-react";
-import { applyTheme, getStoredTheme, type ThemeMode } from "@/lib/shared/theme";
+import { type ThemeMode } from "@/lib/theme/shared";
+import { getStoredTheme, applyTheme } from "@/lib/theme/client";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,9 +72,8 @@ export function ThemeToggle() {
         onClick={() => select(o.value)}
         onMouseEnter={clearCloseTimer}
         onMouseLeave={handleLeave}
-        className={`flex items-center gap-2.5 cursor-pointer py-2.5 ${
-          active ? "text-foreground font-medium" : "text-muted-foreground"
-        }`}
+        className={`flex items-center gap-2.5 cursor-pointer py-2.5 ${active ? "text-foreground font-medium" : "text-muted-foreground"
+          }`}
       >
         <Icon className="h-4 w-4 shrink-0" />
         <span className="flex-1">{o.label}</span>

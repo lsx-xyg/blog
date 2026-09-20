@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth/server/auth";
+import { auth } from "@/lib/auth/server";
 import { headers } from "next/headers";
-import { isAdminUser } from "@/lib/shared/utils";
+import { isAdminUser } from "@/lib/shared";
 import { listFriendLinks, createFriendLink } from "@/lib/friend-links/server";
 
 /**

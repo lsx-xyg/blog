@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
-import { listPublishedPosts, listPublishedPostMeta } from "@/lib/posts";
+import { listPublishedPosts, listPublishedPostMeta } from "@/lib/posts/server";
 import { FileText, Tags, Star } from "lucide-react";
 import { getSiteSettings } from "@/lib/settings/server";
 import type { Metadata } from "next";

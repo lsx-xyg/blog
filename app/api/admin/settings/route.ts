@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireAdmin, apiError } from "@/lib/shared/admin-api";
+import { requireAdmin, apiError } from "@/lib/admin/server";
 import { getSettingsBundle, applySettingsPatch } from "@/lib/settings/server";
 
 /**

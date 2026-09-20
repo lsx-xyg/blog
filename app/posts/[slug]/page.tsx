@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { getPublishedPostBySlugOrId, listPublishedPosts } from "@/lib/posts";
+import { getPublishedPostBySlugOrId, listPublishedPosts } from "@/lib/posts/server";
 import { renderMdx } from "@/lib/mdx/server";
-import { formatDate } from "@/lib/shared/utils";
+import { formatDate } from "@/lib/shared";
 import { CodeCopy } from "@/components/posts/code-copy";
 import { ViewCounter } from "@/components/posts/view-counter";
 import { ArticleToc } from "@/components/posts/article-toc";

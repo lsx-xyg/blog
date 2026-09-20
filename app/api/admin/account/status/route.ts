@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
-import { auth } from "@/lib/auth/server/auth";
-import { isAdminUser } from "@/lib/shared/utils";
+import { auth } from "@/lib/auth/server";
+import { isAdminUser } from "@/lib/shared";
 import { db } from "@/db";
 import { accounts } from "@/db/schema";
 

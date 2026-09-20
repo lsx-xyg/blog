@@ -2,7 +2,7 @@
  * GET /api/admin/cron/jobs/[id]/history - 获取任务执行历史
  */
 import { NextResponse } from "next/server";
-import { requireAdmin, adminDenied } from "@/lib/auth/server/guard";
+import { requireAdmin, adminDenied } from "@/lib/auth/server";
 import { getJobHistory } from "@/lib/cron/server";
 
 export const dynamic = "force-dynamic";

@@ -1,5 +1,5 @@
 /**
- * 四主题（对齐参考站 czhlove.cn）：浅色(light) / 深色(dark) / 护眼(warm) / 跟随系统(system)
+ * 四主题：浅色(light) / 深色(dark) / 护眼(warm) / 跟随系统(system)
  * - 记忆：localStorage["site-theme"] = "light" | "dark" | "warm" | "system"（客户端）
  * - 同步：cookie "site-theme"（服务端 SSR 用，root layout 据此渲染 html class，防 FOUC）
  * - 应用：html.dark / html.theme-warm class（globals.css tokens），light 时不加 class，system 时按 prefers-color-scheme
@@ -22,25 +22,6 @@ export const THEME_INIT_SCRIPT = `(function(){try{var t=localStorage.getItem('${
  */
 export const THEME_INIT_SCRIPT_SRC = "/theme-init.js";
 
-/** 应用主题到 html class（客户端调用） */
-export function applyTheme(mode: ThemeMode) {
-  const root = document.documentElement;
-  root.classList.toggle("dark", mode === "dark");
-  root.classList.toggle("theme-warm", mode === "warm");
-  // theme-system 仅用于服务端/CSS 系统偏好兜底（globals.css @media prefers-color-scheme）
-  root.classList.toggle("theme-system", mode === "system");
-  if (mode === "system") {
-    const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    root.classList.toggle("dark", dark);
-  }
-  if (mode === "light") {
-    root.classList.remove("dark", "theme-warm");
-  }
-  localStorage.setItem(THEME_KEY, mode);
-  // 同步写 cookie，供服务端 SSR 直接渲染 html class（消除 404 等路径的主题闪烁）
-  document.cookie = `${THEME_KEY}=${mode}; path=/; max-age=31536000; samesite=lax`;
-}
-
 /**
  * 服务端：根据 cookie 计算 html 上应渲染的主题 class
  * - dark → "dark"；warm → "theme-warm"；system → "theme-system"（CSS 媒体查询按系统偏好兜底）
@@ -51,11 +32,4 @@ export function getThemeClassFromValue(value: string | undefined): string {
   if (value === "warm") return "theme-warm";
   if (value === "system") return "theme-system";
   return "";
-}
-
-/** 读取已记忆主题（缺省 system） */
-export function getStoredTheme(): ThemeMode {
-  if (typeof window === "undefined") return "system";
-  const t = localStorage.getItem(THEME_KEY);
-  return t === "light" || t === "dark" || t === "warm" ? t : "system";
 }

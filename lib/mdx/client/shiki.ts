@@ -9,7 +9,7 @@ import { createHighlighterCore } from "@shikijs/core";
 import { createJavaScriptRegexEngine } from "@shikijs/engine-javascript";
 import type { Root, Element } from "hast";
 import { visit } from "unist-util-visit";
-import type { ThemeMode } from "@/lib/shared/theme";
+import type { ThemeMode } from "@/lib/theme/shared";
 
 /**
  * 异步初始化 Shiki highlighter

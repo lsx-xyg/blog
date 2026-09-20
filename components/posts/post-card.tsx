@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { formatDate } from "@/lib/shared/utils";
+import { formatDate } from "@/lib/shared";
 import { CalendarDays, Star } from "lucide-react";
 import { LazyImage } from "@/components/media/lazy-image";
 

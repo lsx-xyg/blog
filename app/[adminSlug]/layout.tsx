@@ -7,9 +7,9 @@
  */
 import { notFound, redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth/server/auth";
-import { getAdminPathAsync } from "@/lib/shared/admin-path";
-import { isAdminUser } from "@/lib/shared/utils";
+import { auth } from "@/lib/auth/server";
+import { getAdminPathAsync } from "@/lib/admin/server";
+import { isAdminUser } from "@/lib/shared";
 import { GuideManager } from "@/components/guides/guide-manager";
 
 export const dynamic = "force-dynamic";

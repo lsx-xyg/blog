@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth/server/auth";
-import { isAdminUser } from "@/lib/shared/utils";
+import { auth } from "@/lib/auth/server";
+import { isAdminUser } from "@/lib/shared";
 import { getPublicStorageDriver, validateImage } from "@/lib/storage/server";
 
 /** 上传图片 API

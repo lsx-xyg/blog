@@ -29,7 +29,7 @@ import { getPrivateStorageDriver } from "@/lib/storage/server";
 import type { StorageDriverInterface } from "@/lib/types/storage";
 import { BackupTrigger, BackupAuditAction } from "@/lib/types/backup";
 import { StorageDriverType } from "@/lib/types/storage";
-import { isEncryptionAvailable } from "@/lib/shared/crypto";
+import { isEncryptionAvailable } from "@/lib/crypto/server";
 import { eq, desc } from "drizzle-orm";
 import {
   BACKUP_TABLES,

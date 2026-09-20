@@ -6,11 +6,11 @@ import { sql, desc, eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { users, posts, tags, media, friendLinks } from "@/db/schema";
 import { PostStatus } from "@/lib/types/posts";
-import { auth } from "@/lib/auth/server/auth";
-import { getAdminPathAsync } from "@/lib/shared/admin-path";
-import { isAdminUser } from "@/lib/shared/utils";
-import { formatDate } from "@/lib/shared/utils";
-import { getEnv } from "@/lib/env/server/utils";
+import { auth } from "@/lib/auth/server";
+import { getAdminPathAsync } from "@/lib/admin/server";
+import { isAdminUser } from "@/lib/shared";
+import { formatDate } from "@/lib/shared";
+import { getEnv } from "@/lib/env/server";
 import { AdminLogin } from "@/components/auth/admin-login";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { SetupWizard } from "@/components/auth/setup-wizard";
@@ -23,7 +23,7 @@ import {
   normalizeQuickOrder,
   DASHBOARD_ORDER_KEY,
   QUICK_ORDER_KEY,
-} from "@/lib/admin/dashboard-order";
+} from "@/lib/admin/shared";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {

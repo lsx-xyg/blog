@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { getEnv } from "@/lib/env/server/utils";
+import { getEnv } from "@/lib/env/server";
 
 export const dynamic = "force-dynamic";
 

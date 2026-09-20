@@ -19,7 +19,7 @@ import { ChevronLeft, ChevronRight, FileText, ImagePlus, Settings, X } from "luc
 import { TagInput } from "@/components/shared/tag-input";
 import { MediaPicker } from "@/components/media/media-picker";
 import { usePostForm } from "@/components/posts/use-post-form";
-import { EDITOR_STEPS, type PostFormData } from "@/lib/posts/form";
+import { EDITOR_STEPS, type PostFormData } from "@/lib/posts/shared";
 import { PostStatus } from "@/lib/types/posts";
 
 /**

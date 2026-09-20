@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { guiders } from "@/db/schema";
-import { requireAdmin, adminDenied } from "@/lib/auth/server/guard";
+import { requireAdmin, adminDenied } from "@/lib/auth/server";
 import type { GuideStep } from "@/lib/types/guides";
 
 export const dynamic = "force-dynamic";

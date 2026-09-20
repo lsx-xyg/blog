@@ -7,14 +7,14 @@
  * 下一步跳转页面（跨页引导）。拾取锚点自动保存当前表单后跳目标页点选。
  */
 import { Plus, Trash2, X, HelpCircle, MousePointerClick } from "lucide-react";
-import { GUIDE_EVENT_ANCHORS } from "@/lib/guides/shared/anchor-registry";
+import { GUIDE_EVENT_ANCHORS } from "@/lib/guides/shared";
 import {
   inputClass,
   labelClass,
   helpClass,
   PLACEMENT_OPTIONS,
   type StepForm,
-} from "@/lib/guides/client/form-meta";
+} from "@/lib/guides/client";
 
 export function StepEditor({
   steps,

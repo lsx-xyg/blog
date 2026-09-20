@@ -10,8 +10,8 @@
 import { Plus, Trash2, X, MousePointerClick } from "lucide-react";
 import type { GuideCondition } from "@/lib/types/guides";
 import { GuideConditionOp } from "@/lib/types/guides";
-import { GUIDE_EVENT_ANCHORS } from "@/lib/guides/shared/anchor-registry";
-import { ADMIN_PAGES } from "@/lib/shared/admin-pages";
+import { GUIDE_EVENT_ANCHORS } from "@/lib/guides/shared";
+import { ADMIN_PAGES } from "@/lib/admin/shared";
 import {
   inputClass,
   labelClass,
@@ -20,7 +20,7 @@ import {
   OP_LABEL,
   OP_BY_FIELD,
   DEFAULT_VALUE_BY_FIELD,
-} from "@/lib/guides/client/form-meta";
+} from "@/lib/guides/client";
 
 export function ConditionSection({
   logic,

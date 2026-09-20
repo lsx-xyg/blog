@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { requireAdmin, apiError } from "@/lib/shared/admin-api";
+import { requireAdmin, apiError } from "@/lib/admin/server";
 import {
   getProgress,
   guideExistsByKey,
   upsertProgress,
   deleteProgress,
   parseProgressInput,
-} from "@/lib/guides/server/service";
+} from "@/lib/guides/server";
 
 /**
  * 用户引导进度 API（user_guide_progress 表）——C9 薄壳
@@ -71,7 +71,7 @@ export async function DELETE(request: Request) {
 }
 
 /** 复用 requireAdmin 的会话（薄壳内取一次 userId） */
-import { auth } from "@/lib/auth/server/auth";
+import { auth } from "@/lib/auth/server";
 import { headers } from "next/headers";
 async function getSessionUserId(): Promise<string | null> {
   const session = await auth.api.getSession({ headers: await headers() });

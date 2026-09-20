@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { listPublishedPostsFiltered } from "@/lib/posts";
+import { listPublishedPostsFiltered } from "@/lib/posts/server";
 
 export const dynamic = "force-dynamic";
 

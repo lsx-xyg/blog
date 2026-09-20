@@ -9,7 +9,8 @@ import { Image as ImageIcon, Columns2, Eye, Pencil } from "lucide-react";
 import { MediaPicker } from "@/components/media/media-picker";
 import "bytemd/dist/index.css";
 import { MediaType } from "@/lib/types/media";
-import { getStoredTheme, type ThemeMode } from "@/lib/shared/theme";
+import { type ThemeMode } from "@/lib/theme/shared";
+import { getStoredTheme } from "@/lib/theme/client";
 import { createShikiHighlighter, createShikiRehypePlugin, getEffectiveTheme } from "@/lib/mdx/client";
 import { ZH_LOCALE } from "@/lib/mdx/client";
 

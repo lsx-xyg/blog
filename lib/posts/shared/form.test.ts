@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { emptyForm, buildPostPayload, validatePostForm } from "@/lib/posts/form";
+import { emptyForm, buildPostPayload, validatePostForm } from "@/lib/posts/shared";
 import { PostStatus } from "@/lib/types/posts";
 
 describe("validatePostForm", () => {

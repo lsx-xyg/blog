@@ -6,7 +6,7 @@
 import { describe, expect, it } from "vitest";
 import { readdirSync, existsSync } from "node:fs";
 import path from "node:path";
-import { ADMIN_PAGES } from "./admin-pages";
+import { ADMIN_PAGES } from "./pages";
 
 const ADMIN_DIR = path.join(process.cwd(), "app/[adminSlug]");
 

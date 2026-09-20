@@ -15,12 +15,12 @@
  */
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth/server/auth";
-import { getAdminPathAsync } from "@/lib/shared/admin-path";
-import { isAdminUser } from "@/lib/shared/utils";
-import { getPostById } from "@/lib/posts";
+import { auth } from "@/lib/auth/server";
+import { getAdminPathAsync } from "@/lib/admin/server";
+import { isAdminUser } from "@/lib/shared";
+import { getPostById } from "@/lib/posts/server";
 import { PostEditor } from "@/components/posts/post-editor";
-import type { PostFormData } from "@/lib/posts/form";
+import type { PostFormData } from "@/lib/posts/shared";
 import { AdminBreadcrumb } from "@/components/admin/admin-breadcrumb";
 
 export const dynamic = "force-dynamic";

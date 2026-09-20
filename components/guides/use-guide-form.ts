@@ -16,7 +16,7 @@ import {
   EMPTY_FORM,
   toStepForms,
   type FormState,
-} from "@/lib/guides/client/form-meta";
+} from "@/lib/guides/client";
 import { validateGuideForm } from "@/lib/guides/client";
 
 export function useGuideForm(opts: {

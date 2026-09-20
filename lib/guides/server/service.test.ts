@@ -11,7 +11,7 @@ import {
   parseProgressInput,
   validatePublishedSteps,
   isValidStepList,
-} from "@/lib/guides/server/service";
+} from "@/lib/guides/server";
 import { GuideStatus } from "@/lib/types/guides";
 
 const validStep = { id: "s1", target: "editor-save", title: "保存", content: "点击保存" };

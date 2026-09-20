@@ -1,9 +1,9 @@
 /** 后台账号设置：修改密码 / 关联 GitHub；未匹配/未授权一律 404 伪装 */
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth/server/auth";
-import { getAdminPathAsync } from "@/lib/shared/admin-path";
-import { isAdminUser } from "@/lib/shared/utils";
+import { auth } from "@/lib/auth/server";
+import { getAdminPathAsync } from "@/lib/admin/server";
+import { isAdminUser } from "@/lib/shared";
 import { AccountSettings } from "@/components/auth/account-settings";
 import { AdminBreadcrumb } from "@/components/admin/admin-breadcrumb";
 

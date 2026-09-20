@@ -9,8 +9,8 @@
 
 import { NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth/server/auth";
-import { isAdminUser } from "@/lib/shared/utils";
+import { auth } from "@/lib/auth/server";
+import { isAdminUser } from "@/lib/shared";
 import { importBackup, type BackupData } from "@/lib/backup/server";
 
 export const dynamic = "force-dynamic";

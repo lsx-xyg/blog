@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { desc, eq, and } from "drizzle-orm";
 import { db } from "@/db";
 import { mediaTags, tags, media } from "@/db/schema";
-import { listPublishedPostMeta } from "@/lib/posts";
+import { listPublishedPostMeta } from "@/lib/posts/server";
 import { MediaType } from "@/lib/types/media";
 
 export const dynamic = "force-dynamic";

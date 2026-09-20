@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { Guide, GuideStep } from "@/lib/types/guides";
-import { buildTourSteps, pickSelector } from "@/lib/guides/shared/tour";
+import { buildTourSteps, pickSelector } from "../shared/tour";
 
 function makeStep(overrides: Partial<GuideStep> = {}): GuideStep {
   return {

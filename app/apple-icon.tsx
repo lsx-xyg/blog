@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 import { cookies } from "next/headers";
-import { LIN_SERIF_BOLD_BASE64 } from "@/lib/shared/favicon-font";
+import { LIN_SERIF_BOLD_BASE64 } from "@/lib/shared";
 
 /**
  * Apple 主屏图标（apple-touch-icon，180×180 PNG）。

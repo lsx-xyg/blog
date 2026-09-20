@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { cn } from "@/lib/shared/utils";
+import { cn } from "@/lib/shared";
 
 /**
  * 通用懒加载图片组件（基于 Next.js Image）

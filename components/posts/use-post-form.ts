@@ -4,7 +4,7 @@
  * 文章编辑表单状态机 hook（C10）。
  *
  * 收口：form 状态、步骤导航、标签加载、保存编排（新建/编辑分支 + toast + 跳转）。
- * 组件层只做 JSX 装配。payload 构造/校验在 lib/posts/form.ts（纯函数）。
+ * 组件层只做 JSX 装配。payload 构造/校验在 lib/posts/shared/form.ts（纯函数）。
  */
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -14,7 +14,7 @@ import {
   emptyForm,
   buildPostPayload,
   validatePostForm,
-} from "@/lib/posts/form";
+} from "@/lib/posts/shared";
 
 export function usePostForm({
   postId,

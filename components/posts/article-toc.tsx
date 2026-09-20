@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { List, Copy, Check } from "lucide-react";
 import type { TocItem } from "remark-flexible-toc";
-import { scrollToElement } from "@/lib/shared/smooth-scroll";
+import { scrollToElement } from "@/lib/shared/client";
 import {
   Sheet,
   SheetContent,

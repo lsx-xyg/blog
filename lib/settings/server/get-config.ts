@@ -34,7 +34,7 @@ export async function getConfig<K extends RegistryKey>(
 
   let dbResolved: string | boolean | number | null = dbVal;
   if (def.secret && typeof dbVal === "string" && dbVal) {
-    const { decryptIfAvailable } = await import("@/lib/shared/crypto");
+    const { decryptIfAvailable } = await import("@/lib/crypto/server");
     dbResolved = decryptIfAvailable(dbVal);
   }
 

@@ -23,7 +23,7 @@ import {
   getStorageSettings,
   getPrivateStorageSettings
 } from "./settings";
-import { encryptIfAvailable } from "@/lib/shared/crypto";
+import { encryptIfAvailable } from "@/lib/crypto/server";
 import { CronDeployPlatform } from "@/lib/types/settings";
 import type {
   CronSettings,

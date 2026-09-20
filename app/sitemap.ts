@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { getAllPostsForSitemap } from "@/lib/posts";
+import { getAllPostsForSitemap } from "@/lib/posts/server";
 
 /**
  * sitemap.xml

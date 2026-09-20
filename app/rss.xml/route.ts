@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { listPublishedPostMeta } from "@/lib/posts";
+import { listPublishedPostMeta } from "@/lib/posts/server";
 
 /**
  * RSS 2.0 feed

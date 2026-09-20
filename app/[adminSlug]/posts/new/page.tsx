@@ -15,9 +15,9 @@
  */
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth/server/auth";
-import { getAdminPathAsync } from "@/lib/shared/admin-path";
-import { isAdminUser } from "@/lib/shared/utils";
+import { auth } from "@/lib/auth/server";
+import { getAdminPathAsync } from "@/lib/admin/server";
+import { isAdminUser } from "@/lib/shared";
 import { PostEditor } from "@/components/posts/post-editor";
 import { AdminBreadcrumb } from "@/components/admin/admin-breadcrumb";
 

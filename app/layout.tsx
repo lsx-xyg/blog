@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { cookies } from "next/headers";
-import { getAdminPathAsync } from "@/lib/shared/admin-path";
+import { getAdminPathAsync } from "@/lib/admin/server";
 import {
   THEME_INIT_SCRIPT,
   THEME_INIT_SCRIPT_SRC,
   THEME_KEY,
   getThemeClassFromValue,
-} from "@/lib/shared/theme";
+} from "@/lib/theme/shared";
 import { SiteHeader } from "@/components/layout/site-header";
 import { MobileNav } from "@/components/layout/mobile-nav";
 import { Footer } from "@/components/layout/footer";
