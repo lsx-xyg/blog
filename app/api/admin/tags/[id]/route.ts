@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/server/auth";
 import { headers } from "next/headers";
 import { isAdminUser } from "@/lib/shared/utils";
-import { deleteTag, getTagById, getTagByName, updateTag } from "@/lib/tags";
+import { deleteTag, getTagById, getTagByName, updateTag } from "@/lib/tags/server";
 
 /**
  * 标签管理 API

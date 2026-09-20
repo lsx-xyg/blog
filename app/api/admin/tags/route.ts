@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth/server/auth";
 import { headers } from "next/headers";
 import { isAdminUser } from "@/lib/shared/utils";
-import { createTag, getTagByName, listAllTags, listTagsWithCount } from "@/lib/tags";
+import { createTag, getTagByName, listAllTags, listTagsWithCount } from "@/lib/tags/server";
 
 /**
  * 标签 API

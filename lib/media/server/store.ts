@@ -6,7 +6,7 @@ import { db } from "@/db";
 import { media, posts, mediaTags, tags } from "@/db/schema";
 import { MediaType } from "@/lib/types/media";
 import { StorageDriverType } from "@/lib/types/storage";
-import { getOrCreateTags } from "@/lib/tags";
+import { getOrCreateTags } from "@/lib/tags/server";
 import { PostStatus } from "@/lib/types/posts";
 
 /** 创建媒体记录 */

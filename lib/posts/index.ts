@@ -4,7 +4,7 @@
 import { and, desc, eq, or, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { posts, tags, postTags } from "@/db/schema";
-import { getOrCreateTags } from "@/lib/tags";
+import { getOrCreateTags } from "@/lib/tags/server";
 import { PostMeta, PostStatus } from "@/lib/types/posts";
 
 /** 数据库事务类型（用于 setPostTags 支持在事务内执行，与文章创建/更新原子提交） */
