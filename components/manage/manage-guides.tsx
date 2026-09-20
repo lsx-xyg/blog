@@ -28,11 +28,11 @@ import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import { AdminListPage } from "@/components/admin/list-page";
 import { CreateButton, RefreshButton } from "@/components/admin/action-buttons";
 import { useToast } from "@/components/ui/toast";
-import { GuideMissesPanel } from "@/components/guide/misses-panel";
+import { GuideMissesPanel } from "@/components/guides/misses-panel";
 
-import { StepEditor } from "@/components/guide/step-editor";
-import { ConditionSection } from "@/components/guide/condition-editor";
-import { useGuideForm } from "@/components/guide/use-guide-form";
+import { StepEditor } from "@/components/guides/step-editor";
+import { ConditionSection } from "@/components/guides/condition-editor";
+import { useGuideForm } from "@/components/guides/use-guide-form";
 import {
   labelClass,
   inputClass,

@@ -10,7 +10,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/auth/auth";
 import { getAdminPathAsync } from "@/lib/shared/admin-path";
 import { isAdminUser } from "@/lib/shared/utils";
-import { GuideManager } from "@/components/guide/guide-manager";
+import { GuideManager } from "@/components/guides/guide-manager";
 
 export const dynamic = "force-dynamic";
 
