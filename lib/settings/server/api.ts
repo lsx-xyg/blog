@@ -8,6 +8,11 @@
  * 纯函数（buildSettingsOps / to*ForClient）可独立单测，加密函数注入便于测试。
  */
 import {
+  getSetting,
+  setSettingsBatch,
+  deleteSetting,
+} from "./store";
+import {
   getSiteSettings,
   getSocialLinks,
   getFooterSettings,
@@ -16,11 +21,8 @@ import {
   getGiscusSettings,
   getCronSettings,
   getStorageSettings,
-  getPrivateStorageSettings,
-  getSetting,
-  setSettingsBatch,
-  deleteSetting,
-} from "@/lib/settings";
+  getPrivateStorageSettings
+} from "./settings";
 import { encryptIfAvailable } from "@/lib/shared/crypto";
 import { CronDeployPlatform } from "@/lib/types/settings";
 import type {

@@ -5,9 +5,9 @@ const storeMock = vi.hoisted(() => ({
   getSetting: vi.fn<() => Promise<unknown>>(),
 }));
 
-vi.mock("@/lib/settings/store", () => storeMock);
+vi.mock("@/lib/settings/server/store", () => storeMock);
 
-import { getConfig } from "@/lib/settings/get-config";
+import { getConfig } from "@/lib/settings/server";
 
 describe("getConfig falsy 合并（评论开关回归）", () => {
   beforeEach(() => {

@@ -8,8 +8,7 @@
  */
 import { ENV_KEYS } from "@/lib/env/shared";
 import { getEnv } from "@/lib/env/server";
-
-import { getSetting } from "@/lib/settings";
+import { getSetting } from "@/lib/settings/server";
 
 /** 异步版本：env 优先 → DB settings.admin_path 覆盖 → 兜底 admin */
 export async function getAdminPathAsync(): Promise<string> {

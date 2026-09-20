@@ -11,7 +11,7 @@
  */
 
 import { getConfig } from "./get-config";
-import { registry, type RegistryKey } from "./registry";
+import { registry, type RegistryKey } from "../shared/registry";
 
 /* ---------------- 类型工具：把扁平键组装成嵌套类型 ---------------- */
 

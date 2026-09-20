@@ -11,7 +11,7 @@ import {
   toStorageForClient,
   toPrivateStorageForClient,
   toCronForClient,
-} from "@/lib/settings/service";
+} from "@/lib/settings/server";
 
 /** 测试加密函数：能区分「敏感字段走加密」即可 */
 const mockEncrypt = (v: string) => `enc(${v})`;

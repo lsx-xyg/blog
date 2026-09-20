@@ -11,7 +11,7 @@
 
 import { NextResponse } from "next/server";
 import { createBackup } from "@/lib/backup";
-import { getCronSettings } from "@/lib/settings";
+import { getCronSettings } from "@/lib/settings/server";
 import { BackupTrigger } from "@/lib/types/backup";
 
 export const dynamic = "force-dynamic";

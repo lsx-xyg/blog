@@ -4,7 +4,7 @@
  */
 import { NextResponse } from "next/server";
 import { requireAdmin, adminDenied } from "@/lib/auth/server/guard";
-import { getSetting, setSetting } from "@/lib/settings/store";
+import { getSetting, setSetting } from "@/lib/settings/server";
 import {
   DASHBOARD_ORDER_KEY,
   QUICK_ORDER_KEY,

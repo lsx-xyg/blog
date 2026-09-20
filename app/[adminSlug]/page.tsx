@@ -17,7 +17,7 @@ import { SetupWizard } from "@/components/auth/setup-wizard";
 import { AdminBreadcrumb } from "@/components/admin/admin-breadcrumb";
 import DashboardCards from "@/components/admin/dashboard-cards";
 import QuickLinks from "@/components/admin/quick-links";
-import { getSetting } from "@/lib/settings/store";
+import { getSetting } from "@/lib/settings/server";
 import {
   normalizeCardOrder,
   normalizeQuickOrder,

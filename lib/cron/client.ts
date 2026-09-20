@@ -10,7 +10,7 @@
  *
  * 依赖方向：client.ts ← service.ts（业务层调适配器，方向单向）
  */
-import { getCronJobApiKey } from "@/lib/settings";
+import { getCronJobApiKey } from "@/lib/settings/server";
 import type {
   CronJobConfig,
   CronJob,

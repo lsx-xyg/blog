@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   secretRevealReducer,
   SECRET_REVEAL_SECONDS,
-} from "@/lib/settings/secret-reveal";
+} from "../shared/secret-reveal";
 
 describe("secretRevealReducer", () => {
   it("reveal：设置明文并重置倒计时为 30 秒", () => {

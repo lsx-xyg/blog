@@ -1,6 +1,3 @@
-import { getDeployPlatform } from "@/lib/settings";
-import { CronDeployPlatform } from "@/lib/types/settings";
-
 /**
  * T12 定时任务：SERVER 模式下使用 node-cron 内置定时任务
  *
@@ -16,7 +13,7 @@ export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     try {
       // 动态 import，让打包器把这条链放到 Node bundle，不进 Edge bundle
-      const { getDeployPlatform } = await import("@/lib/settings");
+      const { getDeployPlatform } = await import("@/lib/settings/server");
       const { CronDeployPlatform } = await import("@/lib/types/settings");
 
       // 数据库查询可能失败（Neon 冷启动/网络问题），失败时使用默认值 VERCEL

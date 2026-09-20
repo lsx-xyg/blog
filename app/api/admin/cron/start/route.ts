@@ -6,8 +6,8 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, adminDenied } from "@/lib/auth/server/guard";
 import { createSystemJob, findSystemJob, listCronJobs, updateCronJob } from "@/lib/cron";
-import { getDeployPlatform } from "@/lib/settings";
-import { getCronSettings, getSiteSettings } from "@/lib/settings/index";
+import { getDeployPlatform } from "@/lib/settings/server";
+import { getCronSettings, getSiteSettings } from "@/lib/settings/server";
 import { CronDeployPlatform } from "@/lib/types/settings";
 import { getPresetKeyFromTitle, getSystemJobPreset } from "@/lib/cron/system-jobs";
 

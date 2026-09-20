@@ -1,5 +1,5 @@
 import  { type StorageDriverInterface, StorageDriverType } from "@/lib/types/storage";
-import { getStorageSettings, getPrivateStorageSettings } from "@/lib/settings";
+import { getStorageSettings, getPrivateStorageSettings } from "@/lib/settings/server";
 import { LocalStorageDriver, GithubStorageDriver, S3StorageDriver } from "@/lib/storage/drivers";
 
 export * from "@/lib/types/storage";

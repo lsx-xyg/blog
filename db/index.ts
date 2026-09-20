@@ -1,10 +1,11 @@
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import { getEnv } from "@/lib/env/server/utils";
+import { ENV_KEYS } from "@/lib/env/shared";
 
-const url = getEnv("DATABASE_URL");
+const url = getEnv(ENV_KEYS.DATABASE_URL);
 if (!url) {
-  throw new Error("缺少环境变量 DATABASE_URL（可在 .env 中配置）");
+  throw new Error(`缺少环境变量 ${ENV_KEYS.DATABASE_URL}（可在 .env 中配置）`);
 }
 
 /**

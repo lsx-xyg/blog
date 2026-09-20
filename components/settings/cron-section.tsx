@@ -16,7 +16,7 @@ import { emitGuideTrigger } from "@/lib/guides/client";
 import { GUIDE_TRIGGER_EVENT } from "@/lib/guides";
 import { SecretRevealDialog } from "@/components/shared/secret-reveal-dialog";
 import { usePasswordStatus, getAdminPathFromUrl } from "@/components/auth/use-password-status";
-import { secretRevealReducer } from "@/lib/settings/secret-reveal";
+import { secretRevealReducer } from "@/lib/settings/shared";
 
 const inputClass =
   "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all";

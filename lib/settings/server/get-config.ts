@@ -8,8 +8,8 @@
  * 缓存层可在本函数预留扩展点（本次不实现）。
  */
 
-import { getSetting } from "@/lib/settings/store";
-import { registry, type RegistryKey, type ConfigDef } from "@/lib/settings/registry";
+import { getSetting } from "./store";
+import { registry, type RegistryKey, type ConfigDef } from "../shared/registry";
 
 /**
  * 读取单个配置，按 env > DB > default 合并，并对敏感字段解密。

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth/server/auth";
 import { isAdminUser } from "@/lib/shared/utils";
-import { getSetting } from "@/lib/settings";
+import { getSetting } from "@/lib/settings/server";
 import { decryptIfAvailable } from "@/lib/shared/crypto";
 import { db } from "@/db";
 import { accounts } from "@/db/schema";

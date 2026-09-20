@@ -14,7 +14,7 @@ import { Footer } from "@/components/layout/footer";
 import { ToastProvider } from "@/components/ui/toast";
 import { PageProgress } from "@/components/layout/page-progress";
 import GuidePicker from "@/components/guides/picker-layer";
-import { getSiteSettings, getFooterSettings } from "../lib/settings";
+import { getSiteSettings, getFooterSettings } from "@/lib/settings/server";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 

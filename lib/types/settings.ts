@@ -2,7 +2,7 @@
  * settings 相关类型定义。
  *
  * 单独成文件的原因：
- * - 被 @/lib/settings、@/lib/storage、后台组件等多处引用
+ * - 被 @/lib/settings/server、@/lib/storage、后台组件等多处引用
  * - 避免类型层与实现层形成循环依赖
  */
 import { StorageDriverType } from "@/lib/types/storage";

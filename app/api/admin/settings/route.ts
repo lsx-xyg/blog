@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireAdmin, apiError } from "@/lib/shared/admin-api";
-import { getSettingsBundle, applySettingsPatch } from "@/lib/settings/service";
+import { getSettingsBundle, applySettingsPatch } from "@/lib/settings/server";
 
 /**
  * 站点设置 API（C9 薄壳：领域逻辑在 lib/settings/service.ts）
