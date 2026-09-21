@@ -70,7 +70,7 @@ export const GUIDE_CONDITION_OPS = Object.values(GuideConditionOp) as GuideCondi
  *   {field:"user_age_days", op:"gte", value:3},
  * ]}
  *
- * 字段约定（field 与埋点/data-guide 用同一标识，见 lib/guide-events.ts）：
+ * 字段约定（field 与埋点/data-guide 用同一标识，见 lib/guides/shared/anchor-registry.ts）：
  * - event_click：用户点击了某锚点元素（value = data-guide 锚点值），实时行为触发
  * - page：适用页面（value = 后台相对路径前缀，如 /settings）
  * - click_count.<target>：用户点击某锚点的累计次数（服务端 user_events 统计）

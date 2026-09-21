@@ -9,8 +9,8 @@
  * - 新建/编辑文章
  * - 保存后返回文章列表页
  *
- * 表单状态机 / 保存编排在 components/post/use-post-form.ts，
- * 数据模型 / payload / 校验在 lib/posts/form.ts（纯函数）。
+ * 表单状态机 / 保存编排在 components/posts/use-post-form.ts，
+ * 数据模型 / payload / 校验在 lib/posts/shared/form.ts（纯函数）。
  */
 
 import { useState } from 'react';

@@ -210,7 +210,7 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
       // 已有引导在显示 → 不叠加
       if (isOnbordaVisible) return;
 
-      // 触发决策（进度抑制 + 条件评估 + 续接）收口在 lib/guide/trigger.ts
+      // 触发决策（进度抑制 + 条件评估 + 续接）收口在 lib/guides/shared/trigger.ts
       const decision = decideTrigger(guide, {
         page: ctx.page,
         event: ctx.event,
@@ -241,7 +241,7 @@ function GuideEngine({ children }: { children: React.ReactNode }) {
         }
       }
 
-      // 构造 onborda tour steps（映射规则收口在 lib/guide/tour.ts，含失效监控分发）
+      // 构造 onborda tour steps（映射规则收口在 lib/guides/shared/tour.ts，含失效监控分发）
       const adminPath = getAdminPath();
       const steps = buildTourSteps(guide, adminPath, {
         isHit: (sel) => querySelectorSafe(sel) !== null,

@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 /**
  * 动态站点图标（favicon）：「林」字 + 主题配色。
  *
- * 主题通过 cookie `site-theme`（见 lib/shared/theme.ts）区分：
+ * 主题通过 cookie `site-theme`（见 lib/theme/shared/theme.ts）区分：
  * - light  → 白底深字（默认）
  * - dark   → 深底白字
  * - warm   → 米黄底深棕字（护眼）

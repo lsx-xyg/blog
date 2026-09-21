@@ -4,7 +4,7 @@
  * 定时任务表单状态机 hook（C11：manage-cron-jobs 交互拆分）。
  *
  * 收口：form 状态、创建/编辑切换、编辑详情回填、保存编排。
- * 数据模型 / 转换函数在 lib/cron/form.ts（jobToForm/formToConfig/DEFAULT_FORM）。
+ * 数据模型 / 转换函数在 lib/cron/shared/form.ts（jobToForm/formToConfig/DEFAULT_FORM）。
  * 保存成功后通过 onSaved 通知父组件刷新列表（避免 hook 依赖列表加载）。
  */
 import { useState } from 'react';

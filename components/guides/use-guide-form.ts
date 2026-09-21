@@ -4,7 +4,7 @@
  * 引导表单状态机（新建/编辑共用）
  *
  * 职责：form 状态 + 校验 + 保存（含 keepEditing 语义）+ 拾取前自动保存 + 打开新建/编辑。
- * 校验规则收口在 lib/guides/validate.ts（可单测），组件只做网络副作用与状态流转。
+ * 校验规则收口在 lib/guides/client/validate.ts（可单测），组件只做网络副作用与状态流转。
  */
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';

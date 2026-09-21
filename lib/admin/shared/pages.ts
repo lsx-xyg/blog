@@ -4,7 +4,7 @@
  * 说明：后台路由采用**静态清单**，而非运行时扫描 app/[adminSlug] 目录——
  * Vercel 等部署环境为 Next.js standalone 输出，源码 app/ 目录不随产物分发，
  * 运行时 readdirSync 会失败导致列表只剩首页。新增后台页面时，请同步在
- * ADMIN_PAGES 增加一项；lib/shared/admin-pages.test.ts 会用文件系统扫描校验
+ * ADMIN_PAGES 增加一项；lib/admin/shared/pages.test.ts 会用文件系统扫描校验
  * 清单没有遗漏（测试失败即提醒）。
  */
 export interface AdminPageOption {

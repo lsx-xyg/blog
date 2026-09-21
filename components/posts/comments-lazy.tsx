@@ -12,7 +12,7 @@ import dynamic from 'next/dynamic';
  * 使用 ssr: false 只在客户端加载，不影响首屏渲染和 SEO。
  */
 
-/** giscus 配置类型（与 components/comments.tsx 中的类型保持一致） */
+/** giscus 配置类型（与 components/posts/comments.tsx 中的类型保持一致） */
 type GiscusConfig = {
   repo?: string;
   repoId?: string;

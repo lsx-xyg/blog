@@ -5,7 +5,7 @@
  *
  * 结构化行式表单：条件字段 → 比较方式 → 值。字段决定可用操作符与输入控件
  * （page 用下拉、数字字段用数字框、event_click 支持拾取元素生成选择器），
- * 切换字段时重置操作符与值（数据隔离）。校验规则见 lib/guides/validate.ts。
+ * 切换字段时重置操作符与值（数据隔离）。校验规则见 lib/guides/client/validate.ts。
  */
 import { Plus, Trash2, X, MousePointerClick } from 'lucide-react';
 import type { GuideCondition } from '@/lib/types/guides';

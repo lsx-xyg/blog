@@ -2,7 +2,7 @@
  * 引导触发条件评估（前后端共用纯函数）
  *
  * target_condition 通用表达式：{logic:"and"|"or", conditions: GuideCondition[]}
- * 字段约定见 lib/types/guides.ts 与 lib/guide-events.ts。
+ * 字段约定见 lib/types/guides.ts 与 lib/guides/shared/anchor-registry.ts。
  */
 
 import type { GuideCondition, GuideTargetCondition } from '@/lib/types/guides';

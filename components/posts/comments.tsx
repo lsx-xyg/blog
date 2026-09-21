@@ -33,7 +33,7 @@ type CommentsProps = {
 export function Comments({ config }: CommentsProps) {
   const [theme, setTheme] = useState<string>('light');
 
-  // 从 localStorage 读取当前主题（与 lib/theme.ts 的存储 key 一致）
+  // 从 localStorage 读取当前主题（与 lib/theme/shared/theme.ts 的存储 key 一致）
   useEffect(() => {
     const storedTheme = localStorage.getItem('site-theme') || 'light';
     setTheme(storedTheme);

@@ -1,5 +1,5 @@
 // 引导配置 seed 脚本
-// 使用方式：npx tsx scripts/seed-guides.ts
+// 使用方式：npx tsx scripts/seed/guides.ts
 // 幂等：guideKey 已存在则跳过（改版换新 guideKey 版本号）
 import '@/lib/env/server/load';
 import { getEnv } from '@/lib/env/server';

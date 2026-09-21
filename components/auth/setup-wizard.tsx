@@ -1,6 +1,6 @@
 /**
  * 引导向导（client）：SETUP_SECRET 校验 → 密码注册 / GitHub 登录
- * 首个创建用户由 lib/auth.ts databaseHooks 自动置为 isAdmin
+ * 首个创建用户由 lib/auth/server/auth.ts databaseHooks 自动置为 isAdmin
  */
 'use client';
 
