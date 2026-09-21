@@ -1,8 +1,9 @@
 /**
  * 备份存储驱动解析（Backup Storage Driver 语义）
  *
- * 职责：根据备份记录选驱动——优先用记录创建时的驱动（切换驱动后旧备份仍可操作），
- * 配置不可用时回退到当前配置的私有存储驱动。
+ * 职责：根据备份记录选驱动——优先按记录创建时的**平台**在档案池里找该平台的档案
+ * （切换通道绑定后旧备份仍可操作），找不到时回退到备份通道
+ * （`storage.binding.backup`）当前绑定的驱动，即 `getStorageDriver(BACKUP)`。
  */
 import { getPrivateStorageDriver, getPrivateStorageDriverByType } from '@/lib/storage/server';
 import type { StorageDriverInterface, StorageDriverType } from '@/lib/types/storage';

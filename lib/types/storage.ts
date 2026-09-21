@@ -1,11 +1,15 @@
 /** 存储驱动抽象层（StorageDriver interface）
  *
- * 三个实现：
+ * 四个实现：
  * - local：本地文件存储（开发环境用，存在 public/uploads/）
- * - github：GitHub 图床（生产环境用，jsDelivr CDN 加速）
- * - s3：S3 兼容存储（占位，后续实现）
+ * - github：GitHub 图床（公开/私有仓库 + CDN/反代加速）
+ * - s3：S3 兼容对象存储（Cloudflare R2 / 阿里云 OSS / MinIO 等）
+ * - webdav：WebDAV 服务（坚果云 / NAS / Alist 等，无公网直链，仅限私有用途）
  *
- * 切换方式：环境变量 STORAGE_DRIVER=local|github|s3
+ * 取用方式：**不要按驱动类型直接 new / 取实例**，一律走
+ * `getStorageDriver(channel)`（通道 → 档案池 storage_profiles 的绑定解析）。
+ * 环境变量 STORAGE_DRIVER=local|github|s3|webdav 只在「未播种档案 / 未绑定通道」时
+ * 作为旧版回退配置使用。
  */
 /** 上传结果 */
 export interface UploadResult {

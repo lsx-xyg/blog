@@ -35,8 +35,8 @@ Next.js 15 App Router + TypeScript + Tailwind CSS + Drizzle ORM + Neon (PostgreS
 
 ## Capabilities and Constraints
 
-- 规格冻结：docs/SPEC.md v1.0（16 章）；ADR 0001-0006 已接受。
-- 数据库 9 张表；存储抽象 StorageDriver（VERCEL_BLOB | S3 | GITHUB，视频不走 GitHub）；备份 = 全量 JSON + 复用存储驱动。
+- 规格冻结：docs/SPEC.md v1.0（16 章）；ADR 0001-0015 已接受。
+- 数据库 18 张表（14 业务表 + 4 张 Better Auth 核心表）；存储走「档案池 + 通道绑定」——storage_profiles 表存多份命名配置（LOCAL | GITHUB | S3 | WEBDAV），通道（文章图 / 相册 / 备份）各自绑定一份档案，图片对外统一走站内路由 `/m/{key}`；备份 = 全量 JSON + 复用存储驱动（私有档案）。
 - 搜索 SEARCH_MODE=CLIENT|DATABASE 开关，起步 CLIENT（minisearch）。
 - 约束：env 全大写 + 小写转大写兜底；DB 枚举全大写；标签名原样存储、大小写敏感；giscus 依赖公开仓库。
 - 明确未决：站点正式名称（暂用 blog 占位）、Logo（待设计）。
@@ -50,7 +50,7 @@ Next.js 15 App Router + TypeScript + Tailwind CSS + Drizzle ORM + Neon (PostgreS
 
 ## Evidence on Hand
 
-- docs/SPEC.md v1.0（已冻结）；docs/adr/0001-0006（已接受）；AGENTS.md + docs/agents/（issue-tracker / triage / domain / skill-workflow）。
+- docs/SPEC.md v1.0（已冻结）；docs/adr/0001-0015（已接受）；AGENTS.md + docs/agents/（issue-tracker / triage / domain / skill-workflow）；CONTEXT.md 术语表（存储领域含 Storage Profile / Storage Channel）。
 - 参考站 czhlove.cn 结构已核实：首页 = 站点简介 + 文章列表 + 横排标签筛选（URL 不变）+ 最新/精选切换 + 加载更多。
 
 ## Product Principles

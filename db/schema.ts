@@ -1,7 +1,10 @@
 /**
  * 数据库 schema（SPEC §4）
- * - 9 张业务表 + Better Auth 4 张核心表（user/session/account/verification）
- * - 枚举值全大写（post_status / backup_trigger）
+ * - 14 张业务表 + Better Auth 4 张核心表（user/session/account/verification）
+ *   业务表：posts / tags / post_tags / media / media_tags / settings / storage_profiles /
+ *           friend_links / backup_records / backup_audit_logs /
+ *           guiders / user_guide_progress / user_events / guide_step_events
+ * - 枚举值全大写（post_status / media_type / storage_driver / backup_trigger / backup_audit_action / guide_status / guide_progress_status）
  * - 标签 name 原样存储（大小写敏感），slug 唯一冲突加后缀
  */
 import { BackupTrigger, BackupAuditAction } from '@/lib/types/backup';
@@ -156,8 +159,8 @@ export const media = pgTable(
   {
     id: uuid('id').primaryKey().defaultRandom(),
     type: mediaType('type').notNull(), // ARTICLE | GALLERY（枚举，禁止硬编码）
-    url: text('url').notNull(), // 访问 URL（存储驱动返回的公开 URL）
-    storageDriver: storageDriverType('storage_driver').notNull().default(StorageDriverType.LOCAL), // LOCAL | GITHUB | S3
+    url: text('url').notNull(), // 对外地址：站内路由 /m/{storageKey}（由 app/m/[...key] 代理到真实 CDN）
+    storageDriver: storageDriverType('storage_driver').notNull().default(StorageDriverType.LOCAL), // LOCAL | GITHUB | S3 | WEBDAV（入库时的平台，删除/回源按其反查档案）
     storageKey: text('storage_key'), // 存储键（用于删除，如 2026/09/uuid.jpg）
     title: text('title'), // 可空
     description: text('description'), // 可空
@@ -241,9 +244,9 @@ export const backupRecords = pgTable('backup_records', {
   fileKey: text('file_key').notNull(),
   size: bigint('size', { mode: 'number' }).notNull(),
   triggeredBy: backupTrigger('triggered_by').notNull().default('MANUAL'),
-  // 备份创建时使用的存储驱动（GITHUB/S3/LOCAL）
+  // 备份创建时使用的存储驱动（LOCAL | GITHUB | S3 | WEBDAV）
   // 用于切换驱动后仍能正确下载/删除旧备份
-  // null 表示未知，回退到当前配置的私有存储驱动
+  // null 表示未知，回退到备份通道（storage.binding.backup）绑定的档案
   storageDriver: storageDriverType('storage_driver'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

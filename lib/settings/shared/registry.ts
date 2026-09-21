@@ -36,32 +36,35 @@
  *                         [env: CRON_SECRET]
  * - cron.jobApiKey      → cron.job_api_key（敏感，AES-256-GCM）
  *                         [env: CRON_JOB_API_KEY]
- * - storage.driver      → storage.driver（归一化为 LOCAL/GITHUB/S3）
+ * - 存储：**取驱动走通道** `getStorageDriver(channel)`（档案池 storage_profiles +
+ *   `storage.binding.*` 绑定）；下面 storage.* / storagePrivate.* 是**旧版**两组配置，
+ *   仅在「档案未播种 / 通道未绑定」时作为回退，后台已不再直接编辑（改在 /{adminSlug}/storage）
+ * - storage.driver      → storage.driver（归一化为 LOCAL/GITHUB/S3/WEBDAV）
  *                         [env: STORAGE_DRIVER]
- * - storage.github.owner    → storage.github.owner
- *                             [env: GITHUB_STORAGE_OWNER]
- * - storage.github.repo     → storage.github.repo
- *                             [env: GITHUB_STORAGE_REPO]
- * - storage.github.branch   → storage.github.branch
- *                             [env: GITHUB_STORAGE_BRANCH]
+ * - storage.github.owner / repo / branch / directory → storage.github.*
+ *                         [env: GITHUB_STORAGE_OWNER / _REPO / _BRANCH / _DIRECTORY]
  * - storage.github.cdnBase  → storage.github.cdn_base（默认 raw.githubusercontent.com 直连）
- *                             [env: GITHUB_STORAGE_CDN_BASE]
- * - storage.github.urlStyle → storage.github.url_style（path=/{branch}/ 普通路径；at=@{branch} jsDelivr 格式）
- *                             [env: GITHUB_STORAGE_URL_STYLE]
+ *                         [env: GITHUB_STORAGE_CDN_BASE]
+ * - storage.github.urlStyle → storage.github.url_style
+ *                         （path = /{branch}/ 普通路径；at = @{branch} jsDelivr 格式）
+ *                         [env: GITHUB_STORAGE_URL_STYLE]
  * - storage.github.token    → storage.github.token（敏感，AES-256-GCM）
- *                             [env: GITHUB_STORAGE_TOKEN]
- * - storage.s3.endpoint     → storage.s3.endpoint
- *                             [env: S3_ENDPOINT]
- * - storage.s3.bucket       → storage.s3.bucket
- *                             [env: S3_BUCKET]
- * - storage.s3.region       → storage.s3.region（默认 auto）
- *                             [env: S3_REGION]
- * - storage.s3.accessKey    → storage.s3.access_key（敏感，AES-256-GCM）
- *                             [env: S3_ACCESS_KEY]
- * - storage.s3.secretKey    → storage.s3.secret_key（敏感，AES-256-GCM）
- *                             [env: S3_SECRET_KEY]
- * - storage.local.uploadDir → storage.local.upload_dir
- *                             [env: LOCAL_UPLOAD_DIR]
+ *                         [env: GITHUB_STORAGE_TOKEN]
+ * - storage.s3.endpoint / publicBase / bucket / region / directory → storage.s3.*
+ *                         [env: S3_ENDPOINT / S3_PUBLIC_BASE / S3_BUCKET / S3_REGION / S3_DIRECTORY]
+ * - storage.s3.accessKey / secretKey → storage.s3.*（敏感，AES-256-GCM）
+ *                         [env: S3_ACCESS_KEY / S3_SECRET_KEY]
+ * - storage.local.uploadDir / directory → storage.local.*
+ *                         [env: LOCAL_UPLOAD_DIR / LOCAL_STORAGE_DIRECTORY]
+ * - storage.webdav.url / username / password / directory → storage.webdav.*
+ *                         [env: WEBDAV_URL / WEBDAV_USERNAME / WEBDAV_PASSWORD / WEBDAV_DIRECTORY]
+ * - storage.binding.upload / gallery / backup → 通道绑定的档案名（storage_profiles.name，空 = 未绑定）
+ *                         [env: STORAGE_BINDING_UPLOAD / _GALLERY / _BACKUP]
+ * - storagePrivate.*    → 旧版私有存储（与公开组同构，DB key 前缀 storage_private.*）
+ *                         [env: STORAGE_PRIVATE_DRIVER / GITHUB_PRIVATE_* / S3_PRIVATE_* /
+ *                          LOCAL_PRIVATE_DIR / LOCAL_PRIVATE_SUBDIRECTORY / WEBDAV_PRIVATE_*]
+ * - backup.retentionDays / retentionCount → 备份保留策略（0 = 不限制，超限即清理，至少保留最新一份）
+ *                         [env: BACKUP_RETENTION_DAYS / BACKUP_RETENTION_COUNT]
  *
  * 优先级统一为：env > DB > default（仅 getConfig 一处合并）。
  */

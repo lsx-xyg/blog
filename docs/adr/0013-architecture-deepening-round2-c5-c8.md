@@ -18,6 +18,9 @@ ADR-0012 完成 C1–C4 后，第二轮评审（improve-codebase-architecture）
 - **C6 管理页骨架组合化**：新增 `components/admin/list-page.tsx`（AdminListPage：header + 错误条 + 搜索/筛选行 + loading/empty 门 + children 插槽）与 `components/admin/action-buttons.tsx`（CreateButton/RefreshButton 统一按钮模板：移动端只图标、禁用/加载态内置）。六页（posts/friend-links/media/tags/backup/guides）全部改造，保留各自专属内容（posts 批量工具栏、media 清理面板/分页、backup 三按钮/块标题、guides 失效监控面板）。
 - **C7 设置页密钥状态机**：新增 `lib/settings/secret-reveal.ts` 纯 reducer（reveal 重置 30s / tick 递减 / 归零自动隐藏），6 单测；新增 `components/settings/cron-section.tsx` 自持 cron 密钥完整交互（二次验证弹窗 / 明文倒计时 / 输入框 👁 / 无密码引导），`manage-settings.tsx` 894 → 701。
   - **storage 分区保留内联**：59 行薄块，核心逻辑已在 StorageConfigForm，拆出去只是搬移、删除测试不成立。
+    - _后续（2026-09-21）_：存储改「档案池 + 通道绑定」后，`StorageConfigForm` 已删除，
+      storage 分区也整体移出设置页，成为独立页面 `/{adminSlug}/storage`（`components/manage/manage-storage.tsx`
+      - `components/shared/storage-profiles-manager.tsx`）。设置页现在只留一个跳转入口。
 - **C8 cron 动作集合决策**：`lib/cron/jobs.ts` 新增 `availableActions(job, cls)`（系统任务：启停+手动触发+编辑/历史/删除；普通任务：切换+编辑/历史/删除，顺序即展示顺序），`manage-cron-jobs.tsx` 新增 `renderActions` 统一渲染，两处重复分支收敛。
 
 ## Consequences

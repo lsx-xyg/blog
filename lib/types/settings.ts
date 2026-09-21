@@ -54,7 +54,9 @@ export type CronSettings = {
   /** 是否已配置（加载时显示用，不返回明文） */
   jobApiKeyConfigured?: boolean;
 };
-/** 存储配置类型 */
+/** 旧版存储配置类型（公开组的形态）。
+ *  新代码请用档案结构（`lib/storage/server/profiles.ts` 的 ProfileConfig）；
+ *  本类型保留给 registry 声明与「档案未播种 / 通道未绑定」时的回退配置。 */
 
 export type StorageSettings = {
   driver: StorageDriverType;
@@ -96,7 +98,9 @@ export type StorageSettings = {
   };
 };
 
-/** 私有存储配置类型（与公开存储结构相同，用于备份等敏感数据） */
+/** 旧版私有存储配置类型（结构与公开存储相同）。
+ *  当前存储由「档案池 + 通道绑定」管理（storage_profiles 表 + storage.binding.*），
+ *  本类型只在升级兼容路径上使用：档案池未播种 / 备份通道未绑定时作为回退配置。 */
 export type PrivateStorageSettings = StorageSettings;
 
 /** 备份保留策略类型（两项均为 0 表示不自动清理） */

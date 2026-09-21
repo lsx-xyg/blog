@@ -8,6 +8,14 @@
  * 本脚本扫描 width/height 为空的 media 记录，按当前存储配置取回图片字节并用
  * sharp 探测尺寸后写库。图片走的是公开 CDN 地址，不需要管理员会话。
  *
+ * 取值方式：media.url 现在存的是站内路由（/m/{key}，非 http），所以脚本优先用
+ * storageKey 拼真实地址（`getPublicStorageDriver().getUrl()`）。
+ *
+ * ⚠️ 已知简化：脚本对**所有**记录都用「文章图片」通道的驱动拼 URL，
+ * 未按 media.storageDriver 分别解析（相册若绑到另一个平台的档案，拼出的地址可能不对）。
+ * 记录入库时平台不同的场景下，需要改成 getStorageDriverForPlatform(row.storageDriver, 'public')。
+ * 失败明细会逐条列出，可先 --dry-run 确认再实跑。
+ *
  * 用法：
  *   npm run media:backfill-dimensions              # 实际写入
  *   npm run media:backfill-dimensions -- --dry-run # 只预览，不写库

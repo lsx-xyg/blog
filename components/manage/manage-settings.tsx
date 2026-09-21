@@ -54,11 +54,17 @@ const AboutEditor = dynamic(
 /**
  * 后台设置管理组件
  *
- * 分区：
- * 1. 站点设置（站名/简介/SEO/Logo/Favicon）
- * 2. 社交链接（GitHub/Twitter/邮箱/RSS）
- * 3. 页脚设置（版权/ICP）
- * 4. 关于页面内容（Markdown 编辑器）
+ * 分区（对应 activeSection）：
+ * 1. site      站点设置（站名/简介/SEO/Logo/Favicon/站点 URL）
+ * 2. social    社交链接（GitHub/Twitter/邮箱/RSS）
+ * 3. footer    页脚设置（版权/ICP）
+ * 4. about     关于页面内容（Markdown 编辑器，动态导入）
+ * 5. giscus    评论设置
+ * 6. cron      定时任务（CronSection，敏感字段自持交互）
+ * 7. advanced  高级设置（后台路径 + 加密状态）
+ *
+ * 存储设置不在这里：已独立为 `/{adminSlug}/storage`（档案池 + 通道绑定，见
+ * components/manage/manage-storage.tsx），本页只保留一个跳转入口。
  */
 export function ManageSettings() {
   const { showToast } = useToast();

@@ -1,7 +1,16 @@
 # ADR-0009: 备份存储元数据、Cron UI 完善、私有仓库下载方案
 
-- Status: **Accepted**
+- Status: **Accepted**（取驱动方式已由 ADR-0015 调整，见下）
 - Date: 2026-09-15
+
+> **现状说明（2026-09-21）**：本 ADR 的两条结论仍然有效且已实现——
+> ① `backup_records.storage_driver` 记录平台，旧备份切换后仍可操作；
+> ② 私有仓库/无公开 URL 的备份统一走服务端鉴权路由 `/api/admin/backup/{id}` 下载。
+>
+> 变的是**「按平台找驱动」的落地方式**：当时是「按驱动类型重建实例，不可用则回退当前私有配置」；
+> 现在是**在档案池里按平台找对应档案**（`getStorageDriverForPlatform(platform, 'private')`），
+> 找不到再回退到备份通道（`storage.binding.backup`）绑定的档案。语义一致，层级从「配置」换到「档案」。
+> 背景见 ADR-0015。
 
 ## Context
 

@@ -1,7 +1,16 @@
 # ADR-0008: 存储架构公私分离（Public/Private Storage Separation）
 
-- Status: **Accepted**
+- Status: **Superseded by [ADR-0015](./0015-storage-profile-pool-channel-binding.md)**（2026-09-21）
 - Date: 2026-09-15
+
+> **更新说明（2026-09-21）**：本决策把「公开 / 私有」做成**两套固定实例 + 两组固定配置**，
+> 当出现「相册想单独放 R2」「备份想同时留本地一份」这类需求时，配置维度不够用。
+> 现已改为**档案池（storage_profiles）+ 通道绑定**模型，见 ADR-0015。
+> 本 ADR 保留作为历史记录——其中「公开资源与私有数据必须物理隔离」「不要一石三鸟」的
+> 结论仍然有效，只是落地方式从「两套配置」变成「可见性属性 + 通道绑定」。
+> 文中 `lib/storage/index.ts`、`lib/settings/index.ts`、`lib/backup/index.ts`、`components/manage-settings.tsx`
+> 等路径均为**当时版本**，`lib/` 模块化重构后已迁移（现为 `lib/storage/server/factory.ts`、
+> `lib/settings/server/`、`lib/backup/server/service.ts`、`components/manage/manage-settings.tsx`）。
 
 ## Context
 

@@ -2,14 +2,17 @@
  * 存储驱动测试脚本
  *
  * 用法：
- *   npx tsx scripts/storage.ts            # 用当前 STORAGE_DRIVER
- *   npx tsx scripts/storage.ts github     # 强制用 GitHub 驱动
+ *   npx tsx scripts/storage/driver.ts            # 测「文章图片」通道当前绑定的档案
+ *   npx tsx scripts/storage/driver.ts github     # 指定平台（仅对旧版回退配置生效）
+ *
+ * 注意：驱动实例现在按**通道绑定**解析（storage.binding.upload → storage_profiles 档案）。
+ * 命令行参数只改旧版 STORAGE_DRIVER env，在已绑定通道时不会改变实际使用的驱动。
  *
  * 测试内容：
  * 1. 准备内嵌的 1x1 JPEG 测试图（不依赖外网）
  * 2. 校验图片（validateImage）
- * 3. 上传到公开存储
- * 4. 读取 getUrl
+ * 3. 上传到「文章图片」通道的驱动
+ * 4. 读取 getUrl（私有档案没有公开 URL，此处会抛错，属预期）
  * 5. 删除文件
  */
 import '@/lib/env/server/load';
@@ -19,7 +22,8 @@ import { STORAGE_DRIVER_VALUES } from '@/lib/types/storage';
 async function main() {
   console.log('=== 存储驱动测试 ===\n');
 
-  // 支持命令行参数指定驱动：npx tsx scripts/driver.ts github
+  // 支持命令行参数指定驱动：npx tsx scripts/storage/driver.ts github
+  // （仅覆盖旧版 STORAGE_DRIVER；通道已绑定档案时以绑定为准）
   const driverArg = process.argv[2]?.toUpperCase();
   if (driverArg && STORAGE_DRIVER_VALUES.some((d) => d === driverArg)) {
     process.env.STORAGE_DRIVER = driverArg;
@@ -43,8 +47,8 @@ async function main() {
   }
   console.log('   校验通过\n');
 
-  // 3. 获取公开存储驱动
-  console.log('3. 获取公开存储驱动...');
+  // 3. 获取「文章图片」通道绑定的驱动
+  console.log('3. 获取「文章图片」通道的存储驱动...');
   const driver = await getPublicStorageDriver();
   console.log(`   使用驱动：${driver.name}\n`);
 

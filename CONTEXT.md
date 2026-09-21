@@ -54,9 +54,17 @@ _Avoid_: 存储实例、storage config、存储方案
 存储的用途维度（lib/storage/shared/channels.ts，扩展点文件）：UPLOAD（文章图片）、GALLERY（相册图片）、BACKUP（数据库备份）。每个通道绑定一个档案，上传/备份时按通道路由到对应驱动；`getStorageDriver(channel)` 是唯一入口，禁止按驱动类型直接取实例。
 _Avoid_: 用途、通道绑定、storage type
 
+**Storage Binding（通道绑定）**：
+通道到档案的映射，存在 settings 表的 `storage.binding.{channel}`（env `STORAGE_BINDING_*` 可覆盖）。一个通道同时只绑一个档案，可为空（空 = 未绑定，回退旧版 storage.* / storagePrivate.* 配置）。后台在 `/{adminSlug}/storage` 修改，保存即生效，且**只影响新上传**——历史文件按入库记录的平台反查档案。
+_Avoid_: 绑定关系、channel mapping、storage route
+
 **Public / Private Storage（公开 / 私有存储）**：
 档案的可见性属性：public 档案承载公开访问资源（必须有公网 URL），private 档案仅服务端存取。通道按可见性筛选可绑定的档案（如 WebDAV 只能绑 BACKUP）。**注意**：早期"公开/私有存储双通道"模型已被「档案池 + 通道绑定」取代，dashboard 不再有独立的公开/私有两套配置。
 _Avoid_: 公开仓库、私有仓库、双通道
+
+**Media Route（站内图片路由）**：
+`/m/{storageKey}`，图片的唯一对外地址（`app/m/[...key]/route.ts`）。入库时 `media.url` 与正文、封面的图片地址都固化为本路由，路由按 `media.storage_driver` 反查档案、拼出真实 URL 并**流式代理**图片字节。因此切换 CDN / 反代或换档案无需迁移历史图片。必须返回字节而非 302——`next/image` 优化器对站内 URL 不发网络请求而是内部 mock，302 空响应会被判为 400。
+_Avoid_: 图片代理、图床路由、/m 接口
 
 **jsDelivr CDN**：
 GitHub 存储驱动使用的一种 CDN 加速方式，将 GitHub 仓库中的文件转换为快速访问的 CDN URL。格式：https://cdn.jsdelivr.net/gh/{owner}/{repo}@{branch}/{path}。由档案配置的 cdnBase + urlStyle（path / at）决定实际拼接方式，也支持自建反代前缀。
@@ -151,11 +159,11 @@ _Avoid_: 瀑布流布局、masonry、grid
 ### 运维领域
 
 **Backup（备份）**：
-数据库的完整导出，以 JSON 格式存储。支持手动导出下载和定时自动备份。备份文件上传到 Private Storage。支持导入恢复。备份记录中存储 storage_driver 字段，记录备份创建时使用的存储驱动，切换驱动后旧备份仍可操作。
+数据库的完整导出，以 JSON 格式存储（覆盖 `BACKUP_TABLES` 的 11 张表，详见 SPEC §11）。支持手动导出下载和定时自动备份。备份文件写入**备份通道绑定的档案**（`storage.binding.backup`）。支持导入恢复（覆盖式）。备份记录中存储 storage_driver 字段，记录备份创建时使用的平台，切换绑定后旧备份仍可操作；后台下载统一走服务端鉴权路由 `/api/admin/backup/{id}`。
 _Avoid_: 数据库备份、dump、export
 
 **Backup Storage Driver（备份存储驱动）**：
-backup_records 表中的字段，记录备份创建时使用的存储驱动类型（GITHUB/S3/LOCAL）。下载/删除备份时优先使用此字段对应的驱动实例，不可用时回退到当前配置的私有存储驱动。解决切换驱动后旧备份无法操作的问题。
+backup_records 表中的字段，记录备份创建时使用的存储平台（LOCAL / GITHUB / S3 / WEBDAV）。下载/删除备份时优先在档案池里找**该平台**的档案，找不到时回退到备份通道当前绑定的档案（等价 `getStorageDriver(BACKUP)`）。解决切换绑定后旧备份无法操作的问题。
 _Avoid_: 备份平台、backup platform
 
 **Backup Retention（备份保留策略）**：
@@ -183,6 +191,6 @@ _Avoid_: 部署环境、deploy target
 - 所有枚举值使用全大写（如 DRAFT、PUBLISHED、LOCAL、GITHUB、ARTICLE、GALLERY）
 - 标签名称原样存储，不强制大写
 - 数据库表名使用蛇形命名（如 post_tags、media_tags）
-- 环境变量使用全大写下划线分隔（如 STORAGE_DRIVER、GITHUB_TOKEN）
+- 环境变量使用全大写下划线分隔（如 STORAGE_BINDING_BACKUP、GITHUB_STORAGE_TOKEN）
 - data-guide 锚点名使用 kebab-case（如 editor-save、reveal-view）
 - 新增术语时，必须同时记录 _Avoid_ 列表，防止同义词混用

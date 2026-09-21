@@ -1,20 +1,26 @@
 /**
- * 旧备份数据迁移脚本
+ * 旧备份数据迁移脚本（历史一次性脚本，已完成使命）
  *
  * 功能：将存储在公开存储（public storage）中的旧备份文件迁移到私有存储（private storage）
  *
  * 使用场景：
- * - 存储架构公私分离重构后，旧的备份文件可能还存储在公开仓库中
+ * - 存储架构「公私分离」重构（ADR-0008）后，旧的备份文件可能还存储在公开仓库中
  * - 需要将这些敏感数据迁移到私有仓库，避免数据泄露
  *
+ * ⚠️ 现状（2026-09-21）：存储已改为「档案池 + 通道绑定」（ADR-0015），
+ * 后台不再有独立的公开/私有两套配置。脚本里的
+ * `getPublicStorageDriver()` / `getPrivateStorageDriver()` 仍可用，但语义已变为
+ * `getStorageDriver(UPLOAD)` / `getStorageDriver(BACKUP)`（即通道绑定的档案）。
+ * 若档案池已播种，本脚本会按绑定档案而不是旧版 env 迁移——执行前请先确认绑定。
+ *
  * 使用方法：
- *   npx tsx scripts/migrate-backups-to-private.ts [--delete]
+ *   npx tsx scripts/storage/migrate-backups-to-private.ts [--delete]
  *
  * 参数：
  *   --delete  迁移完成后从公开存储删除旧文件（默认不删除，只复制）
  *
  * 注意：
- * - 运行前请确保已配置好公开存储和私有存储
+ * - 运行前请确保公开通道与备份通道都已绑定可用档案
  * - 建议先不带 --delete 参数运行，验证迁移结果后再删除旧文件
  * - 迁移过程中会更新数据库 backup_records 表中的 fileKey
  * - 本脚本假设公开存储可通过 HTTP 访问（如 GITHUB），LOCAL 驱动可能不适用

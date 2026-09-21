@@ -36,10 +36,13 @@
 
 ## 3. 仓库结构（双公开仓库）
 
-| 仓库           | 用途                                                                             |
-| -------------- | -------------------------------------------------------------------------------- |
-| Repo A（公开） | 博客代码 + giscus 评论（Discussions）                                            |
-| Repo B（公开） | 纯图床：图片资产，jsDelivr CDN 加速；GitHub token 仅授 Repo B 的 Contents 写权限 |
+| 仓库           | 用途                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------- |
+| Repo A（公开） | 博客代码 + giscus 评论（Discussions）                                                 |
+| Repo B（公开） | 图床仓库（可选的存储档案之一）：图片资产；GitHub token 仅授 Repo B 的 Contents 写权限 |
+
+> 图床不再限定为 GitHub 仓库：存储档案池支持 GitHub / S3 兼容（R2、OSS…）/ 本地 / WebDAV，
+> 通道各自绑定。仓库 B 的定位是「零成本起步的公开图床档案」，后期可平滑换成 R2（切换只影响新上传）。
 
 ---
 
@@ -85,21 +88,21 @@ Better Auth 自动创建 `user` / `session` / `account` / `verification` 表。
 
 > **设计决策（2026-09-13 最终版）**：所有图片（文章图片 + 相册图片）统一在 `media` 表管理，通过 `type` 字段（枚举 `ARTICLE` | `GALLERY`）区分。**已彻底删除 `gallery_items` 表**，精选字段（`featured`）直接放在 `media` 表中。相册图片 = `media` 表中 `type=GALLERY` 的记录。标签通过 `media_tags` 关联表管理。
 
-| 字段               | 类型                       | 说明                                                            |
-| ------------------ | -------------------------- | --------------------------------------------------------------- |
-| `id`               | uuid PK                    |                                                                 |
-| `type`             | enum ∈ {ARTICLE, GALLERY}  | 图片类型（枚举，禁止硬编码字符串）                              |
-| `url`              | text                       | 访问 URL（存储驱动返回的公开 URL，GitHub 驱动为 jsDelivr 形态） |
-| `storage_driver`   | text ∈ {LOCAL, GITHUB, S3} | 存储平台（小写转大写兜底校验）                                  |
-| `storage_key`      | text NULL                  | 存储键（用于删除，如 2026/09/uuid.jpg）                         |
-| `title`            | text NULL                  | 图片标题/名称（可用于 alt 文本、搜索）                          |
-| `description`      | text NULL                  | 图片描述                                                        |
-| `mime_type`        | text NULL                  | MIME 类型，如 image/jpeg                                        |
-| `size`             | integer NULL               | 文件大小（字节）                                                |
-| `width` / `height` | integer NULL               | 图片宽高（可空）                                                |
-| `featured`         | boolean DEFAULT false      | 精选（仅 GALLERY 类型有意义，ARTICLE 类型忽略）                 |
-| `uploaded_by`      | text NULL                  | 上传者 user_id（Better Auth 用 text 类型 id）                   |
-| `created_at`       | timestamptz                |                                                                 |
+| 字段               | 类型                               | 说明                                                                           |
+| ------------------ | ---------------------------------- | ------------------------------------------------------------------------------ |
+| `id`               | uuid PK                            |                                                                                |
+| `type`             | enum ∈ {ARTICLE, GALLERY}          | 图片类型（枚举，禁止硬编码字符串）                                             |
+| `url`              | text                               | 对外访问地址：站内路由 `/m/{storageKey}`（由 `app/m/[...key]` 代理到真实 CDN） |
+| `storage_driver`   | enum ∈ {LOCAL, GITHUB, S3, WEBDAV} | 入库时的存储平台；删除 / 回源按它反查档案池，切绑定不影响历史图片              |
+| `storage_key`      | text NULL                          | 存储键（用于删除，如 2026/09/uuid.jpg）                                        |
+| `title`            | text NULL                          | 图片标题/名称（可用于 alt 文本、搜索）                                         |
+| `description`      | text NULL                          | 图片描述                                                                       |
+| `mime_type`        | text NULL                          | MIME 类型，如 image/jpeg                                                       |
+| `size`             | integer NULL                       | 文件大小（字节）                                                               |
+| `width` / `height` | integer NULL                       | 图片宽高（上传时用 sharp 探测；老数据为空时按 4:3 兜底并可用回填脚本补齐）     |
+| `featured`         | boolean DEFAULT false              | 精选（仅 GALLERY 类型有意义，ARTICLE 类型忽略）                                |
+| `uploaded_by`      | text NULL                          | 上传者 user_id（Better Auth 用 text 类型 id）                                  |
+| `created_at`       | timestamptz                        |                                                                                |
 
 索引：`type`、`storage_driver`、`created_at`、`featured`
 
@@ -129,36 +132,72 @@ Better Auth 自动创建 `user` / `session` / `account` / `verification` 表。
 
 ### 4.9 `backup_records` 备份记录表
 
-| 字段           | 类型                  | 说明                 |
-| -------------- | --------------------- | -------------------- |
-| `id`           | uuid PK               |                      |
-| `file_key`     | text                  | 存储中的备份文件 key |
-| `size`         | bigint                |                      |
-| `triggered_by` | text ∈ {MANUAL, AUTO} |                      |
-| `created_at`   | timestamptz           |                      |
+| 字段             | 类型                                    | 说明                                                        |
+| ---------------- | --------------------------------------- | ----------------------------------------------------------- |
+| `id`             | uuid PK                                 |                                                             |
+| `file_key`       | text                                    | 存储中的备份文件 key                                        |
+| `size`           | bigint                                  |                                                             |
+| `triggered_by`   | text ∈ {MANUAL, AUTO}                   |                                                             |
+| `storage_driver` | enum NULL ∈ {LOCAL, GITHUB, S3, WEBDAV} | 备份创建时的存储平台；null = 未知，回退到备份通道绑定的档案 |
+| `created_at`     | timestamptz                             |                                                             |
+
+### 4.10 `storage_profiles` 存储档案池表（ADR-0015）
+
+| 字段                        | 类型                               | 说明                                                               |
+| --------------------------- | ---------------------------------- | ------------------------------------------------------------------ |
+| `id`                        | uuid PK                            |                                                                    |
+| `name`                      | text UNIQUE                        | 档案名（用平台名 slug：github / r2 / webdav / local…）             |
+| `driver`                    | enum ∈ {LOCAL, GITHUB, S3, WEBDAV} | 驱动类型                                                           |
+| `config`                    | jsonb                              | 驱动配置（敏感字段 token / secretKey / password AES-256-GCM 加密） |
+| `created_at` / `updated_at` | timestamptz                        |                                                                    |
+
+**用途绑定不落在这张表**：通道（upload / gallery / backup）→ 档案名的映射存在 `settings`
+表的 `storage.binding.*` 键，便于后台单独修改且 env 可覆盖。详见 §5。
+
+### 4.11 其余表
+
+`backup_audit_logs`（备份审计）、`guiders` / `user_guide_progress` / `user_events` / `guide_step_events`（引导系统）
+见 §8.1；Better Auth 的 `user` / `session` / `account` / `verification` 见 §4.1。
 
 ---
 
-## 5. 存储抽象（interface，多驱动）
+## 5. 存储抽象（档案池 + 通道绑定，ADR-0015）
 
 ```
 interface StorageDriver {
-  upload(file, filename, mimeType)  // 服务端直传（非客户端预签名 URL）
+  upload(file, filename, mimeType)   // 服务端直传（非客户端预签名 URL）
   delete(key)                        // 删除
-  getUrl(key)                        // 公开访问 URL
+  getUrl(key)                        // 公网访问 URL（私有档案会抛错，见下）
+  download(key)                      // 读回文件内容（私有仓库/bucket 走 API+Token）
 }
 ```
 
-- `STORAGE_DRIVER = LOCAL | GITHUB | S3`
-  - **LOCAL**：默认，本地文件存储（`public/uploads/`），开发环境用，不消耗外部 API 额度
-  - **GITHUB**：Contents API 上传 → 返回 **jsDelivr 形态 URL** 存库；视频不走 GitHub
-  - **S3**：@aws-sdk/client-s3（占位，后续实现，R2 / OSS / MinIO 等任意 S3 兼容平台）
-- **与原方案偏差记录**：原定义为 `VERCEL_BLOB | S3 | GITHUB`，interface 方法为 `getUploadUrl/delete/getPublicUrl`；用户否决 VERCEL_BLOB（不想依赖 Vercel 专有服务，且 Vercel Blob 免费额度有限），改用 LOCAL 本地驱动；上传方式从客户端预签名 URL 改为服务端直传（简化实现，博客场景上传量小）
+**模型：档案池 + 通道绑定**（取代早期的「公开/私有双实例」）
+
+- **档案（Storage Profile）**：`storage_profiles` 表的一行 = 一份完整存储配置
+  （档案名用平台名 + 驱动 + 该驱动的配置项，敏感字段 AES-256-GCM 加密）。后台可独立增删改、单独测连通性。
+- **通道（Storage Channel）**：存储的**用途**维度，注册表在 `lib/storage/shared/channels.ts`（扩展点文件）
+  - `upload` 文章图片（public）/ `gallery` 相册图片（public）/ `backup` 数据库备份（private）
+  - 每个通道在后台绑定一个档案；配置键 `storage.binding.{channel}`，env 可覆盖（`STORAGE_BINDING_*`）
+- **取用唯一入口**：`getStorageDriver(channel)`；历史文件按入库时记录的平台反查档案
+  （`media.storage_driver` / `backup_records.storage_driver`），所以**切换绑定只影响新上传**，已有文件永久可用
+- **驱动**：`LOCAL | GITHUB | S3 | WEBDAV`
+  - **LOCAL**：本地文件系统（公开 `public/uploads/`，私有 `private/storage/`），开发环境用，不消耗外部额度
+  - **GITHUB**：Contents API 上传；URL 由档案的 `cdnBase` + `urlStyle` 决定（`path` 普通路径 / `at` jsDelivr 格式），支持自建反代；视频不走 GitHub
+  - **S3**：@aws-sdk/client-s3，R2 / OSS / MinIO 等任意 S3 兼容平台（公开访问需配 `publicBase`）
+  - **WEBDAV**：坚果云 / NAS / Alist 等，无公网直链，**仅可绑定私有通道**（备份）
+- **图片对外统一走站内路由 `/m/{key}`**（见 §7）：入库即固化站内地址，切 CDN / 反代无需迁移历史图片
+- **契约要点**：`upload()` 不得内部调用 `getUrl()`——私有档案（WebDAV、未配 `publicBase` 的 S3）
+  没有公开 URL，`getUrl` 会抛错；私有档案的 `upload` 返回 `url: ''`，读内容一律走 `download()`
+- **与原方案偏差记录**：原定义为 `VERCEL_BLOB | S3 | GITHUB`，interface 方法为 `getUploadUrl/delete/getPublicUrl`；
+  用户否决 VERCEL_BLOB（不想依赖 Vercel 专有服务，且免费额度有限），改用 LOCAL 本地驱动；
+  上传方式从客户端预签名 URL 改为服务端直传（简化实现，博客场景上传量小）
 - 图片组件统一懒加载（`loading="lazy"` + `decoding="async"`）
 - 备份上传复用同一 interface（见 §11）
 - 文件命名：`YYYY/MM/uuid.ext`（按日期分目录 + UUID 避免冲突 + 保留扩展名）
 - 上传限制：单张 10MB，格式 jpg/jpeg/png/webp/gif
 - 鉴权：仅管理员可上传/删除（Better Auth session）
+- 后台入口：`/{adminSlug}/storage`（独立页，不受「站点设置」的保存按钮管辖）
 
 ---
 
@@ -195,7 +234,8 @@ interface StorageDriver {
 | `/posts/[slug]`                         | 文章页：TOC、Shiki 高亮 + 复制按钮、懒加载图、浏览量、giscus 评论；文章卡片样式照参考站（日期/标题/摘要/标签/封面/"更多阅读"） |
 | `/gallery`                              | 相册：瀑布流 + 无限滚动 + **隐藏式**标签筛选面板（多选）+ 最新/精选切换                                                        |
 | `/about`                                | 关于页：渲染 settings.about_content（Markdown）                                                                                |
-| `/friends`                              | 友链页：friend_links 卡片展示                                                                                                  |
+| `/links`                                | 友链页：friend_links 卡片展示                                                                                                  |
+| `/m/[...key]`                           | 站内图片入口：按 `media.storage_driver` 反查档案 → 流式代理图片字节（含 next/image 优化器兼容，见 §5）                         |
 | `/sitemap.xml` `/robots.txt` `/rss.xml` | SEO 三件套                                                                                                                     |
 
 **筛选架构（方案 A，纯客户端）**：
@@ -225,8 +265,9 @@ interface StorageDriver {
 | 相册管理 | 图片上传/编辑/删除、精选标记、标签                                                                                        |
 | 友链管理 | CRUD                                                                                                                      |
 | 标签管理 | 编辑/删除（删除时自动清除文章/相册上的关联）                                                                              |
+| 存储     | **独立页 `/{adminSlug}/storage`**：档案池增删改（按驱动出表单）+ 通道绑定（文章图/相册/备份）+ 连通性测试                 |
 | 备份     | 见 §11                                                                                                                    |
-| 设置     | site_title / description / footer / about_content / admin_path / 社交链接                                                 |
+| 设置     | site_title / description / footer / about_content / admin_path / 社交链接 / 评论 / 定时任务（**不含存储**，已拆独立页）   |
 
 **标签录入逻辑**：combobox 打开显示已有标签 → 选择或输入新建 → 服务端按 name 精确匹配（大小写敏感）复用已有 tag_id，不存在则新建（name 原样存储 + 生成 slug）。
 
@@ -308,17 +349,22 @@ interface StorageDriver {
 
 ## 11. 备份与恢复（已实现 ✅）
 
-**范围**：全量备份所有业务表（users / sessions / accounts / verifications / posts / tags / post_tags / media / media_tags / settings / friend_links）。图片本体在存储层，不在备份范围。
+**范围**：**以下 11 张表**（即 `lib/backup/server/schema.ts` 的 `BACKUP_TABLES`）——
+users / sessions / accounts / verifications / posts / tags / post_tags / media / media_tags / settings / friend_links。
+
+- **不在备份范围**：图片/备份文件本体（在存储层）、`storage_profiles`（存储档案，含加密密钥）、
+  `backup_records` / `backup_audit_logs`（备份自身的记录）、引导系统四表（guiders / user_guide_progress / user_events / guide_step_events）。
+  恢复是**覆盖式**的，未纳入的表不会被清空也不受影响。
 
 - **格式**：JSON 文件（schema 版本号 + 导出时间 + 各表数据数组）
-- **导出**：手动 → 生成 JSON 上传到**私有存储**，后台可下载；定时 → 自动上传到备份存储
+- **导出**：手动 → 生成 JSON 上传到**备份通道绑定的档案**，后台可下载；定时 → 自动上传到同一通道
 - **导入**：上传 JSON → 校验版本 → 按外键逆序清空 → 按外键顺序插入 → **覆盖式**；确认弹窗含覆盖警告
 - **定时备份**：复用**备份通道绑定的档案**（`storage.binding.backup` → storage_profiles 档案，可回退旧版 `STORAGE_PRIVATE_DRIVER` = LOCAL | GITHUB | S3 | WEBDAV），走 `backups/` 前缀；`VERCEL` 模式 cron-job.org 触发 `GET /api/cron/backup`，`SERVER` 模式 node-cron
 - **保留策略（已实现 ✅）**：按「保留天数 / 保留条数」自动清理旧备份——两项任一超限即删，`0` 表示不限制，无论怎么配都至少保留最新一份（安全阀，避免策略把备份全清空）；每次创建备份（手动 / 定时）后自动执行，后台另提供「立即清理」手动触发
-- **历史**：后台备份页显示 backup_records（时间/大小/触发方式），可下载、可删除、可恢复
+- **历史**：后台备份页显示 backup_records（时间/大小/触发方式/平台），可下载、可删除、可恢复；下载统一走服务端鉴权路由 `/api/admin/backup/{id}`（私有档案没有公开 URL）
 - **内容加密**：备份内容支持 AES-256-GCM 加密（需配置 ENCRYPTION_KEY），加密后的文件以 `BACKUP_ENC_V1:` 魔数开头，下载时自动解密
 - **审计日志**：备份操作（创建/下载/删除/恢复）记录到 backup_audit_logs 表，包含操作人、IP、User-Agent、时间
-- ⚠️ **安全提醒**：备份含账号表数据（邮箱等）；**必须使用私有存储**（私有 GitHub 仓库 / 私有 S3 bucket / 本地私有目录）；建议配置 ENCRYPTION_KEY 对备份内容加密；即使私有仓库被访问，没有密钥也无法读取备份内容
+- ⚠️ **安全提醒**：备份含账号表数据（邮箱等）；**必须绑定私有可见性的档案**（私有 GitHub 仓库 / 私有 S3 bucket / WebDAV / 本地私有目录）；后台绑定接口会拒绝把 WebDAV 或缺少公开域名的 S3 绑到公开通道；建议配置 ENCRYPTION_KEY 对备份内容加密；即使私有仓库被访问，没有密钥也无法读取备份内容
 
 ### 实现细节
 
@@ -380,58 +426,78 @@ ENCRYPTION_KEY=
 ### 按需配置
 
 ```ini
-# ===== 存储驱动（公开存储 - 图片/视频等公开资源）=====
-# LOCAL（开发默认）/ GITHUB（生产推荐）/ S3
-# 想在后台动态切换驱动，就不设置此环境变量
+# ===== 存储（档案池 + 通道绑定，ADR-0015）=====
+# 平常什么都不用设：在后台 {ADMIN_PATH}/storage 里「建档案 → 绑通道」即可（敏感字段加密入库）。
+# 下面的环境变量只在两种场景用：
+#   (a) 想用 env 强制覆盖后台配置（优先级 env > DB）
+#   (b) 应急回退——档案池未播种/通道未绑定时，用旧版 storage.* / storagePrivate.* 顶上
+#
+# 通道 → 档案名的绑定（填 storage_profiles.name，如 github / r2 / webdav）
+STORAGE_BINDING_UPLOAD=      # 文章图片（public）
+STORAGE_BINDING_GALLERY=     # 相册图片（public）
+STORAGE_BINDING_BACKUP=      # 数据库备份（private）
+
+# --- 旧版：公开组配置（回退用；同时是后台档案池的初始播种来源）---
+# LOCAL（开发默认）/ GITHUB / S3 / WEBDAV
 STORAGE_DRIVER=LOCAL
 
-# --- GitHub 公开仓库（STORAGE_DRIVER=GITHUB 时需要）---
-# 也可在后台「存储设置」动态配置（加密存储），环境变量优先级更高
-# 公开仓库用于存储文章/相册图片，通过 jsDelivr CDN 加速访问
+# GitHub 公开仓库（STORAGE_DRIVER=GITHUB 时需要）
+# 图片对外统一走站内 /m/{key}，cdnBase + urlStyle 决定回源地址
 GITHUB_STORAGE_TOKEN=          # Personal Access Token（repo 权限）
 GITHUB_STORAGE_OWNER=lsx-xyg   # 仓库所有者
-GITHUB_STORAGE_REPO=public      # 仓库名（原 images 已改名为 public）
+GITHUB_STORAGE_REPO=public     # 仓库名（原 images 已改名为 public）
 GITHUB_STORAGE_BRANCH=main     # 分支
-GITHUB_STORAGE_CDN_BASE=https://cdn.jsdelivr.net/gh  # CDN 基础 URL
-GITHUB_STORAGE_DIRECTORY=       # 子目录（可选，如 uploads，留空则存根目录）
+GITHUB_STORAGE_CDN_BASE=https://cdn.jsdelivr.net/gh  # 回源基础 URL（jsDelivr / raw 直连 / 自建反代前缀）
+GITHUB_STORAGE_URL_STYLE=path  # path = /{branch}/ 普通路径；at = @{branch} jsDelivr 格式
+GITHUB_STORAGE_DIRECTORY=      # 子目录（可选，如 uploads，留空则存根目录）
 
-# --- S3 兼容存储（STORAGE_DRIVER=S3 时需要）---
-# 支持阿里云 OSS / Cloudflare R2 / AWS S3 / MinIO 等
+# S3 兼容存储（STORAGE_DRIVER=S3 时需要）：阿里云 OSS / Cloudflare R2 / AWS S3 / MinIO 等
 S3_ENDPOINT=
 S3_REGION=auto
 S3_BUCKET=
+S3_PUBLIC_BASE=               # ⚠️ 公开通道必填：R2 自定义域 / r2.dev / OSS CDN 域名，否则图片无公网 URL
 S3_ACCESS_KEY=
 S3_SECRET_KEY=
-S3_DIRECTORY=                    # 子目录（可选）
+S3_DIRECTORY=                 # 子目录（可选）
 
-# ===== 存储驱动（私有存储 - 备份/敏感数据）=====
-# 用于存储数据库备份等敏感数据，必须使用私有仓库/bucket
-# 与公开存储独立配置，互不干扰
-# LOCAL（开发默认，存 private/storage 目录）/ GITHUB（私有仓库）/ S3（私有 bucket）
+# 本地（STORAGE_DRIVER=LOCAL 时需要，开发默认）
+LOCAL_UPLOAD_DIR=public/uploads
+LOCAL_STORAGE_DIRECTORY=      # 子目录（可选）
+
+# WebDAV（仅可绑私有通道，如备份）：坚果云 / NAS / Alist
+WEBDAV_URL=                   # 如 https://dav.jianguoyun.com/dav/
+WEBDAV_USERNAME=
+WEBDAV_PASSWORD=
+WEBDAV_DIRECTORY=             # 子目录（可选）
+
+# --- 旧版：私有组配置（回退用）---
+# 备份等敏感数据必须放私有可见性的档案（私有仓库 / 私有 bucket / WebDAV / 本地私有目录）
 STORAGE_PRIVATE_DRIVER=LOCAL
 
-# --- GitHub 私有仓库（STORAGE_PRIVATE_DRIVER=GITHUB 时需要）---
-# 私有仓库只有所有者可访问，备份文件不会公开
-# 建议使用独立的 Token，权限最小化
 GITHUB_PRIVATE_TOKEN=           # Personal Access Token（repo 权限）
 GITHUB_PRIVATE_OWNER=lsx-xyg    # 仓库所有者
-GITHUB_PRIVATE_REPO=backups      # 仓库名（建议单独建私有仓库）
+GITHUB_PRIVATE_REPO=backups     # 仓库名（建议单独建私有仓库）
 GITHUB_PRIVATE_BRANCH=main      # 分支
-GITHUB_PRIVATE_DIRECTORY=        # 子目录（可选，如 backups，留空则存根目录）
+GITHUB_PRIVATE_DIRECTORY=       # 子目录（可选，如 backups，留空则存根目录）
 
-# --- S3 私有 bucket（STORAGE_PRIVATE_DRIVER=S3 时需要）---
-# 建议开启服务端加密（SSE-S3 或 SSE-KMS）
 S3_PRIVATE_ENDPOINT=
 S3_PRIVATE_REGION=auto
 S3_PRIVATE_BUCKET=
 S3_PRIVATE_ACCESS_KEY=
 S3_PRIVATE_SECRET_KEY=
-S3_PRIVATE_DIRECTORY=            # 子目录（可选）
+S3_PRIVATE_DIRECTORY=           # 子目录（可选）
 
-# --- 本地私有存储（STORAGE_PRIVATE_DRIVER=LOCAL 时需要）---
-# 私有目录不会暴露到 Web，只能通过后台 API 下载
-LOCAL_PRIVATE_DIR=private/storage  # 私有目录（相对于项目根目录）
-LOCAL_PRIVATE_DIRECTORY=            # 子目录（可选）
+LOCAL_PRIVATE_DIR=private/storage  # 私有目录（相对于项目根目录，不暴露到 Web）
+LOCAL_PRIVATE_SUBDIRECTORY=        # 子目录（可选）
+
+WEBDAV_PRIVATE_URL=
+WEBDAV_PRIVATE_USERNAME=
+WEBDAV_PRIVATE_PASSWORD=
+WEBDAV_PRIVATE_DIRECTORY=
+
+# --- 备份保留策略（0 = 不限制；超限即清理，始终至少保留最新一份）---
+BACKUP_RETENTION_DAYS=          # 早于 N 天的备份自动清理
+BACKUP_RETENTION_COUNT=         # 最多保留 N 份
 
 # ===== 后台入口 =====
 # 后台管理路径（默认 admin），建议设一个不容易猜到的路径
@@ -464,13 +530,12 @@ NEXT_PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOUVJQps4DFcnk
 # SEARCH_MODE=CLIENT|DATABASE
 
 # 备份（T13 已实现 ✅）
-# 备份文件使用私有存储（备份通道绑定的档案 → 可回退 STORAGE_PRIVATE_DRIVER），走 backups/ 前缀
+# 备份文件写入**备份通道绑定的档案**（storage.binding.backup，可回退 STORAGE_PRIVATE_DRIVER），走 backups/ 前缀
 # 定时备份复用 CRON_SECRET 和 DEPLOY_PLATFORM 配置
 # 备份内容支持 AES-256-GCM 加密（需配置 ENCRYPTION_KEY）
 # 备份操作支持审计日志（backup_audit_logs 表）
 # 保留策略（已实现 ✅）：后台「备份管理 → 保留策略」配置，0 = 不限制
-# BACKUP_RETENTION_DAYS=7       # 早于 7 天的备份自动清理
-# BACKUP_RETENTION_COUNT=30     # 最多保留 30 份
+# 对应 env：BACKUP_RETENTION_DAYS / BACKUP_RETENTION_COUNT（见上方「存储」段）
 ```
 
 ---
@@ -505,14 +570,14 @@ NEXT_PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOUVJQps4DFcnk
 
 ## 14. 开发里程碑
 
-| 里程碑 | 内容                                                                |
-| ------ | ------------------------------------------------------------------- |
-| M1     | 脚手架：Next 15 + TS + Tailwind + Drizzle + Neon 连通               |
-| M2     | 数据层：全部 schema + 存储三驱动（Blob/S3/GitHub）                  |
-| M3     | 前台：首页瀑布流、文章页、MDX 渲染、三色主题                        |
-| M4     | 功能：筛选/搜索/精选/浏览量/评论/SEO/关于/友链                      |
-| M5     | 后台：引导流程、认证、文章/相册/友链/标签/设置管理、Milkdown 编辑器 |
-| M6     | 定时发布 + 备份 + 部署 Vercel + Cloudflare 域名                     |
+| 里程碑 | 内容                                                                                    |
+| ------ | --------------------------------------------------------------------------------------- |
+| M1     | 脚手架：Next 15 + TS + Tailwind + Drizzle + Neon 连通                                   |
+| M2     | 数据层：全部 schema + 存储驱动（LOCAL / GITHUB / S3 / WEBDAV，经档案池 + 通道绑定取用） |
+| M3     | 前台：首页瀑布流、文章页、MDX 渲染、三色主题                                            |
+| M4     | 功能：筛选/搜索/精选/浏览量/评论/SEO/关于/友链                                          |
+| M5     | 后台：引导流程、认证、文章/相册/友链/标签/设置管理、Milkdown 编辑器                     |
+| M6     | 定时发布 + 备份 + 部署 Vercel + Cloudflare 域名                                         |
 
 ---
 

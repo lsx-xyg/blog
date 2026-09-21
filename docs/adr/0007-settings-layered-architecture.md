@@ -3,6 +3,22 @@
 - Status: **Accepted**
 - Date: 2026-09-14
 
+> **路径对照（2026-09-21）**：本 ADR 正文里的路径是**当时版本**。后来 `lib/` 做了一次模块化重构
+> （commit `e90f215 refactor: 🔨 重构 lib`），文件已迁移；逻辑本身未变，读代码请按下表：
+>
+> | 本文路径                           | 现路径                                     |
+> | ---------------------------------- | ------------------------------------------ |
+> | `lib/settings/registry.ts`         | `lib/settings/shared/registry.ts`          |
+> | `lib/settings/get-config.ts`       | `lib/settings/server/get-config.ts`        |
+> | `lib/settings/get-config-group.ts` | `lib/settings/server/get-config-groups.ts` |
+> | `lib/settings/index.ts`            | `lib/settings/server/index.ts` + `shared/` |
+> | `lib/storage/index.ts`             | `lib/storage/server/factory.ts`            |
+> | `lib/types/storage.ts`             | `lib/types/storage.ts`（未变）             |
+>
+> 另：存储取驱动已从「单例 + 按驱动类型缓存」改为「档案池 + 通道绑定」
+> （`getStorageDriver(channel)`，见 ADR-0015）；registry 里的 `storage.binding.*`
+> 与 `backup.retention*` 是本 ADR 之后新增的键。
+
 ## Context
 
 原配置模块存在大量重复逻辑、扩展繁琐、类型散乱问题。旧版 `lib/settings.ts` 每个配置项都需要手写 `env || db || default` 优先级合并、手动解密、手动类型处理，新增一个配置需要修改多处代码。同时 `lib/storage/config.ts` 存在同款重复配置解析逻辑，维护成本极高。

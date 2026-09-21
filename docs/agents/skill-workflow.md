@@ -19,7 +19,7 @@
 |                     | to-questionnaire                     | 手动           | 决策无法自行回答时                               |
 | **规格**            | to-spec                              | 手动           | 需求明确 → 生成 spec 发布到 issue tracker        |
 |                     | to-tickets                           | 手动           | spec 确认 → 拆为 tracer-bullet tickets           |
-|                     | ADR（docs/adr/）                     | 手动           | 关键技术决策落档（已完成 0001-0006）             |
+|                     | ADR（docs/adr/）                     | 手动           | 关键技术决策落档（已完成 0001-0015）             |
 | **设计（UI）**      | impeccable `context`                 | 手动           | 每会话首次                                       |
 |                     | impeccable `init` / `document`       | 手动           | **锁定 PRODUCT.md / DESIGN.md**（✅ 已完成）     |
 |                     | impeccable `shape`                   | 手动           | 新界面规划 UX/UI 后再写代码                      |
@@ -40,28 +40,31 @@
 |                     | triage / wayfinder                   | 按需           | issue 流转 / 路径规划                            |
 | **交接**            | handoff                              | 手动           | 会话压缩交接给其他 Agent                         |
 
-## 本项目阶段当前进度（2026-09-10）
+## 本项目阶段当前进度
+
+> 最近更新：2026-09-21（存储改「档案池 + 通道绑定」、存储设置独立页、备份保留策略落地后同步）
 
 | 阶段            | 状态                                                                              |
 | --------------- | --------------------------------------------------------------------------------- |
 | 规划 / 需求澄清 | ✅ 完成（SPEC v1.0 冻结，docs/SPEC.md）                                           |
-| 规格            | ✅ 完成（SPEC + ADR 0001-0006）                                                   |
-| 工程配置        | ✅ 完成（AGENTS.md + docs/agents/；技能三源重装；GitHub 仓库 blog + images 图床） |
+| 规格            | ✅ 完成（SPEC + ADR 0001-0015）                                                   |
+| 工程配置        | ✅ 完成（AGENTS.md + docs/agents/；技能三源重装；GitHub 仓库 blog + 图床）        |
 | 设计（UI）      | ✅ 完成（PRODUCT.md + DESIGN.md 锁定：参考站结构 × 现代 UI 升级，4 项决策已确认） |
-| 开发            | 🚧 **进行中（M1 脚手架开始）**                                                    |
-| 部署 / 运维     | ⏳ M6                                                                             |
+| 开发            | ✅ 完成（M1–M6 全部落地，详见下表）                                               |
+| 部署 / 运维     | 🚧 进行中（Vercel + Cloudflare 域名已通；存储档案池 / 备份策略线上验证中）        |
+| 质量收口        | 🚧 进行中（tsc + eslint + vitest 全绿 186 例；持续按 diff 评审）                  |
 
-## 下一步行动（按顺序）
+## 里程碑清单（按顺序）
 
-| 里程碑                | 做什么                                                                | 调用什么 skill                                                                         | 状态                                                                                                                                                                                                                                                                                                     |
-| --------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **M1 脚手架**         | Next.js 15 + TS + Tailwind + Drizzle 初始化；git 关联 blog 仓库       | setup-pre-commit（一次性）、git-commit                                                 | ✅ 已完成（2026-09-10，构建通过，已推送）                                                                                                                                                                                                                                                                |
-| **M2 数据层**         | Drizzle schema 9 张表 + 迁移 + seed                                   | domain-modeling（如需建模）、implement                                                 | 🚧 进行中：**T1 schema+迁移 ✅**（2026-09-11，12 表落库验证通过），seed 待做                                                                                                                                                                                                                             |
-| **M3 前台**           | 首页（瀑布流+筛选）、相册、文章页（MDX+Shiki）、关于/友链、三主题     | **taste-skill（design-taste-frontend）**、impeccable `craft`/`audit`                   | 🚧 进行中：**T4 文章闭环 ✅**（2026-09-11）、**T7 前台筛选搜索精选 ✅**（2026-09-11，瀑布流+标签OR筛选+精选+minisearch中文搜索+三主题切换/记忆/防FOUC，e2e 通过）、**T7.1 视觉精修 ✅**（2026-09-11，shadcn裸HSL变量体系对齐参考站+LXGW WenKai Screen字体+2列瀑布流+隐藏滚动条，e2e 通过），相册 T5 待做 |
-| **M4 后台**           | Better Auth（密码+GitHub+关联）、引导流程、Milkdown 编辑器、管理 CRUD | implement、impeccable `operate` 相关                                                   | 🚧 进行中：**T8 认证与后台入口 ✅**（2026-09-11，引导+自动管理员+动态路径+API 鉴权 e2e 通过，GitHub OAuth 本地已验证）、**T10 Milkdown 编辑器 ✅**（2026-09-12，Crepe 编辑器+图片上传集成+创建/编辑回显 e2e 通过，#10 已关），后台其余管理（相册/标签/友链/设置/备份）待 T11                             |
-| **M5 存储/搜索/评论** | StorageDriver（LOCAL/GITHUB/S3+jsDelivr）、minisearch、giscus         | implement、tdd                                                                         | 🚧 进行中：**T3 存储抽象三驱动 ✅**（2026-09-12，LOCAL+GITHUB+S3 占位+上传/删除 API+10MB 限制+jsDelivr CDN，本地+GitHub 驱动 e2e 通过，#3 已关）、**T7 搜索 ✅**（minisearch 中文搜索已完成），giscus 评论待 T11                                                                                         |
-| **M6 定时/备份/SEO**  | 定时发布两套实现、JSON 备份+导入、SEO/OG                              | implement、code-review                                                                 | ⏳ 待开始                                                                                                                                                                                                                                                                                                |
-| **质量收口**          | 全量评审、bug 修复、上线前打磨                                        | tdd、code-review、diagnosing-bugs、verifier-hub、artifact-preview、impeccable `polish` | ⏳ 待开始                                                                                                                                                                                                                                                                                                |
+| 里程碑                | 做什么                                                                | 调用什么 skill                                                                         | 状态                                                                                                                                                                                                                       |
+| --------------------- | --------------------------------------------------------------------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **M1 脚手架**         | Next.js 15 + TS + Tailwind + Drizzle 初始化；git 关联 blog 仓库       | setup-pre-commit（一次性）、git-commit                                                 | ✅ 已完成（2026-09-10，构建通过，已推送）                                                                                                                                                                                  |
+| **M2 数据层**         | Drizzle schema 全表 + 迁移 + seed                                     | domain-modeling（如需建模）、implement                                                 | ✅ 已完成：主 schema 落库 + 迁移 0001-0012；seed 脚本 `scripts/seed/{gallery,guides}.ts`                                                                                                                                   |
+| **M3 前台**           | 首页（瀑布流+筛选）、相册、文章页（MDX+Shiki）、关于/友链、三主题     | **taste-skill（design-taste-frontend）**、impeccable `craft`/`audit`                   | ✅ 已完成：T4 文章闭环 / T7 前台筛选搜索精选 / T7.1 视觉精修 / **T5 相册**（瀑布流 + 标签筛选 + 精选，`app/gallery`）；友链页实际路由为 **`/links`**                                                                       |
+| **M4 后台**           | Better Auth（密码+GitHub+关联）、引导流程、Milkdown 编辑器、管理 CRUD | implement、impeccable `operate` 相关                                                   | ✅ 已完成：T8 认证与后台入口 / T10 Milkdown 编辑器 / T11 后台管理（posts · media · tags · friend-links · settings · **storage** · backup · cron · guides · account）/ 引导系统（T14）                                      |
+| **M5 存储/搜索/评论** | 存储驱动、minisearch、giscus                                          | implement、tdd                                                                         | ✅ 已完成：搜索（minisearch 中文分词）、giscus 评论（`components/posts/comments*.tsx`）；存储已从「三驱动（S3 占位）」演进为**档案池 + 通道绑定**（LOCAL / GITHUB / S3 / WEBDAV，ADR-0015），图片统一走站内路由 `/m/{key}` |
+| **M6 定时/备份/SEO**  | 定时发布两套实现、JSON 备份+导入、SEO/OG                              | implement、code-review                                                                 | ✅ 已完成：定时发布（VERCEL cron-job.org + SERVER node-cron）、定时/手动备份 + JSON 恢复 + 保留策略（ADR-0006/0009）、SEO 三件套（`sitemap.ts` / `robots.ts` / `rss.xml`）+ openGraph                                      |
+| **质量收口**          | 全量评审、bug 修复、上线前打磨                                        | tdd、code-review、diagnosing-bugs、verifier-hub、artifact-preview、impeccable `polish` | 🚧 进行中：单元测试 186 例全绿 + tsc/eslint 全过；架构深化四轮（ADR-0012/0013/0014）已落地                                                                                                                                 |
 
 ## 使用原则
 
