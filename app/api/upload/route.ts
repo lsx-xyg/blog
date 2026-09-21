@@ -12,7 +12,7 @@ import { probeImageDimensions, resolveMediaPlatform } from '@/lib/media/server';
  * - 字段：file（图片文件）
  * - 鉴权：仅管理员可上传
  * - 限制：10MB，jpg/png/webp/gif
- * - 返回：{ url, key, size, mimeType }
+ * - 返回：{ url（站内 /m/{key}）, key, size, mimeType, width, height, storageDriver }
  *
  * DELETE /api/upload?key=xxx
  * - 删除指定 key 的图片
@@ -51,8 +51,9 @@ export async function POST(request: NextRequest) {
     // 探测原始宽高：编辑器插入正文时可带上尺寸，避免图片布局抖动
     const dimensions = await probeImageDimensions(buffer);
 
-    // 返回站内路由地址（/m/{key}），由 app/m/[...key] 按当前存储配置代理/重定向到真实 CDN。
-    // 文章/媒体库持久化站内地址，后台切换 CDN 时历史图片无需迁移。
+    // 返回站内路由地址（/m/{key}），由 app/m/[...key] 按**入库时平台**解析档案并流式代理
+    // 到真实 CDN（仅回源失败/本地驱动才退回 302）。文章/媒体库持久化站内地址，
+    // 后台切换档案或 CDN 时历史图片无需迁移。
     // 结果中包含 storageDriver，用于后续删除时选择对应平台
     return NextResponse.json({
       ...result,

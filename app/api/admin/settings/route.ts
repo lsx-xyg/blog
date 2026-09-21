@@ -28,8 +28,10 @@ export async function PUT(request: Request) {
   try {
     const body = await request.json();
     await applySettingsPatch(body);
-    // 存储驱动实例按类型缓存在模块级 Map 里，配置变更后必须重置，
-    // 否则后台改 cdnBase/owner/token 等字段在进程重启前都不会生效
+    // 存储驱动实例缓存在模块级 Map 里（按档案名 + 按旧版驱动类型各一份），
+    // 配置变更后必须重置，否则后台改 cdnBase/owner/token 等字段在进程重启前都不会生效。
+    // 注意：档案池（storage/profiles）与通道绑定（storage/bindings）的写入接口
+    // 各自也会调 resetStorageDriver()，这里的重置只负责旧版 storage.* 配置改动。
     resetStorageDriver();
     return NextResponse.json({ success: true });
   } catch (error) {

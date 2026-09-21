@@ -78,7 +78,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = 'ALL' }: Me
     }
   }, [open, activeTab, loadItems]);
 
-  // 处理文件上传（复用 lib/media/upload.ts 共享执行）
+  // 处理文件上传（复用 lib/media/client/upload.ts 的 uploadMediaFile 共享执行）
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 

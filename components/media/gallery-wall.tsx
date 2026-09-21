@@ -19,8 +19,9 @@ const FALLBACK_HEIGHT = 900;
  * - IntersectionObserver 无限滚动（每次 +9 张）
  * - 标签 OR 筛选（多选，隐藏式筛选面板）
  * - 最新/精选切换
- * - 图片懒加载
- * - 点击图片查看大图（简单实现）
+ * - 图片懒加载：瀑布流用 LazyImage 的 intrinsic 模式（上传时 sharp 探测的原始宽高，
+ *   无宽高的老数据用 FALLBACK_WIDTH/HEIGHT 占位）
+ * - 点击图片查看大图：预览弹窗用 next/image fill + object-contain（含宽高时按原比例自适应）
  */
 export function GalleryWall() {
   const pathname = usePathname();

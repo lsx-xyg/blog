@@ -12,7 +12,8 @@ import { resolveMediaPlatform } from '@/lib/media/server';
  * 实时拼出真实访问 URL 并**流式代理**图片字节。
  *
  * 平台解析（升级到档案池后的兼容核心）：
- * - media 表存了 storageDriver（LOCAL/GITHUB/S3）→ 在档案池里找该平台的档案
+ * - media 表存了 storageDriver（LOCAL / GITHUB / S3——WEBDAV 只能绑私有通道，
+ *   公开入口这里不会遇到）→ 在档案池里找该平台的档案
  *   （优先绑定到公开通道的那个），历史图片跟着入库时的平台走，
  *   后台新增/切换任何档案都不影响已有图片
  * - media 表查不到（极老数据）→ 回退当前公开通道配置

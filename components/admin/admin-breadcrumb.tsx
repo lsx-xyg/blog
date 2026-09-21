@@ -8,8 +8,14 @@
  * - 支持自定义当前页面名称
  *
  * 用法：
- * <AdminBreadcrumb current="文章管理" />
- * <AdminBreadcrumb current="编辑文章" parent={{ label: "文章管理", href: "/dashboard/posts" }} />
+ * // 后台首页：不传 current，只显示到「后台管理」
+ * <AdminBreadcrumb adminPath={adminPath} />
+ * // 子页面：current 为当前页名；parent 可选，href 用后台真实路径
+ * <AdminBreadcrumb
+ *   current="编辑文章"
+ *   parent={{ label: '文章管理', href: `/${adminPath}/posts` }}
+ *   adminPath={adminPath}
+ * />
  */
 'use client';
 

@@ -103,7 +103,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               <ArticleProgress />
 
               {/* 封面图：priority + fetchPriority=high 抢占 LCP，由 next/image 做
-                  格式转换/尺寸裁剪/预加载，避免原图（图床直链）拖慢首屏 */}
+                  格式转换/尺寸裁剪/预加载。封面地址多为站内 /m/{key}（转发到当前存储档案），
+                  也支持手填外链——两种来源都由优化器处理，避免原图直出拖慢首屏 */}
               {post.coverUrl ? (
                 <div className="mb-4 md:mb-8">
                   <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">

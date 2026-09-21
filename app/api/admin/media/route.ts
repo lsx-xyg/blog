@@ -89,8 +89,9 @@ export async function POST(request: Request) {
     // 探测原始宽高：供前端 next/image 以原始比例渲染（相册瀑布流必需）
     const dimensions = await probeImageDimensions(buffer);
 
-    // 媒体库持久化站内路由地址（/m/{key}），由 app/m/[...key] 按当前存储配置
-    // 302 到真实 CDN；后台切换 CDN 时历史图片无需迁移
+    // 媒体库持久化站内路由地址（/m/{key}），由 app/m/[...key] 按入库时平台解析档案
+    // 并流式代理真实 CDN（仅回源失败或本地驱动才退回 302）；
+    // 后台切换档案/CDN 时历史图片无需迁移
     const mediaRecord = await createMedia({
       type,
       url: `/m/${uploadResult.key}`,
