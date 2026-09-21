@@ -32,7 +32,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       priority: 0.5,
     },
     {
-      url: `${baseUrl}/friends`,
+      // 友链页的实际路由是 /links（app/links/page.tsx，导航 NAV_ITEMS 同此）
+      url: `${baseUrl}/links`,
       lastModified: new Date(),
       changeFrequency: 'weekly',
       priority: 0.5,
