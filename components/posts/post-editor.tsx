@@ -30,7 +30,7 @@ import { PostStatus } from '@/lib/types/posts';
  * 使用 dynamic import + ssr: false 延迟加载。
  */
 const MarkdownEditor = dynamic(
-  () => import('@/components/posts/markdown-editor').then((mod) => mod.MarkdownEditor),
+  () => import('@/components/shared/markdown-editor').then((mod) => mod.MarkdownEditor),
   {
     ssr: false, // ByteMD 编辑器只能在客户端渲染
     loading: () => (

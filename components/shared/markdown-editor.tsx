@@ -20,6 +20,9 @@ import { ZH_LOCALE } from '@/lib/mdx/client';
 /**
  * Markdown 编辑器组件（基于 ByteMD + Shiki）——C10 精简后只做装配
  *
+ * 通用编辑器：文章编辑器与关于页编辑器共用（原 components/posts/markdown-editor.tsx，
+ * about-editor.tsx 已并入本组件）。
+ *
  * 功能：
  * - 源码手写 + 左右分屏实时预览
  * - GFM 支持（表格、任务列表、删除线）
@@ -32,13 +35,17 @@ import { ZH_LOCALE } from '@/lib/mdx/client';
  * shiki 初始化/插件/主题解析在 lib/mdx/client/shiki.ts，中文文案在 lib/mdx/client/locale.ts。
  * 用法：
  * <MarkdownEditor value={content} onChange={setContent} />
+ * <MarkdownEditor value={content} onChange={setContent} uploadType={MediaType.ARTICLE} />
  */
 export function MarkdownEditor({
   value,
   onChange,
+  uploadType = MediaType.ARTICLE,
 }: {
   value: string;
   onChange: (value: string) => void;
+  /** 上传图片归入的媒体类型（决定走哪个存储通道），默认文章图片 */
+  uploadType?: MediaType;
 }) {
   const [highlighter, setHighlighter] = useState<HighlighterCore | null>(null);
   const [showMediaPicker, setShowMediaPicker] = useState(false);
@@ -124,7 +131,7 @@ export function MarkdownEditor({
       try {
         const formData = new FormData();
         formData.append('file', file);
-        formData.append('type', MediaType.ARTICLE); // 从编辑器上传默认是文章图片
+        formData.append('type', uploadType); // 由调用方指定媒体类型（默认文章图片）
 
         // 使用新的媒体库上传 API（自动保存到 media 表）
         const response = await fetch('/api/admin/media', {

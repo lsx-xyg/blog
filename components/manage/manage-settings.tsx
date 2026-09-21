@@ -26,7 +26,7 @@ import { CronDeployPlatform } from '@/lib/types/settings';
 import { CronSection } from '@/components/settings/cron-section';
 
 /**
- * AboutEditor 动态导入（Bundle 优化）
+ * MarkdownEditor 动态导入（Bundle 优化）
  *
  * ByteMD 编辑器体积较大（约 200+ kB），只在编辑关于页面内容时才需要。
  * 使用 dynamic import + ssr: false 延迟加载，
@@ -36,8 +36,8 @@ import { CronSection } from '@/components/settings/cron-section';
  * - 站点设置页 First Load JS：312 kB → 约 150 kB（减少约 50%）
  * - 编辑器只在点击"关于页面"分区时才加载
  */
-const AboutEditor = dynamic(
-  () => import('@/components/shared/about-editor').then((mod) => mod.AboutEditor),
+const MarkdownEditor = dynamic(
+  () => import('@/components/shared/markdown-editor').then((mod) => mod.MarkdownEditor),
   {
     ssr: false, // ByteMD 编辑器只能在客户端渲染
     loading: () => (
@@ -469,9 +469,9 @@ export function ManageSettings() {
             <div className="rounded-xl border border-border bg-card p-6 animate-fade-in-up">
               <h2 className="text-lg font-semibold mb-4">关于页面内容</h2>
               <p className="text-sm text-muted-foreground mb-4">
-                使用 Markdown 格式编写关于页面的内容
+                使用 Markdown 格式编写关于页面的内容（支持粘贴/拖拽上传图片、媒体库选图）
               </p>
-              <AboutEditor value={aboutContent} onChange={setAboutContent} />
+              <MarkdownEditor value={aboutContent} onChange={setAboutContent} />
             </div>
           )}
 
