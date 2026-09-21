@@ -74,6 +74,9 @@ export type StorageSettings = {
     bucket: string;
     region: string;
     directory: string; // bucket 内的子目录
+    /** 公开访问域名（R2 绑定的自定义域名 / r2.dev 域名，OSS 的 CDN 域名等）。
+     *  公开通道的档案必须配置，否则图片无公网 URL。 */
+    publicBase: string;
     accessKey: string; // 用户输入的明文（保存时用）
     secretKey: string; // 用户输入的明文（保存时用）
     accessKeyConfigured?: boolean; // 是否已配置
@@ -83,10 +86,26 @@ export type StorageSettings = {
     uploadDir: string;
     directory: string; // uploadDir 内的子目录
   };
+  webdav: {
+    /** WebDAV 服务地址（如 https://dav.jianguoyun.com/dav/） */
+    url: string;
+    username: string;
+    password: string; // 用户输入的明文（保存时用）
+    passwordConfigured?: boolean; // 是否已配置
+    directory: string; // 服务内的子目录
+  };
 };
 
 /** 私有存储配置类型（与公开存储结构相同，用于备份等敏感数据） */
 export type PrivateStorageSettings = StorageSettings;
+
+/** 备份保留策略类型（两项均为 0 表示不自动清理） */
+export type BackupSettings = {
+  /** 保留天数：创建时间早于 N 天的备份会被清理（0 = 不限制天数） */
+  retentionDays: number;
+  /** 保留条数：按创建时间倒序只保留最新 N 条（0 = 不限制条数） */
+  retentionCount: number;
+};
 
 /** 定时任务部署平台类型 */
 export const CronDeployPlatform = {

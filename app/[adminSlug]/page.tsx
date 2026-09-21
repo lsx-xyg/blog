@@ -2,6 +2,7 @@
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
 import Link from 'next/link';
+import Image from 'next/image';
 import { sql, desc, eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { users, posts, tags, media, friendLinks } from '@/db/schema';
@@ -247,12 +248,12 @@ export default async function AdminRootPage({
                     className="group relative aspect-square overflow-hidden rounded-lg bg-muted"
                     title={item.title || '图片'}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                    <Image
                       src={item.url}
                       alt={item.title || '图片'}
-                      className="h-full w-full object-cover transition-transform group-hover:scale-110"
-                      loading="lazy"
+                      fill
+                      sizes="(max-width: 768px) 20vw, 10vw"
+                      className="object-cover transition-transform group-hover:scale-110"
                     />
                   </Link>
                 ))}

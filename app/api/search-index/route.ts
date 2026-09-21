@@ -23,6 +23,8 @@ interface SearchIndexCache {
       description: string | null;
       featured: boolean;
       imageUrl: string;
+      width: number | null;
+      height: number | null;
       createdAt: Date;
       tags: string[];
     }>;
@@ -54,6 +56,8 @@ export async function GET() {
       description: media.description,
       featured: media.featured,
       imageUrl: media.url,
+      width: media.width,
+      height: media.height,
       createdAt: media.createdAt,
       tagName: tags.name,
     })
@@ -71,6 +75,8 @@ export async function GET() {
       description: string | null;
       featured: boolean;
       imageUrl: string;
+      width: number | null;
+      height: number | null;
       createdAt: Date;
       tags: string[];
     }
@@ -84,6 +90,8 @@ export async function GET() {
         description: r.description,
         featured: r.featured,
         imageUrl: r.imageUrl,
+        width: r.width,
+        height: r.height,
         createdAt: r.createdAt,
         tags: [],
       };

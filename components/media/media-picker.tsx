@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import Image from 'next/image';
 import { X, Upload, Search, Image as ImageIcon, Loader2 } from 'lucide-react';
 import { MediaType, MEDIA_TYPE_LABELS } from '@/lib/types/media';
 import { uploadMediaFile } from '@/lib/media/client';
@@ -270,12 +271,12 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = 'ALL' }: Me
                         onClick={() => handleSelect(item)}
                         className="group relative aspect-square overflow-hidden rounded-lg border border-border hover:border-primary transition-colors"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                           src={item.url}
                           alt={item.title || '媒体图片'}
-                          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                          loading="lazy"
+                          fill
+                          sizes="(max-width: 640px) 33vw, (max-width: 768px) 25vw, 16vw"
+                          className="object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                         {/* 类型标签 */}
                         <div className="absolute top-1 left-1">

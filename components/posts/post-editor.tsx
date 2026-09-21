@@ -15,6 +15,7 @@
 
 import { useState } from 'react';
 import dynamic from 'next/dynamic';
+import Image from 'next/image';
 import { ChevronLeft, ChevronRight, FileText, ImagePlus, Settings, X } from 'lucide-react';
 import { TagInput } from '@/components/shared/tag-input';
 import { MediaPicker } from '@/components/media/media-picker';
@@ -174,11 +175,12 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                   {form.coverUrl ? (
                     <div className="mt-2 flex items-start gap-3">
                       <div className="relative aspect-video w-40 overflow-hidden rounded-lg border border-border">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                        <Image
                           src={form.coverUrl}
                           alt="封面预览"
-                          className="h-full w-full object-cover"
+                          fill
+                          sizes="160px"
+                          className="object-cover"
                         />
                       </div>
                       <button

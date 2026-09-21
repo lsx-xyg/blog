@@ -30,6 +30,9 @@ export type GalleryMeta = {
   title: string | null;
   description: string | null;
   imageUrl: string;
+  /** 原始宽高（上传时用 sharp 探测，老数据可能为 null → 前端用默认比例兜底） */
+  width: number | null;
+  height: number | null;
   featured: boolean;
   createdAt: Date;
   tags: string[];

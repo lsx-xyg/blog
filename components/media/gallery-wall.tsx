@@ -2,8 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import Image from 'next/image';
+import { LazyImage } from '@/components/media/lazy-image';
 import type { GalleryMeta } from '@/lib/types/gallery';
 import { Filter, Sparkles, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+
+/** 老数据没有宽高信息时的兜底占位比例（4:3，加载完成后按真实比例重排） */
+const FALLBACK_WIDTH = 1200;
+const FALLBACK_HEIGHT = 900;
 
 /**
  * 相册瀑布流组件
@@ -267,30 +273,17 @@ export function GalleryWall() {
               onClick={() => setPreviewImage(item.imageUrl)}
             >
               <div className="relative overflow-hidden rounded-lg border border-border bg-muted">
-                {/* 使用原生 <img> 而不是 next/image/LazyImage
-                 * 原因：
-                 * 1. 瀑布流需要图片自然高度，next/image 的 fill 模式要求父容器有明确高度
-                 * 2. 外部图片（picsum.photos 等）需要配置 remotePatterns
-                 * 3. 原生 <img> + loading="lazy" 已经足够，更简单可靠
-                 */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                {/* 使用 LazyImage 的 intrinsic 模式：上传时已用 sharp 探测原始宽高存进
+                    media.width/height，按原始比例整宽渲染，瀑布流自然高度与 next/image
+                    优化（WebP/AVIF、响应式尺寸）兼得。老数据宽高为 null 时退到默认比例。 */}
+                <LazyImage
                   src={item.imageUrl}
                   alt={item.title || '相册图片'}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-full h-auto transition-all duration-500 group-hover:scale-105 opacity-0"
-                  onClick={() => setPreviewImage(item.imageUrl)}
-                  onLoad={(e) => {
-                    // 图片加载完成后淡入显示
-                    (e.target as HTMLImageElement).style.opacity = '1';
-                  }}
-                  onError={(e) => {
-                    console.error('[GalleryWall] 图片加载失败:', item.imageUrl);
-                    (e.target as HTMLImageElement).style.opacity = '0.3';
-                    // 显示一个占位符
-                    (e.target as HTMLImageElement).style.background = 'hsl(var(--muted))';
-                  }}
+                  width={item.width ?? FALLBACK_WIDTH}
+                  height={item.height ?? FALLBACK_HEIGHT}
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  imgClassName="transition-transform duration-500 group-hover:scale-105"
+                  onError={() => console.error('[GalleryWall] 图片加载失败:', item.imageUrl)}
                 />
                 {/* 悬浮信息 */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
@@ -338,13 +331,20 @@ export function GalleryWall() {
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
           onClick={() => setPreviewImage(null)}
         >
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={previewImage}
-            alt="预览"
-            className="max-h-full max-w-full rounded-lg object-contain"
+          <div
+            className="relative h-full w-full"
             onClick={(e) => e.stopPropagation()}
-          />
+            role="presentation"
+          >
+            <Image
+              src={previewImage}
+              alt="预览"
+              fill
+              sizes="100vw"
+              quality={90}
+              className="object-contain"
+            />
+          </div>
           <button
             type="button"
             className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white hover:bg-white/20 transition-colors"

@@ -7,6 +7,7 @@ import type {
   CronSettings,
   StorageSettings,
   PrivateStorageSettings,
+  BackupSettings,
   CronDeployPlatform,
 } from '@/lib/types/settings';
 import { getConfig } from './get-config';
@@ -107,6 +108,16 @@ export async function getStorageSettings(): Promise<StorageSettings> {
 
 export async function getPrivateStorageSettings(): Promise<PrivateStorageSettings> {
   return await getConfigGroup('storagePrivate');
+}
+/**
+ * 获取备份保留策略。
+ *
+ * 字段：retentionDays / retentionCount（0 = 不限制，两项任一超限即清理）。
+ * 优先级：env > DB > default（由 getConfig 统一处理）。
+ */
+
+export async function getBackupSettings(): Promise<BackupSettings> {
+  return await getConfigGroup('backup');
 }
 // ========================
 /**

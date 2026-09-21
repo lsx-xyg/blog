@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getPublicStorageDriver } from '@/lib/storage/server';
+import { getStorageDriverForPlatform, getPublicStorageDriver } from '@/lib/storage/server';
+import { resolveMediaPlatform } from '@/lib/media/server';
 
 /**
  * 站内图片路由（统一图片入口）
@@ -7,9 +8,14 @@ import { getPublicStorageDriver } from '@/lib/storage/server';
  * GET /m/{storageKey}  例：/m/2026/09/uuid.jpg
  *
  * 设计：文章/媒体库里存的是本路由的站内地址（永久不变），
- * 本路由按「当前」存储配置实时拼出真实访问 URL 并**流式代理**图片字节。
- * 好处：后台切换 CDN（jsDelivr / raw 直连 / 自定义加速）全站立即生效，
- * 文章内容无需改动。
+ * 本路由按 media 表记录的 **入库时平台**（storageDriver）解析对应存储档案，
+ * 实时拼出真实访问 URL 并**流式代理**图片字节。
+ *
+ * 平台解析（升级到档案池后的兼容核心）：
+ * - media 表存了 storageDriver（LOCAL/GITHUB/S3）→ 在档案池里找该平台的档案
+ *   （优先绑定到公开通道的那个），历史图片跟着入库时的平台走，
+ *   后台新增/切换任何档案都不影响已有图片
+ * - media 表查不到（极老数据）→ 回退当前公开通道配置
  *
  * 为什么是代理而不是 302：
  * next/image 优化器对站内 URL 不发网络请求，而是在进程内 mock 一个请求
@@ -22,9 +28,8 @@ import { getPublicStorageDriver } from '@/lib/storage/server';
  * 时退回 302，浏览器侧 <img> 仍可自行跟随重定向救急。
  *
  * 缓存：
- * - storageKey 含 uuid，内容不可变，代理成功时返回一年 immutable，
- *   浏览器和 next/image 优化器（磁盘缓存）都会长缓存
- * - 回源失败的 302 用短缓存（max-age=300），恢复后最多 5 分钟收敛
+ * - 响应：storageKey 含 uuid、内容不可变，成功时一年 immutable
+ * - 平台反查：resolveMediaPlatform 进程内缓存 5 分钟（key → 平台不可变，TTL 只为省查询）
  */
 
 export const dynamic = 'force-dynamic';
@@ -51,8 +56,20 @@ export async function GET(
     return new NextResponse('Not Found', { status: 404 });
   }
 
-  const driver = await getPublicStorageDriver();
-  const target = driver.getUrl(storageKey);
+  // 按入库时平台解析档案；查不到/未收录时回退当前公开通道
+  const platform = await resolveMediaPlatform(storageKey);
+  const driver =
+    (platform ? await getStorageDriverForPlatform(platform, 'public') : null) ??
+    (await getPublicStorageDriver());
+
+  let target: string;
+  try {
+    target = driver.getUrl(storageKey);
+  } catch (error) {
+    // 档案缺公开域名等配置问题：直接 404，避免无限重定向
+    console.error('[/m] 拼接访问 URL 失败:', error);
+    return new NextResponse('Upstream Unavailable', { status: 404 });
+  }
 
   // 本地驱动等返回相对路径（同源静态文件）：浏览器同源 302 跟随没有问题
   if (target.startsWith('/')) {

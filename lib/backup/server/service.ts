@@ -6,14 +6,15 @@
  * - schema.ts：表映射 + 行级敏感字段处理 + 日期还原
  * - store.ts：备份存储驱动解析（记录驱动优先，回退当前配置）
  * - audit.ts：审计日志
- * - service.ts：仅编排主流程（导出 / 导入 / 创建 / 下载 / 删除 / 列表）
+ * - service.ts：仅编排主流程（导出 / 导入 / 创建 / 下载 / 删除 / 列表 / 清理）
  *
  * 功能：
  * 1. 手动导出 JSON 全量备份（下载到本地 / 上传到存储）
  * 2. 手动导入 JSON 备份（恢复数据）
  * 3. 定时备份（复用 T12 的 cron-job.org/node-cron 双实现）
- * 4. 备份文件上传到存储（复用 T3 的存储抽象，支持 LOCAL/GITHUB/S3）
+ * 4. 备份文件上传到存储（复用 T3 的存储抽象，支持 LOCAL/GITHUB/S3/WEBDAV）
  * 5. 后台备份管理（查看列表、下载、删除、手动创建、恢复）
+ * 6. 保留策略自动清理旧备份（按天数 / 条数，策略纯逻辑见 shared/retention.ts）
  *
  * 备份格式：
  * {
@@ -29,7 +30,11 @@ import { getPrivateStorageDriver } from '@/lib/storage/server';
 import type { StorageDriverInterface } from '@/lib/types/storage';
 import { BackupTrigger, BackupAuditAction } from '@/lib/types/backup';
 import { StorageDriverType } from '@/lib/types/storage';
+import type { BackupSettings } from '@/lib/types/settings';
 import { isEncryptionAvailable } from '@/lib/crypto/server';
+import { getBackupSettings } from '@/lib/settings/server';
+import { isRetentionEnabled, planPrune } from '../shared/retention';
+import type { PruneResult } from '../shared/retention';
 import { eq, desc } from 'drizzle-orm';
 import {
   BACKUP_TABLES,
@@ -153,7 +158,7 @@ export async function importBackup(backupData: BackupData): Promise<void> {
  * 创建备份并上传到存储
  *
  * @param triggeredBy 触发方式（MANUAL / AUTO）
- * @returns 备份记录
+ * @returns 备份记录 + 服务端下载地址（与存储驱动无关，WebDAV/私有 R2 同样可用）
  */
 export async function createBackup(
   triggeredBy: BackupTrigger = BackupTrigger.MANUAL,
@@ -191,9 +196,18 @@ export async function createBackup(
   // 6. 记录审计日志
   await logBackupAudit(record.id, record.fileKey, BackupAuditAction.CREATE);
 
+  // 7. 按保留策略清理旧备份（手动 / 定时创建都会走这里；清理失败不影响本次备份）
+  try {
+    await pruneBackups();
+  } catch (e) {
+    console.error('[backup] 保留策略清理失败：', e);
+  }
+
   return {
     record,
-    downloadUrl: uploadResult.url,
+    // 不用 uploadResult.url：私有通道（WebDAV、未配 publicBase 的 S3）没有公开 URL，
+    // 备份统一走服务端鉴权路由下载（该路由内部按记录的平台调 download()）
+    downloadUrl: `/api/admin/backup/${record.id}`,
   };
 }
 
@@ -277,4 +291,51 @@ export async function downloadBackup(
     filename,
     mimeType: 'application/json',
   };
+}
+
+/* ---------- 保留策略清理 ---------- */
+
+/**
+ * 按保留策略清理旧备份（超天数 / 超条数）
+ *
+ * 调用时机：
+ * - 每次创建备份后自动执行（手动与定时备份都经过 createBackup）
+ * - 后台「立即清理」按钮手动触发
+ *
+ * 删除复用 deleteBackup（含审计日志 + 存储文件清理），单条失败只记日志、不中断其余记录，
+ * 避免一个已经不在存储里的旧备份把整轮清理卡死。
+ *
+ * @param policy 指定策略（可选，默认读取配置）
+ * @returns 清理结果（生效策略 / 扫描总数 / 已删除的备份 ID）
+ */
+export async function pruneBackups(policy?: BackupSettings): Promise<PruneResult> {
+  const effective = policy ?? (await getBackupSettings());
+
+  if (!isRetentionEnabled(effective)) {
+    return { policy: effective, scanned: 0, deleted: [] };
+  }
+
+  const records = await db
+    .select({ id: backupRecords.id, createdAt: backupRecords.createdAt })
+    .from(backupRecords);
+
+  const doomedIds = planPrune(records, effective);
+  const deleted: string[] = [];
+
+  for (const id of doomedIds) {
+    try {
+      await deleteBackup(id);
+      deleted.push(id);
+    } catch (e) {
+      console.error(`[backup] 清理旧备份失败：${id}`, e);
+    }
+  }
+
+  if (deleted.length > 0) {
+    console.log(
+      `[backup] 保留策略清理：删除 ${deleted.length} 份（保留 ${effective.retentionDays} 天 / ${effective.retentionCount} 条）`,
+    );
+  }
+
+  return { policy: effective, scanned: records.length, deleted };
 }

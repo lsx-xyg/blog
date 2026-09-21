@@ -2,10 +2,16 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/server';
 import { headers } from 'next/headers';
 import { isAdminUser } from '@/lib/shared';
-import { listMedia, countMedia, createMedia } from '@/lib/media/server';
-import { getPublicStorageDriver } from '@/lib/storage/server';
+import { listMedia, countMedia, createMedia, probeImageDimensions } from '@/lib/media/server';
+import { getStorageDriver } from '@/lib/storage/server';
+import { StorageChannel } from '@/lib/storage/shared/channels';
 import { MediaType } from '@/lib/types/media';
 import { StorageDriverType } from '@/lib/types/storage';
+
+/** 媒体类型 → 存储通道（media.type 决定图片进哪个档案） */
+function channelForMediaType(type: MediaType): StorageChannel {
+  return type === MediaType.GALLERY ? StorageChannel.GALLERY : StorageChannel.UPLOAD;
+}
 
 /**
  * 后台媒体库 API
@@ -76,9 +82,12 @@ export async function POST(request: Request) {
     // 读取文件内容
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // 调用公开存储驱动上传（媒体资源需要公开访问）
-    const driver = await getPublicStorageDriver();
+    // 按媒体类型路由到对应通道（文章图 → upload，相册 → gallery，绑定见后台存储设置）
+    const driver = await getStorageDriver(channelForMediaType(type));
     const uploadResult = await driver.upload(buffer, file.name, file.type);
+
+    // 探测原始宽高：供前端 next/image 以原始比例渲染（相册瀑布流必需）
+    const dimensions = await probeImageDimensions(buffer);
 
     // 媒体库持久化站内路由地址（/m/{key}），由 app/m/[...key] 按当前存储配置
     // 302 到真实 CDN；后台切换 CDN 时历史图片无需迁移
@@ -90,6 +99,8 @@ export async function POST(request: Request) {
       title: file.name.replace(/\.[^.]+$/, ''),
       mimeType: file.type,
       size: file.size,
+      width: dimensions?.width ?? null,
+      height: dimensions?.height ?? null,
       uploadedBy: session.user.id,
     });
 

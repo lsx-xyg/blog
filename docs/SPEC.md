@@ -313,7 +313,8 @@ interface StorageDriver {
 - **格式**：JSON 文件（schema 版本号 + 导出时间 + 各表数据数组）
 - **导出**：手动 → 生成 JSON 上传到**私有存储**，后台可下载；定时 → 自动上传到备份存储
 - **导入**：上传 JSON → 校验版本 → 按外键逆序清空 → 按外键顺序插入 → **覆盖式**；确认弹窗含覆盖警告
-- **定时备份**：复用**私有存储驱动**（STORAGE_PRIVATE_DRIVER = LOCAL | GITHUB | S3），走 `backups/` 前缀；`VERCEL` 模式 cron-job.org 触发 `GET /api/cron/backup`，`SERVER` 模式 node-cron；自动备份保留策略可后续配置
+- **定时备份**：复用**备份通道绑定的档案**（`storage.binding.backup` → storage_profiles 档案，可回退旧版 `STORAGE_PRIVATE_DRIVER` = LOCAL | GITHUB | S3 | WEBDAV），走 `backups/` 前缀；`VERCEL` 模式 cron-job.org 触发 `GET /api/cron/backup`，`SERVER` 模式 node-cron
+- **保留策略（已实现 ✅）**：按「保留天数 / 保留条数」自动清理旧备份——两项任一超限即删，`0` 表示不限制，无论怎么配都至少保留最新一份（安全阀，避免策略把备份全清空）；每次创建备份（手动 / 定时）后自动执行，后台另提供「立即清理」手动触发
 - **历史**：后台备份页显示 backup_records（时间/大小/触发方式），可下载、可删除、可恢复
 - **内容加密**：备份内容支持 AES-256-GCM 加密（需配置 ENCRYPTION_KEY），加密后的文件以 `BACKUP_ENC_V1:` 魔数开头，下载时自动解密
 - **审计日志**：备份操作（创建/下载/删除/恢复）记录到 backup_audit_logs 表，包含操作人、IP、User-Agent、时间
@@ -321,17 +322,19 @@ interface StorageDriver {
 
 ### 实现细节
 
-- **核心逻辑**：`lib/backup/index.ts`
+- **核心逻辑**：`lib/backup/server/`
   - `exportBackup()`: 导出全量备份（11张业务表）
   - `importBackup()`: 导入备份（按依赖顺序清空和插入）
-  - `createBackup()`: 创建备份并上传到存储
-  - `listBackups()/getBackup()/deleteBackup()/downloadBackup()`
+  - `createBackup()`: 创建备份并上传到存储（上传后自动执行保留策略清理）
+  - `listBackups()/getBackup()/deleteBackup()/downloadBackup()/pruneBackups()`
+- **保留策略**：纯逻辑在 `lib/backup/shared/retention.ts`（`planPrune` 可单测，`normalizeRetention` 归一化表单值），配置经 `getBackupSettings()` 走 registry（`backup.retention_days` / `backup.retention_count`，env `BACKUP_RETENTION_DAYS` / `BACKUP_RETENTION_COUNT`）
 - **API 路由**：
   - `GET/POST /api/admin/backup` - 备份列表/创建备份
   - `GET/DELETE /api/admin/backup/[id]` - 下载备份/删除备份
   - `POST /api/admin/backup/restore` - 恢复备份（上传JSON文件）
+  - `GET/PUT/POST /api/admin/backup/retention` - 读取/保存保留策略、按策略立即清理
   - `GET /api/cron/backup` - 定时备份触发接口（CRON_SECRET鉴权）
-- **后台管理**：`app/[adminSlug]/backup/page.tsx` + `components/manage-backup.tsx`
+- **后台管理**：`app/[adminSlug]/backup/page.tsx` + `components/manage/manage-backup.tsx`（列表 + 保留策略卡片）
 
 ---
 
@@ -461,11 +464,13 @@ NEXT_PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOUVJQps4DFcnk
 # SEARCH_MODE=CLIENT|DATABASE
 
 # 备份（T13 已实现 ✅）
-# 备份文件使用私有存储（STORAGE_PRIVATE_DRIVER），走 backups/ 前缀
+# 备份文件使用私有存储（备份通道绑定的档案 → 可回退 STORAGE_PRIVATE_DRIVER），走 backups/ 前缀
 # 定时备份复用 CRON_SECRET 和 DEPLOY_PLATFORM 配置
 # 备份内容支持 AES-256-GCM 加密（需配置 ENCRYPTION_KEY）
 # 备份操作支持审计日志（backup_audit_logs 表）
-# BACKUP_RETENTION=7（预留，自动删除旧备份）
+# 保留策略（已实现 ✅）：后台「备份管理 → 保留策略」配置，0 = 不限制
+# BACKUP_RETENTION_DAYS=7       # 早于 7 天的备份自动清理
+# BACKUP_RETENTION_COUNT=30     # 最多保留 30 份
 ```
 
 ---
@@ -477,15 +482,20 @@ NEXT_PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOUVJQps4DFcnk
 | `/api/auth/*`                 | Better Auth | 登录（密码/GitHub/账号关联）                      |
 | `/api/search-index`           | 公开        | 全量轻量元数据（文章+相册），驱动筛选/搜索/瀑布流 |
 | `/api/posts/[slug]/views`     | 公开        | 浏览量 +1（客户端上报）                           |
-| `/api/storage/upload-url`     | admin       | 上传凭证（图片）                                  |
+| `/m/[...key]`                 | 公开        | 站内图片代理（统一 CDN 出口，流式返回）           |
+| `/api/upload`                 | admin       | 图片上传（按通道 upload / gallery 路由到档案）    |
 | `/api/admin/posts*`           | admin       | 文章 CRUD / 发布（含定时）                        |
 | `/api/admin/gallery*`         | admin       | 相册 CRUD                                         |
 | `/api/admin/tags*`            | admin       | 标签 CRUD                                         |
 | `/api/admin/friend-links*`    | admin       | 友链 CRUD                                         |
 | `/api/admin/settings`         | admin       | 设置读写                                          |
+| `/api/admin/storage/profiles` | admin       | 存储档案（档案池）CRUD                            |
+| `/api/admin/storage/bindings` | admin       | 通道绑定（upload / gallery / backup）             |
+| `/api/admin/storage/test`     | admin       | 档案连通性测试（上传 / 下载 / 删除往返）          |
 | `/api/admin/backup`           | admin       | 备份列表 / 创建备份                               |
 | `/api/admin/backup/[id]`      | admin       | 下载备份 / 删除备份                               |
 | `/api/admin/backup/restore`   | admin       | 上传恢复备份                                      |
+| `/api/admin/backup/retention` | admin       | 保留策略读取 / 保存 / 立即清理                    |
 | `/api/cron/publish-scheduled` | CRON_SECRET | 定时发布扫描                                      |
 | `/api/cron/backup`            | CRON_SECRET | 定时全量备份                                      |
 | `/api/rss`                    | 公开        | RSS/Atom                                          |

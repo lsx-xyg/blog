@@ -26,6 +26,7 @@ import {
   Tag,
   Link2,
   Settings,
+  HardDrive,
   Timer,
   DatabaseBackup,
   UserRound,
@@ -34,6 +35,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
+import { DEFAULT_QUICK_ORDER as LIB_DEFAULT_QUICK_ORDER } from '@/lib/admin/shared/dashboard-order';
 
 export type QuickLinkDef = {
   key: string;
@@ -44,18 +46,8 @@ export type QuickLinkDef = {
   iconClass: string;
 };
 
-/** 默认顺序：未自定义时兜底 */
-export const DEFAULT_QUICK_ORDER = [
-  'posts',
-  'media',
-  'tags',
-  'friendLinks',
-  'settings',
-  'cron',
-  'backup',
-  'account',
-  'guides',
-] as const;
+/** 默认顺序：未自定义时兜底（与 lib/admin/shared 单一来源，避免两处漂移） */
+export const DEFAULT_QUICK_ORDER = LIB_DEFAULT_QUICK_ORDER;
 
 function makeDefs(adminPath: string): Record<string, QuickLinkDef> {
   const link = (p: string) => `/${adminPath}${p}`;
@@ -95,10 +87,18 @@ function makeDefs(adminPath: string): Record<string, QuickLinkDef> {
     settings: {
       key: 'settings',
       title: '站点设置',
-      desc: '站名 / SEO / 存储 / 评论',
+      desc: '站名 / SEO / 评论',
       href: link('/settings'),
       icon: Settings,
       iconClass: 'bg-gray-500/10 text-gray-600 dark:text-gray-400',
+    },
+    storage: {
+      key: 'storage',
+      title: '存储设置',
+      desc: '存储档案 / 通道绑定',
+      href: link('/storage'),
+      icon: HardDrive,
+      iconClass: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400',
     },
     cron: {
       key: 'cron',

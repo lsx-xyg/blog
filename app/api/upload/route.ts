@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/server';
 import { isAdminUser } from '@/lib/shared';
-import { getPublicStorageDriver, validateImage } from '@/lib/storage/server';
+import { getStorageDriver, getStorageDriverForPlatform, validateImage } from '@/lib/storage/server';
+import { StorageChannel } from '@/lib/storage/shared/channels';
+import { probeImageDimensions, resolveMediaPlatform } from '@/lib/media/server';
 
 /** 上传图片 API
  *
@@ -42,16 +44,21 @@ export async function POST(request: NextRequest) {
     // 读取文件内容
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // 调用公开存储驱动上传（图片需要公开访问）
-    const driver = await getPublicStorageDriver();
+    // 按通道解析驱动：编辑器上传固定走「文章图片」通道（绑定档案见后台存储设置）
+    const driver = await getStorageDriver(StorageChannel.UPLOAD);
     const result = await driver.upload(buffer, file.name, file.type);
 
-    // 返回站内路由地址（/m/{key}），由 app/m/[...key] 按当前存储配置 302 到真实 CDN。
+    // 探测原始宽高：编辑器插入正文时可带上尺寸，避免图片布局抖动
+    const dimensions = await probeImageDimensions(buffer);
+
+    // 返回站内路由地址（/m/{key}），由 app/m/[...key] 按当前存储配置代理/重定向到真实 CDN。
     // 文章/媒体库持久化站内地址，后台切换 CDN 时历史图片无需迁移。
     // 结果中包含 storageDriver，用于后续删除时选择对应平台
     return NextResponse.json({
       ...result,
       url: `/m/${result.key}`,
+      width: dimensions?.width ?? null,
+      height: dimensions?.height ?? null,
       storageDriver: driver.name.toUpperCase(),
     });
   } catch (error) {
@@ -77,8 +84,11 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ error: '缺少 key 参数' }, { status: 400 });
     }
 
-    // 调用公开存储驱动删除
-    const driver = await getPublicStorageDriver();
+    // 按入库时平台反查驱动删除（历史文件跟着当时的平台走，不受当前绑定影响）
+    const platform = await resolveMediaPlatform(key);
+    const driver =
+      (platform ? await getStorageDriverForPlatform(platform, 'public') : null) ??
+      (await getStorageDriver(StorageChannel.UPLOAD));
     await driver.delete(key);
 
     return NextResponse.json({ success: true, key });

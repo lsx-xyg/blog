@@ -9,7 +9,9 @@
  */
 /** 上传结果 */
 export interface UploadResult {
-  /** 访问 URL（本地驱动返回 /uploads/...，GitHub 驱动返回 jsDelivr CDN URL） */
+  /** 访问 URL（本地驱动返回 /uploads/...，GitHub 驱动返回 CDN/反代 URL）。
+   *  私有通道档案（WebDAV、未配 publicBase 的 S3）没有公开 URL，此处为空串——
+   *  读取内容请走 download()，公开访问请勿依赖此字段。 */
   url: string;
   /** 存储键（相对路径，如 2026/09/uuid.jpg），用于删除 */
   key: string;
@@ -56,6 +58,7 @@ export const StorageDriverType = {
   LOCAL: 'LOCAL',
   GITHUB: 'GITHUB',
   S3: 'S3',
+  WEBDAV: 'WEBDAV',
 } as const;
 
 export type StorageDriverType =

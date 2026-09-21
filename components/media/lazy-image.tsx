@@ -8,32 +8,51 @@ import { cn } from '@/lib/shared';
  * 通用懒加载图片组件（基于 Next.js Image）
  *
  * 功能：
- * - 使用 Next.js Image 组件自动优化图片（格式转换、尺寸调整、懒加载）
+ * - 使用 Next.js Image 自动优化图片（格式转换、尺寸调整、懒加载）
  * - 图片加载前显示占位符（背景色 + 脉冲动画）
- * - 图片加载完成后淡入显示
- * - 支持自定义占位符颜色
+ * - 加载完成后淡入显示；加载失败显示提示
  * - 支持点击查看大图（可选）
- * - 加载失败显示提示
+ *
+ * 三种渲染模式（`mode`）：
+ * - `fill`：铺满父容器（object-fit 裁剪）。**要求父容器有确定尺寸**（如 aspect-video），
+ *   否则容器高度为 0，图片会塌陷不可见
+ * - `intrinsic`：已知原始宽高，按原始比例整宽显示（`w-full h-auto`），无布局抖动。
+ *   传了 width + height 时默认用这个模式
+ * - `natural`：宽高未知（如 Markdown 正文里外链的图片），整宽显示、比例交给图片自身决定
+ *
+ * 默认模式：有 width + height → `intrinsic`，否则 → `natural`（避免容器无高度时塌陷）
  *
  * 用法：
- * <LazyImage src="/image.jpg" alt="图片" className="w-full h-auto" />
- * <LazyImage src="/image.jpg" alt="图片" placeholderColor="#f0f0f0" />
- * <LazyImage src="/image.jpg" alt="图片" width={800} height={600} />
+ * <LazyImage src="/a.jpg" alt="图" mode="fill" className="h-full w-full" />
+ * <LazyImage src="/a.jpg" alt="图" width={1200} height={800} className="my-6 rounded-lg" />
+ * <LazyImage src="/a.jpg" alt="图" mode="natural" className="my-6 rounded-lg" />
  */
+
+export type LazyImageMode = 'fill' | 'intrinsic' | 'natural';
 
 interface LazyImageProps {
   /** 图片地址 */
   src: string;
   /** 图片描述 */
   alt: string;
-  /** 自定义类名 */
+  /** 外层容器类名（fill 模式下需要该容器有确定尺寸） */
   className?: string;
+  /** 传给 <img> 自身的类名 */
+  imgClassName?: string;
   /** 占位符背景色（默认使用主题的 muted 色） */
   placeholderColor?: string;
-  /** 图片宽度（可选，不填则使用 fill 模式） */
+  /** 渲染模式，不传则按 width/height 自动推断 */
+  mode?: LazyImageMode;
+  /** 图片宽度（intrinsic 模式必需） */
   width?: number;
-  /** 图片高度（可选，不填则使用 fill 模式） */
+  /** 图片高度（intrinsic 模式必需） */
   height?: number;
+  /** 响应式 sizes，不传则按模式取默认值 */
+  sizes?: string;
+  /** 是否优先加载（LCP 图片用） */
+  priority?: boolean;
+  /** 输出质量（默认 Next 的 75） */
+  quality?: number;
   /** 是否在加载时显示脉冲动画（默认 true） */
   showSkeleton?: boolean;
   /** 点击图片的回调（可选） */
@@ -46,13 +65,23 @@ interface LazyImageProps {
   objectFit?: 'cover' | 'contain' | 'fill' | 'none' | 'scale-down';
 }
 
+const DEFAULT_FILL_SIZES = '(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw';
+/** natural 模式的占位比例（宽高未知；加载完成后浏览器按图片真实比例重排） */
+const NATURAL_PLACEHOLDER_WIDTH = 1600;
+const NATURAL_PLACEHOLDER_HEIGHT = 1200;
+
 export function LazyImage({
   src,
   alt,
   className,
+  imgClassName,
   placeholderColor,
+  mode,
   width,
   height,
+  sizes,
+  priority = false,
+  quality,
   showSkeleton = true,
   onClick,
   onLoad,
@@ -75,8 +104,12 @@ export function LazyImage({
     onError?.();
   };
 
-  // 判断是否使用 fill 模式（没有指定 width 或 height 时）
-  const useFill = !width || !height;
+  const resolvedMode: LazyImageMode = mode ?? (width && height ? 'intrinsic' : 'natural');
+  const resolvedSizes = sizes ?? (resolvedMode === 'fill' ? DEFAULT_FILL_SIZES : '100vw');
+  const fadeStyle: React.CSSProperties = {
+    opacity: isLoaded ? 1 : 0,
+    transition: 'opacity 0.5s ease-in-out',
+  };
 
   return (
     <div
@@ -99,23 +132,53 @@ export function LazyImage({
       )}
 
       {/* Next.js Image 组件（自动优化、懒加载） */}
-      {!hasError && (
+      {!hasError && resolvedMode === 'fill' && (
         <Image
           src={src}
           alt={alt}
-          width={useFill ? undefined : width}
-          height={useFill ? undefined : height}
-          fill={useFill}
-          loading="lazy"
+          fill
+          sizes={resolvedSizes}
+          priority={priority}
+          quality={quality}
           decoding="async"
+          className={imgClassName}
           onLoad={handleLoad}
           onError={handleError}
-          style={{
-            objectFit,
-            opacity: isLoaded ? 1 : 0,
-            transition: 'opacity 0.5s ease-in-out',
-          }}
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+          style={{ objectFit, ...fadeStyle }}
+        />
+      )}
+
+      {!hasError && resolvedMode === 'intrinsic' && (
+        <Image
+          src={src}
+          alt={alt}
+          width={width as number}
+          height={height as number}
+          sizes={resolvedSizes}
+          priority={priority}
+          quality={quality}
+          decoding="async"
+          className={cn('h-auto w-full', imgClassName)}
+          onLoad={handleLoad}
+          onError={handleError}
+          style={{ objectFit, ...fadeStyle }}
+        />
+      )}
+
+      {!hasError && resolvedMode === 'natural' && (
+        <Image
+          src={src}
+          alt={alt}
+          width={NATURAL_PLACEHOLDER_WIDTH}
+          height={NATURAL_PLACEHOLDER_HEIGHT}
+          sizes={resolvedSizes}
+          priority={priority}
+          quality={quality}
+          decoding="async"
+          className={cn('h-auto w-full', imgClassName)}
+          onLoad={handleLoad}
+          onError={handleError}
+          style={{ objectFit, ...fadeStyle }}
         />
       )}
     </div>

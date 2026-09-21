@@ -24,6 +24,7 @@ export const ADMIN_PAGES: AdminPageOption[] = [
   { path: '/posts', label: '文章管理' },
   { path: '/posts/new', label: '新建文章' },
   { path: '/settings', label: '站点设置' },
+  { path: '/storage', label: '存储设置' },
   { path: '/tags', label: '标签管理' },
 ];
 

@@ -15,11 +15,20 @@ import { LazyImage } from '@/components/media/lazy-image';
 
 // 自定义 MDX 组件
 const components = {
-  // 自定义 img 组件，使用 LazyImage 实现懒加载
+  // 自定义 img 组件：正文图片宽高未知，用 natural 模式按图片自身比例整宽显示
+  // （旧写法不传尺寸会走 fill 模式，而外层容器没有高度 → 图片塌陷不可见）
   img: ({ src, alt }: React.ImgHTMLAttributes<HTMLImageElement>) => {
     // MDX 的 src 可能是 string 或 Blob，只处理 string 类型
     if (!src || typeof src !== 'string') return null;
-    return <LazyImage src={src} alt={alt || ''} className="my-6 rounded-lg" />;
+    return (
+      <LazyImage
+        src={src}
+        alt={alt || ''}
+        mode="natural"
+        sizes="(max-width: 768px) 100vw, 768px"
+        className="my-6 rounded-lg"
+      />
+    );
   },
 };
 

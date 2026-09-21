@@ -43,19 +43,23 @@ _Avoid_: 认证系统、auth、next-auth
 ### 存储领域
 
 **Storage Driver（存储驱动）**：
-文件存储的抽象接口，定义 upload/delete/getUrl/download 四个方法。支持三种实现：LOCAL（本地文件系统）、GITHUB（GitHub 仓库 + jsDelivr CDN）、S3（S3 兼容存储）。download 方法用于从存储中读取文件内容，GitHub 驱动重写此方法使用 API+Token 下载私有仓库文件，其他驱动默认实现为 fetch(getUrl())。
+文件存储的抽象接口，定义 upload/delete/getUrl/download 四个方法。支持四种实现：LOCAL（本地文件系统）、GITHUB（GitHub 仓库 + CDN/反代加速）、S3（S3 兼容对象存储，R2/OSS/MinIO 通用）、WEBDAV（坚果云/NAS 等，仅限私有用途）。download 方法用于从存储中读取文件内容，GitHub 驱动重写此方法使用 API+Token 下载私有仓库文件，其他驱动默认实现为 fetch(getUrl())。
 _Avoid_: 存储、uploader、file storage
 
-**Public Storage（公开存储）**：
-存储公开可访问资源的存储实例，用于图片、视频等内容资源。GitHub 实现使用公开仓库，S3 实现使用公开 bucket，本地实现使用 public/ 目录。
-_Avoid_: 公开仓库、图片存储
+**Storage Profile（存储档案）**：
+一份完整的存储配置（storage_profiles 表）：档案名（用平台名，如 github / r2 / webdav）+ 驱动 + 该驱动的配置项（敏感字段 AES-256-GCM 加密入库）。驱动实例按档案构建并缓存，后台可独立增删改、单独测试连通性。
+_Avoid_: 存储实例、storage config、存储方案
 
-**Private Storage（私有存储）**：
-存储私有/敏感数据的存储实例，用于数据库备份等。GitHub 实现使用私有仓库，S3 实现使用私有 bucket，本地实现使用不暴露到 Web 的目录。
-_Avoid_: 私有仓库、备份存储
+**Storage Channel（存储通道）**：
+存储的用途维度（lib/storage/shared/channels.ts，扩展点文件）：UPLOAD（文章图片）、GALLERY（相册图片）、BACKUP（数据库备份）。每个通道绑定一个档案，上传/备份时按通道路由到对应驱动；`getStorageDriver(channel)` 是唯一入口，禁止按驱动类型直接取实例。
+_Avoid_: 用途、通道绑定、storage type
+
+**Public / Private Storage（公开 / 私有存储）**：
+档案的可见性属性：public 档案承载公开访问资源（必须有公网 URL），private 档案仅服务端存取。通道按可见性筛选可绑定的档案（如 WebDAV 只能绑 BACKUP）。**注意**：早期"公开/私有存储双通道"模型已被「档案池 + 通道绑定」取代，dashboard 不再有独立的公开/私有两套配置。
+_Avoid_: 公开仓库、私有仓库、双通道
 
 **jsDelivr CDN**：
-GitHub 存储驱动使用的 CDN 加速服务，将 GitHub 仓库中的文件转换为快速访问的 CDN URL。格式：https://cdn.jsdelivr.net/gh/{owner}/{repo}@{branch}/{path}
+GitHub 存储驱动使用的一种 CDN 加速方式，将 GitHub 仓库中的文件转换为快速访问的 CDN URL。格式：https://cdn.jsdelivr.net/gh/{owner}/{repo}@{branch}/{path}。由档案配置的 cdnBase + urlStyle（path / at）决定实际拼接方式，也支持自建反代前缀。
 _Avoid_: CDN、加速
 
 ### 配置领域
@@ -153,6 +157,10 @@ _Avoid_: 数据库备份、dump、export
 **Backup Storage Driver（备份存储驱动）**：
 backup_records 表中的字段，记录备份创建时使用的存储驱动类型（GITHUB/S3/LOCAL）。下载/删除备份时优先使用此字段对应的驱动实例，不可用时回退到当前配置的私有存储驱动。解决切换驱动后旧备份无法操作的问题。
 _Avoid_: 备份平台、backup platform
+
+**Backup Retention（备份保留策略）**：
+按「保留天数 / 保留条数」自动清理旧备份的规则（`backup.retention_days` / `backup.retention_count`，`0` 表示不限制）。两项任一超限即删；无论怎么配都至少保留最新一份（安全阀）。纯逻辑在 `lib/backup/shared/retention.ts`（`planPrune` / `normalizeRetention`），执行在 `pruneBackups()`——每次创建备份（手动 / 定时）后自动跑一次，后台另有「立即清理」入口。清理复用 `deleteBackup()`，因此同样写审计日志并删除存储中的文件。
+_Avoid_: 清理策略、trim policy、retention rule
 
 **Backup Encryption（备份加密）**：
 备份文件内容的 AES-256-GCM 加密，需配置 ENCRYPTION_KEY 环境变量。加密后的文件以 BACKUP_ENC_V1: 魔数开头，下载时自动检测并解密。即使私有仓库被访问，没有密钥也无法读取备份内容。未配置密钥时明文存储并警告。

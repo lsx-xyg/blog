@@ -47,7 +47,10 @@ export function PostCard({ post }: { post: CardPost }) {
           <LazyImage
             src={post.coverUrl}
             alt={post.title}
-            className="h-full w-full transition-transform duration-300 group-hover:scale-105"
+            mode="fill"
+            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            imgClassName="transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full"
           />
           {post.featured ? <FeaturedBadge className="absolute right-2 top-2 shadow-sm" /> : null}
         </div>

@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/auth/server';
 import { headers } from 'next/headers';
 import { isAdminUser } from '@/lib/shared';
-import { getMediaById, updateMedia, deleteMedia } from '@/lib/media/server';
-import { getPublicStorageDriver } from '@/lib/storage/server';
+import { getMediaById, updateMedia, deleteMedia, resolveMediaPlatform } from '@/lib/media/server';
+import { getStorageDriverForPlatform, getStorageDriver } from '@/lib/storage/server';
+import { StorageChannel } from '@/lib/storage/shared/channels';
 import { MediaType } from '@/lib/types/media';
 
 /**
@@ -60,10 +61,14 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
   }
 
   try {
-    // 先删除存储中的文件
+    // 先删除存储中的文件（按入库时平台反查驱动，历史文件不受当前绑定影响）
     if (existing.storageKey) {
       try {
-        const driver = await getPublicStorageDriver();
+        const platform =
+          existing.storageDriver ?? (await resolveMediaPlatform(existing.storageKey));
+        const driver =
+          (platform ? await getStorageDriverForPlatform(platform, 'public') : null) ??
+          (await getStorageDriver(StorageChannel.UPLOAD));
         await driver.delete(existing.storageKey);
       } catch (error) {
         console.error('删除存储文件失败（数据库记录仍会删除）：', error);

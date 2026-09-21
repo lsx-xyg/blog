@@ -21,11 +21,8 @@ import type {
   GiscusSettings,
   SocialLinks,
   SiteSettings,
-  StorageSettings,
 } from '@/lib/types/settings';
-import { StorageDriverType } from '@/lib/types/storage';
 import { CronDeployPlatform } from '@/lib/types/settings';
-import { StorageConfigForm } from '@/components/shared/storage-config-form';
 import { CronSection } from '@/components/settings/cron-section';
 
 /**
@@ -69,7 +66,7 @@ export function ManageSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState<
-    'site' | 'social' | 'footer' | 'about' | 'storage' | 'giscus' | 'cron' | 'advanced'
+    'site' | 'social' | 'footer' | 'about' | 'giscus' | 'cron' | 'advanced'
   >('site');
   const [originalAdminPath, setOriginalAdminPath] = useState('');
 
@@ -96,58 +93,6 @@ export function ManageSettings() {
 
   const [aboutContent, setAboutContent] = useState('');
   const [adminPath, setAdminPath] = useState('');
-  const [storage, setStorage] = useState<StorageSettings>({
-    driver: StorageDriverType.LOCAL as StorageDriverType,
-    github: {
-      owner: '',
-      repo: '',
-      branch: '',
-      cdnBase: '',
-      urlStyle: 'path' as StorageSettings['github']['urlStyle'],
-      directory: '',
-      token: '',
-      tokenConfigured: false,
-    },
-    s3: {
-      endpoint: '',
-      bucket: '',
-      region: '',
-      directory: '',
-      accessKey: '',
-      secretKey: '',
-      accessKeyConfigured: false,
-      secretKeyConfigured: false,
-    },
-    local: { uploadDir: '', directory: '' },
-  });
-
-  const [privateStorage, setPrivateStorage] = useState<StorageSettings>({
-    driver: StorageDriverType.LOCAL as StorageDriverType,
-    github: {
-      owner: '',
-      repo: '',
-      branch: '',
-      cdnBase: '',
-      urlStyle: 'path' as StorageSettings['github']['urlStyle'],
-      directory: '',
-      token: '',
-      tokenConfigured: false,
-    },
-    s3: {
-      endpoint: '',
-      bucket: '',
-      region: '',
-      directory: '',
-      accessKey: '',
-      secretKey: '',
-      accessKeyConfigured: false,
-      secretKeyConfigured: false,
-    },
-    local: { uploadDir: '', directory: '' },
-  });
-
-  // 存储设置分区：公开存储 / 私有存储 切换
-  const [storageTab, setStorageTab] = useState<'public' | 'private'>('public');
 
   const [giscus, setGiscus] = useState<GiscusSettings>({
     repo: '',
@@ -178,8 +123,6 @@ export function ManageSettings() {
         setAboutContent(data.aboutContent);
         setAdminPath(data.adminPath ?? '');
         setOriginalAdminPath(data.adminPath ?? ''); // 保存原始路径，用于检测是否变更
-        if (data.storage) setStorage(data.storage);
-        if (data.privateStorage) setPrivateStorage(data.privateStorage);
         if (data.giscus) setGiscus(data.giscus);
         if (data.cron) setCron(data.cron);
       }
@@ -251,8 +194,6 @@ export function ManageSettings() {
           footer,
           aboutContent,
           adminPath,
-          storage,
-          privateStorage,
           giscus,
           cron,
         }),
@@ -288,7 +229,6 @@ export function ManageSettings() {
     { id: 'social' as const, label: '社交链接', icon: Link2 },
     { id: 'footer' as const, label: '页脚设置', icon: SettingsIcon },
     { id: 'about' as const, label: '关于页面', icon: FileText },
-    { id: 'storage' as const, label: '存储设置', icon: SettingsIcon },
     { id: 'giscus' as const, label: '评论设置', icon: SettingsIcon },
     { id: 'cron' as const, label: '定时任务', icon: SettingsIcon },
     { id: 'advanced' as const, label: '高级设置', icon: SettingsIcon },
@@ -526,64 +466,6 @@ export function ManageSettings() {
                 使用 Markdown 格式编写关于页面的内容
               </p>
               <AboutEditor value={aboutContent} onChange={setAboutContent} />
-            </div>
-          )}
-
-          {/* 存储设置 */}
-          {activeSection === 'storage' && (
-            <div className="rounded-xl border border-border bg-card p-6 animate-fade-in-up">
-              <h2 className="text-lg font-semibold mb-4">存储设置</h2>
-
-              <div className="mb-4 rounded-lg border border-blue-500/30 bg-blue-500/5 p-3">
-                <p className="text-xs text-blue-700 dark:text-blue-400">
-                  <strong>ℹ️ 说明：</strong>
-                  敏感信息（GitHub Token、S3 Access Key/Secret Key）使用 AES-256-GCM
-                  加密存储在数据库中，可在此动态配置。
-                  环境变量优先级更高（设置了对应环境变量则后台配置不生效）。
-                  敏感信息不回显，只显示「已配置」状态，留空则保持当前配置。
-                  修改驱动后，新上传的文件将使用新驱动，已上传的文件不受影响。
-                </p>
-              </div>
-
-              {/* 公开/私有存储切换标签 */}
-              <div className="flex gap-2 mb-6">
-                <button
-                  type="button"
-                  onClick={() => setStorageTab('public')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    storageTab === 'public'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                  }`}
-                >
-                  公开存储（图片/视频）
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setStorageTab('private')}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                    storageTab === 'private'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'bg-secondary text-secondary-foreground hover:bg-secondary/80'
-                  }`}
-                >
-                  私有存储（备份/敏感数据）
-                </button>
-              </div>
-
-              {/* 公开存储配置表单 */}
-              {storageTab === 'public' && (
-                <StorageConfigForm storage={storage} setStorage={setStorage} isPrivate={false} />
-              )}
-
-              {/* 私有存储配置表单 */}
-              {storageTab === 'private' && (
-                <StorageConfigForm
-                  storage={privateStorage}
-                  setStorage={setPrivateStorage}
-                  isPrivate={true}
-                />
-              )}
             </div>
           )}
 

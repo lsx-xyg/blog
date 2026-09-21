@@ -86,6 +86,16 @@ export type ConfigDef<T> = {
   transform?: (raw: string) => T;
 };
 
+/**
+ * 保留策略数值归一化：非法值 / 负数 / 小数 → 0（0 表示不限制）。
+ * 上限只做防呆，避免误填天文数字把清理逻辑变成死代码。
+ */
+function toRetentionValue(raw: string): number {
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return Math.min(n, 10000);
+}
+
 export const registry = {
   'site.name': {
     key: 'site.name',
@@ -188,10 +198,12 @@ export const registry = {
     key: 'storage.driver',
     env: 'STORAGE_DRIVER',
     default: StorageDriverType.LOCAL,
-    // 归一化：任何非 GITHUB/S3（忽略大小写）的值都落到 LOCAL
+    // 归一化：任何非 GITHUB/S3/WEBDAV（忽略大小写）的值都落到 LOCAL
     transform: (v) => {
       const u = v.toUpperCase();
-      return u === StorageDriverType.GITHUB || u === StorageDriverType.S3
+      return u === StorageDriverType.GITHUB ||
+        u === StorageDriverType.S3 ||
+        u === StorageDriverType.WEBDAV
         ? u
         : StorageDriverType.LOCAL;
     },
@@ -240,6 +252,11 @@ export const registry = {
     env: 'S3_ENDPOINT',
     default: '',
   },
+  'storage.s3.publicBase': {
+    key: 'storage.s3.public_base',
+    env: 'S3_PUBLIC_BASE',
+    default: '',
+  },
   'storage.s3.bucket': {
     key: 'storage.s3.bucket',
     env: 'S3_BUCKET',
@@ -277,6 +294,44 @@ export const registry = {
     env: 'LOCAL_STORAGE_DIRECTORY',
     default: '',
   },
+  'storage.webdav.url': {
+    key: 'storage.webdav.url',
+    env: 'WEBDAV_URL',
+    default: '',
+  },
+  'storage.webdav.username': {
+    key: 'storage.webdav.username',
+    env: 'WEBDAV_USERNAME',
+    default: '',
+  },
+  'storage.webdav.password': {
+    key: 'storage.webdav.password',
+    env: 'WEBDAV_PASSWORD',
+    default: '',
+    secret: true,
+  },
+  'storage.webdav.directory': {
+    key: 'storage.webdav.directory',
+    env: 'WEBDAV_DIRECTORY',
+    default: '',
+  },
+  // === 存储通道绑定（channel → storage_profiles.name）===
+  // 空值表示未绑定，factory 回退到旧版公开/私有配置行为
+  'storage.binding.upload': {
+    key: 'storage.binding.upload',
+    env: 'STORAGE_BINDING_UPLOAD',
+    default: '',
+  },
+  'storage.binding.gallery': {
+    key: 'storage.binding.gallery',
+    env: 'STORAGE_BINDING_GALLERY',
+    default: '',
+  },
+  'storage.binding.backup': {
+    key: 'storage.binding.backup',
+    env: 'STORAGE_BINDING_BACKUP',
+    default: '',
+  },
   // === 私有存储配置（用于备份等敏感数据）===
   'storagePrivate.driver': {
     key: 'storage_private.driver',
@@ -284,7 +339,9 @@ export const registry = {
     default: StorageDriverType.LOCAL,
     transform: (v) => {
       const u = v.toUpperCase();
-      return u === StorageDriverType.GITHUB || u === StorageDriverType.S3
+      return u === StorageDriverType.GITHUB ||
+        u === StorageDriverType.S3 ||
+        u === StorageDriverType.WEBDAV
         ? u
         : StorageDriverType.LOCAL;
     },
@@ -332,6 +389,11 @@ export const registry = {
     env: 'S3_PRIVATE_ENDPOINT',
     default: '',
   },
+  'storagePrivate.s3.publicBase': {
+    key: 'storage_private.s3.public_base',
+    env: 'S3_PRIVATE_PUBLIC_BASE',
+    default: '',
+  },
   'storagePrivate.s3.bucket': {
     key: 'storage_private.s3.bucket',
     env: 'S3_PRIVATE_BUCKET',
@@ -368,6 +430,41 @@ export const registry = {
     key: 'storage_private.local.directory',
     env: 'LOCAL_PRIVATE_SUBDIRECTORY',
     default: 'backups',
+  },
+  'storagePrivate.webdav.url': {
+    key: 'storage_private.webdav.url',
+    env: 'WEBDAV_PRIVATE_URL',
+    default: '',
+  },
+  'storagePrivate.webdav.username': {
+    key: 'storage_private.webdav.username',
+    env: 'WEBDAV_PRIVATE_USERNAME',
+    default: '',
+  },
+  'storagePrivate.webdav.password': {
+    key: 'storage_private.webdav.password',
+    env: 'WEBDAV_PRIVATE_PASSWORD',
+    default: '',
+    secret: true,
+  },
+  'storagePrivate.webdav.directory': {
+    key: 'storage_private.webdav.directory',
+    env: 'WEBDAV_PRIVATE_DIRECTORY',
+    default: 'backups',
+  },
+  // === 备份保留策略（自动清理旧备份，0 = 不限制）===
+  // 两项任一超限即删除：超过 N 天的，或条数排在第 M 位之后的
+  'backup.retentionDays': {
+    key: 'backup.retention_days',
+    env: 'BACKUP_RETENTION_DAYS',
+    default: 0,
+    transform: toRetentionValue,
+  },
+  'backup.retentionCount': {
+    key: 'backup.retention_count',
+    env: 'BACKUP_RETENTION_COUNT',
+    default: 0,
+    transform: toRetentionValue,
   },
 } satisfies Record<string, ConfigDef<any>>;
 

@@ -6,8 +6,8 @@ import { getEnv } from '@/lib/env/server';
 // 迁移必须走非池化（direct）连接串（neon-postgres skill：pooled 不支持 session 级操作）
 export default defineConfig({
   dialect: 'postgresql',
-  schema: '@/db/schema.ts',
-  out: '@/db/drizzle',
+  schema: './db/schema.ts',
+  out: './db/drizzle',
   dbCredentials: {
     url: getEnv('DATABASE_URL_UNPOOLED') ?? getEnv('DATABASE_URL') ?? '',
   },

@@ -202,6 +202,21 @@ export const settings = pgTable('settings', {
   value: jsonb('value').notNull(),
 });
 
+/* ---------- storage_profiles 存储档案池表 ----------
+ *
+ * 一行 = 一份完整命名的存储配置（档案），name 用平台名（github / r2 / webdav / local…）。
+ * 用途（文章图/相册/备份）通过 settings 里的 storage.binding.* 绑定到档案名。
+ * config 为 JSONB：各驱动自己的字段，敏感字段（token/secretKey/password）AES-256-GCM 加密存储。
+ */
+export const storageProfiles = pgTable('storage_profiles', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull().unique(), // 平台名 slug，如 github / r2 / webdav / local
+  driver: storageDriverType('driver').notNull(), // LOCAL | GITHUB | S3 | WEBDAV
+  config: jsonb('config').notNull().$type<Record<string, unknown>>(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 /* ---------- friend_links 友链表（SPEC §4.8） ---------- */
 
 export const friendLinks = pgTable(
@@ -360,6 +375,8 @@ export type Media = typeof media.$inferSelect;
 export type NewMedia = typeof media.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
 export type NewSetting = typeof settings.$inferInsert;
+export type StorageProfile = typeof storageProfiles.$inferSelect;
+export type NewStorageProfile = typeof storageProfiles.$inferInsert;
 export type FriendLink = typeof friendLinks.$inferSelect;
 export type NewFriendLink = typeof friendLinks.$inferInsert;
 export type BackupRecord = typeof backupRecords.$inferSelect;

@@ -23,6 +23,7 @@ export const QUICK_LINK_KEYS = [
   'tags',
   'friendLinks',
   'settings',
+  'storage',
   'cron',
   'backup',
   'account',
