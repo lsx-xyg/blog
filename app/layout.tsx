@@ -15,12 +15,12 @@ import { ToastProvider } from '@/components/ui/toast';
 import { PageProgress } from '@/components/layout/page-progress';
 import GuidePicker from '@/components/guides/picker-layer';
 import { getSiteSettings, getFooterSettings } from '@/lib/settings/server';
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+import { getSiteUrlAsync } from '@/lib/seo/shared';
 
 /** 动态生成 metadata（从 settings 表读取站名和描述） */
 export async function generateMetadata(): Promise<Metadata> {
   const site = await getSiteSettings();
+  const siteUrl = await getSiteUrlAsync();
 
   return {
     metadataBase: new URL(siteUrl),

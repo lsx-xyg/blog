@@ -512,6 +512,8 @@ ADMIN_PATH=
 
 # ===== 站点信息（SEO / RSS / sitemap）=====
 # 也可在后台「站点设置」动态配置，环境变量优先级更高
+# robots/sitemap/rss/metadataBase 统一走 lib/seo/shared 的 getSiteUrlAsync()：
+# env > DB(site.site_url) > VERCEL_PROJECT_PRODUCTION_URL 兜底 > localhost（防线上输出 localhost）
 NEXT_PUBLIC_SITE_URL=http://localhost:3000   # 生产环境必须配置
 NEXT_PUBLIC_SITE_NAME=林圣轩blog
 NEXT_PUBLIC_SITE_DESCRIPTION=技术写作与生活记录

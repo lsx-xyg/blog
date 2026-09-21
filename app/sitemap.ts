@@ -1,5 +1,6 @@
 import type { MetadataRoute } from 'next';
 import { getAllPostsForSitemap } from '@/lib/posts/server';
+import { getSiteUrlAsync } from '@/lib/seo/shared';
 
 /**
  * sitemap.xml
@@ -12,7 +13,7 @@ import { getAllPostsForSitemap } from '@/lib/posts/server';
  * 每次构建时自动生成，也可以在运行时动态生成
  */
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const baseUrl = await getSiteUrlAsync();
 
   // 获取所有已发布文章
   const posts = await getAllPostsForSitemap();

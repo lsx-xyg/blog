@@ -13,6 +13,7 @@ import { ArticleProgress } from '@/components/posts/article-progress';
 import { ScrollToTop } from '@/components/layout/scroll-to-top';
 import { CommentsLazy } from '@/components/posts/comments-lazy';
 import { getGiscusSettings } from '@/lib/settings/server';
+import { getSiteUrlAsync } from '@/lib/seo/shared';
 import { CalendarDays, Clock } from 'lucide-react';
 
 export const dynamicParams = true;
@@ -39,7 +40,7 @@ export async function generateMetadata({
   const post = await getPost(slug);
   if (!post) return { title: '文章不存在' };
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const siteUrl = await getSiteUrlAsync();
   const url = `${siteUrl}/posts/${post.slug || post.id}`;
 
   return {

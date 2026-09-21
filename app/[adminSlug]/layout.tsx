@@ -6,6 +6,7 @@
  * - 非管理员 → 404 伪装
  */
 import { notFound, redirect } from 'next/navigation';
+import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { auth } from '@/lib/auth/server';
 import { getAdminPathAsync } from '@/lib/admin/server';
@@ -13,6 +14,14 @@ import { isAdminUser } from '@/lib/shared';
 import { GuideManager } from '@/components/guides/guide-manager';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * 后台整域 noindex：robots.txt 公开可见，自定义 adminSlug 不能写进 Disallow
+ * （等于泄露后台入口），改用 metadata 让搜索引擎不收录任何后台页面。
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  return { robots: { index: false, follow: false } };
+}
 
 export default async function AdminLayout({
   children,

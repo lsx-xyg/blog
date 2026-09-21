@@ -1,14 +1,14 @@
 import { listFriendLinks } from '@/lib/friend-links/server';
 import { getSiteSettings } from '@/lib/settings/server';
+import { getSiteUrlAsync } from '@/lib/seo/shared';
 import Image from 'next/image';
 import { Link2 } from 'lucide-react';
 import type { Metadata } from 'next';
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
-
 /** 动态生成友链页面 metadata */
 export async function generateMetadata(): Promise<Metadata> {
   const site = await getSiteSettings();
+  const siteUrl = await getSiteUrlAsync();
   return {
     title: `友链 | ${site.name}`,
     description: `${site.name} 的友情链接`,

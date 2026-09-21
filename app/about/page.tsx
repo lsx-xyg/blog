@@ -1,12 +1,12 @@
 import { getAboutContent, getSiteSettings } from '@/lib/settings/server';
 import { renderMdx } from '@/lib/mdx/server';
+import { getSiteUrlAsync } from '@/lib/seo/shared';
 import type { Metadata } from 'next';
-
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 
 /** 动态生成关于页面 metadata */
 export async function generateMetadata(): Promise<Metadata> {
   const site = await getSiteSettings();
+  const siteUrl = await getSiteUrlAsync();
   return {
     title: `关于 | ${site.name}`,
     description: `关于 ${site.name}`,

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { listPublishedPostMeta } from '@/lib/posts/server';
+import { getSiteUrlAsync } from '@/lib/seo/shared';
 
 /**
  * RSS 2.0 feed
@@ -8,7 +9,7 @@ import { listPublishedPostMeta } from '@/lib/posts/server';
  * 包含：标题、链接、描述、发布日期、作者
  */
 export async function GET() {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+  const baseUrl = await getSiteUrlAsync();
   const siteName = process.env.NEXT_PUBLIC_SITE_NAME || '林圣轩blog';
   const siteDescription = process.env.NEXT_PUBLIC_SITE_DESCRIPTION || '技术写作与生活记录';
 
