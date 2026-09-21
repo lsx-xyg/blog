@@ -143,6 +143,8 @@ video {
   --input: 240 5.9% 90%;
   --ring: 240 5.9% 10%;
   --radius: 0.75rem;
+  /* 正文链接色（.mdx-content a）：primary 是近黑，链接需要可辨识的独立色 */
+  --mdx-link: 215 85% 42%;
 
   /* shadcn 扩展变量（chart/sidebar，暂用 oklch） */
   --chart-1: 173 58% 39%;
@@ -187,6 +189,7 @@ html.dark {
   --border: 240 3.7% 15.9%;
   --input: 240 3.7% 15.9%;
   --ring: 240 4.9% 83.9%;
+  --mdx-link: 213 90% 68%;
 
   --chart-1: 220 70% 50%;
   --chart-2: 160 60% 45%;
@@ -239,6 +242,7 @@ html.theme-system {
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 240 4.9% 83.9%;
+    --mdx-link: 213 90% 68%;
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -278,6 +282,7 @@ html.theme-warm {
   --border: 46 20% 80%;
   --input: 46 20% 80%;
   --ring: 30 15% 30%;
+  --mdx-link: 24 62% 38%;
 
   --fg-faint: hsl(var(--muted-foreground) / 0.6);
   --selection: hsl(var(--foreground) / 0.1);
@@ -407,9 +412,25 @@ body {
 }
 
 .mdx-content a {
-  color: hsl(var(--primary));
+  color: hsl(var(--mdx-link));
   text-decoration: underline;
+  /* 默认淡下划线（颜色仍可辨识），hover 时加深加粗，链接意图不打字也能看出 */
+  text-decoration-color: hsl(var(--mdx-link) / 0.4);
+  text-decoration-thickness: 1px;
   text-underline-offset: 3px;
+  transition:
+    color 0.15s ease,
+    text-decoration-color 0.15s ease;
+}
+
+.mdx-content a:hover {
+  text-decoration-color: hsl(var(--mdx-link) / 0.9);
+  text-decoration-thickness: 2px;
+}
+
+/* 链接内是图片（封面/配图常用 [![alt](img)](link) 套法）时不要下划线 */
+.mdx-content a:has(> img) {
+  text-decoration: none;
 }
 
 /* Tailwind v4 preflight 会重置 list-style: none，这里显式恢复列表符号 */
