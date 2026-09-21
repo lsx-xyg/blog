@@ -32,7 +32,9 @@ export default async function AboutPage() {
         <p className="mt-3 text-muted-foreground">{site.name}</p>
       </header>
 
-      <article className="prose prose-neutral dark:prose-invert max-w-none">{mdxContent}</article>
+      {/* 正文样式与文章详情页共用 .mdx-content（globals.css）：
+          prose 不可用 —— 项目未安装 @tailwindcss/typography，prose 是无样式的空类 */}
+      <article className="mdx-content">{mdxContent}</article>
     </div>
   );
 }
