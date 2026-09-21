@@ -18,19 +18,19 @@
 
 ## 2. 技术栈
 
-| 层         | 选型                                 | 说明                                                                           |
-| ---------- | ------------------------------------ | ------------------------------------------------------------------------------ |
-| 框架       | Next.js 15（App Router）+ TypeScript | 用户对 Next.js 零基础，从零搭建                                                |
-| 样式       | Tailwind CSS + CSS 变量三主题        |                                                                                |
-| ORM        | Drizzle ORM                          | schema 即代码，轻量                                                            |
-| 数据库     | Neon (PostgreSQL)                    | 前期免费起步，后期可迁自有服务器                                               |
-| 认证       | Better Auth                          | 密码 + GitHub OAuth + 账号关联（Auth.js 已并入，官方推荐新项目用 Better Auth） |
-| MDX 渲染   | next-mdx-remote-client               | 正文存 Markdown 原文，渲染走 MDX 管道                                          |
-| 代码高亮   | Shiki                                |                                                                                |
-| 后台编辑器 | Milkdown                             | WYSIWYG Markdown，ProseMirror 内核，活跃维护                                   |
-| 搜索       | minisearch                           | 纯客户端搜索                                                                   |
-| 评论       | giscus                               | GitHub Discussions 驱动，零后端                                                |
-| 定时任务   | cron-job.org + node-cron             | 按 DEPLOY_PLATFORM 双实现                                                      |
+| 层         | 选型                                 | 说明                                                                                         |
+| ---------- | ------------------------------------ | -------------------------------------------------------------------------------------------- |
+| 框架       | Next.js 15（App Router）+ TypeScript | 用户对 Next.js 零基础，从零搭建                                                              |
+| 样式       | Tailwind CSS + CSS 变量三主题        |                                                                                              |
+| ORM        | Drizzle ORM                          | schema 即代码，轻量                                                                          |
+| 数据库     | Neon (PostgreSQL)                    | 前期免费起步，后期可迁自有服务器                                                             |
+| 认证       | Better Auth                          | 密码 + GitHub OAuth + 账号关联（Auth.js 已并入，官方推荐新项目用 Better Auth）               |
+| MDX 渲染   | next-mdx-remote-client               | 正文存 Markdown 原文，渲染走 MDX 管道                                                        |
+| 代码高亮   | Shiki                                |                                                                                              |
+| 后台编辑器 | ByteMD                               | 分屏 Markdown（CodeMirror 5 内核）+ Shiki 高亮；原选型为 Milkdown WYSIWYG，实施期改用 ByteMD |
+| 搜索       | minisearch                           | 纯客户端搜索                                                                                 |
+| 评论       | giscus                               | GitHub Discussions 驱动，零后端                                                              |
+| 定时任务   | cron-job.org + node-cron             | 按 DEPLOY_PLATFORM 双实现                                                                    |
 
 ---
 
@@ -258,16 +258,16 @@ interface StorageDriver {
 
 ## 8. 后台功能（/[adminSlug]）
 
-| 页面     | 功能                                                                                                                      |
-| -------- | ------------------------------------------------------------------------------------------------------------------------- |
-| 文章管理 | 三态筛选（草稿/定时/发布）、新建/编辑/删除、精选标记                                                                      |
-| 编辑器   | Milkdown WYSIWYG；标签输入 = **可搜索下拉 combobox**（列出已有标签可搜可选，输入不存在时回车自动创建）；图片拖拽/粘贴上传 |
-| 相册管理 | 图片上传/编辑/删除、精选标记、标签                                                                                        |
-| 友链管理 | CRUD                                                                                                                      |
-| 标签管理 | 编辑/删除（删除时自动清除文章/相册上的关联）                                                                              |
-| 存储     | **独立页 `/{adminSlug}/storage`**：档案池增删改（按驱动出表单）+ 通道绑定（文章图/相册/备份）+ 连通性测试                 |
-| 备份     | 见 §11                                                                                                                    |
-| 设置     | site_title / description / footer / about_content / admin_path / 社交链接 / 评论 / 定时任务（**不含存储**，已拆独立页）   |
+| 页面     | 功能                                                                                                                                        |
+| -------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| 文章管理 | 三态筛选（草稿/定时/发布）、新建/编辑/删除、精选标记                                                                                        |
+| 编辑器   | ByteMD 分屏 Markdown（左写右预览）；标签输入 = **可搜索下拉 combobox**（列出已有标签可搜可选，输入不存在时回车自动创建）；图片拖拽/粘贴上传 |
+| 相册管理 | 图片上传/编辑/删除、精选标记、标签                                                                                                          |
+| 友链管理 | CRUD                                                                                                                                        |
+| 标签管理 | 编辑/删除（删除时自动清除文章/相册上的关联）                                                                                                |
+| 存储     | **独立页 `/{adminSlug}/storage`**：档案池增删改（按驱动出表单）+ 通道绑定（文章图/相册/备份）+ 连通性测试                                   |
+| 备份     | 见 §11                                                                                                                                      |
+| 设置     | site_title / description / footer / about_content / admin_path / 社交链接 / 评论 / 定时任务（**不含存储**，已拆独立页）                     |
 
 **标签录入逻辑**：combobox 打开显示已有标签 → 选择或输入新建 → 服务端按 name 精确匹配（大小写敏感）复用已有 tag_id，不存在则新建（name 原样存储 + 生成 slug）。
 
@@ -576,7 +576,7 @@ NEXT_PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOUVJQps4DFcnk
 | M2     | 数据层：全部 schema + 存储驱动（LOCAL / GITHUB / S3 / WEBDAV，经档案池 + 通道绑定取用） |
 | M3     | 前台：首页瀑布流、文章页、MDX 渲染、三色主题                                            |
 | M4     | 功能：筛选/搜索/精选/浏览量/评论/SEO/关于/友链                                          |
-| M5     | 后台：引导流程、认证、文章/相册/友链/标签/设置管理、Milkdown 编辑器                     |
+| M5     | 后台：引导流程、认证、文章/相册/友链/标签/设置管理、ByteMD 编辑器                       |
 | M6     | 定时发布 + 备份 + 部署 Vercel + Cloudflare 域名                                         |
 
 ---

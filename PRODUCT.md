@@ -8,7 +8,7 @@ web
 
 ## Stack
 
-Next.js 15 App Router + TypeScript + Tailwind CSS + Drizzle ORM + Neon (PostgreSQL) + Better Auth；MDX（next-mdx-remote-client + Shiki）；Milkdown 编辑器；minisearch 客户端搜索；giscus 评论；部署 Vercel。详见 docs/SPEC.md（v1.0 已冻结）。
+Next.js 15 App Router + TypeScript + Tailwind CSS + Drizzle ORM + Neon (PostgreSQL) + Better Auth；MDX（next-mdx-remote-client + Shiki）；ByteMD 编辑器（分屏 Markdown）；minisearch 客户端搜索；giscus 评论；部署 Vercel。详见 docs/SPEC.md（v1.0 已冻结）。
 
 ## Users
 
@@ -26,7 +26,7 @@ Next.js 15 App Router + TypeScript + Tailwind CSS + Drizzle ORM + Neon (PostgreS
 
 ## Operating Context
 
-- 写作：后台 Milkdown 编辑器写 Markdown/MDX；文章可定时发布（VERCEL 模式走 cron-job.org，SERVER 模式走 node-cron）。
+- 写作：后台 ByteMD 编辑器（分屏 Markdown）写 Markdown/MDX；文章可定时发布（VERCEL 模式走 cron-job.org，SERVER 模式走 node-cron）。
 - 浏览：桌面 + 移动；三色主题 light/dark/sepia，跟随系统 + 手动记忆。
 - 内容组织：首页（文章瀑布流 + 标签多选筛选 + 最新/精选切换）、相册（图片瀑布流 + 标签筛选 + 精选）、关于、友链。
 - 评论：giscus（GitHub Discussions，iframe 内独立 OAuth，与后台登录隔离）。
