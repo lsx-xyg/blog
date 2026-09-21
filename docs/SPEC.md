@@ -11,7 +11,7 @@
 - **定位**：个人博客 + 生活相册 + 关于页 + 友链页，全中文内容
 - **参考站**：https://czhlove.cn/（刘承 blog）——借鉴其导航结构、文章卡片样式、标签筛选交互、"最新/精选"切换、加载更多
 - **架构**：Next.js 全栈（前后端一体，App Router）
-- **部署**：Vercel（免费起步，后期流量大再迁自有服务器）
+- **部署**：Vercel（免费起步，后期流量大再迁自有服务器）；数据库迁移随构建自动执行（ADR-0016）
 - **域名**：用户自有免费域名，DNS 托管 Cloudflare → 解析到 Vercel
 
 ---
@@ -499,6 +499,12 @@ WEBDAV_PRIVATE_DIRECTORY=
 BACKUP_RETENTION_DAYS=          # 早于 N 天的备份自动清理
 BACKUP_RETENTION_COUNT=         # 最多保留 N 份
 
+# ===== 部署迁移（ADR-0016）=====
+# 迁移随 Vercel 生产构建自动执行（build = db:migrate:deploy && next build）
+# 平时无需配置：本地构建、Vercel 预览/开发构建都会跳过迁移
+MIGRATE_ON_DEPLOY=              # =1 时预览构建、本地构建也执行迁移（其他 CI 同理）
+SKIP_DB_MIGRATE=                # =1 时本次构建强制跳过迁移（应急开关）
+
 # ===== 后台入口 =====
 # 后台管理路径（默认 admin），建议设一个不容易猜到的路径
 # 也可在后台「高级设置」动态配置，环境变量优先级更高
@@ -590,15 +596,19 @@ NEXT_PUBLIC_GISCUS_CATEGORY_ID=DIC_kwDOUVJQps4DFcnk
 5. Vercel 项目（连接 Repo A，配置全部 env）
 6. Cloudflare DNS（免费域名解析到 Vercel）
 7. giscus 配置（Repo A 开启 Discussions，后台填入仓库名）
+8. 迁移不用手动执行：Vercel 构建会先跑 `db:migrate:deploy`（ADR-0016）。两个前提：后台 Build Command
+   保持默认（勿覆盖成 `next build`），且**不要**在 Vercel 设 `NODE_ENV=production`（会导致
+   devDependencies 不安装，`tsx` 缺失）
 
 ---
 
 ## 16. 风险与注意记录
 
-| 项                  | 说明                                                   |
-| ------------------- | ------------------------------------------------------ |
-| 备份含账号数据      | GitHub 驱动上传公开 repo 会公开账号信息，部署时权衡    |
-| cron-job.org 无重试 | 定时接口幂等设计兜底，失败下次扫描自愈                 |
-| Vercel Hobby 限制   | 自带 Cron 仅每日一次 → 必须用外部 cron-job.org（已定） |
-| 引导抢注窗口        | 部署后尽快完成引导，或设置 SETUP_SECRET                |
-| GitHub 图床         | 单文件 ≤50MB，视频不走 GitHub；jsDelivr 有流量治理政策 |
+| 项                  | 说明                                                                                           |
+| ------------------- | ---------------------------------------------------------------------------------------------- |
+| 备份含账号数据      | GitHub 驱动上传公开 repo 会公开账号信息，部署时权衡                                            |
+| cron-job.org 无重试 | 定时接口幂等设计兜底，失败下次扫描自愈                                                         |
+| Vercel Hobby 限制   | 自带 Cron 仅每日一次 → 必须用外部 cron-job.org（已定）                                         |
+| 引导抢注窗口        | 部署后尽快完成引导，或设置 SETUP_SECRET                                                        |
+| GitHub 图床         | 单文件 ≤50MB，视频不走 GitHub；jsDelivr 有流量治理政策                                         |
+| 迁移失败即构建失败  | 新迁移有问题时部署不生效（fail fast，好于线上跑新代码旧 schema）；无 down 迁移，回滚靠手写 SQL |

@@ -156,6 +156,15 @@ _Avoid_: 目录、table of contents、outline
 首页文章列表和相册页图片列表的布局方式，多列不等高排列，随页面滚动无限加载。PC 端最多 4 列，移动端 1 列。
 _Avoid_: 瀑布流布局、masonry、grid
 
+### 数据库领域
+
+**Deploy Migration（部署迁移）**：
+迁移 SQL 随代码入库（`db/drizzle/`），但只有执行 migrate 才会落库。本项目把这一步挂在**构建阶段**
+（`build` = `npm run db:migrate:deploy && next build`，ADR-0016），判定规则是纯函数
+`lib/db/shared/deploy-migrate.ts`：只对 Vercel 生产构建自动执行，预览与本地构建默认跳过；
+`MIGRATE_ON_DEPLOY=1` 强制、`SKIP_DB_MIGRATE=1` 关闭。手动迁移仍走 `npm run db:migrate(:debug)`。
+_Avoid_: 自动建表、启动时迁移、db push
+
 ### 运维领域
 
 **Backup（备份）**：
