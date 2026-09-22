@@ -10,6 +10,7 @@
  * 设置项约定（语义化名 → DB key [env]）：
  * - site.name           → site.name
  * - site.description    → site.description
+ * - site.seoTitle       → site.seo_title（首页 <title> 显式覆盖，空 = 自动组装）
  * - site.seoDescription → site.seo_description
  * - site.logoUrl        → site.logo_url
  * - site.faviconUrl     → site.favicon_url
@@ -108,9 +109,14 @@ export const registry = {
     key: 'site.description',
     default: '技术写作与生活记录',
   },
+  'site.seoTitle': {
+    key: 'site.seo_title',
+    default: '',
+  },
   'site.seoDescription': {
     key: 'site.seo_description',
-    default: '林圣轩的个人博客，分享技术写作与生活记录',
+    default:
+      '林圣轩blog，一个专注前端与全栈开发的技术博客：分享 Next.js、React、TypeScript、数据库与工程化实践，也记录生活与思考。',
   },
   'site.logoUrl': {
     key: 'site.logo_url',

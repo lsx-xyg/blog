@@ -11,6 +11,7 @@ import { StorageDriverType, type GithubUrlStyle } from '@/lib/types/storage';
 export type SiteSettings = {
   name: string;
   description: string;
+  seoTitle: string;
   seoDescription: string;
   logoUrl: string;
   faviconUrl: string;

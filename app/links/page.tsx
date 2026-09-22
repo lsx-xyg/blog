@@ -10,8 +10,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const site = await getSiteSettings();
   const siteUrl = await getSiteUrlAsync();
   return {
-    title: `友链 | ${site.name}`,
-    description: `${site.name} 的友情链接`,
+    // 只写页面名：根布局模板会自动拼「| 站名」（见 about 页同类注释）
+    title: '友情链接 · 博客交换链接',
+    description: `${site.name} 的友情链接页，收录长期关注的技术博客与个人站点，欢迎交换友链。`,
     alternates: {
       canonical: `${siteUrl}/links`,
     },

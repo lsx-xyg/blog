@@ -13,7 +13,9 @@ import { ArticleProgress } from '@/components/posts/article-progress';
 import { ScrollToTop } from '@/components/layout/scroll-to-top';
 import { CommentsLazy } from '@/components/posts/comments-lazy';
 import { getGiscusSettings } from '@/lib/settings/server';
-import { getSiteUrlAsync } from '@/lib/seo/shared';
+import { getSiteUrlAsync, buildPostDescription } from '@/lib/seo/shared';
+import { getPostTags } from '@/lib/posts/server';
+import { JsonLd } from '@/components/seo/json-ld';
 import { CalendarDays, Clock } from 'lucide-react';
 
 export const dynamicParams = true;
@@ -43,9 +45,12 @@ export async function generateMetadata({
   const siteUrl = await getSiteUrlAsync();
   const url = `${siteUrl}/posts/${post.slug || post.id}`;
 
+  // summary 缺失或过短时用正文摘要兜底（Bing 会标记过短/缺失的描述）
+  const description = buildPostDescription(post.summary, post.content);
+
   return {
     title: post.title,
-    description: post.summary ?? undefined,
+    description,
     alternates: {
       canonical: url,
     },
@@ -54,7 +59,7 @@ export async function generateMetadata({
       locale: 'zh_CN',
       url,
       title: post.title,
-      description: post.summary ?? undefined,
+      description,
       publishedTime: post.publishedAt?.toISOString(),
       modifiedTime: post.updatedAt?.toISOString(),
       authors: ['林圣轩'],
@@ -72,7 +77,7 @@ export async function generateMetadata({
     twitter: {
       card: 'summary_large_image',
       title: post.title,
-      description: post.summary ?? undefined,
+      description,
       images: post.coverUrl ? [post.coverUrl] : undefined,
     },
   };
@@ -91,6 +96,17 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   const { content, toc } = await renderMdx(post.content);
 
+  // 结构化数据（SEO 富摘要 + GEO 供 AI 答案引擎引用）所需
+  const siteUrl = await getSiteUrlAsync();
+  const url = `${siteUrl}/posts/${post.slug || post.id}`;
+  const description = buildPostDescription(post.summary, post.content);
+  const tagNames = await getPostTags(post.id);
+  const coverImage = post.coverUrl
+    ? post.coverUrl.startsWith('http')
+      ? post.coverUrl
+      : `${siteUrl}${post.coverUrl}`
+    : undefined;
+
   return (
     <main className="container mx-auto px-4 py-4 md:px-4 md:py-8 pb-24 md:pb-8">
       {/* 滚动到顶部：解决页面加载时滚动位置不在顶部的问题 */}
@@ -100,6 +116,34 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         <div className="mx-auto grid w-full grid-cols-1 max-w-4xl">
           <div className="min-w-0">
             <article className="mx-auto w-full max-w-4xl animate-page-enter">
+              {/* 文章实体结构化数据（BlogPosting）+ 面包屑 */}
+              <JsonLd
+                data={{
+                  '@context': 'https://schema.org',
+                  '@type': 'BlogPosting',
+                  headline: post.title,
+                  description,
+                  url,
+                  mainEntityOfPage: url,
+                  datePublished: post.publishedAt?.toISOString(),
+                  dateModified: (post.updatedAt || post.publishedAt)?.toISOString(),
+                  author: { '@type': 'Person', name: '林圣轩', url: siteUrl },
+                  ...(coverImage ? { image: [coverImage] } : {}),
+                  ...(tagNames.length > 0 ? { keywords: tagNames.join(', ') } : {}),
+                  inLanguage: 'zh-CN',
+                }}
+              />
+              <JsonLd
+                data={{
+                  '@context': 'https://schema.org',
+                  '@type': 'BreadcrumbList',
+                  itemListElement: [
+                    { '@type': 'ListItem', position: 1, name: '首页', item: `${siteUrl}/` },
+                    { '@type': 'ListItem', position: 2, name: post.title, item: url },
+                  ],
+                }}
+              />
+
               {/* 阅读进度条 */}
               <ArticleProgress />
 

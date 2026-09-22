@@ -3,7 +3,7 @@ import dynamic from 'next/dynamic';
 import { listPublishedPosts, listPublishedPostMeta } from '@/lib/posts/server';
 import { FileText, Tags, Star } from 'lucide-react';
 import { getSiteSettings } from '@/lib/settings/server';
-import { getSiteUrlAsync } from '@/lib/seo/shared';
+import { getSiteUrlAsync, buildHomeTitle, buildHomeDescription } from '@/lib/seo/shared';
 import type { Metadata } from 'next';
 
 // PostWall 组件代码分割（包含 minisearch，体积较大）
@@ -25,8 +25,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const site = await getSiteSettings();
   const siteUrl = await getSiteUrlAsync();
   return {
-    title: site.name,
-    description: site.seoDescription || site.description,
+    // 过短的标题会被 Bing 标记「标题太短」，走共享的兜底组装
+    title: buildHomeTitle(site.name, site.description, site.seoTitle),
+    description: buildHomeDescription(site.seoDescription, site.description),
     alternates: {
       canonical: siteUrl,
     },

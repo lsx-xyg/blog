@@ -79,6 +79,7 @@ export function ManageSettings() {
   const [site, setSite] = useState<SiteSettings>({
     name: '',
     description: '',
+    seoTitle: '',
     seoDescription: '',
     logoUrl: '',
     faviconUrl: '',
@@ -335,6 +336,29 @@ export function ManageSettings() {
                   />
                 </div>
                 <div>
+                  <label className={labelClass}>SEO 标题（可选）</label>
+                  <input
+                    type="text"
+                    value={site.seoTitle ?? ''}
+                    onChange={(e) => setSite({ ...site, seoTitle: e.target.value })}
+                    className={inputClass}
+                    placeholder="留空则自动用「站点名称 · 站点简介」"
+                  />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    首页 &lt;title&gt; 显式覆盖。建议 20~30 字，当前{' '}
+                    <span
+                      className={
+                        site.seoTitle && (site.seoTitle.length < 15 || site.seoTitle.length > 60)
+                          ? 'text-destructive'
+                          : 'text-muted-foreground'
+                      }
+                    >
+                      {(site.seoTitle ?? '').length}
+                    </span>{' '}
+                    字。
+                  </p>
+                </div>
+                <div>
                   <label className={labelClass}>SEO 描述</label>
                   <textarea
                     value={site.seoDescription}
@@ -342,6 +366,20 @@ export function ManageSettings() {
                     className={`${inputClass} min-h-[80px] resize-y`}
                     placeholder="用于搜索引擎的描述信息"
                   />
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    建议 50~160 字（过短/过长会被 Bing 标记），当前{' '}
+                    <span
+                      className={
+                        site.seoDescription.length > 0 &&
+                        (site.seoDescription.length < 30 || site.seoDescription.length > 160)
+                          ? 'text-destructive'
+                          : 'text-muted-foreground'
+                      }
+                    >
+                      {site.seoDescription.length}
+                    </span>{' '}
+                    字。
+                  </p>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>

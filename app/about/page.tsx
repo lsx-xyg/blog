@@ -8,8 +8,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const site = await getSiteSettings();
   const siteUrl = await getSiteUrlAsync();
   return {
-    title: `关于 | ${site.name}`,
-    description: `关于 ${site.name}`,
+    // 只写页面名：根布局模板会自动拼「| 站名」，手动再拼一次会得到
+    // 「关于 | 林圣轩blog | 林圣轩blog」这种重复标题
+    title: '关于本站与博主',
+    description: `关于 ${site.name}：${site.description}。这里介绍博主的背景经历、博客的定位与内容方向。`,
     alternates: {
       canonical: `${siteUrl}/about`,
     },

@@ -14,21 +14,27 @@ import { Footer } from '@/components/layout/footer';
 import { ToastProvider } from '@/components/ui/toast';
 import { PageProgress } from '@/components/layout/page-progress';
 import GuidePicker from '@/components/guides/picker-layer';
-import { getSiteSettings, getFooterSettings } from '@/lib/settings/server';
-import { getSiteUrlAsync } from '@/lib/seo/shared';
+import { getSiteSettings, getFooterSettings, getSocialLinks } from '@/lib/settings/server';
+import { getSiteUrlAsync, buildHomeTitle, buildHomeDescription } from '@/lib/seo/shared';
+import { JsonLd } from '@/components/seo/json-ld';
 
 /** 动态生成 metadata（从 settings 表读取站名和描述） */
 export async function generateMetadata(): Promise<Metadata> {
   const site = await getSiteSettings();
   const siteUrl = await getSiteUrlAsync();
 
+  // 首页标题/描述兜底组装：显式配置优先，过短时自动补足（Bing 站长工具
+  // 会标记「标题太短」「Meta Description 太长或太短」）
+  const homeTitle = buildHomeTitle(site.name, site.description, site.seoTitle);
+  const homeDescription = buildHomeDescription(site.seoDescription, site.description);
+
   return {
     metadataBase: new URL(siteUrl),
     title: {
-      default: site.name,
+      default: homeTitle,
       template: `%s | ${site.name}`,
     },
-    description: site.seoDescription || site.description,
+    description: homeDescription,
     keywords: ['博客', '技术博客', 'Next.js', 'React', 'TypeScript', '全栈开发', '林圣轩'],
     authors: [{ name: '林圣轩' }],
     creator: '林圣轩',
@@ -37,13 +43,13 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: 'zh_CN',
       url: siteUrl,
       siteName: site.name,
-      title: site.name,
-      description: site.seoDescription || site.description,
+      title: homeTitle,
+      description: homeDescription,
     },
     twitter: {
       card: 'summary_large_image',
-      title: site.name,
-      description: site.seoDescription || site.description,
+      title: homeTitle,
+      description: homeDescription,
     },
     robots: {
       index: true,
@@ -65,10 +71,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const [site, footer, adminPath] = await Promise.all([
+  const [site, footer, adminPath, social, siteUrl] = await Promise.all([
     getSiteSettings(),
     getFooterSettings(),
     getAdminPathAsync(),
+    getSocialLinks(),
+    getSiteUrlAsync(),
   ]);
 
   // 服务端读取主题 cookie，直接在 <html> 上渲染主题 class：
@@ -97,6 +105,31 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       {/* suppressHydrationWarning：忽略浏览器扩展注入属性（如 data-atm-ext-installed）导致的水合差异 */}
       <body suppressHydrationWarning className="min-h-screen flex-col">
+        {/* 结构化数据（SEO 富摘要 + GEO 供 AI 答案引擎引用）：站点实体 + 作者实体 */}
+        <JsonLd
+          data={{
+            '@context': 'https://schema.org',
+            '@type': 'WebSite',
+            name: site.name,
+            url: siteUrl,
+            description: buildHomeDescription(site.seoDescription, site.description),
+            inLanguage: 'zh-CN',
+          }}
+        />
+        <JsonLd
+          data={{
+            '@context': 'https://schema.org',
+            '@type': 'Person',
+            name: '林圣轩',
+            url: siteUrl,
+            description: site.description,
+            ...(social.github || social.twitter
+              ? {
+                  sameAs: [social.github, social.twitter].filter((v): v is string => Boolean(v)),
+                }
+              : {}),
+          }}
+        />
         <ToastProvider>
           <PageProgress />
           <SiteHeader

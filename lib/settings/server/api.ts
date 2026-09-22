@@ -159,6 +159,7 @@ export function buildSettingsOps(
   if (site) {
     addSetting('site.name', site.name);
     addSetting('site.description', site.description);
+    addSetting('site.seo_title', site.seoTitle);
     addSetting('site.seo_description', site.seoDescription);
     addSetting('site.logo_url', site.logoUrl);
     addSetting('site.favicon_url', site.faviconUrl);
