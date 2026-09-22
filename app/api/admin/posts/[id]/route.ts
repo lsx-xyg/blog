@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { posts } from '@/db/schema';
 import { setPostTags } from '@/lib/posts/server';
 import { requireAdmin, adminDenied } from '@/lib/auth/server';
+import { notifyPostsChanged } from '@/lib/seo/server';
 import { POST_STATUS_VALUES, PostStatus } from '@/lib/types/posts';
 
 export const dynamic = 'force-dynamic';
@@ -71,6 +73,16 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   revalidatePath('/');
   revalidatePath(`/posts/${existing[0].slug ?? existing[0].id}`);
   revalidatePath(`/posts/${updated.slug ?? updated.id}`);
+
+  // IndexNow 旁路推送：已发布的文章更新即通知（slug 变更时新旧 URL 都推，加速旧 URL 重抓）
+  if (updated.status === PostStatus.PUBLISHED) {
+    after(() => {
+      const changed = [{ id: updated.id, slug: updated.slug }];
+      const oldSlug = existing[0].slug;
+      if (oldSlug && oldSlug !== updated.slug) changed.push({ id: updated.id, slug: oldSlug });
+      return notifyPostsChanged(changed);
+    });
+  }
 
   return NextResponse.json({ post: updated });
 }

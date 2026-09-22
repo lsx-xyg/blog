@@ -10,6 +10,7 @@
 import { getSetting, setSettingsBatch, deleteSetting } from './store';
 import {
   getSiteSettings,
+  getSeoSettings,
   getSocialLinks,
   getFooterSettings,
   getAboutContent,
@@ -76,21 +77,33 @@ export function toCronForClient(cron: CronSettings) {
 
 /** GET 聚合：一次读全量设置并裁剪敏感字段（route 直接返回此结果） */
 export async function getSettingsBundle() {
-  const [site, social, footer, aboutContent, adminPath, storage, privateStorage, giscus, cron] =
-    await Promise.all([
-      getSiteSettings(),
-      getSocialLinks(),
-      getFooterSettings(),
-      getAboutContent(),
-      getSetting<string>('admin.path'),
-      getStorageSettings(),
-      getPrivateStorageSettings(),
-      getGiscusSettings(),
-      getCronSettings(),
-    ]);
+  const [
+    site,
+    seo,
+    social,
+    footer,
+    aboutContent,
+    adminPath,
+    storage,
+    privateStorage,
+    giscus,
+    cron,
+  ] = await Promise.all([
+    getSiteSettings(),
+    getSeoSettings(),
+    getSocialLinks(),
+    getFooterSettings(),
+    getAboutContent(),
+    getSetting<string>('admin.path'),
+    getStorageSettings(),
+    getPrivateStorageSettings(),
+    getGiscusSettings(),
+    getCronSettings(),
+  ]);
 
   return {
     site,
+    seo,
     social,
     footer,
     aboutContent,
@@ -164,6 +177,19 @@ export function buildSettingsOps(
     addSetting('site.logo_url', site.logoUrl);
     addSetting('site.favicon_url', site.faviconUrl);
     addSetting('site.site_url', site.siteUrl);
+  }
+
+  // 搜索收录：开关存布尔字符串，密钥为公开值（可选文本，空 = 删除走自动生成）
+  const seo = body.seo as Record<string, unknown> | undefined;
+  if (seo) {
+    const { indexNowEnabled, indexNowKey } = seo as {
+      indexNowEnabled?: unknown;
+      indexNowKey?: unknown;
+    };
+    if (indexNowEnabled !== undefined && indexNowEnabled !== null) {
+      addSetting('seo.indexnow_enabled', indexNowEnabled ? 'true' : 'false');
+    }
+    handleOptionalText(indexNowKey, 'seo.indexnow_key');
   }
 
   const social = body.social as Record<string, unknown> | undefined;

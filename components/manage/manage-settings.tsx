@@ -13,12 +13,14 @@ import {
   ShieldCheck,
   AlertTriangle,
   Loader2,
+  Megaphone,
 } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 import type {
   CronSettings,
   FooterSettings,
   GiscusSettings,
+  SeoSettings,
   SocialLinks,
   SiteSettings,
 } from '@/lib/types/settings';
@@ -56,12 +58,13 @@ const MarkdownEditor = dynamic(
  *
  * 分区（对应 activeSection）：
  * 1. site      站点设置（站名/简介/SEO/Logo/Favicon/站点 URL）
- * 2. social    社交链接（GitHub/Twitter/邮箱/RSS）
- * 3. footer    页脚设置（版权/ICP）
- * 4. about     关于页面内容（Markdown 编辑器，动态导入）
- * 5. giscus    评论设置
- * 6. cron      定时任务（CronSection，敏感字段自持交互）
- * 7. advanced  高级设置（后台路径 + 加密状态）
+ * 2. seo       搜索收录（IndexNow 自动推送 + 手动全量推送入口）
+ * 3. social    社交链接（GitHub/Twitter/邮箱/RSS）
+ * 4. footer    页脚设置（版权/ICP）
+ * 5. about     关于页面内容（Markdown 编辑器，动态导入）
+ * 6. giscus    评论设置
+ * 7. cron      定时任务（CronSection，敏感字段自持交互）
+ * 8. advanced  高级设置（后台路径 + 加密状态）
  *
  * 存储设置不在这里：已独立为 `/{adminSlug}/storage`（档案池 + 通道绑定，见
  * components/manage/manage-storage.tsx），本页只保留一个跳转入口。
@@ -72,7 +75,7 @@ export function ManageSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [activeSection, setActiveSection] = useState<
-    'site' | 'social' | 'footer' | 'about' | 'giscus' | 'cron' | 'advanced'
+    'site' | 'seo' | 'social' | 'footer' | 'about' | 'giscus' | 'cron' | 'advanced'
   >('site');
   const [originalAdminPath, setOriginalAdminPath] = useState('');
 
@@ -92,6 +95,22 @@ export function ManageSettings() {
     email: '',
     rss: '/rss.xml',
   });
+
+  // 搜索收录（IndexNow）：设置值走全局保存；手动推送走独立按钮
+  const [seo, setSeo] = useState<SeoSettings>({
+    indexNowEnabled: false,
+    indexNowKey: '',
+  });
+  const [indexNowStatus, setIndexNowStatus] = useState<{
+    enabled: boolean;
+    key: string;
+    keyValid: boolean;
+    keyFileUrl: string;
+    siteUrl: string;
+    urlCount: number;
+  } | null>(null);
+  const [pushing, setPushing] = useState(false);
+  const [pushResult, setPushResult] = useState<{ ok: boolean; text: string } | null>(null);
 
   const [footer, setFooter] = useState<FooterSettings>({
     copyright: '',
@@ -125,6 +144,12 @@ export function ManageSettings() {
       if (res.ok) {
         const data = await res.json();
         setSite(data.site);
+        setSeo(
+          data.seo ?? {
+            indexNowEnabled: false,
+            indexNowKey: '',
+          },
+        );
         setSocial(data.social);
         setFooter(data.footer);
         setAboutContent(data.aboutContent);
@@ -188,6 +213,56 @@ export function ManageSettings() {
     checkEncryption(true);
   }, [checkEncryption]);
 
+  // 进入「搜索收录」分区时拉取 IndexNow 状态（密钥文件地址、可推送 URL 数等）
+  useEffect(() => {
+    if (activeSection !== 'seo') return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/admin/seo/indexnow');
+        if (res.ok && !cancelled) {
+          const data = await res.json();
+          setIndexNowStatus(data);
+        }
+      } catch {
+        // 状态拉取失败不打扰用户，推送按钮自身会报错
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [activeSection]);
+
+  /** 一键推送全站 URL 到 IndexNow（Bing / Yandex / Seznam / Naver 共享通知） */
+  const pushAllToIndexNow = async () => {
+    setPushing(true);
+    setPushResult(null);
+    try {
+      const res = await fetch('/api/admin/seo/indexnow', { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setPushResult({
+          ok: data.ok,
+          text: data.ok
+            ? `推送成功：${data.submitted}/${data.urlCount} 条 URL 已提交（${data.message}）`
+            : `推送未生效：${data.message}`,
+        });
+        showToast(
+          data.ok ? `已提交 ${data.submitted} 条 URL` : `推送未生效：${data.message}`,
+          data.ok ? 'success' : 'error',
+        );
+      } else {
+        setPushResult({ ok: false, text: data.error || '推送请求失败' });
+        showToast(data.error || '推送请求失败', 'error');
+      }
+    } catch {
+      setPushResult({ ok: false, text: '推送请求失败，请重试' });
+      showToast('推送请求失败，请重试', 'error');
+    } finally {
+      setPushing(false);
+    }
+  };
+
   // 保存设置
   const saveSettings = async () => {
     setSaving(true);
@@ -197,6 +272,7 @@ export function ManageSettings() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           site,
+          seo,
           social,
           footer,
           aboutContent,
@@ -233,6 +309,7 @@ export function ManageSettings() {
 
   const sections = [
     { id: 'site' as const, label: '站点设置', icon: Globe },
+    { id: 'seo' as const, label: '搜索收录', icon: Megaphone },
     { id: 'social' as const, label: '社交链接', icon: Link2 },
     { id: 'footer' as const, label: '页脚设置', icon: SettingsIcon },
     { id: 'about' as const, label: '关于页面', icon: FileText },
@@ -416,6 +493,118 @@ export function ManageSettings() {
                       优先级更高。
                     </p>
                   </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 搜索收录（IndexNow） */}
+          {activeSection === 'seo' && (
+            <div className="rounded-xl border border-border bg-card p-6 animate-fade-in-up">
+              <h2 className="text-lg font-semibold mb-4">搜索收录（IndexNow）</h2>
+              <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+                文章发布/更新时自动通知搜索引擎抓取（通常分钟级），一次提交 Bing / Yandex / Seznam /
+                Naver 全部共享。
+                <strong> Google 不参与 IndexNow</strong>
+                （其 Indexing API 仅限招聘/直播页，站点地图 ping 已下线）——Google 侧由{' '}
+                <code className="rounded bg-accent px-1 font-mono text-xs">/sitemap.xml</code> +
+                Search Console 覆盖，无需额外操作。
+              </p>
+              <div className="space-y-5">
+                {/* 自动推送开关 */}
+                <label className="flex items-center gap-2 text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    checked={seo.indexNowEnabled}
+                    onChange={(e) => setSeo({ ...seo, indexNowEnabled: e.target.checked })}
+                    className="accent-primary h-4 w-4"
+                  />
+                  启用自动推送（文章发布 / 更新 / 定时发布到期时自动提交 IndexNow）
+                </label>
+
+                {/* 密钥 */}
+                <div>
+                  <label className={labelClass}>IndexNow 密钥</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={seo.indexNowKey ?? ''}
+                      onChange={(e) => setSeo({ ...seo, indexNowKey: e.target.value })}
+                      className={`${inputClass} font-mono`}
+                      placeholder="留空则首次推送时自动生成（32 位十六进制）"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setSeo({
+                          ...seo,
+                          indexNowKey: crypto.randomUUID().replace(/-/g, ''),
+                        })
+                      }
+                      className="whitespace-nowrap rounded-lg border border-input px-3 py-2 text-sm hover:bg-accent transition-colors"
+                    >
+                      重新生成
+                    </button>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    密钥是<strong>公开值</strong>
+                    （引擎要抓取密钥文件验证站点所有权）。修改密钥后请点「保存设置」，密钥文件地址：
+                    {indexNowStatus?.keyFileUrl ? (
+                      <a
+                        href={indexNowStatus.keyFileUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline break-all"
+                      >
+                        {indexNowStatus.keyFileUrl}
+                      </a>
+                    ) : (
+                      '保存并生成密钥后显示'
+                    )}
+                  </p>
+                </div>
+
+                {/* 手动全量推送 */}
+                <div className="rounded-lg border border-border bg-background p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-medium">手动全量推送</h3>
+                      <p className="mt-0.5 text-xs text-muted-foreground">
+                        一键提交全站 URL（首页 + 关于/友链/相册 + 全部已发布文章 + RSS）
+                        {indexNowStatus ? `，当前共 ${indexNowStatus.urlCount} 条` : ''}
+                        ，无需再去 Bing 官网逐条提交。
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={pushAllToIndexNow}
+                      disabled={pushing || !seo.indexNowEnabled}
+                      className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                    >
+                      {pushing ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Megaphone className="h-4 w-4" />
+                      )}
+                      立即推送全部 URL
+                    </button>
+                  </div>
+                  {!seo.indexNowEnabled && (
+                    <p className="mt-2 text-xs text-yellow-600 dark:text-yellow-400">
+                      需先勾选「启用自动推送」并保存设置后，推送才会真正提交。
+                    </p>
+                  )}
+                  {pushResult && (
+                    <p
+                      className={`mt-3 rounded-lg border p-3 text-xs leading-relaxed ${
+                        pushResult.ok
+                          ? 'border-green-500/30 bg-green-500/5 text-green-700 dark:text-green-400'
+                          : 'border-red-500/30 bg-red-500/5 text-red-700 dark:text-red-400'
+                      }`}
+                    >
+                      {pushResult.text}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

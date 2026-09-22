@@ -9,6 +9,7 @@ import type {
   PrivateStorageSettings,
   BackupSettings,
   CronDeployPlatform,
+  SeoSettings,
 } from '@/lib/types/settings';
 import { getConfig } from './get-config';
 import { getConfigGroup } from './get-config-groups';
@@ -21,6 +22,15 @@ import { getConfigGroup } from './get-config-groups';
 
 export async function getSiteSettings(): Promise<SiteSettings> {
   return await getConfigGroup('site');
+}
+/**
+ * 获取搜索收录设置（IndexNow）。
+ *
+ * 字段：indexNowEnabled / indexNowKey
+ * 密钥为公开值（经 /{key}.txt 供引擎校验），不需要敏感字段裁剪。
+ */
+export async function getSeoSettings(): Promise<SeoSettings> {
+  return await getConfigGroup('seo');
 }
 /**
  * 获取社交链接。

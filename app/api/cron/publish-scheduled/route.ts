@@ -18,8 +18,10 @@
  */
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { publishScheduledPosts } from '@/lib/posts/server';
 import { getCronSettings } from '@/lib/settings/server';
+import { notifyPostsChanged } from '@/lib/seo/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -52,6 +54,8 @@ export async function GET(req: Request) {
       for (const post of published) {
         revalidatePath(`/posts/${post.slug ?? post.id}`);
       }
+      // IndexNow 旁路推送：定时到期的文章发布即通知（失败不影响发布结果）
+      after(() => notifyPostsChanged(published));
     }
 
     return NextResponse.json({

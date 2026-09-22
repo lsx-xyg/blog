@@ -16,6 +16,9 @@
  * - site.faviconUrl     → site.favicon_url
  * - site.siteUrl        → site.site_url
  *                         [env: NEXT_PUBLIC_SITE_URL]
+ * - seo.indexNowEnabled → seo.indexnow_enabled（文章发布/更新时自动推送 IndexNow）
+ * - seo.indexNowKey     → seo.indexnow_key（IndexNow 密钥，8~128 位 hex，
+ *                         公开值：经 /{key}.txt 供引擎校验站点所有权）
  * - social.github       → social.github
  * - social.twitter      → social.twitter
  * - social.email        → social.email
@@ -129,6 +132,16 @@ export const registry = {
   'site.siteUrl': {
     key: 'site.site_url',
     env: 'NEXT_PUBLIC_SITE_URL',
+    default: '',
+  },
+  // === 搜索收录（IndexNow：Bing/Yandex/Seznam/Naver 共用的即时索引协议）===
+  'seo.indexNowEnabled': {
+    key: 'seo.indexnow_enabled',
+    default: false,
+    transform: (v) => v === 'true' || v === '1',
+  },
+  'seo.indexNowKey': {
+    key: 'seo.indexnow_key',
     default: '',
   },
   'social.github': {

@@ -17,6 +17,20 @@ export type SiteSettings = {
   faviconUrl: string;
   siteUrl: string;
 };
+/** 站点 URL 等 SEO 基础设置见 SiteSettings；本组为搜索收录推送设置 */
+
+/**
+ * 搜索收录设置（IndexNow 即时索引协议）。
+ *
+ * Google 不参与 IndexNow（其 Indexing API 仅限 JobPosting/BroadcastEvent，
+ * sitemap ping 端点已下线），Google 侧靠 sitemap + Search Console 覆盖。
+ */
+export type SeoSettings = {
+  /** 文章发布/更新时是否自动推送 IndexNow（Bing/Yandex/Seznam/Naver 共享通知） */
+  indexNowEnabled: boolean;
+  /** IndexNow 密钥（8~128 位 hex；公开值，经 /{key}.txt 验证站点所有权，空 = 首次推送时自动生成） */
+  indexNowKey: string;
+};
 /** 社交链接类型 */
 
 export type SocialLinks = {

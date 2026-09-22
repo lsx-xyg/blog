@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { eq } from 'drizzle-orm';
 import { db } from '@/db';
 import { posts } from '@/db/schema';
 import { listAllPosts, setPostTags } from '@/lib/posts/server';
 import { requireAdmin, adminDenied } from '@/lib/auth/server';
+import { notifyPostsChanged } from '@/lib/seo/server';
 import { POST_STATUS_VALUES, PostStatus } from '@/lib/types/posts';
 
 export const dynamic = 'force-dynamic';
@@ -66,5 +68,11 @@ export async function POST(req: Request) {
   });
 
   revalidatePath('/');
+
+  // IndexNow 旁路推送（发布即通知 Bing 等引擎抓取；未启用/失败均不影响保存）
+  if (created.status === PostStatus.PUBLISHED) {
+    after(() => notifyPostsChanged([created]));
+  }
+
   return NextResponse.json({ post: created }, { status: 201 });
 }
