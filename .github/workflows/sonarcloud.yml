@@ -16,7 +16,8 @@ jobs:
           # 拉取全量历史，保证 SonarCloud 计算增量/重复率准确
           fetch-depth: 0
       - name: Run SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        # 锁定完整 commit SHA（供应链安全，避免分支/标签被篡改）
+        uses: SonarSource/sonarcloud-github-action@ba3875ecf642b2129de2b589510c81a8b53dbf4e
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 自动提供，用于 PR 评论
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   # 在 SonarCloud 生成，配置到仓库 Secrets
