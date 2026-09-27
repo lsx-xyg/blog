@@ -1,0 +1,22 @@
+name: SonarCloud
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonarcloud:
+    name: SonarCloud 代码质量分析
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # 拉取全量历史，保证 SonarCloud 计算增量/重复率准确
+          fetch-depth: 0
+      - name: Run SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 自动提供，用于 PR 评论
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   # 在 SonarCloud 生成，配置到仓库 Secrets
