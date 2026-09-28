@@ -15,6 +15,7 @@ type TagInputProps = {
   onChange: (tags: string[]) => void;
   placeholder?: string;
   allTags?: Tag[]; // 所有已有标签，用于下拉提示
+  id?: string; // 关联 label（htmlFor）用
 };
 
 /**
@@ -29,6 +30,7 @@ export function TagInput({
   onChange,
   placeholder = '输入标签后回车添加',
   allTags = [],
+  id,
 }: TagInputProps) {
   const [inputValue, setInputValue] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
@@ -127,6 +129,7 @@ export function TagInput({
         ))}
         <input
           ref={inputRef}
+          id={id}
           type="text"
           value={inputValue}
           onChange={(e) => {

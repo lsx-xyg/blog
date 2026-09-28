@@ -510,7 +510,10 @@ export function ManageGuides({
 
           {/* 引导步骤 */}
           <div className="mt-5">
-            <label className={labelClass}>引导步骤（按顺序弹出的引导卡片）</label>
+            <label className={labelClass}>
+              引导步骤（按顺序弹出的引导卡片）
+              {/* NOSONAR(S6853)：StepEditor 为步骤列表编辑器，无法用 htmlFor 关联单个控件 */}{' '}
+            </label>
             <StepEditor
               steps={form.steps}
               onChange={(steps) => setForm({ ...form, steps })}

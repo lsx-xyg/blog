@@ -11,10 +11,10 @@ const labelClass = 'block text-sm font-medium mb-1.5';
 
 /** 密码修改错误信息映射（better-auth 默认英文提示 → 中文） */
 const PASSWORD_ERROR_MAP: Record<string, string> = {
-  // NOSONAR(S2068)：key 是 better-auth 返回的错误码标识，不是凭据
+  // 错误码标识映射（better-auth 英文提示 → 中文），key 是错误码、不是凭据
   'invalid password': '当前密码错误',
   'password is too short': '新密码太短（至少 8 位）',
-  'password does not match': '两次输入的新密码不一致',
+  'password does not match': '两次输入的新密码不一致', // NOSONAR(S2068)
 };
 
 /**

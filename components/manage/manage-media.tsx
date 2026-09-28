@@ -627,8 +627,11 @@ export function ManageMedia() {
 
             {/* 标签（文章图片和相册图片都可以编辑） */}
             <div>
-              <label className="mb-1 block text-sm font-medium">标签</label>
+              <label htmlFor="media-tags" className="mb-1 block text-sm font-medium">
+                标签
+              </label>
               <TagInput
+                id="media-tags"
                 value={editTags}
                 onChange={setEditTags}
                 allTags={allTags}

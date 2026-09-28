@@ -116,6 +116,7 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
               <div>
                 <label className={label}>
                   正文（Markdown）* — 支持粘贴/拖拽图片自动上传，左右分屏实时预览
+                  {/* NOSONAR(S6853)：ByteMD 编辑器为 contenteditable 复杂组件，无法用 htmlFor 关联 */}{' '}
                 </label>
                 <div className="mt-1">
                   <MarkdownEditor value={form.content} onChange={(v) => set('content', v)} />
@@ -208,9 +209,12 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                   ) : null}
                 </div>
                 <div className="md:col-span-2">
-                  <label className={label}>标签</label>
+                  <label htmlFor="post-tags" className={label}>
+                    标签
+                  </label>
                   <div className="mt-1">
                     <TagInput
+                      id="post-tags"
                       value={form.tags}
                       onChange={(tags) => setForm((f) => ({ ...f, tags }))}
                       allTags={allTags}
