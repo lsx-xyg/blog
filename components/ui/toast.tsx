@@ -87,11 +87,14 @@ function ToastItem({ toast, onRemove }: { toast: Toast; onRemove: (id: number) =
 }
 
 /** Toast Provider：包裹应用，提供 showToast 方法 */
+/** 模块级自增 id（避免使用伪随机数；进程内单调递增保证唯一） */
+let toastSeq = 0;
+
 export function ToastProvider({ children }: { children: React.ReactNode }) {
   const [toasts, setToasts] = useState<Toast[]>([]);
 
   const showToast = useCallback((message: string, type: ToastType = 'info') => {
-    const id = Date.now() + Math.random();
+    const id = ++toastSeq;
     setToasts((prev) => [...prev, { id, type, message }]);
   }, []);
 

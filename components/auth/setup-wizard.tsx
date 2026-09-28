@@ -84,13 +84,15 @@ export function SetupWizard({
         }}
         className="rounded-xl border border-border bg-card p-6"
       >
-        <label className={label}>安装密钥（SETUP_SECRET）</label>
+        <label htmlFor="field-1" className={label}>
+          安装密钥（SETUP_SECRET）
+        </label>
         <input
+          id="field-1"
           type="password"
           className={`${input} mt-1 w-full`}
           value={secret}
           onChange={(e) => setSecret(e.target.value)}
-          autoFocus
         />
         {error && <p className="mt-2 text-xs text-red-500">{error}</p>}
         <button
@@ -110,8 +112,11 @@ export function SetupWizard({
         <h2 className="mb-4 text-sm font-semibold">创建管理员账号</h2>
         <div className="space-y-3">
           <div>
-            <label className={label}>昵称</label>
+            <label htmlFor="field-2" className={label}>
+              昵称
+            </label>
             <input
+              id="field-2"
               className={`${input} mt-1 w-full`}
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -119,8 +124,11 @@ export function SetupWizard({
             />
           </div>
           <div>
-            <label className={label}>邮箱</label>
+            <label htmlFor="field-3" className={label}>
+              邮箱
+            </label>
             <input
+              id="field-3"
               type="email"
               className={`${input} mt-1 w-full`}
               value={email}
@@ -129,8 +137,11 @@ export function SetupWizard({
             />
           </div>
           <div>
-            <label className={label}>密码</label>
+            <label htmlFor="field-4" className={label}>
+              密码
+            </label>
             <input
+              id="field-4"
               type="password"
               className={`${input} mt-1 w-full`}
               value={password}

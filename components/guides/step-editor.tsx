@@ -84,7 +84,7 @@ export function StepEditor({
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="sm:col-span-2">
-              <label className={`${labelClass} inline-flex items-center gap-1`}>
+              <label htmlFor="field-1" className={`${labelClass} inline-flex items-center gap-1`}>
                 高亮元素（target）
                 <span
                   className="inline-flex shrink-0 cursor-help"
@@ -94,6 +94,7 @@ export function StepEditor({
                 </span>
               </label>
               <input
+                id="field-1"
                 list="guide-anchor-options"
                 value={s.target}
                 onChange={(e) => setStep(i, { target: e.target.value })}
@@ -141,8 +142,11 @@ export function StepEditor({
               </div>
             </div>
             <div>
-              <label className={labelClass}>标题（title）</label>
+              <label htmlFor="field-2" className={labelClass}>
+                标题（title）
+              </label>
               <input
+                id="field-2"
                 value={s.title}
                 onChange={(e) => setStep(i, { title: e.target.value })}
                 className={inputClass}
@@ -150,8 +154,11 @@ export function StepEditor({
               />
             </div>
             <div>
-              <label className={labelClass}>卡片位置（placement）</label>
+              <label htmlFor="field-3" className={labelClass}>
+                卡片位置（placement）
+              </label>
               <select
+                id="field-3"
                 value={s.placement}
                 onChange={(e) => setStep(i, { placement: e.target.value })}
                 className={inputClass}
@@ -165,8 +172,11 @@ export function StepEditor({
               <p className={helpClass}>引导卡片出现在高亮元素的上/下/左/右。</p>
             </div>
             <div className="sm:col-span-2">
-              <label className={labelClass}>说明文字（content）</label>
+              <label htmlFor="field-4" className={labelClass}>
+                说明文字（content）
+              </label>
               <textarea
+                id="field-4"
                 value={s.content}
                 onChange={(e) => setStep(i, { content: e.target.value })}
                 rows={2}
@@ -175,7 +185,7 @@ export function StepEditor({
               />
             </div>
             <div className="sm:col-span-2">
-              <label className={`${labelClass} inline-flex items-center gap-1`}>
+              <label htmlFor="field-5" className={`${labelClass} inline-flex items-center gap-1`}>
                 下一步跳转页面（nextRoute，可选）
                 <span
                   className="inline-flex shrink-0 cursor-help"
@@ -185,6 +195,7 @@ export function StepEditor({
                 </span>
               </label>
               <select
+                id="field-5"
                 value={
                   s.nextRoute && pages.some((p) => p.path === s.nextRoute)
                     ? s.nextRoute

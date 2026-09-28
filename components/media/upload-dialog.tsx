@@ -66,13 +66,16 @@ export function UploadDialog({
       <div className="space-y-4">
         {/* 上传类型选择（单选切换） */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium">上传到</label>
+          <label htmlFor="field-1" className="mb-1.5 block text-sm font-medium">
+            上传到
+          </label>
           <div className="grid grid-cols-2 gap-2">
             {([MediaType.ARTICLE, MediaType.GALLERY] as const).map((t) => {
               const value: UploadTarget = t;
               const active = uploadType === value;
               return (
                 <button
+                  id="field-1"
                   key={value}
                   type="button"
                   onClick={() => onUploadTypeChange(value)}
@@ -94,8 +97,11 @@ export function UploadDialog({
 
         {/* 选择文件 */}
         <div>
-          <label className="mb-1.5 block text-sm font-medium">选择图片</label>
+          <label htmlFor="field-2" className="mb-1.5 block text-sm font-medium">
+            选择图片
+          </label>
           <input
+            id="field-2"
             ref={fileInputRef}
             type="file"
             accept="image/*"

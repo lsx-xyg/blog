@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { LazyImage } from '@/components/media/lazy-image';
 import type { GalleryMeta } from '@/lib/types/gallery';
 import { Filter, Sparkles, Clock, ChevronDown, ChevronUp } from 'lucide-react';
+import { keyActivate } from '@/lib/shared/utils';
 
 /** 老数据没有宽高信息时的兜底占位比例（4:3，加载完成后按真实比例重排） */
 const FALLBACK_WIDTH = 1200;
@@ -73,7 +74,7 @@ export function GalleryWall() {
   const allTags = useMemo(() => {
     const tagSet = new Set<string>();
     items.forEach((item) => item.tags.forEach((t) => tagSet.add(t)));
-    return Array.from(tagSet).sort();
+    return Array.from(tagSet).sort((a, b) => a.localeCompare(b));
   }, [items]);
 
   // 筛选后的列表
@@ -271,7 +272,11 @@ export function GalleryWall() {
             <div
               key={item.id}
               className="mb-4 break-inside-avoid cursor-pointer group"
+              role="button"
+              tabIndex={0}
+              aria-label={item.title || '查看图片'}
               onClick={() => setPreviewImage(item.imageUrl)}
+              onKeyDown={keyActivate(() => setPreviewImage(item.imageUrl))}
             >
               <div className="relative overflow-hidden rounded-lg border border-border bg-muted">
                 {/* 使用 LazyImage 的 intrinsic 模式：上传时已用 sharp 探测原始宽高存进
@@ -330,7 +335,11 @@ export function GalleryWall() {
       {previewImage && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 p-4"
+          role="button"
+          aria-label="关闭预览"
+          tabIndex={0}
           onClick={() => setPreviewImage(null)}
+          onKeyDown={keyActivate(() => setPreviewImage(null))}
         >
           <div
             className="relative h-full w-full"

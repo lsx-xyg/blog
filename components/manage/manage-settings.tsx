@@ -26,6 +26,7 @@ import type {
 } from '@/lib/types/settings';
 import { CronDeployPlatform } from '@/lib/types/settings';
 import { CronSection } from '@/components/settings/cron-section';
+import { stripEdgeSlashes } from '@/lib/shared/utils';
 
 /**
  * MarkdownEditor 动态导入（Bundle 优化）
@@ -283,8 +284,8 @@ export function ManageSettings() {
       });
       if (res.ok) {
         // 检测 admin_path 是否发生了变化
-        const normalizedNew = adminPath.trim().replace(/^\/+|\/+$/g, '');
-        const normalizedOld = originalAdminPath.trim().replace(/^\/+|\/+$/g, '');
+        const normalizedNew = stripEdgeSlashes(adminPath.trim());
+        const normalizedOld = stripEdgeSlashes(originalAdminPath.trim());
         const adminPathChanged = normalizedNew !== normalizedOld && normalizedNew !== '';
 
         if (adminPathChanged) {
@@ -394,8 +395,11 @@ export function ManageSettings() {
               <h2 className="text-lg font-semibold mb-4">站点设置</h2>
               <div className="space-y-4">
                 <div>
-                  <label className={labelClass}>站点名称</label>
+                  <label htmlFor="field-1" className={labelClass}>
+                    站点名称
+                  </label>
                   <input
+                    id="field-1"
                     type="text"
                     value={site.name}
                     onChange={(e) => setSite({ ...site, name: e.target.value })}
@@ -404,8 +408,11 @@ export function ManageSettings() {
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>站点简介</label>
+                  <label htmlFor="field-2" className={labelClass}>
+                    站点简介
+                  </label>
                   <textarea
+                    id="field-2"
                     value={site.description}
                     onChange={(e) => setSite({ ...site, description: e.target.value })}
                     className={`${inputClass} min-h-[80px] resize-y`}
@@ -413,8 +420,11 @@ export function ManageSettings() {
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>SEO 标题（可选）</label>
+                  <label htmlFor="field-3" className={labelClass}>
+                    SEO 标题（可选）
+                  </label>
                   <input
+                    id="field-3"
                     type="text"
                     value={site.seoTitle ?? ''}
                     onChange={(e) => setSite({ ...site, seoTitle: e.target.value })}
@@ -436,8 +446,11 @@ export function ManageSettings() {
                   </p>
                 </div>
                 <div>
-                  <label className={labelClass}>SEO 描述</label>
+                  <label htmlFor="field-4" className={labelClass}>
+                    SEO 描述
+                  </label>
                   <textarea
+                    id="field-4"
                     value={site.seoDescription}
                     onChange={(e) => setSite({ ...site, seoDescription: e.target.value })}
                     className={`${inputClass} min-h-[80px] resize-y`}
@@ -460,8 +473,11 @@ export function ManageSettings() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}>Logo URL（可选）</label>
+                    <label htmlFor="field-5" className={labelClass}>
+                      Logo URL（可选）
+                    </label>
                     <input
+                      id="field-5"
                       type="text"
                       value={site.logoUrl ?? ''}
                       onChange={(e) => setSite({ ...site, logoUrl: e.target.value })}
@@ -470,8 +486,11 @@ export function ManageSettings() {
                     />
                   </div>
                   <div>
-                    <label className={labelClass}>Favicon URL（可选）</label>
+                    <label htmlFor="field-6" className={labelClass}>
+                      Favicon URL（可选）
+                    </label>
                     <input
+                      id="field-6"
                       type="text"
                       value={site.faviconUrl ?? ''}
                       onChange={(e) => setSite({ ...site, faviconUrl: e.target.value })}
@@ -480,8 +499,11 @@ export function ManageSettings() {
                     />
                   </div>
                   <div>
-                    <label className={labelClass}>站点 URL（NEXT_PUBLIC_SITE_URL）</label>
+                    <label htmlFor="field-7" className={labelClass}>
+                      站点 URL（NEXT_PUBLIC_SITE_URL）
+                    </label>
                     <input
+                      id="field-7"
                       type="text"
                       value={site.siteUrl ?? ''}
                       onChange={(e) => setSite({ ...site, siteUrl: e.target.value })}
@@ -524,9 +546,12 @@ export function ManageSettings() {
 
                 {/* 密钥 */}
                 <div>
-                  <label className={labelClass}>IndexNow 密钥</label>
+                  <label htmlFor="field-8" className={labelClass}>
+                    IndexNow 密钥
+                  </label>
                   <div className="flex gap-2">
                     <input
+                      id="field-8"
                       type="text"
                       value={seo.indexNowKey ?? ''}
                       onChange={(e) => setSeo({ ...seo, indexNowKey: e.target.value })}
@@ -616,8 +641,11 @@ export function ManageSettings() {
               <h2 className="text-lg font-semibold mb-4">社交链接</h2>
               <div className="space-y-4">
                 <div>
-                  <label className={labelClass}>GitHub</label>
+                  <label htmlFor="field-9" className={labelClass}>
+                    GitHub
+                  </label>
                   <input
+                    id="field-9"
                     type="text"
                     value={social.github ?? ''}
                     onChange={(e) => setSocial({ ...social, github: e.target.value })}
@@ -626,8 +654,11 @@ export function ManageSettings() {
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>Twitter / X</label>
+                  <label htmlFor="field-10" className={labelClass}>
+                    Twitter / X
+                  </label>
                   <input
+                    id="field-10"
                     type="text"
                     value={social.twitter ?? ''}
                     onChange={(e) => setSocial({ ...social, twitter: e.target.value })}
@@ -636,8 +667,11 @@ export function ManageSettings() {
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>邮箱</label>
+                  <label htmlFor="field-11" className={labelClass}>
+                    邮箱
+                  </label>
                   <input
+                    id="field-11"
                     type="email"
                     value={social.email ?? ''}
                     onChange={(e) => setSocial({ ...social, email: e.target.value })}
@@ -646,8 +680,11 @@ export function ManageSettings() {
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>RSS 订阅地址</label>
+                  <label htmlFor="field-12" className={labelClass}>
+                    RSS 订阅地址
+                  </label>
                   <input
+                    id="field-12"
                     type="text"
                     value={social.rss}
                     onChange={(e) => setSocial({ ...social, rss: e.target.value })}
@@ -665,8 +702,11 @@ export function ManageSettings() {
               <h2 className="text-lg font-semibold mb-4">页脚设置</h2>
               <div className="space-y-4">
                 <div>
-                  <label className={labelClass}>版权文字</label>
+                  <label htmlFor="field-13" className={labelClass}>
+                    版权文字
+                  </label>
                   <input
+                    id="field-13"
                     type="text"
                     value={footer.copyright}
                     onChange={(e) => setFooter({ ...footer, copyright: e.target.value })}
@@ -678,8 +718,11 @@ export function ManageSettings() {
                   </p>
                 </div>
                 <div>
-                  <label className={labelClass}>ICP 备案号（可选）</label>
+                  <label htmlFor="field-14" className={labelClass}>
+                    ICP 备案号（可选）
+                  </label>
                   <input
+                    id="field-14"
                     type="text"
                     value={footer.icp ?? ''}
                     onChange={(e) => setFooter({ ...footer, icp: e.target.value })}
@@ -730,8 +773,11 @@ export function ManageSettings() {
                   启用评论（关闭后文章页不显示评论区）
                 </label>
                 <div>
-                  <label className={labelClass}>仓库（owner/repo）</label>
+                  <label htmlFor="field-15" className={labelClass}>
+                    仓库（owner/repo）
+                  </label>
                   <input
+                    id="field-15"
                     type="text"
                     value={giscus.repo}
                     onChange={(e) => setGiscus({ ...giscus, repo: e.target.value })}
@@ -740,8 +786,11 @@ export function ManageSettings() {
                   />
                 </div>
                 <div>
-                  <label className={labelClass}>仓库 ID（repoId）</label>
+                  <label htmlFor="field-16" className={labelClass}>
+                    仓库 ID（repoId）
+                  </label>
                   <input
+                    id="field-16"
                     type="text"
                     value={giscus.repoId}
                     onChange={(e) => setGiscus({ ...giscus, repoId: e.target.value })}
@@ -751,8 +800,11 @@ export function ManageSettings() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className={labelClass}>讨论分类（category）</label>
+                    <label htmlFor="field-17" className={labelClass}>
+                      讨论分类（category）
+                    </label>
                     <input
+                      id="field-17"
                       type="text"
                       value={giscus.category}
                       onChange={(e) => setGiscus({ ...giscus, category: e.target.value })}
@@ -761,8 +813,11 @@ export function ManageSettings() {
                     />
                   </div>
                   <div>
-                    <label className={labelClass}>分类 ID（categoryId）</label>
+                    <label htmlFor="field-18" className={labelClass}>
+                      分类 ID（categoryId）
+                    </label>
                     <input
+                      id="field-18"
                       type="text"
                       value={giscus.categoryId}
                       onChange={(e) => setGiscus({ ...giscus, categoryId: e.target.value })}
@@ -784,8 +839,11 @@ export function ManageSettings() {
               <h2 className="text-lg font-semibold mb-4">高级设置</h2>
               <div className="space-y-4">
                 <div>
-                  <label className={labelClass}>后台路径（admin_path）</label>
+                  <label htmlFor="field-19" className={labelClass}>
+                    后台路径（admin_path）
+                  </label>
                   <input
+                    id="field-19"
                     type="text"
                     value={adminPath}
                     onChange={(e) => setAdminPath(e.target.value)}

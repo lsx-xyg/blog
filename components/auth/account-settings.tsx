@@ -11,6 +11,7 @@ const labelClass = 'block text-sm font-medium mb-1.5';
 
 /** 密码修改错误信息映射（better-auth 默认英文提示 → 中文） */
 const PASSWORD_ERROR_MAP: Record<string, string> = {
+  // NOSONAR(S2068)：key 是 better-auth 返回的错误码标识，不是凭据
   'invalid password': '当前密码错误',
   'password is too short': '新密码太短（至少 8 位）',
   'password does not match': '两次输入的新密码不一致',
@@ -229,8 +230,11 @@ export function AccountSettings() {
         <div className="mt-4 grid gap-4 sm:grid-cols-2">
           {hasPassword && (
             <div className="sm:col-span-2">
-              <label className={labelClass}>当前密码</label>
+              <label htmlFor="field-1" className={labelClass}>
+                当前密码
+              </label>
               <input
+                id="field-1"
                 type="password"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
@@ -241,8 +245,11 @@ export function AccountSettings() {
             </div>
           )}
           <div>
-            <label className={labelClass}>新密码</label>
+            <label htmlFor="field-2" className={labelClass}>
+              新密码
+            </label>
             <input
+              id="field-2"
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
@@ -252,8 +259,11 @@ export function AccountSettings() {
             />
           </div>
           <div>
-            <label className={labelClass}>确认新密码</label>
+            <label htmlFor="field-3" className={labelClass}>
+              确认新密码
+            </label>
             <input
+              id="field-3"
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}

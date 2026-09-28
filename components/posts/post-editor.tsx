@@ -129,8 +129,11 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
             <div key="step-2" className="space-y-4 animate-fade-in-up">
               <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className={label}>标题 *</label>
+                  <label htmlFor="field-1" className={label}>
+                    标题 *
+                  </label>
                   <input
+                    id="field-1"
                     className={`${input} mt-1 w-full`}
                     value={form.title}
                     onChange={(e) => set('title', e.target.value)}
@@ -138,25 +141,34 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                   />
                 </div>
                 <div>
-                  <label className={label}>Slug（留空自动用 ID）</label>
+                  <label htmlFor="field-2" className={label}>
+                    Slug（留空自动用 ID）
+                  </label>
                   <input
+                    id="field-2"
                     className={`${input} mt-1 w-full font-mono`}
                     value={form.slug}
                     onChange={(e) => set('slug', e.target.value)}
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className={label}>摘要</label>
+                  <label htmlFor="field-3" className={label}>
+                    摘要
+                  </label>
                   <input
+                    id="field-3"
                     className={`${input} mt-1 w-full`}
                     value={form.summary}
                     onChange={(e) => set('summary', e.target.value)}
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className={label}>封面图（可选）</label>
+                  <label htmlFor="field-4" className={label}>
+                    封面图（可选）
+                  </label>
                   <div className="mt-1 flex gap-2">
                     <input
+                      id="field-4"
                       className={`${input} w-full font-mono`}
                       value={form.coverUrl}
                       onChange={(e) => set('coverUrl', e.target.value)}
@@ -207,8 +219,11 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                   </div>
                 </div>
                 <div>
-                  <label className={label}>状态</label>
+                  <label htmlFor="field-5" className={label}>
+                    状态
+                  </label>
                   <select
+                    id="field-5"
                     className={`${input} mt-1 w-full`}
                     value={form.status}
                     onChange={(e) => set('status', e.target.value)}
@@ -219,8 +234,11 @@ export function PostEditor({ postId, initialData, adminPath }: PostEditorProps) 
                   </select>
                 </div>
                 <div>
-                  <label className={label}>定时发布时间（选择"定时"状态时生效）</label>
+                  <label htmlFor="field-6" className={label}>
+                    定时发布时间（选择"定时"状态时生效）
+                  </label>
                   <input
+                    id="field-6"
                     type="datetime-local"
                     className={`${input} mt-1 w-full font-mono`}
                     value={form.scheduledAt}

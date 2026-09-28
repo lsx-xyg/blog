@@ -357,15 +357,17 @@ export function ManageTags() {
         >
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium mb-1.5">标签名称 *</label>
+              <label htmlFor="field-1" className="block text-sm font-medium mb-1.5">
+                标签名称 *
+              </label>
               <input
+                id="field-1"
                 type="text"
                 value={tagName}
                 onChange={(e) => setTagName(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && saveTag()}
                 placeholder="如：前端开发"
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-                autoFocus
               />
               <p className="mt-1 text-xs text-muted-foreground">
                 slug

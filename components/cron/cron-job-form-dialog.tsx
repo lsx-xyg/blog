@@ -48,8 +48,11 @@ export function CronJobFormDialog({
         <div className="space-y-4">
           {/* 基本信息 */}
           <div>
-            <label className="mb-1 block text-sm font-medium">任务标题</label>
+            <label htmlFor="field-1" className="mb-1 block text-sm font-medium">
+              任务标题
+            </label>
             <input
+              id="field-1"
               type="text"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
@@ -59,10 +62,11 @@ export function CronJobFormDialog({
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium">
+            <label htmlFor="field-2" className="mb-1 block text-sm font-medium">
               请求 URL <span className="text-red-500">*</span>
             </label>
             <input
+              id="field-2"
               type="text"
               value={form.url}
               onChange={(e) => setForm({ ...form, url: e.target.value })}
@@ -73,10 +77,15 @@ export function CronJobFormDialog({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="mb-1 block text-sm font-medium">请求方法</label>
+              <label htmlFor="field-3" className="mb-1 block text-sm font-medium">
+                请求方法
+              </label>
               <select
+                id="field-3"
                 value={form.requestMethod}
-                onChange={(e) => setForm({ ...form, requestMethod: parseInt(e.target.value, 10) })}
+                onChange={(e) =>
+                  setForm({ ...form, requestMethod: Number.parseInt(e.target.value, 10) })
+                }
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
               >
                 {REQUEST_METHODS.map((m) => (
@@ -87,12 +96,15 @@ export function CronJobFormDialog({
               </select>
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium">超时时间（秒）</label>
+              <label htmlFor="field-4" className="mb-1 block text-sm font-medium">
+                超时时间（秒）
+              </label>
               <input
+                id="field-4"
                 type="number"
                 value={form.requestTimeout}
                 onChange={(e) =>
-                  setForm({ ...form, requestTimeout: parseInt(e.target.value, 10) || -1 })
+                  setForm({ ...form, requestTimeout: Number.parseInt(e.target.value, 10) || -1 })
                 }
                 className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
                 placeholder="-1 表示使用默认"
@@ -139,8 +151,11 @@ export function CronJobFormDialog({
             <h3 className="mb-3 font-medium">调度配置</h3>
             <div className="space-y-3">
               <div>
-                <label className="mb-1 block text-sm font-medium">时区</label>
+                <label htmlFor="field-5" className="mb-1 block text-sm font-medium">
+                  时区
+                </label>
                 <select
+                  id="field-5"
                   value={form.schedule.timezone}
                   onChange={(e) =>
                     setForm({ ...form, schedule: { ...form.schedule, timezone: e.target.value } })
@@ -156,10 +171,11 @@ export function CronJobFormDialog({
               </div>
               <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
                 <div>
-                  <label className="mb-1 block text-xs text-muted-foreground">
+                  <label htmlFor="field-6" className="mb-1 block text-xs text-muted-foreground">
                     分钟 (0-59, -1=每分)
                   </label>
                   <input
+                    id="field-6"
                     type="text"
                     value={form.schedule.minutes}
                     onChange={(e) =>
@@ -170,10 +186,11 @@ export function CronJobFormDialog({
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs text-muted-foreground">
+                  <label htmlFor="field-7" className="mb-1 block text-xs text-muted-foreground">
                     小时 (0-23, -1=每时)
                   </label>
                   <input
+                    id="field-7"
                     type="text"
                     value={form.schedule.hours}
                     onChange={(e) =>
@@ -184,10 +201,11 @@ export function CronJobFormDialog({
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs text-muted-foreground">
+                  <label htmlFor="field-8" className="mb-1 block text-xs text-muted-foreground">
                     日 (1-31, -1=每天)
                   </label>
                   <input
+                    id="field-8"
                     type="text"
                     value={form.schedule.mdays}
                     onChange={(e) =>
@@ -198,10 +216,11 @@ export function CronJobFormDialog({
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs text-muted-foreground">
+                  <label htmlFor="field-9" className="mb-1 block text-xs text-muted-foreground">
                     月 (1-12, -1=每月)
                   </label>
                   <input
+                    id="field-9"
                     type="text"
                     value={form.schedule.months}
                     onChange={(e) =>
@@ -212,10 +231,11 @@ export function CronJobFormDialog({
                   />
                 </div>
                 <div>
-                  <label className="mb-1 block text-xs text-muted-foreground">
+                  <label htmlFor="field-10" className="mb-1 block text-xs text-muted-foreground">
                     周几 (0-6, -1=每天)
                   </label>
                   <input
+                    id="field-10"
                     type="text"
                     value={form.schedule.wdays}
                     onChange={(e) =>
@@ -310,10 +330,11 @@ export function CronJobFormDialog({
 
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-xs text-muted-foreground">
+                    <label htmlFor="field-11" className="mb-1 block text-xs text-muted-foreground">
                       失败多少次后通知（最小 1）
                     </label>
                     <input
+                      id="field-11"
                       type="number"
                       min={1}
                       value={form.notification.onFailureCount}
@@ -322,7 +343,7 @@ export function CronJobFormDialog({
                           ...form,
                           notification: {
                             ...form.notification,
-                            onFailureCount: parseInt(e.target.value, 10) || 1,
+                            onFailureCount: Number.parseInt(e.target.value, 10) || 1,
                           },
                         })
                       }
@@ -331,10 +352,11 @@ export function CronJobFormDialog({
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-xs text-muted-foreground">
+                    <label htmlFor="field-12" className="mb-1 block text-xs text-muted-foreground">
                       SSL 过期提前通知（秒，默认 604800 = 7 天）
                     </label>
                     <input
+                      id="field-12"
                       type="number"
                       min={0}
                       value={form.notification.onSslCertExpirySeconds}
@@ -343,7 +365,7 @@ export function CronJobFormDialog({
                           ...form,
                           notification: {
                             ...form.notification,
-                            onSslCertExpirySeconds: parseInt(e.target.value, 10) || 0,
+                            onSslCertExpirySeconds: Number.parseInt(e.target.value, 10) || 0,
                           },
                         })
                       }
@@ -379,8 +401,11 @@ export function CronJobFormDialog({
               <div className="mt-4 space-y-4">
                 <div>
                   <div className="mb-2 flex items-center justify-between">
-                    <label className="text-sm font-medium">请求头</label>
+                    <label htmlFor="field-13" className="text-sm font-medium">
+                      请求头
+                    </label>
                     <button
+                      id="field-13"
                       type="button"
                       onClick={() =>
                         setForm({ ...form, headers: [...form.headers, { key: '', value: '' }] })
@@ -430,8 +455,11 @@ export function CronJobFormDialog({
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium">请求体</label>
+                  <label htmlFor="field-14" className="mb-1 block text-sm font-medium">
+                    请求体
+                  </label>
                   <textarea
+                    id="field-14"
                     value={form.body}
                     onChange={(e) => setForm({ ...form, body: e.target.value })}
                     className="h-24 w-full rounded-lg border border-input bg-background px-3 py-2 font-mono text-xs"
@@ -455,8 +483,14 @@ export function CronJobFormDialog({
                   {form.auth.enable && (
                     <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
                       <div>
-                        <label className="mb-1 block text-xs text-muted-foreground">用户名</label>
+                        <label
+                          htmlFor="field-15"
+                          className="mb-1 block text-xs text-muted-foreground"
+                        >
+                          用户名
+                        </label>
                         <input
+                          id="field-15"
                           type="text"
                           value={form.auth.user}
                           onChange={(e) =>
@@ -467,8 +501,14 @@ export function CronJobFormDialog({
                         />
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs text-muted-foreground">密码</label>
+                        <label
+                          htmlFor="field-16"
+                          className="mb-1 block text-xs text-muted-foreground"
+                        >
+                          密码
+                        </label>
                         <input
+                          id="field-16"
                           type="password"
                           value={form.auth.password}
                           onChange={(e) =>

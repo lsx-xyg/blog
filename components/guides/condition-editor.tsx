@@ -56,10 +56,13 @@ export function ConditionSection({
   return (
     <div className="mt-5">
       <div className="mb-2 flex items-center justify-between">
-        <label className={labelClass}>触发条件（什么时候弹这个引导）</label>
+        <label htmlFor="field-1" className={labelClass}>
+          触发条件（什么时候弹这个引导）
+        </label>
         <div className="flex items-center gap-1 text-xs text-muted-foreground">
           <span>满足逻辑：</span>
           <select
+            id="field-1"
             value={logic}
             onChange={(e) => onLogicChange(e.target.value as 'and' | 'or')}
             className="rounded-md border border-input bg-background px-2 py-1 text-xs"

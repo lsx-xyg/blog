@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ChevronRight, Eye, Loader2, Lock, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { keyActivate } from '@/lib/shared/utils';
 
 /**
  * 敏感信息二次验证弹窗（#18 方案 C：管理员密码验证）
@@ -113,7 +114,11 @@ export function SecretRevealDialog({
       {/* 遮罩层 */}
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm animate-in fade-in duration-200"
+        role="button"
+        aria-label="关闭"
+        tabIndex={0}
         onClick={onClose}
+        onKeyDown={keyActivate(onClose)}
       />
 
       {/* 对话框 */}

@@ -12,6 +12,7 @@
  */
 import type { ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { keyActivate } from '@/lib/shared/utils';
 
 export type AdminModalProps = {
   open: boolean;
@@ -55,7 +56,11 @@ export function AdminModal({
     >
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        role={closeOnBackdrop ? 'button' : undefined}
+        aria-label={closeOnBackdrop ? '关闭弹窗' : undefined}
+        tabIndex={closeOnBackdrop ? 0 : undefined}
         onClick={closeOnBackdrop ? onClose : undefined}
+        onKeyDown={closeOnBackdrop ? keyActivate(onClose) : undefined}
       />
       <div
         className={`relative w-full ${WIDTH_MAP[maxWidth]} max-h-[92vh] overflow-y-auto rounded-2xl border border-border bg-background p-6 shadow-2xl animate-fade-in-up`}

@@ -409,8 +409,11 @@ export function ManageFriendLinks() {
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className={labelClass}>名称 *</label>
+                <label htmlFor="field-1" className={labelClass}>
+                  名称 *
+                </label>
                 <input
+                  id="field-1"
                   type="text"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
@@ -419,8 +422,11 @@ export function ManageFriendLinks() {
                 />
               </div>
               <div>
-                <label className={labelClass}>排序</label>
+                <label htmlFor="field-2" className={labelClass}>
+                  排序
+                </label>
                 <input
+                  id="field-2"
                   type="number"
                   value={form.sortOrder}
                   onChange={(e) => setForm({ ...form, sortOrder: Number(e.target.value) })}
@@ -430,8 +436,11 @@ export function ManageFriendLinks() {
               </div>
             </div>
             <div>
-              <label className={labelClass}>链接 *</label>
+              <label htmlFor="field-3" className={labelClass}>
+                链接 *
+              </label>
               <input
+                id="field-3"
                 type="url"
                 value={form.url}
                 onChange={(e) => setForm({ ...form, url: e.target.value })}
@@ -440,8 +449,11 @@ export function ManageFriendLinks() {
               />
             </div>
             <div>
-              <label className={labelClass}>头像 URL（可选）</label>
+              <label htmlFor="field-4" className={labelClass}>
+                头像 URL（可选）
+              </label>
               <input
+                id="field-4"
                 type="url"
                 value={form.avatarUrl}
                 onChange={(e) => setForm({ ...form, avatarUrl: e.target.value })}
@@ -450,8 +462,11 @@ export function ManageFriendLinks() {
               />
             </div>
             <div>
-              <label className={labelClass}>描述</label>
+              <label htmlFor="field-5" className={labelClass}>
+                描述
+              </label>
               <textarea
+                id="field-5"
                 value={form.description}
                 onChange={(e) => setForm({ ...form, description: e.target.value })}
                 className={`${inputClass} min-h-[60px] resize-y`}
@@ -459,8 +474,11 @@ export function ManageFriendLinks() {
               />
             </div>
             <div>
-              <label className={labelClass}>标签（用逗号分隔）</label>
+              <label htmlFor="field-6" className={labelClass}>
+                标签（用逗号分隔）
+              </label>
               <input
+                id="field-6"
                 type="text"
                 value={form.tags}
                 onChange={(e) => setForm({ ...form, tags: e.target.value })}

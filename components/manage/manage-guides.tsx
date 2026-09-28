@@ -408,8 +408,11 @@ export function ManageGuides({
           {/* 基本信息 */}
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-              <label className={labelClass}>标题</label>
+              <label htmlFor="field-1" className={labelClass}>
+                标题
+              </label>
               <input
+                id="field-1"
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
                 className={inputClass}
@@ -418,8 +421,11 @@ export function ManageGuides({
               <p className={helpClass}>引导的名称，仅在管理页展示。</p>
             </div>
             <div>
-              <label className={labelClass}>guideKey</label>
+              <label htmlFor="field-2" className={labelClass}>
+                guideKey
+              </label>
               <input
+                id="field-2"
                 value={form.guideKey}
                 onChange={(e) => setForm({ ...form, guideKey: e.target.value })}
                 className={`${inputClass} font-mono`}
@@ -431,8 +437,11 @@ export function ManageGuides({
               </p>
             </div>
             <div>
-              <label className={labelClass}>页面</label>
+              <label htmlFor="field-3" className={labelClass}>
+                页面
+              </label>
               <select
+                id="field-3"
                 value={pages.some((p) => p.path === form.page) ? form.page : '__custom__'}
                 onChange={(e) => {
                   const v = e.target.value;
@@ -455,8 +464,11 @@ export function ManageGuides({
               </p>
             </div>
             <div>
-              <label className={labelClass}>优先级</label>
+              <label htmlFor="field-4" className={labelClass}>
+                优先级
+              </label>
               <input
+                id="field-4"
                 type="number"
                 value={form.priority}
                 onChange={(e) => setForm({ ...form, priority: Number(e.target.value) })}
@@ -465,8 +477,11 @@ export function ManageGuides({
               <p className={helpClass}>同页面有多个引导可触发时，数字小的先显示。</p>
             </div>
             <div>
-              <label className={labelClass}>状态</label>
+              <label htmlFor="field-5" className={labelClass}>
+                状态
+              </label>
               <select
+                id="field-5"
                 value={form.status}
                 onChange={(e) => setForm({ ...form, status: e.target.value as GuideStatus })}
                 className={inputClass}

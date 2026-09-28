@@ -148,8 +148,11 @@ export function CronSection({
       </p>
       <div className="space-y-4">
         <div>
-          <label className={labelClass}>部署平台</label>
+          <label htmlFor="field-1" className={labelClass}>
+            部署平台
+          </label>
           <select
+            id="field-1"
             className={`${inputClass} mt-1 w-full`}
             value={cron.deployPlatform}
             onChange={(e) =>
@@ -165,7 +168,7 @@ export function CronSection({
           </p>
         </div>
         <div>
-          <label className={labelClass}>
+          <label htmlFor="field-2" className={labelClass}>
             CRON_SECRET（定时任务接口鉴权密钥）
             {cron.secretConfigured && (
               <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
@@ -174,6 +177,7 @@ export function CronSection({
           </label>
           <div className="relative">
             <input
+              id="field-2"
               type={showCronSecret ? 'text' : 'password'}
               value={cron.secret}
               onChange={(e) => setCron({ ...cron, secret: e.target.value })}
@@ -193,7 +197,7 @@ export function CronSection({
           </p>
         </div>
         <div>
-          <label className={labelClass}>
+          <label htmlFor="field-3" className={labelClass}>
             CRON_JOB_API_KEY（cron-job.org API Key）
             {cron.jobApiKeyConfigured && (
               <span className="ml-2 text-xs text-green-600 dark:text-green-400">✓ 已配置</span>
@@ -202,6 +206,7 @@ export function CronSection({
           </label>
           <div className="relative">
             <input
+              id="field-3"
               type={showCronJobApiKey ? 'text' : 'password'}
               value={cron.jobApiKey}
               onChange={(e) => setCron({ ...cron, jobApiKey: e.target.value })}

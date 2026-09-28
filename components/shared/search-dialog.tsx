@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import MiniSearch from 'minisearch';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { keyActivate } from '@/lib/shared/utils';
 
 /** minisearch 中文分词：拉丁词按词，中文按单字 + 连续双字（bigram）索引 */
 function cjkTokenize(text: string): string[] {
@@ -162,7 +163,11 @@ export function SearchDialog() {
             {/* 半透明虚化遮罩（淡入） */}
             <div
               className="absolute inset-0 bg-black/40 backdrop-blur-sm animate-search-backdrop"
+              role="button"
+              aria-label="关闭搜索"
+              tabIndex={0}
               onClick={() => setOpen(false)}
+              onKeyDown={keyActivate(() => setOpen(false))}
             />
 
             {/* 搜索面板（从顶部下滑淡入） */}

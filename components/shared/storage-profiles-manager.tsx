@@ -367,8 +367,11 @@ export function StorageProfilesManager() {
           </h4>
           <div className="grid gap-3 md:grid-cols-2">
             <div>
-              <label className={labelClass}>档案名（平台名）</label>
+              <label htmlFor="field-1" className={labelClass}>
+                档案名（平台名）
+              </label>
               <input
+                id="field-1"
                 type="text"
                 value={draft.name}
                 onChange={(e) => setDraft({ ...draft, name: e.target.value.toLowerCase() })}
@@ -378,8 +381,11 @@ export function StorageProfilesManager() {
               />
             </div>
             <div>
-              <label className={labelClass}>驱动类型</label>
+              <label htmlFor="field-2" className={labelClass}>
+                驱动类型
+              </label>
               <select
+                id="field-2"
                 value={draft.driver}
                 onChange={(e) =>
                   setDraft({ ...draft, driver: e.target.value as StorageDriverType, config: {} })
@@ -404,7 +410,7 @@ export function StorageProfilesManager() {
                 : String(value ?? '');
               return (
                 <div key={f.key} className="md:col-span-2">
-                  <label className={labelClass}>
+                  <label htmlFor="field-3" className={labelClass}>
                     {f.label}
                     {secretConfigured !== undefined && (
                       <span className="ml-1 text-xs text-muted-foreground">
@@ -414,6 +420,7 @@ export function StorageProfilesManager() {
                   </label>
                   {f.select ? (
                     <select
+                      id="field-3"
                       value={String(value ?? f.select[0].value)}
                       onChange={(e) =>
                         setDraft({ ...draft, config: { ...draft.config, [f.key]: e.target.value } })
@@ -496,9 +503,12 @@ export function StorageProfilesManager() {
               const current = bindings[channel] ?? '';
               return (
                 <div key={channel} className="rounded-lg border border-border p-3">
-                  <label className={labelClass}>{meta.label}</label>
+                  <label htmlFor="field-4" className={labelClass}>
+                    {meta.label}
+                  </label>
                   <p className="mb-2 text-xs text-muted-foreground">{meta.description}</p>
                   <select
+                    id="field-4"
                     value={current}
                     onChange={(e) => saveBinding(channel, e.target.value)}
                     disabled={savingBinding || usable.length === 0}

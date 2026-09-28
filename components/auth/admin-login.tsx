@@ -54,19 +54,24 @@ export function AdminLogin({ adminPath }: { adminPath: string }) {
       <form onSubmit={signIn} className="rounded-xl border border-border bg-card p-6">
         <div className="space-y-3">
           <div>
-            <label className={label}>邮箱</label>
+            <label htmlFor="field-1" className={label}>
+              邮箱
+            </label>
             <input
+              id="field-1"
               type="email"
               className={`${input} mt-1 w-full`}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              autoFocus
             />
           </div>
           <div>
-            <label className={label}>密码</label>
+            <label htmlFor="field-2" className={label}>
+              密码
+            </label>
             <input
+              id="field-2"
               type="password"
               className={`${input} mt-1 w-full`}
               value={password}

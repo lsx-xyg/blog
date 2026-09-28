@@ -23,6 +23,7 @@ import { Switch } from '@/components/ui/switch';
 import { TagInput } from '@/components/shared/tag-input';
 import { StorageDriverType } from '@/lib/types/storage';
 import Image from 'next/image';
+import { keyActivate } from '@/lib/shared/utils';
 
 type MediaItem = {
   id: string;
@@ -454,7 +455,11 @@ export function ManageMedia() {
               {/* 图片 */}
               <div
                 className="relative aspect-square overflow-hidden bg-muted cursor-zoom-in"
+                role="button"
+                aria-label={item.title || '查看图片'}
+                tabIndex={0}
                 onClick={() => openLightbox(item.url, item.title || '媒体图片')}
+                onKeyDown={keyActivate(() => openLightbox(item.url, item.title || '媒体图片'))}
               >
                 <Image
                   src={item.url}
@@ -592,8 +597,11 @@ export function ManageMedia() {
 
             {/* 标题 */}
             <div>
-              <label className="mb-1 block text-sm font-medium">标题</label>
+              <label htmlFor="field-1" className="mb-1 block text-sm font-medium">
+                标题
+              </label>
               <input
+                id="field-1"
                 type="text"
                 value={editTitle}
                 onChange={(e) => setEditTitle(e.target.value)}
@@ -604,8 +612,11 @@ export function ManageMedia() {
 
             {/* 描述 */}
             <div>
-              <label className="mb-1 block text-sm font-medium">描述</label>
+              <label htmlFor="field-2" className="mb-1 block text-sm font-medium">
+                描述
+              </label>
               <textarea
+                id="field-2"
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
                 placeholder="输入图片描述"
@@ -651,7 +662,11 @@ export function ManageMedia() {
       {lightboxUrl && (
         <div
           className="fixed inset-0 z-[200] flex items-center justify-center bg-black/90 p-4 animate-fade-in"
+          role="button"
+          aria-label="关闭预览"
+          tabIndex={0}
           onClick={closeLightbox}
+          onKeyDown={keyActivate(closeLightbox)}
         >
           {/* 关闭按钮 */}
           <button

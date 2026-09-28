@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Image from 'next/image';
 import { cn } from '@/lib/shared';
+import { keyActivate } from '@/lib/shared/utils';
 
 /**
  * 通用懒加载图片组件（基于 Next.js Image）
@@ -117,7 +118,11 @@ export function LazyImage({
       style={{
         backgroundColor: placeholderColor || 'hsl(var(--muted))',
       }}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      aria-label={onClick ? alt || '查看图片' : undefined}
       onClick={onClick}
+      onKeyDown={onClick ? keyActivate(onClick) : undefined}
     >
       {/* 占位符/骨架屏 */}
       {!isLoaded && showSkeleton && !hasError && (

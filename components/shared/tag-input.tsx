@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { X, Plus } from 'lucide-react';
+import { keyActivate } from '@/lib/shared/utils';
 
 type Tag = {
   id: string;
@@ -100,7 +101,11 @@ export function TagInput({
       {/* 标签显示区域 + 输入框 */}
       <div
         className="flex min-h-[42px] flex-wrap items-center gap-1.5 rounded-lg border border-input bg-background px-2 py-1.5 transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"
+        role="button"
+        aria-label="编辑标签"
+        tabIndex={0}
         onClick={() => inputRef.current?.focus()}
+        onKeyDown={keyActivate(() => inputRef.current?.focus())}
       >
         {value.map((tagName) => (
           <span
