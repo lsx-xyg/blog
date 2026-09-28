@@ -30,3 +30,32 @@ describe('normalizeSiteUrl', () => {
     expect(normalizeSiteUrl('http://localhost:3000')).toBe('http://localhost:3000');
   });
 });
+
+import { getConfig } from '@/lib/settings/server';
+import { getSiteUrlAsync } from './site-url';
+
+const mockGetConfig = vi.mocked(getConfig);
+
+describe('getSiteUrlAsync', () => {
+  it('DB 有配置时优先返回（归一化后）', async () => {
+    mockGetConfig.mockResolvedValueOnce('https://blog.example.com/');
+    expect(await getSiteUrlAsync()).toBe('https://blog.example.com');
+  });
+
+  it('DB 抛错时降级到 Vercel 注入域名', async () => {
+    mockGetConfig.mockRejectedValueOnce(new Error('db down'));
+    const old = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    process.env.VERCEL_PROJECT_PRODUCTION_URL = 'foo.vercel.app';
+    expect(await getSiteUrlAsync()).toBe('https://foo.vercel.app');
+    delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    void old;
+  });
+
+  it('DB 无配置且无 Vercel 环境时兜底 localhost', async () => {
+    mockGetConfig.mockResolvedValueOnce('' as never);
+    const old = process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    delete process.env.VERCEL_PROJECT_PRODUCTION_URL;
+    expect(await getSiteUrlAsync()).toBe('http://localhost:3000');
+    if (old) process.env.VERCEL_PROJECT_PRODUCTION_URL = old;
+  });
+});
