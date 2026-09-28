@@ -1,23 +1,22 @@
-name: SonarCloud
+name: SonarQube
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
-  sonarcloud:
-    name: SonarCloud 代码质量分析
+  sonarqube:
+    name: SonarQube
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
-          # 拉取全量历史，保证 SonarCloud 计算增量/重复率准确
+          # Shallow clones should be disabled for a better relevancy of analysis
           fetch-depth: 0
-      - name: Run SonarCloud Scan
-        # 锁定完整 commit SHA（供应链安全，避免分支/标签被篡改）
-        uses: SonarSource/sonarcloud-github-action@ba3875ecf642b2129de2b589510c81a8b53dbf4e
+      - name: SonarQube Scan
+        uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 自动提供，用于 PR 评论
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}   # 在 SonarCloud 生成，配置到仓库 Secrets
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
