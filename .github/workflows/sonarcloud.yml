@@ -17,6 +17,8 @@ jobs:
           # Shallow clones should be disabled for a better relevancy of analysis
           fetch-depth: 0
       - name: Install dependencies
+        # 不使用 --ignore-scripts：sharp / unrs-resolver 等依赖需要生命周期脚本（原生二进制），
+        # 忽略会导致构建失败（Sonar S6505 已按 wontfix 处理）
         run: npm ci
       - name: Run tests with coverage
         run: npm run test:coverage
