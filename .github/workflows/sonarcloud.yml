@@ -26,3 +26,7 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@7006c4492b2e0ee0f816d36501671557c97f5995 # v8.1.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          # 唯一版本号（run_id）：让 previous_version 周期精确按“本次改动”算新代码，
+          # 避免回退到 30 天导致历史改动全部计入新代码
+          args: -Dsonar.projectVersion=${{ github.run_id }}
