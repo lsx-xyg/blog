@@ -18,7 +18,7 @@ function slugify(text: string): string {
 /** 清理标题中的 markdown 语法，只保留纯文本 */
 function cleanMarkdown(text: string): string {
   return text
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1') // [链接](url) → 链接
+    .replace(/\[([^\]]+?)\]\(([^)]+?)\)/g, '$1') // [链接](url) → 链接
     .replace(/\*\*([^*]+)\*\*/g, '$1') // **加粗** → 加粗
     .replace(/\*([^*]+)\*/g, '$1') // *斜体* → 斜体
     .replace(/`([^`]+)`/g, '$1') // `代码` → 代码
@@ -42,7 +42,7 @@ export function extractToc(markdown: string): TocItem[] {
     // 跳过代码块内的内容
     if (inCodeBlock) continue;
 
-    const match = line.match(/^(#{1,3})\s+(.+)$/);
+    const match = line.match(/^(#{1,3})\s+(.+)/);
     if (!match) continue;
     const level = match[1].length;
     const rawText = match[2].trim();

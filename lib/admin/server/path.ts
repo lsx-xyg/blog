@@ -9,15 +9,16 @@
 import { ENV_KEYS } from '@/lib/env/shared';
 import { getEnv } from '@/lib/env/server';
 import { getSetting } from '@/lib/settings/server';
+import { stripEdgeSlashes } from '@/lib/shared/utils';
 
 /** 异步版本：env 优先 → DB settings.admin_path 覆盖 → 兜底 admin */
 export async function getAdminPathAsync(): Promise<string> {
   const fromEnv = getEnv(ENV_KEYS.ADMIN_PATH);
-  if (fromEnv) return fromEnv.replace(/^\/+|\/+$/g, '');
+  if (fromEnv) return stripEdgeSlashes(fromEnv);
 
   try {
     const fromDb = await getSetting<string>('admin.path');
-    if (fromDb) return fromDb.replace(/^\/+|\/+$/g, '');
+    if (fromDb) return stripEdgeSlashes(fromDb);
   } catch {
     // DB 读取失败时静默降级到 env/兜底
   }

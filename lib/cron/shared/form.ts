@@ -106,8 +106,8 @@ export function parseScheduleArray(value: string): number[] {
   if (value.trim() === '' || value.trim() === '-1') return [-1];
   return value
     .split(',')
-    .map((v) => parseInt(v.trim(), 10))
-    .filter((v) => !isNaN(v));
+    .map((v) => Number.parseInt(v.trim(), 10))
+    .filter((v) => !Number.isNaN(Number(v)));
 }
 
 /** 数字数组 → 表单调度字符串（空/undefined → "-1"，单 -1 → "-1"） */

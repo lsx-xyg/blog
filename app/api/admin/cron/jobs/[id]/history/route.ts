@@ -13,8 +13,8 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   try {
     const { id } = await params;
-    const jobId = parseInt(id, 10);
-    if (isNaN(jobId)) {
+    const jobId = Number.parseInt(id, 10);
+    if (Number.isNaN(jobId)) {
       return NextResponse.json({ error: '无效的任务 ID' }, { status: 400 });
     }
 

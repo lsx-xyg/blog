@@ -74,8 +74,8 @@ export function buildExcerpt(markdown: string, max = 150): string {
   const text = markdown
     .replace(/```[\s\S]*?```/g, ' ')
     .replace(/`([^`]*)`/g, '$1')
-    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
-    .replace(/\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/!\[[^\]]*?\]\([^)]*?\)/g, ' ')
+    .replace(/\[([^\]]*?)\]\(([^)]*?)\)/g, '$1')
     .replace(/^#{1,6}\s+/gm, ' ')
     .replace(/[*_~>|]+/g, ' ')
     .replace(/\s+/g, ' ')

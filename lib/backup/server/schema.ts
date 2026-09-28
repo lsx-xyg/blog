@@ -110,7 +110,7 @@ export function convertDateFields(row: Record<string, unknown>): Record<string, 
   for (const [key, value] of Object.entries(result)) {
     if (typeof value === 'string' && key.endsWith('At')) {
       const date = new Date(value);
-      if (!isNaN(date.getTime())) {
+      if (!Number.isNaN(date.getTime())) {
         result[key] = date;
       }
     }

@@ -16,9 +16,9 @@ export async function GET(
 
   try {
     const { id, identifier } = await params;
-    const jobId = parseInt(id, 10);
+    const jobId = Number.parseInt(id, 10);
     // identifier 是 cron-job.org 的字符串标识符（如 8440447-16-8-204），不做数值转换
-    if (isNaN(jobId) || !identifier) {
+    if (Number.isNaN(jobId) || !identifier) {
       return NextResponse.json({ error: '无效的任务 ID 或执行标识符' }, { status: 400 });
     }
 

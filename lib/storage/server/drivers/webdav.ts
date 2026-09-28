@@ -1,6 +1,7 @@
 import type { StorageDriverInterface, UploadResult } from '@/lib/types/storage';
 import { generateKey } from '../utils';
 import type { StorageSettings } from '@/lib/types/settings';
+import { stripEdgeSlashes, trimTrailingSlashes } from '@/lib/shared/utils';
 
 /** WebDAV 存储驱动（坚果云 / NAS / Alist / Nextcloud 等）
  *
@@ -27,7 +28,7 @@ export class WebdavStorageDriver implements StorageDriverInterface {
 
   /** 归一化服务地址（去掉末尾斜杠） */
   private get base(): string {
-    return (this.config.url || '').replace(/\/+$/, '');
+    return trimTrailingSlashes(this.config.url || '');
   }
 
   private get auth(): string {
@@ -36,7 +37,7 @@ export class WebdavStorageDriver implements StorageDriverInterface {
 
   /** 构建完整路径（包含子目录），如 backups/2026/09/uuid.sql.gz */
   private buildPath(key: string): string {
-    const dir = (this.config.directory || '').replace(/^\/+|\/+$/g, '');
+    const dir = stripEdgeSlashes(this.config.directory || '');
     return dir ? `${dir}/${key}` : key;
   }
 

@@ -1,3 +1,5 @@
+import { stripEdgeSlashes } from '@/lib/shared/utils';
+
 /**
  * 引导拾取跳转 URL 构造（server-safe，纯函数）
  *
@@ -20,7 +22,7 @@ export function buildGuidePickUrl(
   const pagePath = page.trim();
   if (!pagePath) return null; // 未选择页面 → 不生成跳转链接
 
-  const base = `/${adminPath.replace(/^\/+|\/+$/g, '')}${
+  const base = `/${stripEdgeSlashes(adminPath)}${
     pagePath.startsWith('/') ? pagePath : `/${pagePath}`
   }`;
 

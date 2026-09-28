@@ -10,10 +10,11 @@
  * normalizeSiteUrl() 为纯函数（可单测）：去空白与结尾斜杠，无协议时补 https://。
  * DB 读取失败（如构建期网络抖动）静默降级到兜底，不阻断构建。
  */
+import { trimTrailingSlashes } from '@/lib/shared/utils';
 import { getConfig } from '@/lib/settings/server';
 
 export function normalizeSiteUrl(raw: string): string {
-  const trimmed = raw.trim().replace(/\/+$/, '');
+  const trimmed = trimTrailingSlashes(raw.trim());
   if (/^https?:\/\//.test(trimmed)) return trimmed;
   return `https://${trimmed}`;
 }

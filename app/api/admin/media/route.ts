@@ -28,8 +28,8 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const typeParam = searchParams.get('type');
   const search = searchParams.get('search') || undefined;
-  const page = parseInt(searchParams.get('page') || '1', 10);
-  const pageSize = parseInt(searchParams.get('pageSize') || '20', 10);
+  const page = Number.parseInt(searchParams.get('page') || '1', 10);
+  const pageSize = Number.parseInt(searchParams.get('pageSize') || '20', 10);
 
   // 验证 type 参数
   let type: MediaType | undefined;

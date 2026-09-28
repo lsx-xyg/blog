@@ -7,6 +7,7 @@ import {
 import type { StorageDriverInterface, UploadResult } from '@/lib/types/storage';
 import { generateKey } from '../utils';
 import type { StorageSettings } from '@/lib/types/settings';
+import { trimTrailingSlashes } from '@/lib/shared/utils';
 
 /** S3 兼容对象存储驱动
  *
@@ -79,7 +80,7 @@ export class S3StorageDriver implements StorageDriverInterface {
    * upload() 用它——私有档案上传成功后不该因为「没有公开域名」被判失败并留下孤儿文件。
    */
   private publicUrlOrEmpty(key: string): string {
-    const publicBase = (this.config.publicBase || '').replace(/\/+$/, '');
+    const publicBase = trimTrailingSlashes(this.config.publicBase || '');
     return publicBase ? `${publicBase}/${this.buildPath(key)}` : '';
   }
 
