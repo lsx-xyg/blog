@@ -76,7 +76,7 @@ export function buildExcerpt(markdown: string, max = 150): string {
     .replace(/`([^`]*)`/g, '$1')
     .replace(/!\[[^\]\)]*\]\([^\)\s]*\)/g, ' ')
     .replace(/\[([^\]\)]+)\]\(([^\)\s]+)\)/g, '$1')
-    .replace(/^#{1,6}[ \t]+/gm, ' ') // NOSONAR(S8786)：{1,6} 有界量词 + [ \t] 单一字符类，线性无回溯
+    .replace(/^#{1,6}[ \t]+/gm, ' ') // NOSONAR
     .replace(/[*_~>|]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
