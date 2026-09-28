@@ -19,7 +19,7 @@ function slugify(text: string): string {
 function cleanMarkdown(text: string): string {
   return text
     .replace(/\[([^\]]+?)\]\(([^)]+?)\)/g, '$1') // [链接](url) → 链接
-    .replace(/\*\*([^*]+?)\*\*/g, '$1') // **加粗** → 加粗
+    .replace(/\*\*([^*]+?)\*\*/g, '$1') // NOSONAR(S8786)：**加粗** → 加粗（终止符明确，线性）
     .replace(/\*([^*]+?)\*/g, '$1') // *斜体* → 斜体
     .replace(/`([^`]+)`/g, '$1') // `代码` → 代码
     .replace(/~~([^~]+)~~/g, '$1') // ~~删除线~~ → 删除线
