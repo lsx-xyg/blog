@@ -76,7 +76,7 @@ export function buildExcerpt(markdown: string, max = 150): string {
     .replace(/`([^`]*)`/g, '$1')
     .replace(/!\[[^\]\)]*\]\([^\)\s]*\)/g, ' ')
     .replace(/\[([^\]\)]+)\]\(([^\)\s]+)\)/g, '$1')
-    .replace(/^#{1,6}\s+/gm, ' ')
+    .replace(/^#{1,6}[ \t]+/gm, ' ')
     .replace(/[*_~>|]+/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
