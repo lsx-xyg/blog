@@ -1,7 +1,6 @@
 <div align="center">
 
-<!-- 替换为项目 Logo：docs/logo.png（当前使用 favicon 预览图） -->
-<img src="favicon-preview.png" width="120" alt="blog logo" />
+<img src="docs/logo.png" alt="blog" width="120" />
 
 # blog
 
@@ -13,7 +12,7 @@
 ![Vercel](https://img.shields.io/badge/deploy-Vercel-black)
 ![License](https://img.shields.io/badge/license-unlicensed-lightgrey)
 
-[在线演示](https://blog.dbthree.dpdns.org) · [GitHub](https://github.com/lsx-xyg/blog) · [Issues](https://github.com/lsx-xyg/blog/issues)
+[文档](https://github.com/lsx-xyg/blog/tree/main/docs) · [在线体验](https://blog.dbthree.dpdns.org) · [反馈](https://github.com/lsx-xyg/blog/issues)
 
 </div>
 
@@ -89,6 +88,8 @@ npm run dev          # http://localhost:3000
 3. 生产构建自动执行数据库迁移（`build = db:migrate:deploy && next build`）
 4. 访问 `{站点}/admin` 进入后台（路径可用 `ADMIN_PATH` 修改）
 
+<!-- 替换为实际截图：docs/screenshot-main.png -->
+
 ### 后台管理
 
 - **文章**：写 / 改文章、定时发布、精选与标签
@@ -156,7 +157,7 @@ npm run analyze     # 打包体积分析
 ## 📁 项目结构
 
 ```text
-app/          路由与页面（App Router，含动态 favicon）
+app/          路由与页面（App Router，含静态 favicon 图标）
 components/   前端组件（admin、editor、media、guides、cron 等）
 lib/          业务逻辑（admin / auth / backup / cron / crypto / db /
               env / friend-links / guides / mdx / media / posts / seo /
