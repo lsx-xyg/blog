@@ -10,7 +10,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue)
 ![CI](https://img.shields.io/github/actions/workflow/status/lsx-xyg/blog/sonarcloud.yml?branch=main)
 ![Vercel](https://img.shields.io/badge/deploy-Vercel-black)
-![License](https://img.shields.io/badge/license-unlicensed-lightgrey)
+![License](https://img.shields.io/github/license/lsx-xyg/blog)
 
 [文档](https://github.com/lsx-xyg/blog/tree/main/docs) · [在线体验](https://blog.dbthree.dpdns.org) · [反馈](https://github.com/lsx-xyg/blog/issues)
 
@@ -188,4 +188,4 @@ public/       静态资源（字体、验证文件等）
 
 ## 📄 License
 
-未声明。项目为私有仓库（`package.json` 中 `private: true`，无 license 字段），源码保留所有权利。
+[MIT](LICENSE) © 2026 林圣轩
