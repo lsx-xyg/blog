@@ -1,16 +1,25 @@
 'use client';
 
 /**
- * 后台视频管理（S3 空壳：列表 + 分页 + 状态筛选）
+ * 后台视频管理（S3 Step B2 完整版）
  *
- * Step B 将补：上传弹窗（XHR 进度直传/降级）、编辑弹窗、发布/下架/删除。
+ * 列表 + 分页 + 状态筛选；操作：上传（VideoUploadDialog）、编辑（VideoEditDialog）、
+ * 发布/下架（PATCH status）、删除（ConfirmDialog + DELETE，封面按 isMediaReferenced 联动）。
+ *
+ * 删除提示语义（后端 DELETE 响应 posterDeleted）：
+ * - true  →「视频和封面已删除」
+ * - false →「视频已删除，封面仍被引用未删除」
  */
 import { useCallback, useEffect, useState } from 'react';
-import { Clapperboard, Plus } from 'lucide-react';
+import { Archive, Clapperboard, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import { AdminListPage } from '@/components/admin/list-page';
 import { CreateButton, RefreshButton } from '@/components/admin/action-buttons';
-import { VideoStatus, VIDEO_STATUS_LABELS } from '@/lib/types/video';
+import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { useToast } from '@/components/ui/toast';
+import { VideoStatus, VIDEO_STATUS_LABELS, VideoVisibility } from '@/lib/types/video';
 import { formatDuration } from '@/lib/videos/shared/video';
+import { VideoUploadDialog } from '@/components/videos/video-upload-dialog';
+import { VideoEditDialog, type EditVideoPayload } from '@/components/videos/video-edit-dialog';
 import Image from 'next/image';
 
 type VideoItem = {
@@ -19,6 +28,7 @@ type VideoItem = {
   description: string | null;
   url: string | null;
   posterUrl: string;
+  posterMediaId: string | null;
   storageDriver: string;
   storageKey: string | null;
   mimeType: string | null;
@@ -27,8 +37,10 @@ type VideoItem = {
   width: number | null;
   height: number | null;
   status: VideoStatus;
-  visibility: string;
+  visibility: VideoVisibility;
+  sortOrder: number;
   location: string | null;
+  takenAt: string | null;
   tags: string[];
   createdAt: string;
 };
@@ -46,7 +58,12 @@ function formatSize(bytes: number | null): string {
   return mb >= 1024 ? `${(mb / 1024).toFixed(2)} GB` : `${mb.toFixed(1)} MB`;
 }
 
+/** 操作图标按钮统一样式 */
+const actionBtn =
+  'inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40';
+
 export function ManageVideos() {
+  const { showToast } = useToast();
   const [items, setItems] = useState<VideoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -54,6 +71,12 @@ export function ManageVideos() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [pageSize] = useState(12);
+
+  // 弹窗状态
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [editingVideo, setEditingVideo] = useState<VideoItem | null>(null);
+  const [deletingVideo, setDeletingVideo] = useState<VideoItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   const loadVideos = useCallback(async () => {
     setLoading(true);
@@ -83,6 +106,96 @@ export function ManageVideos() {
 
   const totalPages = Math.ceil(total / pageSize);
 
+  /** 发布/下架切换 */
+  const toggleStatus = async (v: VideoItem) => {
+    const next = v.status === VideoStatus.PUBLISHED ? VideoStatus.ARCHIVED : VideoStatus.PUBLISHED;
+    try {
+      const res = await fetch(`/api/admin/videos/${v.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: next }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        showToast(data?.error || '操作失败', 'error');
+        return;
+      }
+      showToast(next === VideoStatus.PUBLISHED ? '已发布' : '已下架', 'success');
+      loadVideos();
+    } catch {
+      showToast('网络异常，操作失败', 'error');
+    }
+  };
+
+  /** 删除（后端按 isMediaReferenced 联动封面） */
+  const handleDelete = async () => {
+    if (!deletingVideo) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/admin/videos/${deletingVideo.id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        showToast(data?.error || '删除失败', 'error');
+        return;
+      }
+      const data = (await res.json()) as { posterDeleted?: boolean };
+      showToast(
+        data.posterDeleted ? '视频和封面已删除' : '视频已删除，封面仍被引用未删除',
+        'success',
+      );
+      setDeletingVideo(null);
+      loadVideos();
+    } catch {
+      showToast('网络异常，删除失败', 'error');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  /** VideoItem → 编辑弹窗 payload */
+  const toEditPayload = (v: VideoItem): EditVideoPayload => ({
+    id: v.id,
+    title: v.title,
+    description: v.description,
+    posterMediaId: v.posterMediaId,
+    posterUrl: v.posterUrl,
+    takenAt: v.takenAt,
+    location: v.location,
+    tags: v.tags ?? [],
+    sortOrder: v.sortOrder ?? 0,
+    visibility: v.visibility ?? VideoVisibility.PUBLIC,
+    status: v.status,
+  });
+
+  /** 操作按钮组（桌面表格列 / 移动卡片操作行共用） */
+  const renderActions = (v: VideoItem) => (
+    <div className="flex items-center gap-1">
+      <button type="button" title="编辑" className={actionBtn} onClick={() => setEditingVideo(v)}>
+        <Pencil className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        title={v.status === VideoStatus.PUBLISHED ? '下架' : '发布'}
+        className={actionBtn}
+        onClick={() => toggleStatus(v)}
+      >
+        {v.status === VideoStatus.PUBLISHED ? (
+          <Archive className="h-4 w-4" />
+        ) : (
+          <Eye className="h-4 w-4" />
+        )}
+      </button>
+      <button
+        type="button"
+        title="删除"
+        className={`${actionBtn} hover:!text-destructive`}
+        onClick={() => setDeletingVideo(v)}
+      >
+        <Trash2 className="h-4 w-4" />
+      </button>
+    </div>
+  );
+
   return (
     <AdminListPage
       title="视频"
@@ -90,11 +203,10 @@ export function ManageVideos() {
       actions={
         <>
           <CreateButton
-            onClick={() => {}}
+            onClick={() => setUploadOpen(true)}
             label="上传视频"
             icon={Plus}
-            disabled
-            title="上传功能即将开放"
+            title="上传视频（mp4 / webm）"
           />
           <RefreshButton onClick={loadVideos} loading={loading} />
         </>
@@ -159,8 +271,11 @@ export function ManageVideos() {
                 <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                   状态
                 </th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
                   创建时间
+                </th>
+                <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                  操作
                 </th>
               </tr>
             </thead>
@@ -201,50 +316,57 @@ export function ManageVideos() {
                       {VIDEO_STATUS_LABELS[v.status]}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-right text-sm text-muted-foreground">
+                  <td className="px-4 py-3 text-sm text-muted-foreground">
                     {new Date(v.createdAt).toLocaleString('zh-CN', { hour12: false })}
                   </td>
+                  <td className="px-4 py-3 text-right">{renderActions(v)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {/* 移动端：卡片列表（操作下沉模式，Step B 补操作按钮） */}
+        {/* 移动端：卡片列表（操作下沉模式） */}
         <div className="md:hidden rounded-xl border border-border bg-card divide-y divide-border">
           {items.map((v) => (
-            <div key={v.id} className="flex items-center gap-3 p-4 animate-fade-in-up">
-              {v.posterUrl ? (
-                <Image
-                  src={v.posterUrl}
-                  alt={v.title || '视频封面'}
-                  width={96}
-                  height={54}
-                  className="h-14 w-24 shrink-0 rounded object-cover"
-                  unoptimized
-                />
-              ) : (
-                <div className="flex h-14 w-24 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground">
-                  <Clapperboard className="h-5 w-5" />
+            <div key={v.id} className="p-4 animate-fade-in-up">
+              <div className="flex items-center gap-3">
+                {v.posterUrl ? (
+                  <Image
+                    src={v.posterUrl}
+                    alt={v.title || '视频封面'}
+                    width={96}
+                    height={54}
+                    className="h-14 w-24 shrink-0 rounded object-cover"
+                    unoptimized
+                  />
+                ) : (
+                  <div className="flex h-14 w-24 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground">
+                    <Clapperboard className="h-5 w-5" />
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">
+                    {v.title || '未命名视频'}
+                  </p>
+                  <p className="mt-0.5 font-mono text-xs text-muted-foreground">
+                    {formatDuration(v.durationSeconds)} · {formatSize(v.size)}
+                  </p>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <span
+                      className={`inline-block rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[v.status]}`}
+                    >
+                      {VIDEO_STATUS_LABELS[v.status]}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(v.createdAt).toLocaleDateString('zh-CN')}
+                    </span>
+                  </div>
                 </div>
-              )}
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-foreground">
-                  {v.title || '未命名视频'}
-                </p>
-                <p className="mt-0.5 font-mono text-xs text-muted-foreground">
-                  {formatDuration(v.durationSeconds)} · {formatSize(v.size)}
-                </p>
-                <div className="mt-1.5 flex items-center gap-2">
-                  <span
-                    className={`inline-block rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[v.status]}`}
-                  >
-                    {VIDEO_STATUS_LABELS[v.status]}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(v.createdAt).toLocaleDateString('zh-CN')}
-                  </span>
-                </div>
+              </div>
+              {/* 操作下沉（移动端） */}
+              <div className="mt-3 flex justify-end border-t border-border/60 pt-2.5">
+                {renderActions(v)}
               </div>
             </div>
           ))}
@@ -274,6 +396,33 @@ export function ManageVideos() {
             </button>
           </div>
         )}
+
+        {/* 上传 / 编辑 / 删除确认 */}
+        <VideoUploadDialog
+          open={uploadOpen}
+          onClose={() => setUploadOpen(false)}
+          onUploaded={loadVideos}
+        />
+        <VideoEditDialog
+          open={editingVideo !== null}
+          video={editingVideo ? toEditPayload(editingVideo) : null}
+          onClose={() => setEditingVideo(null)}
+          onSaved={loadVideos}
+        />
+        <ConfirmDialog
+          open={deletingVideo !== null}
+          title="删除视频"
+          description={
+            <>
+              确定删除「{deletingVideo?.title || '未命名视频'}」吗？
+              视频文件将从存储中删除；封面若未被其他内容引用会一并删除。
+            </>
+          }
+          confirmLabel="删除"
+          loading={deleting}
+          onConfirm={handleDelete}
+          onClose={() => setDeletingVideo(null)}
+        />
       </>
     </AdminListPage>
   );

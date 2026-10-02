@@ -72,6 +72,10 @@ export async function POST(request: Request) {
       key: result.key,
       url: result.url,
       driver: driver.name.toUpperCase(),
+      // PUT 直传的 Content-Type 必须与 presign 时一致（前端从这里取，不硬编码）
+      contentType: mime,
+      // 前端选文件后的实际大小上限（settings 可配），供二次校验
+      maxSizeMb,
     });
   } catch (error) {
     console.error('视频预签名失败：', error);
