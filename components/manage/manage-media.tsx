@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Upload, Trash2, ImageIcon, AlertTriangle, Edit3, Star, X, ZoomIn } from 'lucide-react';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { AdminModal } from '@/components/admin/modal';
+import { CleanupDialog } from '@/components/admin/cleanup-dialog';
 import { useToast } from '@/components/ui/toast';
 import { MediaType, MEDIA_TYPE_LABELS } from '@/lib/types/media';
 import { AdminListPage } from '@/components/admin/list-page';
@@ -629,73 +630,23 @@ export function ManageMedia() {
         </div>
       )}
 
-      {/* 未使用图片清理 dialog（对齐视频 Tab 孤儿清理：点击出弹窗展示数据） */}
-      <AdminModal
+      {/* 未使用图片清理 dialog（复用公共 CleanupDialog，纵向列表） */}
+      <CleanupDialog
         open={unusedCleanupOpen}
         title="清理未使用图片"
+        loading={unusedLoading}
+        items={unusedItems.map((item) => ({
+          id: item.id,
+          url: item.url,
+          title: item.title || '未命名',
+          subtitle: `${formatSize(item.size)} · ${item.storageDriver}`,
+          badge: '未引用',
+        }))}
+        emptyText="没有发现未使用的图片 🎉"
+        deleteLabel={(n) => `全部删除 (${n})`}
         onClose={() => setUnusedCleanupOpen(false)}
-        maxWidth="lg"
-        footer={
-          <>
-            <button
-              type="button"
-              onClick={() => setUnusedCleanupOpen(false)}
-              className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent"
-            >
-              关闭
-            </button>
-            <button
-              type="button"
-              onClick={cleanupUnusedMedia}
-              disabled={unusedItems.length === 0 || unusedLoading}
-              className="inline-flex items-center gap-1.5 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-white hover:bg-destructive/90 disabled:opacity-50"
-            >
-              <Trash2 className="h-4 w-4" />
-              全部删除 ({unusedItems.length})
-            </button>
-          </>
-        }
-      >
-        <div className="max-h-[60vh] overflow-y-auto pr-1">
-          {unusedLoading ? (
-            <div className="space-y-3 py-2">
-              {[0, 1, 2].map((i) => (
-                <div key={i} className="h-14 animate-pulse rounded-lg bg-muted" />
-              ))}
-            </div>
-          ) : unusedItems.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 py-10 text-center">
-              <AlertTriangle className="h-8 w-8 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">没有发现未使用的图片 🎉</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
-              {unusedItems.map((item) => (
-                <div key={item.id} className="overflow-hidden rounded-lg border border-border">
-                  <div className="relative aspect-square overflow-hidden bg-muted">
-                    <Image
-                      src={item.url}
-                      alt={item.title || '未使用图片'}
-                      fill
-                      sizes="160px"
-                      className="object-cover"
-                      unoptimized
-                    />
-                  </div>
-                  <div className="px-2 py-1.5">
-                    <p className="truncate text-xs font-medium text-foreground">
-                      {item.title || '未命名'}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {formatSize(item.size)} · {item.storageDriver}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </AdminModal>
+        onDelete={() => void cleanupUnusedMedia()}
+      />
 
       <UploadDialog
         open={uploadOpen}
