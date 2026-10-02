@@ -7,7 +7,7 @@
  * - 扩展点字段（albumId/tags/visibility/viewCount/source/thumbnails）已在 schema 落位，
  *   本层提供对应查询/写入入口，后续做相册/标签筛选 UI 时直接复用
  */
-import { and, desc, eq, ilike, or, arrayContains, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, or, arrayContains, inArray, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { videos, media } from '@/db/schema';
 import { VideoStatus, VideoVisibility } from '@/lib/types/video';
@@ -235,4 +235,19 @@ export async function getVideoWithPoster(id: string) {
     .where(eq(videos.id, id))
     .limit(1);
   return rows[0] ?? null;
+}
+
+/** 批量封面映射（列表页用：mediaIds → media.url；空集合返回空 Map） */
+export async function getPosterMap(
+  mediaIds: Array<string | null | undefined>,
+): Promise<Map<string, string>> {
+  const ids = [...new Set(mediaIds.filter((id): id is string => !!id))];
+  if (ids.length === 0) return new Map();
+
+  const rows = await db
+    .select({ id: media.id, url: media.url })
+    .from(media)
+    .where(inArray(media.id, ids));
+
+  return new Map(rows.map((r) => [r.id, r.url ?? '']));
 }

@@ -1,7 +1,7 @@
 /**
  * 媒体库数据访问层（统一管理文章图片 + 相册图片）
  */
-import { and, desc, eq, ilike, inArray, or, sql } from 'drizzle-orm';
+import { and, desc, eq, ilike, inArray, ne, or, sql } from 'drizzle-orm';
 import { db } from '@/db';
 import { media, posts, mediaTags, tags } from '@/db/schema';
 import { MediaType } from '@/lib/types/media';
@@ -50,7 +50,14 @@ export async function getMediaById(id: string) {
   return rows[0] ?? null;
 }
 
-/** 媒体列表（支持按类型筛选、搜索、分页） */
+/**
+ * 媒体列表（支持按类型筛选、搜索、分页）
+ *
+ * 类型隔离约定（明确写条件，不靠默认）：
+ * - 显式传 type（ARTICLE/GALLERY）→ 按该类型查询
+ * - 未传 type → **排除 VIDEO_POSTER**（视频封面只服务 videos.posterMediaId，
+ *   不参与图片 Tab 与 media-picker 列表）
+ */
 export async function listMedia(opts?: {
   type?: MediaType;
   search?: string;
@@ -61,6 +68,7 @@ export async function listMedia(opts?: {
 
   const conditions = [];
   if (type) conditions.push(eq(media.type, type));
+  else conditions.push(ne(media.type, MediaType.VIDEO_POSTER));
   if (search) {
     conditions.push(
       or(
@@ -82,12 +90,13 @@ export async function listMedia(opts?: {
   return query;
 }
 
-/** 统计媒体数量 */
+/** 统计媒体数量（同样隔离 VIDEO_POSTER） */
 export async function countMedia(opts?: { type?: MediaType; search?: string }) {
   const { type, search } = opts ?? {};
 
   const conditions = [];
   if (type) conditions.push(eq(media.type, type));
+  else conditions.push(ne(media.type, MediaType.VIDEO_POSTER));
   if (search) {
     conditions.push(
       or(
@@ -175,10 +184,35 @@ export async function findUnusedMedia() {
 
   // 过滤未使用的媒体：
   // - 相册图片（type=GALLERY）默认就是被使用的
+  // - 视频封面（type=VIDEO_POSTER）不参与清理（删除由视频删除流程联动处理，这里是兜底）
   // - 文章图片（type=ARTICLE）未被文章内容引用的就是未使用的
-  const unusedMedia = allMedia.filter((m) => m.type !== MediaType.GALLERY && !usedUrls.has(m.url));
+  const unusedMedia = allMedia.filter(
+    (m) =>
+      m.type !== MediaType.GALLERY && m.type !== MediaType.VIDEO_POSTER && !usedUrls.has(m.url),
+  );
 
   return unusedMedia;
+}
+
+/**
+ * 判断媒体是否被文章内容引用（删除联动用）
+ *
+ * 视频删除时若封面（posterMediaId 指向的 media）未被任何文章引用，
+ * 则连同封面 media 记录与封面文件一起删除；被引用则跳过。
+ * （VIDEO_POSTER 封面一般不会被文章插入，但引用检查不能省——用户可能在文章里手动贴过这张图）
+ */
+export async function isMediaReferenced(mediaId: string): Promise<boolean> {
+  const item = await db.select().from(media).where(eq(media.id, mediaId)).limit(1);
+  const record = item[0];
+  if (!record || !record.url) return false;
+
+  const rows = await db
+    .select({ id: posts.id })
+    .from(posts)
+    .where(ilike(posts.content, `%${record.url}%`))
+    .limit(1);
+
+  return rows.length > 0;
 }
 
 /** 批量删除媒体 */

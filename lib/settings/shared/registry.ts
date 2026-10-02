@@ -488,6 +488,16 @@ export const registry = {
     default: 0,
     transform: toRetentionValue,
   },
+  // === 视频相册（单文件大小上限，MB；默认 200）===
+  'video.maxSizeMb': {
+    key: 'video.max_size_mb',
+    env: 'VIDEO_MAX_SIZE_MB',
+    default: 200,
+    transform: (v) => {
+      const n = Number(v);
+      return Number.isFinite(n) && n > 0 ? Math.floor(n) : 200;
+    },
+  },
 } satisfies Record<string, ConfigDef<any>>;
 
 /** registry 的语义化键联合类型 */

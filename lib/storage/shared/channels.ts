@@ -18,6 +18,8 @@ export const StorageChannel = {
   GALLERY: 'gallery',
   /** 数据库备份等私有数据 */
   BACKUP: 'backup',
+  /** 视频相册（个人生活视频，建议绑定 S3/R2 大容量档案） */
+  VIDEO: 'video',
   // FILE: 'file', // 示例：以后加「附件/文件下载」用途，加一行即可
 } as const;
 
@@ -68,6 +70,14 @@ export const STORAGE_CHANNEL_META: Record<StorageChannel, StorageChannelMeta> = 
     mediaType: null,
     settingKey: 'storage.binding.backup',
     env: 'STORAGE_BINDING_BACKUP',
+  },
+  [StorageChannel.VIDEO]: {
+    label: '视频相册',
+    description: '视频相册上传的原始视频（mp4/webm，建议绑定 S3/R2 等大容量对象存储档案）',
+    visibility: 'public',
+    mediaType: null,
+    settingKey: 'storage.binding.video',
+    env: 'STORAGE_BINDING_VIDEO',
   },
 };
 
