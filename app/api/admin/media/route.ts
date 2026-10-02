@@ -8,9 +8,18 @@ import { StorageChannel } from '@/lib/storage/shared/channels';
 import { MediaType } from '@/lib/types/media';
 import { StorageDriverType } from '@/lib/types/storage';
 
-/** 媒体类型 → 存储通道（media.type 决定图片进哪个档案） */
+/**
+ * 媒体类型 → 存储通道（media.type 决定图片进哪个档案）
+ *
+ * 显式分支约定：
+ * - GALLERY       → 相册通道
+ * - ARTICLE       → 上传通道（文章配图）
+ * - VIDEO_POSTER  → 上传通道（视频封面与文章图同池；该类型不参与图片 Tab 列表与
+ *                   media-picker，仅服务 videos.posterMediaId，见 lib/media/server/store）
+ */
 function channelForMediaType(type: MediaType): StorageChannel {
-  return type === MediaType.GALLERY ? StorageChannel.GALLERY : StorageChannel.UPLOAD;
+  if (type === MediaType.GALLERY) return StorageChannel.GALLERY;
+  return StorageChannel.UPLOAD;
 }
 
 /**
@@ -70,11 +79,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: '未找到上传文件' }, { status: 400 });
     }
 
-    // 验证 type 参数，默认 ARTICLE
+    // 验证 type 参数，默认 ARTICLE（ARTICLE / GALLERY / VIDEO_POSTER）
     let type: MediaType = MediaType.ARTICLE;
     if (typeParam) {
       const upperType = typeParam.toUpperCase();
-      if (upperType === MediaType.ARTICLE || upperType === MediaType.GALLERY) {
+      if (
+        upperType === MediaType.ARTICLE ||
+        upperType === MediaType.GALLERY ||
+        upperType === MediaType.VIDEO_POSTER
+      ) {
         type = upperType as MediaType;
       }
     }

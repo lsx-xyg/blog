@@ -3,9 +3,13 @@ import { validateUploadTarget, uploadMediaFile, uploadMediaFiles } from '@/lib/m
 import { MediaType } from '@/lib/types/media';
 
 describe('validateUploadTarget', () => {
-  it('仅接受 ARTICLE/GALLERY', () => {
+  it('接受 ARTICLE / GALLERY / VIDEO_POSTER', () => {
     expect(validateUploadTarget(MediaType.ARTICLE)).toBe(true);
     expect(validateUploadTarget(MediaType.GALLERY)).toBe(true);
+    expect(validateUploadTarget(MediaType.VIDEO_POSTER)).toBe(true);
+  });
+
+  it('拒绝其他值', () => {
     expect(validateUploadTarget('VIDEO')).toBe(false);
     expect(validateUploadTarget(undefined)).toBe(false);
     expect(validateUploadTarget(null)).toBe(false);

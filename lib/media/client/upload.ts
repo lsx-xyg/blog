@@ -7,18 +7,23 @@
  */
 import { MediaType } from '@/lib/types/media';
 
-/** 上传目标：文章图片 / 相册图片 */
+/** 上传目标：文章图片 / 相册图片 / 视频封面（内部用途） */
 export type UploadTarget = (typeof MediaType)[keyof typeof MediaType];
 
-/** 上传目标选项（弹窗单选切换用） */
+/** 上传目标选项（弹窗单选切换用）——视频封面是内部用途，不在此暴露 */
 export const UPLOAD_TARGET_OPTIONS: { value: UploadTarget; label: string; hint: string }[] = [
   { value: MediaType.ARTICLE, label: '文章图片', hint: '用作文章配图' },
   { value: MediaType.GALLERY, label: '相册图片', hint: '加入相册' },
 ];
 
-/** 上传目标校验（纯函数） */
+/**
+ * 上传目标校验（纯函数）
+ * VIDEO_POSTER 仅由视频编辑弹窗的封面上传调用方使用（文章/相册上传不受影响）。
+ */
 export function validateUploadTarget(value: unknown): value is UploadTarget {
-  return value === MediaType.ARTICLE || value === MediaType.GALLERY;
+  return (
+    value === MediaType.ARTICLE || value === MediaType.GALLERY || value === MediaType.VIDEO_POSTER
+  );
 }
 
 export type UploadMediaResult = { ok: true; url: string } | { ok: false; error: string };
