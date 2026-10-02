@@ -91,6 +91,7 @@ export function buildVideoCallbackBody(input: {
   width?: number | null;
   height?: number | null;
   title?: string | null;
+  posterMediaId?: string | null;
 }): Record<string, unknown> {
   const body: Record<string, unknown> = {
     key: input.key,
@@ -102,5 +103,6 @@ export function buildVideoCallbackBody(input: {
   if (input.width != null) body.width = input.width;
   if (input.height != null) body.height = input.height;
   if (input.title) body.title = input.title;
+  if (input.posterMediaId) body.posterMediaId = input.posterMediaId;
   return body;
 }

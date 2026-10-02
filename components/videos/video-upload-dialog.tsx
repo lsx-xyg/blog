@@ -27,6 +27,7 @@ import {
   buildVideoCallbackBody,
   type PresignParsed,
 } from '@/lib/videos/shared/video-probe';
+import { captureVideoFrame } from './capture-frame';
 
 /** 前端预检默认上限（MB）；presign 响应返回真实 maxSizeMb 后会复检 */
 const DEFAULT_MAX_SIZE_MB = DEFAULT_MAX_VIDEO_SIZE / 1024 / 1024;
@@ -74,6 +75,23 @@ function probeVideoMeta(file: File): Promise<VideoMeta | null> {
     window.setTimeout(fail, 15_000);
     video.src = objectUrl;
   });
+}
+
+/** 自动截帧并上传为封面（VIDEO_POSTER，走现有图片链路）；失败静默降级返回 null */
+async function uploadPosterFrame(file: File): Promise<string | null> {
+  try {
+    const frame = await captureVideoFrame(file);
+    if (!frame) return null;
+    const formData = new FormData();
+    formData.append('file', new File([frame.blob], 'poster.jpg', { type: 'image/jpeg' }));
+    formData.append('type', 'VIDEO_POSTER');
+    const res = await fetch('/api/admin/media', { method: 'POST', body: formData });
+    if (!res.ok) return null;
+    const media = (await res.json().catch(() => null)) as { id?: string } | null;
+    return media?.id ?? null;
+  } catch {
+    return null;
+  }
 }
 
 export function VideoUploadDialog({
@@ -137,7 +155,7 @@ export function VideoUploadDialog({
     void runUpload(file);
   };
 
-  /** 主流程（probe → presign → 分支上传），每步失败独立处理、不落库 */
+  /** 主流程（probe → 自动截帧封面 → presign → 分支上传），每步失败独立处理、不落库 */
   const runUpload = async (file: File) => {
     // ---- 探测（失败：不落库） ----
     setPhase('probing');
@@ -147,6 +165,9 @@ export function VideoUploadDialog({
       setError('无法读取视频信息，文件可能已损坏或浏览器不支持该编码');
       return;
     }
+
+    // ---- 自动截帧封面（失败静默降级为无封面，不阻塞视频上传） ----
+    const posterMediaId = await uploadPosterFrame(file);
 
     // ---- presign（网络/4xx/5xx 失败：不落库） ----
     setPhase('presigning');
@@ -183,7 +204,7 @@ export function VideoUploadDialog({
       return;
     }
     if (parsed.mode === 'multipart') {
-      await uploadMultipart(file, meta);
+      await uploadMultipart(file, meta, posterMediaId);
       return;
     }
 
@@ -195,11 +216,11 @@ export function VideoUploadDialog({
       setError(recheck.error);
       return;
     }
-    await uploadPresigned(file, meta, parsed);
+    await uploadPresigned(file, meta, parsed, posterMediaId);
   };
 
   /** LOCAL multipart 降级：XHR 带进度，失败不落库 */
-  const uploadMultipart = (file: File, meta: VideoMeta) =>
+  const uploadMultipart = (file: File, meta: VideoMeta, posterMediaId: string | null) =>
     new Promise<void>((resolve) => {
       setPhase('uploading');
       setProgress(0);
@@ -207,6 +228,7 @@ export function VideoUploadDialog({
       const form = new FormData();
       form.append('file', file);
       form.append('title', file.name.replace(/\.[^.]+$/, ''));
+      if (posterMediaId) form.append('posterMediaId', posterMediaId);
       if (meta.durationSeconds != null)
         form.append('durationSeconds', String(meta.durationSeconds));
       if (meta.width != null) form.append('width', String(meta.width));
@@ -262,6 +284,7 @@ export function VideoUploadDialog({
     file: File,
     meta: VideoMeta,
     parsed: Extract<PresignParsed, { mode: 'presigned' }>,
+    posterMediaId: string | null,
   ) =>
     new Promise<void>((resolve) => {
       setPhase('uploading');
@@ -299,6 +322,7 @@ export function VideoUploadDialog({
                 width: meta.width,
                 height: meta.height,
                 title: file.name.replace(/\.[^.]+$/, ''),
+                posterMediaId,
               }),
             ),
           });

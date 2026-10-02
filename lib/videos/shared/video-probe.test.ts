@@ -113,4 +113,27 @@ describe('buildVideoCallbackBody', () => {
     });
     expect(body).toEqual({ key: 'k.mp4', mimeType: 'video/mp4', size: null });
   });
+
+  it('posterMediaId 有值时进回调体，缺省时不出现在回调体', () => {
+    const withPoster = buildVideoCallbackBody({
+      key: 'k.mp4',
+      mimeType: 'video/mp4',
+      size: 100,
+      posterMediaId: 'media-id-1',
+    });
+    expect(withPoster).toEqual({
+      key: 'k.mp4',
+      mimeType: 'video/mp4',
+      size: 100,
+      posterMediaId: 'media-id-1',
+    });
+
+    const withoutPoster = buildVideoCallbackBody({
+      key: 'k.mp4',
+      mimeType: 'video/mp4',
+      size: 100,
+      posterMediaId: null,
+    });
+    expect(withoutPoster).toEqual({ key: 'k.mp4', mimeType: 'video/mp4', size: 100 });
+  });
 });

@@ -170,6 +170,7 @@ export function ManageVideos() {
     description: v.description,
     posterMediaId: v.posterMediaId,
     posterUrl: v.posterUrl,
+    url: v.url ?? '',
     takenAt: v.takenAt,
     location: v.location,
     tags: v.tags ?? [],

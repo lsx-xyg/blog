@@ -116,6 +116,10 @@ export async function POST(request: Request) {
         durationSeconds: parseNum(formData.get('durationSeconds')),
         width: parseNum(formData.get('width')),
         height: parseNum(formData.get('height')),
+        posterMediaId:
+          typeof formData.get('posterMediaId') === 'string'
+            ? (formData.get('posterMediaId') as string)
+            : null,
         uploadedBy: session.user.id,
       });
 
@@ -132,6 +136,7 @@ export async function POST(request: Request) {
       width?: number;
       height?: number;
       title?: string;
+      posterMediaId?: string;
     } | null;
 
     if (!body?.key || !body?.mimeType) {
@@ -165,6 +170,7 @@ export async function POST(request: Request) {
       durationSeconds: body.durationSeconds ?? null,
       width: body.width ?? null,
       height: body.height ?? null,
+      posterMediaId: typeof body.posterMediaId === 'string' ? body.posterMediaId : null,
       uploadedBy: session.user.id,
     });
 

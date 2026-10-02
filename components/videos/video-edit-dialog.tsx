@@ -17,13 +17,14 @@
  * 回显 utcIsoToLocalDatetime 转本地。三层（前端提交/后端存储/前端回显）均为 UTC 单一来源。
  */
 import { useEffect, useState } from 'react';
-import { ImagePlus, ImageOff, Loader2 } from 'lucide-react';
+import { ImagePlus, ImageOff, Loader2, Video } from 'lucide-react';
 import { AdminModal } from '@/components/admin/modal';
 import { TagInput } from '@/components/shared/tag-input';
 import { useToast } from '@/components/ui/toast';
 import { MediaType } from '@/lib/types/media';
 import { VideoStatus, VideoVisibility, VIDEO_STATUS_LABELS } from '@/lib/types/video';
 import { localDatetimeToUtcIso, utcIsoToLocalDatetime } from '@/lib/videos/shared/datetime';
+import { captureVideoFrame } from './capture-frame';
 import Image from 'next/image';
 
 export type EditVideoPayload = {
@@ -32,6 +33,8 @@ export type EditVideoPayload = {
   description: string | null;
   posterMediaId: string | null;
   posterUrl: string;
+  /** 视频播放/回源地址（生成封面用） */
+  url: string;
   takenAt: string | null;
   location: string | null;
   tags: string[];
@@ -119,6 +122,20 @@ export function VideoEditDialog({
     } finally {
       setPosterUploading(false);
     }
+  };
+
+  /** 从视频源截取首帧生成封面（未设置封面时的兜底）；复用 handlePosterUpload 入库 */
+  const handleGeneratePoster = async () => {
+    if (!video?.url) {
+      showToast('当前视频暂无播放地址，无法生成封面', 'error');
+      return;
+    }
+    const frame = await captureVideoFrame(video.url);
+    if (!frame) {
+      showToast('生成封面失败：无法读取视频画面（编码不支持或网络失败）', 'error');
+      return;
+    }
+    await handlePosterUpload(new File([frame.blob], 'poster.jpg', { type: 'image/jpeg' }));
   };
 
   const save = async () => {
@@ -215,6 +232,16 @@ export function VideoEditDialog({
                   onChange={(e) => handlePosterUpload(e.target.files?.[0])}
                 />
               </label>
+              <button
+                type="button"
+                onClick={() => void handleGeneratePoster()}
+                disabled={posterUploading}
+                className="inline-flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none disabled:opacity-40"
+                title="不设置封面时，从视频第一帧生成"
+              >
+                <Video className="h-3.5 w-3.5" />
+                从视频生成封面
+              </button>
               {posterUrl ? (
                 <button
                   type="button"
