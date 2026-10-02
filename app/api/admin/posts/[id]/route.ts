@@ -7,6 +7,7 @@ import { posts } from '@/db/schema';
 import { setPostTags } from '@/lib/posts/server';
 import { requireAdmin, adminDenied } from '@/lib/auth/server';
 import { notifyPostsChanged } from '@/lib/seo/server';
+import { normalizeCoverUrl } from '@/lib/media/server';
 import { POST_STATUS_VALUES, PostStatus } from '@/lib/types/posts';
 
 export const dynamic = 'force-dynamic';
@@ -31,7 +32,10 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
   if (typeof body.title === 'string') patch.title = body.title.trim();
   if (typeof body.summary === 'string') patch.summary = body.summary;
   if (typeof body.content === 'string') patch.content = body.content;
-  if (typeof body.coverUrl === 'string') patch.coverUrl = body.coverUrl;
+  if (typeof body.coverUrl === 'string') {
+    // 封面统一存媒体库相对路径（/m/xxx），避免 CDN 直链与 media.url 前缀不一致
+    patch.coverUrl = await normalizeCoverUrl(body.coverUrl);
+  }
   if (typeof body.featured === 'boolean') patch.featured = body.featured;
   if (
     body.scheduledAt === null ||

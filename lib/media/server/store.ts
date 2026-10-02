@@ -7,7 +7,7 @@ import { media, posts, mediaTags, tags } from '@/db/schema';
 import { MediaType } from '@/lib/types/media';
 import { StorageDriverType } from '@/lib/types/storage';
 import { getOrCreateTags } from '@/lib/tags/server';
-import { PostStatus } from '@/lib/types/posts';
+import { extractImageUrls, urlToPathKey } from './url-refs';
 
 /** 创建媒体记录 */
 export async function createMedia(data: {
@@ -144,75 +144,107 @@ export async function deleteMedia(id: string) {
 }
 
 /**
- * 查找未使用的图片（不在文章内容中）
+ * 封面 URL 规范化：把封面统一存为媒体库相对路径（/m/xxx）
+ *
+ * 背景：media.url 存相对路径，而历史上封面可能被存成 CDN 直链
+ * （https://cdn.jsdelivr.net/gh/.../assets/2026/09/xxx.jpg），两种前缀
+ * 体系不一致，导致「未使用图片」清理时封面图被误判为未使用。
+ * 从源头统一：写入 coverUrl 前按文件名（媒体库 hash 文件名唯一）匹配
+ * media 表，命中则改用 media.url（/m/xxx）；未命中（外部图床）保留原值。
+ */
+export async function normalizeCoverUrl(url: string | null | undefined): Promise<string | null> {
+  if (!url) return url ?? null;
+  let fileName: string | undefined;
+  try {
+    fileName = new URL(url, 'http://local').pathname.split('/').pop();
+  } catch {
+    fileName = url.split('/').pop();
+  }
+  if (!fileName || !fileName.includes('.')) return url;
+  const rows = await db
+    .select({ mediaUrl: media.url })
+    .from(media)
+    .where(ilike(media.url, `%${fileName}`))
+    .limit(1);
+  return rows[0]?.mediaUrl ?? url;
+}
+
+/**
+ * 查找未使用的图片（不在文章内容与封面中）
  *
  * 逻辑：
  * 1. 获取所有媒体的 URL
- * 2. 获取所有已发布文章的内容，检查哪些 URL 被引用
+ * 2. 获取所有文章（含草稿）的内容与封面，检查哪些图片 URL 被引用
  * 3. 相册图片（type=GALLERY）默认就是被使用的，不需要检查
- * 4. 文章图片（type=ARTICLE）未被文章内容引用的就是未使用的图片
+ * 4. 文章图片（type=ARTICLE）未被文章内容/封面引用的就是未使用的图片
+ *
+ * 注意：media.url 为相对路径、posts.coverUrl 为 CDN 直链（前缀体系不同），
+ * 必须经 urlToPathKey 归一化后比较，否则封面图会被误判为未使用。
  */
 export async function findUnusedMedia() {
   // 获取所有媒体
   const allMedia = await db.select().from(media).orderBy(desc(media.createdAt));
 
-  // 获取所有已发布文章的内容
+  // 获取所有文章的内容与封面（草稿封面同样算引用：清理后发布时封面会丢）
   const allPosts = await db
-    .select({ content: posts.content })
-    .from(posts)
-    .where(eq(posts.status, PostStatus.PUBLISHED));
+    .select({ content: posts.content, coverUrl: posts.coverUrl })
+    .from(posts);
 
-  // 合并所有被引用的 URL
-  const usedUrls = new Set<string>();
+  // 合并所有被引用的 URL（归一化键）
+  const usedKeys = new Set<string>();
 
-  // 从文章内容中提取图片 URL（Markdown 格式 ![alt](url) 和 HTML <img src="url">）
+  // 从文章内容提取图片 URL（Markdown ![alt](url) 与 HTML <img src="url">）
   for (const post of allPosts) {
-    if (!post.content) continue;
-    // 匹配 Markdown 图片
-    const mdMatches = post.content.match(/!\[[^\]]*\]\(([^)]+)\)/g) || [];
-    for (const match of mdMatches) {
-      const url = match.replace(/!\[[^\]]*\]\(([^)]+)\)/, '$1');
-      usedUrls.add(url);
+    if (post.content) {
+      for (const url of extractImageUrls(post.content)) {
+        usedKeys.add(urlToPathKey(url));
+      }
     }
-    // 匹配 HTML img
-    const htmlMatches = post.content.match(/<img[^>]+src=["']([^"']+)["']/g) || [];
-    for (const match of htmlMatches) {
-      const url = match.replace(/<img[^>]+src=["']([^"']+)["']/, '$1');
-      usedUrls.add(url);
+    // 文章封面图（CDN 直链，与 media.url 不同前缀，靠归一化键匹配）
+    if (post.coverUrl) {
+      usedKeys.add(urlToPathKey(post.coverUrl));
     }
   }
 
   // 过滤未使用的媒体：
   // - 相册图片（type=GALLERY）默认就是被使用的
   // - 视频封面（type=VIDEO_POSTER）不参与清理（删除由视频删除流程联动处理，这里是兜底）
-  // - 文章图片（type=ARTICLE）未被文章内容引用的就是未使用的
+  // - 文章图片（type=ARTICLE）未被文章内容/封面引用的就是未使用的
   const unusedMedia = allMedia.filter(
     (m) =>
-      m.type !== MediaType.GALLERY && m.type !== MediaType.VIDEO_POSTER && !usedUrls.has(m.url),
+      m.type !== MediaType.GALLERY &&
+      m.type !== MediaType.VIDEO_POSTER &&
+      !usedKeys.has(urlToPathKey(m.url)),
   );
 
   return unusedMedia;
 }
 
 /**
- * 判断媒体是否被文章内容引用（删除联动用）
+ * 判断媒体是否被文章引用（删除联动用）
  *
  * 视频删除时若封面（posterMediaId 指向的 media）未被任何文章引用，
  * 则连同封面 media 记录与封面文件一起删除；被引用则跳过。
  * （VIDEO_POSTER 封面一般不会被文章插入，但引用检查不能省——用户可能在文章里手动贴过这张图）
+ * 引用来源：文章正文图片 + 文章封面（coverUrl），按归一化键匹配。
  */
 export async function isMediaReferenced(mediaId: string): Promise<boolean> {
   const item = await db.select().from(media).where(eq(media.id, mediaId)).limit(1);
   const record = item[0];
   if (!record || !record.url) return false;
 
-  const rows = await db
-    .select({ id: posts.id })
-    .from(posts)
-    .where(ilike(posts.content, `%${record.url}%`))
-    .limit(1);
+  const key = urlToPathKey(record.url);
+  const rows = await db.select({ content: posts.content, coverUrl: posts.coverUrl }).from(posts);
 
-  return rows.length > 0;
+  return rows.some((post) => {
+    if (post.coverUrl && urlToPathKey(post.coverUrl) === key) return true;
+    if (post.content) {
+      for (const url of extractImageUrls(post.content)) {
+        if (urlToPathKey(url) === key) return true;
+      }
+    }
+    return false;
+  });
 }
 
 /** 批量删除媒体 */

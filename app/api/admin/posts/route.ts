@@ -7,6 +7,7 @@ import { posts } from '@/db/schema';
 import { listAllPosts, setPostTags } from '@/lib/posts/server';
 import { requireAdmin, adminDenied } from '@/lib/auth/server';
 import { notifyPostsChanged } from '@/lib/seo/server';
+import { normalizeCoverUrl } from '@/lib/media/server';
 import { POST_STATUS_VALUES, PostStatus } from '@/lib/types/posts';
 
 export const dynamic = 'force-dynamic';
@@ -32,6 +33,11 @@ export async function POST(req: Request) {
     ? body.tags.filter((t: unknown) => typeof t === 'string')
     : [];
 
+  // 封面统一存媒体库相对路径（/m/xxx），避免 CDN 直链与 media.url 前缀不一致
+  const coverUrl = await normalizeCoverUrl(
+    typeof body.coverUrl === 'string' ? body.coverUrl : null,
+  );
+
   // 创建文章 + 写入标签在同一个事务内，保证原子性
   const created = await db.transaction(async (tx) => {
     const [row] = await tx
@@ -41,7 +47,7 @@ export async function POST(req: Request) {
         slug,
         summary: typeof body.summary === 'string' ? body.summary : null,
         content: body.content,
-        coverUrl: typeof body.coverUrl === 'string' ? body.coverUrl : null,
+        coverUrl,
         status,
         featured: Boolean(body.featured),
         scheduledAt:
