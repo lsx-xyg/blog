@@ -1,7 +1,9 @@
 # ADR 0019：视频封面（VIDEO_POSTER）的孤儿处理策略
 
-- 状态：Accepted（2026-10-02）
-- 关联：S2 视频 API 层 / S3 视频相册后台
+- 状态：Implemented（2026-10-03）
+- 关联：S2 视频 API 层 / S3 视频相册后台 / Phase 4 Step C3
+- 实现：`lib/videos/server/orphans.ts` + `app/api/admin/media/orphans/route.ts` +
+  manage-videos「清理孤儿封面」入口（Phase 4 Step C3，已随 C3 提交落地）
 
 ## 背景
 

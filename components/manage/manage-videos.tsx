@@ -11,15 +11,17 @@
  * - false →「视频已删除，封面仍被引用未删除」
  */
 import { useCallback, useEffect, useState } from 'react';
-import { Archive, Clapperboard, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import { AlertTriangle, Archive, Clapperboard, Eye, Pencil, Plus, Trash2 } from 'lucide-react';
 import { AdminListPage } from '@/components/admin/list-page';
 import { CreateButton, RefreshButton } from '@/components/admin/action-buttons';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
+import { AdminModal } from '@/components/admin/modal';
 import { useToast } from '@/components/ui/toast';
 import { VideoStatus, VIDEO_STATUS_LABELS, VideoVisibility } from '@/lib/types/video';
 import { formatDuration } from '@/lib/videos/shared/video';
 import { VideoUploadDialog } from '@/components/videos/video-upload-dialog';
 import { VideoEditDialog, type EditVideoPayload } from '@/components/videos/video-edit-dialog';
+import type { OrphanPoster } from '@/lib/videos/server/orphans';
 import Image from 'next/image';
 
 type VideoItem = {
@@ -77,6 +79,15 @@ export function ManageVideos() {
   const [editingVideo, setEditingVideo] = useState<VideoItem | null>(null);
   const [deletingVideo, setDeletingVideo] = useState<VideoItem | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  // 孤儿封面清理状态（Phase 4 Step C3）
+  const [orphanOpen, setOrphanOpen] = useState(false);
+  const [orphanItems, setOrphanItems] = useState<OrphanPoster[]>([]);
+  const [orphanLoading, setOrphanLoading] = useState(false);
+  const [orphanDeleting, setOrphanDeleting] = useState(false);
+  const [orphanResults, setOrphanResults] = useState<
+    { id: string; ok: boolean; reason?: string }[] | null
+  >(null);
 
   const loadVideos = useCallback(async () => {
     setLoading(true);
@@ -167,6 +178,68 @@ export function ManageVideos() {
     status: v.status,
   });
 
+  /** 打开孤儿封面清理弹窗（拉取预览） */
+  const openOrphans = async () => {
+    setOrphanOpen(true);
+    setOrphanLoading(true);
+    setOrphanResults(null);
+    try {
+      const res = await fetch('/api/admin/media/orphans');
+      if (res.ok) {
+        const data = (await res.json()) as { items: OrphanPoster[] };
+        setOrphanItems(data.items || []);
+      } else {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        showToast(data?.error || '扫描孤儿封面失败', 'error');
+        setOrphanItems([]);
+      }
+    } catch {
+      showToast('网络异常，扫描失败', 'error');
+      setOrphanItems([]);
+    } finally {
+      setOrphanLoading(false);
+    }
+  };
+
+  /** 确认删除孤儿封面（逐条结果显示） */
+  const confirmOrphans = async () => {
+    if (orphanItems.length === 0) return;
+    setOrphanDeleting(true);
+    try {
+      const res = await fetch('/api/admin/media/orphans', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: orphanItems.map((o) => o.id) }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        showToast(data?.error || '删除失败', 'error');
+        return;
+      }
+      const data = (await res.json()) as {
+        results: { id: string; ok: boolean; reason?: string }[];
+        okCount: number;
+        failCount: number;
+      };
+      setOrphanResults(data.results);
+      // 部分失败时刷新列表，只显示还没删的（确认点 3）
+      if (data.failCount > 0) {
+        showToast(
+          `删除 ${data.okCount} 个，${data.failCount} 个跳过（原因见列表）`,
+          data.okCount > 0 ? 'success' : 'error',
+        );
+      } else {
+        showToast(`已删除 ${data.okCount} 个孤儿封面`, 'success');
+      }
+      // 无论成功失败都刷新一次（孤儿集合已变化）
+      loadVideos();
+    } catch {
+      showToast('网络异常，删除失败', 'error');
+    } finally {
+      setOrphanDeleting(false);
+    }
+  };
+
   /** 操作按钮组（桌面表格列 / 移动卡片操作行共用） */
   const renderActions = (v: VideoItem) => (
     <div className="flex items-center gap-1">
@@ -202,6 +275,15 @@ export function ManageVideos() {
       description="个人生活视频相册。支持 mp4 / webm，上传后默认为草稿，发布后才在前台展示。"
       actions={
         <>
+          <button
+            type="button"
+            onClick={() => void openOrphans()}
+            title="清理孤儿封面（未被视频/文章引用的封面图片）"
+            className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
+          >
+            <AlertTriangle className="h-4 w-4" />
+            <span className="hidden sm:inline">清理孤儿封面</span>
+          </button>
           <CreateButton
             onClick={() => setUploadOpen(true)}
             label="上传视频"
@@ -423,6 +505,120 @@ export function ManageVideos() {
           onConfirm={handleDelete}
           onClose={() => setDeletingVideo(null)}
         />
+
+        {/* 孤儿封面清理（Phase 4 Step C3）：预览 + 确认删除 + 逐条结果 */}
+        <AdminModal
+          open={orphanOpen}
+          title="清理孤儿封面"
+          onClose={() => setOrphanOpen(false)}
+          closeOnBackdrop={!orphanDeleting}
+          closeDisabled={orphanDeleting}
+          maxWidth="lg"
+          footer={
+            <>
+              <button
+                type="button"
+                onClick={() => setOrphanOpen(false)}
+                disabled={orphanDeleting}
+                className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50"
+              >
+                关闭
+              </button>
+              {orphanResults ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOrphanResults(null);
+                    void openOrphans();
+                  }}
+                  className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent"
+                >
+                  重新扫描
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void confirmOrphans()}
+                  disabled={orphanItems.length === 0 || orphanDeleting}
+                  className="inline-flex items-center gap-1.5 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-white hover:bg-destructive/90 disabled:opacity-50"
+                >
+                  {orphanDeleting ? (
+                    <>
+                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                      删除中…
+                    </>
+                  ) : (
+                    <>删除 {orphanItems.length} 个孤儿封面</>
+                  )}
+                </button>
+              )}
+            </>
+          }
+        >
+          <div className="max-h-[60vh] overflow-y-auto pr-1">
+            {orphanLoading ? (
+              <div className="space-y-3 py-2">
+                {[0, 1, 2].map((i) => (
+                  <div key={i} className="h-14 animate-pulse rounded-lg bg-muted" />
+                ))}
+              </div>
+            ) : orphanResults ? (
+              <div className="space-y-2 py-1">
+                {orphanResults.map((r) => (
+                  <div
+                    key={r.id}
+                    className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm"
+                  >
+                    <span className="truncate pr-3">{r.reason || '已删除'}</span>
+                    <span
+                      className={
+                        r.ok
+                          ? 'shrink-0 text-green-600 dark:text-green-400'
+                          : 'shrink-0 text-muted-foreground'
+                      }
+                    >
+                      {r.ok ? '✓ 已删除' : `跳过（${r.reason}）`}
+                    </span>
+                  </div>
+                ))}
+                {orphanResults.length === 0 ? (
+                  <p className="py-4 text-center text-sm text-muted-foreground">没有孤儿封面</p>
+                ) : null}
+              </div>
+            ) : orphanItems.length === 0 ? (
+              <div className="flex flex-col items-center gap-2 py-10 text-center">
+                <AlertTriangle className="h-8 w-8 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  没有孤儿封面。所有 VIDEO_POSTER 都被视频或文章引用。
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2 py-1">
+                {orphanItems.map((o) => (
+                  <div
+                    key={o.id}
+                    className="flex items-center gap-3 rounded-lg border border-border px-3 py-2"
+                  >
+                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-muted">
+                      {o.url ? (
+                        <Image src={o.url} alt="" fill sizes="40px" className="object-cover" />
+                      ) : (
+                        <Clapperboard className="absolute inset-0 m-auto h-4 w-4 text-muted-foreground" />
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm text-foreground">{o.storageKey || o.id}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatSize(o.size)} · {new Date(o.createdAt).toLocaleString('zh-CN')}
+                      </p>
+                    </div>
+                    <span className="shrink-0 text-xs text-muted-foreground">未引用</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </AdminModal>
       </>
     </AdminListPage>
   );
