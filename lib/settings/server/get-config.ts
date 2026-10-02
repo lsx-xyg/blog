@@ -38,7 +38,8 @@ export async function getConfig<K extends RegistryKey>(
     dbResolved = decryptIfAvailable(dbVal);
   }
 
-  const envVal = def.env ? process.env[def.env] : undefined;
+  // 环境变量：全大写枚举名优先，小写名做兜底校验（用户约定）
+  const envVal = def.env ? (process.env[def.env] ?? process.env[def.env.toLowerCase()]) : undefined;
 
   // 合并：env > DB > default。
   // 注意 DB 值可能是 JSONB 反序列化出的布尔 false / 0 / 空串等 falsy 值，

@@ -354,6 +354,11 @@ export const registry = {
     env: 'STORAGE_BINDING_BACKUP',
     default: '',
   },
+  'storage.binding.video': {
+    key: 'storage.binding.video',
+    env: 'STORAGE_BINDING_VIDEO',
+    default: '',
+  },
   // === 私有存储配置（用于备份等敏感数据）===
   'storagePrivate.driver': {
     key: 'storage_private.driver',

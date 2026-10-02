@@ -122,24 +122,25 @@ export async function upsertProfile(input: {
     throw new Error(`不支持的驱动类型：${input.driver}`);
   }
 
-  // 合并 secret：调用方未传明文（boolean/undefined）时保留已存的加密值
+  // 合并 secret：调用方未传明文（boolean/undefined）时保留已存值。
+  // 旧值必须先解密再参与合并：DB 里存的是密文，若直接复用旧密文，
+  // encryptConfig 会再加密一次 → 双重加密，凭证永久损坏（读取后仍是密文）。
   const existing = await db
     .select()
     .from(storageProfiles)
     .where(eq(storageProfiles.name, input.name))
     .limit(1);
-  const oldConfig = existing[0] ? existing[0].config : {};
+  const oldConfig = (
+    existing[0] ? decryptConfig(existing[0].driver, existing[0].config) : {}
+  ) as Record<string, unknown>;
   const secrets = SECRET_FIELDS[input.driver] ?? [];
   const merged: Record<string, unknown> = { ...input.config };
   for (const field of secrets) {
     const incoming = merged[field];
-    if (typeof incoming !== 'string') {
-      // 未提供明文：保留旧值；若明确传了空串且旧值存在，视为移除该 secret
-      if (incoming === '' && oldConfig[field] !== undefined) {
-        delete merged[field];
-      } else if (oldConfig[field] !== undefined) {
-        merged[field] = oldConfig[field];
-      }
+    // 非 string（true/false/undefined）= 保持旧值；string 明文 = 覆盖（统一走 encryptConfig 加密）。
+    // 显式传空串（'' 是 string）会覆盖旧值 → encryptConfig 对空串跳过 → 存空 = 移除该 secret。
+    if (typeof incoming !== 'string' && oldConfig[field] !== undefined) {
+      merged[field] = oldConfig[field];
     }
   }
 
@@ -228,9 +229,13 @@ export async function ensureStorageProfilesSeeded(): Promise<void> {
 
     await setChannelBinding(StorageChannel.UPLOAD, pubName);
     await setChannelBinding(StorageChannel.GALLERY, pubName);
+    // 视频通道与公开通道同档案：本地开发=LOCAL（multipart 降级），生产用户按需改绑 S3 档案
+    await setChannelBinding(StorageChannel.VIDEO, pubName);
     await setChannelBinding(StorageChannel.BACKUP, backupBinding);
 
-    console.log(`[storage] 已从旧配置播种档案：${pubName}（公开/相册）+ ${backupBinding}（备份）`);
+    console.log(
+      `[storage] 已从旧配置播种档案：${pubName}（公开/相册/视频）+ ${backupBinding}（备份）`,
+    );
   }
 
   seeded = true;
