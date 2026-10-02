@@ -4,7 +4,7 @@ import { headers } from 'next/headers';
 import { auth } from '@/lib/auth/server';
 import { getAdminPathAsync } from '@/lib/admin/server';
 import { isAdminUser } from '@/lib/shared';
-import { ManageMedia } from '@/components/manage/manage-media';
+import { MediaTabs } from '@/components/media/media-tabs';
 import { AdminBreadcrumb } from '@/components/admin/admin-breadcrumb';
 
 export const dynamic = 'force-dynamic';
@@ -24,7 +24,7 @@ export default async function AdminMediaPage({
   return (
     <div className="mx-auto max-w-6xl px-4 py-6 md:px-6 md:py-8 animate-page-enter">
       <AdminBreadcrumb current="媒体库" adminPath={adminPath} />
-      <ManageMedia />
+      <MediaTabs />
     </div>
   );
 }
