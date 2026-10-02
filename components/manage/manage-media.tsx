@@ -1,19 +1,10 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import {
-  Upload,
-  Trash2,
-  ImageIcon,
-  RefreshCw,
-  AlertTriangle,
-  Edit3,
-  Star,
-  X,
-  ZoomIn,
-} from 'lucide-react';
+import { Upload, Trash2, ImageIcon, AlertTriangle, Edit3, Star, X, ZoomIn } from 'lucide-react';
 import { ConfirmDialog } from '@/components/shared/confirm-dialog';
 import { AdminModal } from '@/components/admin/modal';
+import { useToast } from '@/components/ui/toast';
 import { MediaType, MEDIA_TYPE_LABELS } from '@/lib/types/media';
 import { AdminListPage } from '@/components/admin/list-page';
 import { useMediaUpload } from '@/components/media/use-media-upload';
@@ -55,6 +46,7 @@ type MediaItem = {
  * - 未使用图片清理
  */
 export function ManageMedia() {
+  const { showToast } = useToast();
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -62,7 +54,7 @@ export function ManageMedia() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [pageSize] = useState(20);
-  const [showUnusedCleanup, setShowUnusedCleanup] = useState(false);
+  const [unusedCleanupOpen, setUnusedCleanupOpen] = useState(false);
   const [unusedItems, setUnusedItems] = useState<MediaItem[]>([]);
   const [unusedLoading, setUnusedLoading] = useState(false);
 
@@ -274,15 +266,22 @@ export function ManageMedia() {
 
   const doCleanupUnusedMedia = async () => {
     try {
-      await fetch('/api/admin/media/unused', {
+      const res = await fetch('/api/admin/media/unused', {
         method: 'DELETE',
       });
-      setShowUnusedCleanup(false);
-      setUnusedItems([]);
+      if (!res.ok) {
+        const data = (await res.json().catch(() => null)) as { error?: string } | null;
+        showToast(data?.error || '清理失败，请重试', 'error');
+        return;
+      }
+      const data = (await res.json()) as { deleted?: number };
+      showToast(`已删除 ${data.deleted ?? 0} 张未使用图片`, 'success');
+      // 重新扫描弹窗内容（剩余/空态）+ 刷新主列表
+      await loadUnusedMedia();
       await loadItems();
     } catch (e) {
       console.error('清理未使用图片失败：', e);
-      alert('清理失败，请重试');
+      showToast('清理失败，请重试', 'error');
     }
   };
 
@@ -327,8 +326,8 @@ export function ManageMedia() {
             <button
               type="button"
               onClick={() => {
-                setShowUnusedCleanup(!showUnusedCleanup);
-                if (!showUnusedCleanup) loadUnusedMedia();
+                setUnusedCleanupOpen(true);
+                loadUnusedMedia();
               }}
               className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
             >
@@ -374,73 +373,6 @@ export function ManageMedia() {
             : null
         }
       >
-        {/* 未使用图片清理面板（动画展开/收起） */}
-        <div
-          className={`grid transition-all duration-300 ease-in-out ${
-            showUnusedCleanup
-              ? 'grid-rows-[1fr] opacity-100 mb-6'
-              : 'grid-rows-[0fr] opacity-0 mb-0'
-          }`}
-        >
-          <div className="overflow-hidden">
-            <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-4">
-              <div className="mb-3 flex items-center justify-between">
-                <h3 className="flex items-center gap-2 text-sm font-semibold text-destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  未使用图片清理
-                </h3>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={loadUnusedMedia}
-                    disabled={unusedLoading}
-                    className="flex items-center gap-1 rounded-md border border-input px-2 py-1 text-xs hover:bg-accent transition-colors"
-                  >
-                    <RefreshCw className={`h-3 w-3 ${unusedLoading ? 'animate-spin' : ''}`} />
-                    刷新
-                  </button>
-                  <button
-                    type="button"
-                    onClick={cleanupUnusedMedia}
-                    disabled={unusedItems.length === 0}
-                    className="rounded-md bg-destructive px-2 py-1 text-xs text-destructive-foreground hover:bg-destructive/90 disabled:opacity-50 transition-colors"
-                  >
-                    全部删除 ({unusedItems.length})
-                  </button>
-                </div>
-              </div>
-              {unusedLoading ? (
-                <p className="text-sm text-muted-foreground">扫描中…</p>
-              ) : unusedItems.length === 0 ? (
-                <p className="text-sm text-muted-foreground">没有发现未使用的图片 🎉</p>
-              ) : (
-                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 md:grid-cols-6">
-                  {unusedItems.slice(0, 12).map((item) => (
-                    <div
-                      key={item.id}
-                      className="relative aspect-square overflow-hidden rounded border animate-fade-in-up"
-                    >
-                      <Image
-                        src={item.url}
-                        alt={item.title || '未使用图片'}
-                        width={200}
-                        height={200}
-                        className="h-full w-full object-cover"
-                        unoptimized
-                      />
-                    </div>
-                  ))}
-                  {unusedItems.length > 12 && (
-                    <div className="flex aspect-square items-center justify-center rounded border bg-muted text-sm text-muted-foreground">
-                      +{unusedItems.length - 12}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
         {/* 媒体网格（key 变化时触发切换动画） */}
         <div
           key={`grid-${typeFilter}-${search}-${page}`}
@@ -696,6 +628,74 @@ export function ManageMedia() {
           />
         </div>
       )}
+
+      {/* 未使用图片清理 dialog（对齐视频 Tab 孤儿清理：点击出弹窗展示数据） */}
+      <AdminModal
+        open={unusedCleanupOpen}
+        title="清理未使用图片"
+        onClose={() => setUnusedCleanupOpen(false)}
+        maxWidth="lg"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setUnusedCleanupOpen(false)}
+              className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent"
+            >
+              关闭
+            </button>
+            <button
+              type="button"
+              onClick={cleanupUnusedMedia}
+              disabled={unusedItems.length === 0 || unusedLoading}
+              className="inline-flex items-center gap-1.5 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-white hover:bg-destructive/90 disabled:opacity-50"
+            >
+              <Trash2 className="h-4 w-4" />
+              全部删除 ({unusedItems.length})
+            </button>
+          </>
+        }
+      >
+        <div className="max-h-[60vh] overflow-y-auto pr-1">
+          {unusedLoading ? (
+            <div className="space-y-3 py-2">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-14 animate-pulse rounded-lg bg-muted" />
+              ))}
+            </div>
+          ) : unusedItems.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 py-10 text-center">
+              <AlertTriangle className="h-8 w-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">没有发现未使用的图片 🎉</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+              {unusedItems.map((item) => (
+                <div key={item.id} className="overflow-hidden rounded-lg border border-border">
+                  <div className="relative aspect-square overflow-hidden bg-muted">
+                    <Image
+                      src={item.url}
+                      alt={item.title || '未使用图片'}
+                      fill
+                      sizes="160px"
+                      className="object-cover"
+                      unoptimized
+                    />
+                  </div>
+                  <div className="px-2 py-1.5">
+                    <p className="truncate text-xs font-medium text-foreground">
+                      {item.title || '未命名'}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground">
+                      {formatSize(item.size)} · {item.storageDriver}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </AdminModal>
 
       <UploadDialog
         open={uploadOpen}
