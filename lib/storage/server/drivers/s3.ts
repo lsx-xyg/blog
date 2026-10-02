@@ -4,7 +4,13 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
 } from '@aws-sdk/client-s3';
-import type { StorageDriverInterface, UploadResult } from '@/lib/types/storage';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import type {
+  StorageDriverInterface,
+  UploadResult,
+  PresignedUploadOptions,
+  PresignedUploadResult,
+} from '@/lib/types/storage';
 import { generateKey } from '../utils';
 import type { StorageSettings } from '@/lib/types/settings';
 import { trimTrailingSlashes } from '@/lib/shared/utils';
@@ -24,6 +30,9 @@ import { trimTrailingSlashes } from '@/lib/shared/utils';
  */
 export class S3StorageDriver implements StorageDriverInterface {
   name = 's3' as const;
+
+  /** S3 支持预签名直传（大文件视频绕过 serverless 请求体限制） */
+  readonly supportsPresignedUpload = true;
 
   private config: StorageSettings['s3'];
   private client: S3Client;
@@ -130,5 +139,46 @@ export class S3StorageDriver implements StorageDriverInterface {
       throw new Error(`S3 下载失败：对象为空 ${key}`);
     }
     return Buffer.from(bytes);
+  }
+
+  /**
+   * 获取预签名上传 URL（前端 PUT 直传，绕过 serverless 请求体限制）
+   *
+   * key 缺省时服务端生成（videos/YYYY/MM/uuid.mp4 前缀，与图片 upload 区分）；
+   * 返回的 key 供前端直传后回调保存元数据 / 删除。
+   */
+  async getPresignedUploadUrl(options: PresignedUploadOptions): Promise<PresignedUploadResult> {
+    if (!this.bucket) {
+      throw new Error('S3 档案未配置 bucket');
+    }
+    const key = options.key ?? generateKey('video.mp4');
+    const contentType = options.contentType || 'application/octet-stream';
+    const expiresIn = options.expiresIn ?? 600;
+
+    const command = new PutObjectCommand({
+      Bucket: this.bucket,
+      Key: this.buildPath(key),
+      ContentType: contentType,
+    });
+    const presignedUrl = await getSignedUrl(this.client, command, { expiresIn });
+
+    return {
+      presignedUrl,
+      key,
+      // 未配 publicBase（私有 bucket）时为空串，播放用 getPresignedDownloadUrl
+      url: this.publicUrlOrEmpty(key),
+    };
+  }
+
+  /** 获取预签名下载 URL（私有 bucket 播放/下载用） */
+  async getPresignedDownloadUrl(key: string, expiresIn = 3600): Promise<string> {
+    if (!this.bucket) {
+      throw new Error('S3 档案未配置 bucket');
+    }
+    const command = new GetObjectCommand({
+      Bucket: this.bucket,
+      Key: this.buildPath(key),
+    });
+    return getSignedUrl(this.client, command, { expiresIn });
   }
 }

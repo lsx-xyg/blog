@@ -4,7 +4,7 @@
  *   业务表：posts / tags / post_tags / media / media_tags / settings / storage_profiles /
  *           friend_links / backup_records / backup_audit_logs /
  *           guiders / user_guide_progress / user_events / guide_step_events
- * - 枚举值全大写（post_status / media_type / storage_driver / backup_trigger / backup_audit_action / guide_status / guide_progress_status）
+ * - 枚举值全大写（post_status / media_type / storage_driver / backup_trigger / backup_audit_action / guide_status / guide_progress_status / video_status / video_visibility / video_source）
  * - 标签 name 原样存储（大小写敏感），slug 唯一冲突加后缀
  */
 import { BackupTrigger, BackupAuditAction } from '@/lib/types/backup';
@@ -13,6 +13,7 @@ import type { GuideStep, GuideTargetCondition } from '@/lib/types/guides';
 import { MediaType } from '@/lib/types/media';
 import { PostStatus } from '@/lib/types/posts';
 import { StorageDriverType } from '@/lib/types/storage';
+import { VideoStatus, VideoVisibility, VideoSource } from '@/lib/types/video';
 import {
   pgTable,
   pgEnum,
@@ -43,6 +44,12 @@ export const backupAuditAction = pgEnum('backup_audit_action', BackupAuditAction
 export const guideStatus = pgEnum('guide_status', GuideStatus);
 
 export const guideProgressStatus = pgEnum('guide_progress_status', GuideProgressStatus);
+
+export const videoStatus = pgEnum('video_status', VideoStatus);
+
+export const videoVisibility = pgEnum('video_visibility', VideoVisibility);
+
+export const videoSource = pgEnum('video_source', VideoSource);
 
 /* ---------- Better Auth 核心表（列名 camelCase，与适配器对齐；user 表扩展 isAdmin） ---------- */
 
@@ -195,6 +202,71 @@ export const mediaTags = pgTable(
   (t) => [
     primaryKey({ columns: [t.mediaId, t.tagId] }),
     index('media_tags_tag_id_idx').on(t.tagId),
+  ],
+);
+
+/* ---------- albums 视频相册表（扩展点 1：相册/合集，仅数据模型，无 UI） ---------- */
+
+export const albums = pgTable(
+  'albums',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    title: text('title').notNull(),
+    slug: text('slug').notNull().unique(),
+    description: text('description'),
+    coverMediaId: uuid('cover_media_id').references(() => media.id, { onDelete: 'set null' }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('albums_slug_idx').on(t.slug)],
+);
+
+/* ---------- videos 视频相册表（个人生活视频相册） ----------
+ *
+ * 定位：非短视频平台，管理员上传的原创视频（mp4/webm），前台瀑布流 + 播放页。
+ * 存储：公开直链（url 存 S3 publicBase / LOCAL /uploads/ 直链，不走 /m 图片代理——
+ *       serverless 函数流式代理大视频有超时风险）；storageKey + storageDriver 保留，
+ *       便于后续按档案重新生成 URL。
+ * 封面：posterMediaId 引用 media 表（封面是图片，走现有图片上传链路；
+ *       删除视频不级联删封面，交给「未使用图片清理」统一处理）。
+ * 扩展点预留：albumId（相册）、tags（标签）、visibility（可见性）、viewCount（播放统计）、
+ *            source（来源）、thumbnails（多缩略图）、takenAt（拍摄时间）、location（地点）。
+ */
+export const videos = pgTable(
+  'videos',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    title: text('title'),
+    description: text('description'),
+    storageKey: text('storage_key'),
+    storageDriver: storageDriverType('storage_driver').notNull().default(StorageDriverType.LOCAL),
+    url: text('url'), // 公开直链（无 publicBase 的私有 bucket 为空串，播放时用预签名 URL）
+    posterMediaId: uuid('poster_media_id').references(() => media.id, { onDelete: 'set null' }),
+    mimeType: text('mime_type'),
+    size: integer('size'), // 字节
+    durationSeconds: integer('duration_seconds'),
+    width: integer('width'),
+    height: integer('height'),
+    status: videoStatus('status').notNull().default(VideoStatus.DRAFT),
+    sortOrder: integer('sort_order').notNull().default(0),
+    publishedAt: timestamp('published_at', { withTimezone: true }),
+    takenAt: timestamp('taken_at', { withTimezone: true }),
+    location: text('location'),
+    tags: text('tags').array(),
+    visibility: videoVisibility('visibility').notNull().default(VideoVisibility.PUBLIC),
+    viewCount: integer('view_count').notNull().default(0),
+    albumId: uuid('album_id').references(() => albums.id, { onDelete: 'set null' }),
+    source: videoSource('source').notNull().default(VideoSource.UPLOAD),
+    thumbnails: jsonb('thumbnails').$type<string[]>(),
+    uploadedBy: text('uploaded_by'),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    index('videos_status_idx').on(t.status),
+    index('videos_published_at_idx').on(t.publishedAt),
+    index('videos_visibility_idx').on(t.visibility),
+    index('videos_album_id_idx').on(t.albumId),
+    index('videos_created_at_idx').on(t.createdAt),
   ],
 );
 
@@ -376,6 +448,10 @@ export type Tag = typeof tags.$inferSelect;
 export type NewTag = typeof tags.$inferInsert;
 export type Media = typeof media.$inferSelect;
 export type NewMedia = typeof media.$inferInsert;
+export type Album = typeof albums.$inferSelect;
+export type NewAlbum = typeof albums.$inferInsert;
+export type Video = typeof videos.$inferSelect;
+export type NewVideo = typeof videos.$inferInsert;
 export type Setting = typeof settings.$inferSelect;
 export type NewSetting = typeof settings.$inferInsert;
 export type StorageProfile = typeof storageProfiles.$inferSelect;

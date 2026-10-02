@@ -1,4 +1,10 @@
-import type { StorageDriverInterface, UploadResult, GithubUrlStyle } from '@/lib/types/storage';
+import type {
+  StorageDriverInterface,
+  UploadResult,
+  GithubUrlStyle,
+  PresignedUploadOptions,
+  PresignedUploadResult,
+} from '@/lib/types/storage';
 import { GithubUrlStyle as UrlStyle } from '@/lib/types/storage';
 import { generateKey } from '../utils';
 import { StorageSettings } from '@/lib/types/settings';
@@ -20,6 +26,12 @@ import { StorageSettings } from '@/lib/types/settings';
  */
 export class GithubStorageDriver implements StorageDriverInterface {
   name = 'github' as const;
+
+  /**
+   * GitHub 不适合大视频：仓库 API 单文件限制 25MB 且文件永久留在仓库历史，
+   * 视频一律拒绝走本驱动（业务层可查此标记回退 multipart；视频上传接口再显式拦截）。
+   */
+  readonly supportsPresignedUpload = false;
 
   private config: StorageSettings['github'];
 
@@ -250,5 +262,17 @@ export class GithubStorageDriver implements StorageDriverInterface {
     }
 
     throw new Error('GitHub Blob API 返回格式异常');
+  }
+
+  getPresignedUploadUrl(_options: PresignedUploadOptions): Promise<PresignedUploadResult> {
+    throw new Error(
+      'GITHUB 驱动不支持预签名直传，且不适合存储视频（单文件 25MB 限制 + 仓库历史膨胀），请改用 S3 档案',
+    );
+  }
+
+  async getPresignedDownloadUrl(_key: string, _expiresIn?: number): Promise<string> {
+    throw new Error(
+      'GITHUB 驱动不支持预签名下载：公开仓库请直接用 getUrl()，私有仓库请用 download()',
+    );
   }
 }

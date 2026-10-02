@@ -43,6 +43,45 @@ export interface StorageDriverInterface {
   download(key: string): Promise<Buffer>;
   /** 驱动名称 */
   name: string;
+  /**
+   * 是否支持预签名直传上传（业务分叉点：只查此标记，不判断驱动类型）
+   *
+   * - true（S3）：上传走「服务端发预签名 URL → 前端直传 → 回调落库」
+   * - false（LOCAL/GITHUB/WEBDAV）：走普通 multipart API 上传（服务端中转）
+   */
+  readonly supportsPresignedUpload: boolean;
+  /**
+   * 获取预签名上传 URL（仅 supportsPresignedUpload=true 的驱动实现）
+   *
+   * 用途：Vercel serverless 有请求体限制，视频等大文件由前端 PUT 直传对象存储。
+   * 不支持的驱动抛错，业务代码应先查 supportsPresignedUpload。
+   */
+  getPresignedUploadUrl(options: PresignedUploadOptions): Promise<PresignedUploadResult>;
+  /**
+   * 获取预签名下载 URL（私有 bucket / 无 publicBase 场景的播放与下载）
+   * 不支持的驱动抛错。
+   */
+  getPresignedDownloadUrl(key: string, expiresIn?: number): Promise<string>;
+}
+
+/** 预签名上传选项 */
+export interface PresignedUploadOptions {
+  /** 指定存储键（缺省由驱动生成）。服务端生成后返回，前端直传后用同一个 key 回调保存元数据 */
+  key?: string;
+  /** Content-Type（S3 直传要求与 PUT 请求头一致） */
+  contentType: string;
+  /** URL 有效期（秒），默认 600 */
+  expiresIn?: number;
+}
+
+/** 预签名上传结果 */
+export interface PresignedUploadResult {
+  /** 预签名上传 URL（前端 PUT 直传用） */
+  presignedUrl: string;
+  /** 存储键（上传后回调保存元数据 / 删除用） */
+  key: string;
+  /** 上传完成后的访问 URL（公开直链；私有 bucket 未配 publicBase 时为空串） */
+  url: string;
 }
 /** 支持的图片 MIME 类型 */
 

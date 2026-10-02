@@ -1,6 +1,11 @@
 import { mkdir, writeFile, unlink, readFile } from 'fs/promises';
 import { join, dirname } from 'path';
-import type { StorageDriverInterface, UploadResult } from '@/lib/types/storage';
+import type {
+  StorageDriverInterface,
+  UploadResult,
+  PresignedUploadOptions,
+  PresignedUploadResult,
+} from '@/lib/types/storage';
 import { generateKey } from '../utils';
 import type { StorageSettings } from '@/lib/types/settings';
 
@@ -16,6 +21,9 @@ import type { StorageSettings } from '@/lib/types/settings';
  */
 export class LocalStorageDriver implements StorageDriverInterface {
   name = 'local' as const;
+
+  /** LOCAL 无独立 HTTP 端点，不支持预签名直传（走普通 multipart API 中转） */
+  readonly supportsPresignedUpload = false;
 
   private uploadDirConfig: string;
   private directoryConfig: string;
@@ -78,5 +86,13 @@ export class LocalStorageDriver implements StorageDriverInterface {
     const fullPath = this.buildPath(key);
     const filePath = join(this.uploadDir, fullPath);
     return readFile(filePath);
+  }
+
+  getPresignedUploadUrl(_options: PresignedUploadOptions): Promise<PresignedUploadResult> {
+    throw new Error('LOCAL 驱动不支持预签名直传：本地开发请走普通 multipart 上传接口');
+  }
+
+  async getPresignedDownloadUrl(_key: string, _expiresIn?: number): Promise<string> {
+    throw new Error('LOCAL 驱动不支持预签名下载：请直接用 getUrl() 访问');
   }
 }

@@ -1,4 +1,9 @@
-import type { StorageDriverInterface, UploadResult } from '@/lib/types/storage';
+import type {
+  StorageDriverInterface,
+  UploadResult,
+  PresignedUploadOptions,
+  PresignedUploadResult,
+} from '@/lib/types/storage';
 import { generateKey } from '../utils';
 import type { StorageSettings } from '@/lib/types/settings';
 import { stripEdgeSlashes, trimTrailingSlashes } from '@/lib/shared/utils';
@@ -14,6 +19,9 @@ import { stripEdgeSlashes, trimTrailingSlashes } from '@/lib/shared/utils';
  */
 export class WebdavStorageDriver implements StorageDriverInterface {
   name = 'webdav' as const;
+
+  /** WebDAV 无公网直传端点，不支持预签名直传（视频不走本驱动） */
+  readonly supportsPresignedUpload = false;
 
   private config: StorageSettings['webdav'];
 
@@ -134,5 +142,13 @@ export class WebdavStorageDriver implements StorageDriverInterface {
       throw new Error(`WebDAV 下载失败：${res.status}（key: ${key}）`);
     }
     return Buffer.from(await res.arrayBuffer());
+  }
+
+  getPresignedUploadUrl(_options: PresignedUploadOptions): Promise<PresignedUploadResult> {
+    throw new Error('WEBDAV 驱动不支持预签名直传（无公网直传端点），视频请改用 S3 档案');
+  }
+
+  async getPresignedDownloadUrl(_key: string, _expiresIn?: number): Promise<string> {
+    throw new Error('WEBDAV 驱动不支持预签名下载：请走服务端 download()');
   }
 }
