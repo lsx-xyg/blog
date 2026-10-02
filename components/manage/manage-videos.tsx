@@ -270,356 +270,363 @@ export function ManageVideos() {
   );
 
   return (
-    <AdminListPage
-      title="视频"
-      description="个人生活视频相册。支持 mp4 / webm，上传后默认为草稿，发布后才在前台展示。"
-      actions={
-        <>
-          <button
-            type="button"
-            onClick={() => void openOrphans()}
-            title="清理孤儿封面（未被视频/文章引用的封面图片）"
-            className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
-          >
-            <AlertTriangle className="h-4 w-4" />
-            <span className="hidden sm:inline">清理孤儿封面</span>
-          </button>
-          <CreateButton
-            onClick={() => setUploadOpen(true)}
-            label="上传视频"
-            icon={Plus}
-            title="上传视频（mp4 / webm）"
-          />
-          <RefreshButton onClick={loadVideos} loading={loading} />
-        </>
-      }
-      search={{
-        value: search,
-        onChange: (v) => {
-          setSearch(v);
-          setPage(1);
-        },
-        placeholder: '搜索视频标题…',
-      }}
-      filters={
-        <div className="ml-auto flex items-center gap-2">
-          <select
-            value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value as VideoStatus | 'ALL');
-              setPage(1);
-            }}
-            className="shrink-0 rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="ALL">全部状态</option>
-            {(Object.keys(VIDEO_STATUS_LABELS) as VideoStatus[]).map((s) => (
-              <option key={s} value={s}>
-                {VIDEO_STATUS_LABELS[s]}
-              </option>
-            ))}
-          </select>
-        </div>
-      }
-      loading={loading}
-      empty={
-        items.length === 0
-          ? {
-              icon: <Clapperboard className="h-12 w-12" />,
-              title: search || statusFilter !== 'ALL' ? '没有找到匹配的视频' : '还没有视频',
-              description:
-                search || statusFilter !== 'ALL' ? undefined : '点击右上角「上传视频」上传第一条吧',
-            }
-          : null
-      }
-    >
-      <>
-        {/* 桌面端：表格（与其他管理页统一样式） */}
-        <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-card">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                  封面
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                  标题
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                  时长
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                  大小
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                  状态
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
-                  创建时间
-                </th>
-                <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
-                  操作
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((v, rowIndex) => (
-                <tr
-                  key={v.id}
-                  className="border-b border-border/50 last:border-0 animate-fade-in-up"
-                  style={{ animationDelay: `${Math.min(rowIndex * 30, 300)}ms` }}
-                >
-                  <td className="px-4 py-3">
-                    {v.posterUrl ? (
-                      <Image
-                        src={v.posterUrl}
-                        alt={v.title || '视频封面'}
-                        width={96}
-                        height={54}
-                        className="h-12 w-20 rounded object-cover"
-                        unoptimized
-                      />
-                    ) : (
-                      <div className="flex h-12 w-20 items-center justify-center rounded bg-muted text-muted-foreground">
-                        <Clapperboard className="h-5 w-5" />
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 font-medium text-foreground">
-                    {v.title || '未命名视频'}
-                  </td>
-                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
-                    {formatDuration(v.durationSeconds)}
-                  </td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">{formatSize(v.size)}</td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-block rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[v.status]}`}
-                    >
-                      {VIDEO_STATUS_LABELS[v.status]}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-sm text-muted-foreground">
-                    {new Date(v.createdAt).toLocaleString('zh-CN', { hour12: false })}
-                  </td>
-                  <td className="px-4 py-3 text-right">{renderActions(v)}</td>
-                </tr>
+    <>
+      <AdminListPage
+        title="视频"
+        description="个人生活视频相册。支持 mp4 / webm，上传后默认为草稿，发布后才在前台展示。"
+        actions={
+          <>
+            <button
+              type="button"
+              onClick={() => void openOrphans()}
+              title="清理孤儿封面（未被视频/文章引用的封面图片）"
+              className="inline-flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2 text-sm font-medium transition-colors hover:bg-accent"
+            >
+              <AlertTriangle className="h-4 w-4" />
+              <span className="hidden sm:inline">清理孤儿封面</span>
+            </button>
+            <CreateButton
+              onClick={() => setUploadOpen(true)}
+              label="上传视频"
+              icon={Plus}
+              title="上传视频（mp4 / webm）"
+            />
+            <RefreshButton onClick={loadVideos} loading={loading} />
+          </>
+        }
+        search={{
+          value: search,
+          onChange: (v) => {
+            setSearch(v);
+            setPage(1);
+          },
+          placeholder: '搜索视频标题…',
+        }}
+        filters={
+          <div className="ml-auto flex items-center gap-2">
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value as VideoStatus | 'ALL');
+                setPage(1);
+              }}
+              className="shrink-0 rounded-lg border border-input bg-background px-3 py-2 text-sm transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="ALL">全部状态</option>
+              {(Object.keys(VIDEO_STATUS_LABELS) as VideoStatus[]).map((s) => (
+                <option key={s} value={s}>
+                  {VIDEO_STATUS_LABELS[s]}
+                </option>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </select>
+          </div>
+        }
+        loading={loading}
+        empty={
+          items.length === 0
+            ? {
+                icon: <Clapperboard className="h-12 w-12" />,
+                title: search || statusFilter !== 'ALL' ? '没有找到匹配的视频' : '还没有视频',
+                description:
+                  search || statusFilter !== 'ALL'
+                    ? undefined
+                    : '点击右上角「上传视频」上传第一条吧',
+              }
+            : null
+        }
+      >
+        <>
+          {/* 桌面端：表格（与其他管理页统一样式） */}
+          <div className="hidden md:block overflow-hidden rounded-xl border border-border bg-card">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border bg-muted/50">
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    封面
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    标题
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    时长
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    大小
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    状态
+                  </th>
+                  <th className="px-4 py-3 text-left text-sm font-medium text-muted-foreground">
+                    创建时间
+                  </th>
+                  <th className="px-4 py-3 text-right text-sm font-medium text-muted-foreground">
+                    操作
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((v, rowIndex) => (
+                  <tr
+                    key={v.id}
+                    className="border-b border-border/50 last:border-0 animate-fade-in-up"
+                    style={{ animationDelay: `${Math.min(rowIndex * 30, 300)}ms` }}
+                  >
+                    <td className="px-4 py-3">
+                      {v.posterUrl ? (
+                        <Image
+                          src={v.posterUrl}
+                          alt={v.title || '视频封面'}
+                          width={96}
+                          height={54}
+                          className="h-12 w-20 rounded object-cover"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex h-12 w-20 items-center justify-center rounded bg-muted text-muted-foreground">
+                          <Clapperboard className="h-5 w-5" />
+                        </div>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 font-medium text-foreground">
+                      {v.title || '未命名视频'}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
+                      {formatDuration(v.durationSeconds)}
+                    </td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                      {formatSize(v.size)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[v.status]}`}
+                      >
+                        {VIDEO_STATUS_LABELS[v.status]}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground">
+                      {new Date(v.createdAt).toLocaleString('zh-CN', { hour12: false })}
+                    </td>
+                    <td className="px-4 py-3 text-right">{renderActions(v)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-        {/* 移动端：卡片列表（操作下沉模式） */}
-        <div className="md:hidden rounded-xl border border-border bg-card divide-y divide-border">
-          {items.map((v) => (
-            <div key={v.id} className="p-4 animate-fade-in-up">
-              <div className="flex items-center gap-3">
-                {v.posterUrl ? (
-                  <Image
-                    src={v.posterUrl}
-                    alt={v.title || '视频封面'}
-                    width={96}
-                    height={54}
-                    className="h-14 w-24 shrink-0 rounded object-cover"
-                    unoptimized
-                  />
-                ) : (
-                  <div className="flex h-14 w-24 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground">
-                    <Clapperboard className="h-5 w-5" />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">
-                    {v.title || '未命名视频'}
-                  </p>
-                  <p className="mt-0.5 font-mono text-xs text-muted-foreground">
-                    {formatDuration(v.durationSeconds)} · {formatSize(v.size)}
-                  </p>
-                  <div className="mt-1.5 flex items-center gap-2">
-                    <span
-                      className={`inline-block rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[v.status]}`}
-                    >
-                      {VIDEO_STATUS_LABELS[v.status]}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(v.createdAt).toLocaleDateString('zh-CN')}
-                    </span>
+          {/* 移动端：卡片列表（操作下沉模式） */}
+          <div className="md:hidden rounded-xl border border-border bg-card divide-y divide-border">
+            {items.map((v) => (
+              <div key={v.id} className="p-4 animate-fade-in-up">
+                <div className="flex items-center gap-3">
+                  {v.posterUrl ? (
+                    <Image
+                      src={v.posterUrl}
+                      alt={v.title || '视频封面'}
+                      width={96}
+                      height={54}
+                      className="h-14 w-24 shrink-0 rounded object-cover"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="flex h-14 w-24 shrink-0 items-center justify-center rounded bg-muted text-muted-foreground">
+                      <Clapperboard className="h-5 w-5" />
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-medium text-foreground">
+                      {v.title || '未命名视频'}
+                    </p>
+                    <p className="mt-0.5 font-mono text-xs text-muted-foreground">
+                      {formatDuration(v.durationSeconds)} · {formatSize(v.size)}
+                    </p>
+                    <div className="mt-1.5 flex items-center gap-2">
+                      <span
+                        className={`inline-block rounded-full px-2 py-0.5 text-xs ${STATUS_STYLE[v.status]}`}
+                      >
+                        {VIDEO_STATUS_LABELS[v.status]}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(v.createdAt).toLocaleDateString('zh-CN')}
+                      </span>
+                    </div>
                   </div>
                 </div>
+                {/* 操作下沉（移动端） */}
+                <div className="mt-3 flex justify-end border-t border-border/60 pt-2.5">
+                  {renderActions(v)}
+                </div>
               </div>
-              {/* 操作下沉（移动端） */}
-              <div className="mt-3 flex justify-end border-t border-border/60 pt-2.5">
-                {renderActions(v)}
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* 分页 */}
-        {totalPages > 1 && (
-          <div className="mt-6 flex items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
-              disabled={page === 1}
-              className="rounded-md border border-input px-3 py-1.5 text-sm disabled:opacity-50 hover:bg-accent transition-all duration-200 hover:scale-105 active:scale-95"
-            >
-              上一页
-            </button>
-            <span className="text-sm text-muted-foreground">
-              第 {page} / {totalPages} 页（共 {total} 条）
-            </span>
-            <button
-              type="button"
-              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              disabled={page === totalPages}
-              className="rounded-md border border-input px-3 py-1.5 text-sm disabled:opacity-50 hover:bg-accent transition-all duration-200 hover:scale-105 active:scale-95"
-            >
-              下一页
-            </button>
+            ))}
           </div>
-        )}
 
-        {/* 上传 / 编辑 / 删除确认 */}
-        <VideoUploadDialog
-          open={uploadOpen}
-          onClose={() => setUploadOpen(false)}
-          onUploaded={loadVideos}
-        />
-        <VideoEditDialog
-          open={editingVideo !== null}
-          video={editingVideo ? toEditPayload(editingVideo) : null}
-          onClose={() => setEditingVideo(null)}
-          onSaved={loadVideos}
-        />
-        <ConfirmDialog
-          open={deletingVideo !== null}
-          title="删除视频"
-          description={
-            <>
-              确定删除「{deletingVideo?.title || '未命名视频'}」吗？
-              视频文件将从存储中删除；封面若未被其他内容引用会一并删除。
-            </>
-          }
-          confirmLabel="删除"
-          loading={deleting}
-          onConfirm={handleDelete}
-          onClose={() => setDeletingVideo(null)}
-        />
-
-        {/* 孤儿封面清理（Phase 4 Step C3）：预览 + 确认删除 + 逐条结果 */}
-        <AdminModal
-          open={orphanOpen}
-          title="清理孤儿封面"
-          onClose={() => setOrphanOpen(false)}
-          closeOnBackdrop={!orphanDeleting}
-          closeDisabled={orphanDeleting}
-          maxWidth="lg"
-          footer={
-            <>
+          {/* 分页 */}
+          {totalPages > 1 && (
+            <div className="mt-6 flex items-center justify-center gap-2">
               <button
                 type="button"
-                onClick={() => setOrphanOpen(false)}
-                disabled={orphanDeleting}
-                className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50"
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="rounded-md border border-input px-3 py-1.5 text-sm disabled:opacity-50 hover:bg-accent transition-all duration-200 hover:scale-105 active:scale-95"
               >
-                关闭
+                上一页
               </button>
-              {orphanResults ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setOrphanResults(null);
-                    void openOrphans();
-                  }}
-                  className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent"
-                >
-                  重新扫描
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => void confirmOrphans()}
-                  disabled={orphanItems.length === 0 || orphanDeleting}
-                  className="inline-flex items-center gap-1.5 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-white hover:bg-destructive/90 disabled:opacity-50"
-                >
-                  {orphanDeleting ? (
-                    <>
-                      <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                      删除中…
-                    </>
-                  ) : (
-                    <>删除 {orphanItems.length} 个孤儿封面</>
-                  )}
-                </button>
-              )}
-            </>
-          }
-        >
-          <div className="max-h-[60vh] overflow-y-auto pr-1">
-            {orphanLoading ? (
-              <div className="space-y-3 py-2">
-                {[0, 1, 2].map((i) => (
-                  <div key={i} className="h-14 animate-pulse rounded-lg bg-muted" />
-                ))}
-              </div>
-            ) : orphanResults ? (
-              <div className="space-y-2 py-1">
-                {orphanResults.map((r) => (
-                  <div
-                    key={r.id}
-                    className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm"
-                  >
-                    <span className="truncate pr-3">{r.reason || '已删除'}</span>
-                    <span
-                      className={
-                        r.ok
-                          ? 'shrink-0 text-green-600 dark:text-green-400'
-                          : 'shrink-0 text-muted-foreground'
-                      }
-                    >
-                      {r.ok ? '✓ 已删除' : `跳过（${r.reason}）`}
-                    </span>
-                  </div>
-                ))}
-                {orphanResults.length === 0 ? (
-                  <p className="py-4 text-center text-sm text-muted-foreground">没有孤儿封面</p>
-                ) : null}
-              </div>
-            ) : orphanItems.length === 0 ? (
-              <div className="flex flex-col items-center gap-2 py-10 text-center">
-                <AlertTriangle className="h-8 w-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  没有孤儿封面。所有 VIDEO_POSTER 都被视频或文章引用。
-                </p>
-              </div>
+              <span className="text-sm text-muted-foreground">
+                第 {page} / {totalPages} 页（共 {total} 条）
+              </span>
+              <button
+                type="button"
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="rounded-md border border-input px-3 py-1.5 text-sm disabled:opacity-50 hover:bg-accent transition-all duration-200 hover:scale-105 active:scale-95"
+              >
+                下一页
+              </button>
+            </div>
+          )}
+        </>
+      </AdminListPage>
+
+      {/* 弹窗（移到 AdminListPage 外，与 ManageMedia 一致：避免空态/加载时 children 被替换导致弹窗不渲染） */}
+      {/* 上传 / 编辑 / 删除确认 */}
+      <VideoUploadDialog
+        open={uploadOpen}
+        onClose={() => setUploadOpen(false)}
+        onUploaded={loadVideos}
+      />
+      <VideoEditDialog
+        open={editingVideo !== null}
+        video={editingVideo ? toEditPayload(editingVideo) : null}
+        onClose={() => setEditingVideo(null)}
+        onSaved={loadVideos}
+      />
+      <ConfirmDialog
+        open={deletingVideo !== null}
+        title="删除视频"
+        description={
+          <>
+            确定删除「{deletingVideo?.title || '未命名视频'}」吗？
+            视频文件将从存储中删除；封面若未被其他内容引用会一并删除。
+          </>
+        }
+        confirmLabel="删除"
+        loading={deleting}
+        onConfirm={handleDelete}
+        onClose={() => setDeletingVideo(null)}
+      />
+
+      {/* 孤儿封面清理（Phase 4 Step C3）：预览 + 确认删除 + 逐条结果 */}
+      <AdminModal
+        open={orphanOpen}
+        title="清理孤儿封面"
+        onClose={() => setOrphanOpen(false)}
+        closeOnBackdrop={!orphanDeleting}
+        closeDisabled={orphanDeleting}
+        maxWidth="lg"
+        footer={
+          <>
+            <button
+              type="button"
+              onClick={() => setOrphanOpen(false)}
+              disabled={orphanDeleting}
+              className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent disabled:opacity-50"
+            >
+              关闭
+            </button>
+            {orphanResults ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setOrphanResults(null);
+                  void openOrphans();
+                }}
+                className="rounded-md border border-input px-4 py-2 text-sm font-medium hover:bg-accent"
+              >
+                重新扫描
+              </button>
             ) : (
-              <div className="space-y-2 py-1">
-                {orphanItems.map((o) => (
-                  <div
-                    key={o.id}
-                    className="flex items-center gap-3 rounded-lg border border-border px-3 py-2"
-                  >
-                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-muted">
-                      {o.url ? (
-                        <Image src={o.url} alt="" fill sizes="40px" className="object-cover" />
-                      ) : (
-                        <Clapperboard className="absolute inset-0 m-auto h-4 w-4 text-muted-foreground" />
-                      )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm text-foreground">{o.storageKey || o.id}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {formatSize(o.size)} · {new Date(o.createdAt).toLocaleString('zh-CN')}
-                      </p>
-                    </div>
-                    <span className="shrink-0 text-xs text-muted-foreground">未引用</span>
-                  </div>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => void confirmOrphans()}
+                disabled={orphanItems.length === 0 || orphanDeleting}
+                className="inline-flex items-center gap-1.5 rounded-md bg-destructive px-4 py-2 text-sm font-medium text-white hover:bg-destructive/90 disabled:opacity-50"
+              >
+                {orphanDeleting ? (
+                  <>
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    删除中…
+                  </>
+                ) : (
+                  <>删除 {orphanItems.length} 个孤儿封面</>
+                )}
+              </button>
             )}
-          </div>
-        </AdminModal>
-      </>
-    </AdminListPage>
+          </>
+        }
+      >
+        <div className="max-h-[60vh] overflow-y-auto pr-1">
+          {orphanLoading ? (
+            <div className="space-y-3 py-2">
+              {[0, 1, 2].map((i) => (
+                <div key={i} className="h-14 animate-pulse rounded-lg bg-muted" />
+              ))}
+            </div>
+          ) : orphanResults ? (
+            <div className="space-y-2 py-1">
+              {orphanResults.map((r) => (
+                <div
+                  key={r.id}
+                  className="flex items-center justify-between rounded-lg border border-border px-3 py-2 text-sm"
+                >
+                  <span className="truncate pr-3">{r.reason || '已删除'}</span>
+                  <span
+                    className={
+                      r.ok
+                        ? 'shrink-0 text-green-600 dark:text-green-400'
+                        : 'shrink-0 text-muted-foreground'
+                    }
+                  >
+                    {r.ok ? '✓ 已删除' : `跳过（${r.reason}）`}
+                  </span>
+                </div>
+              ))}
+              {orphanResults.length === 0 ? (
+                <p className="py-4 text-center text-sm text-muted-foreground">没有孤儿封面</p>
+              ) : null}
+            </div>
+          ) : orphanItems.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 py-10 text-center">
+              <AlertTriangle className="h-8 w-8 text-muted-foreground" />
+              <p className="text-sm text-muted-foreground">
+                没有孤儿封面。所有 VIDEO_POSTER 都被视频或文章引用。
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2 py-1">
+              {orphanItems.map((o) => (
+                <div
+                  key={o.id}
+                  className="flex items-center gap-3 rounded-lg border border-border px-3 py-2"
+                >
+                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-muted">
+                    {o.url ? (
+                      <Image src={o.url} alt="" fill sizes="40px" className="object-cover" />
+                    ) : (
+                      <Clapperboard className="absolute inset-0 m-auto h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm text-foreground">{o.storageKey || o.id}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {formatSize(o.size)} · {new Date(o.createdAt).toLocaleString('zh-CN')}
+                    </p>
+                  </div>
+                  <span className="shrink-0 text-xs text-muted-foreground">未引用</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </AdminModal>
+    </>
   );
 }
