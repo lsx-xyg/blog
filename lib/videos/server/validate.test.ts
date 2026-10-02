@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { validateVideoUpload, presignCodeForDriver, PRESIGN_CODES } from './validate';
+import {
+  validateVideoUpload,
+  presignCodeForDriver,
+  presignExpiresForSize,
+  PRESIGN_CODES,
+} from './validate';
 
 const MB = 1024 * 1024;
 
@@ -56,5 +61,22 @@ describe('presignCodeForDriver', () => {
   it('github/webdav → 拒绝', () => {
     expect(presignCodeForDriver('github')).toBe(PRESIGN_CODES.VIDEO_DRIVER_UNSUPPORTED);
     expect(presignCodeForDriver('webdav')).toBe(PRESIGN_CODES.VIDEO_DRIVER_UNSUPPORTED);
+  });
+});
+
+describe('presignExpiresForSize', () => {
+  it('小于 50MB → 600s', () => {
+    expect(presignExpiresForSize(0)).toBe(600);
+    expect(presignExpiresForSize(49 * 1024 * 1024)).toBe(600);
+  });
+
+  it('等于/大于 50MB → 3600s', () => {
+    expect(presignExpiresForSize(50 * 1024 * 1024)).toBe(3600);
+    expect(presignExpiresForSize(200 * 1024 * 1024)).toBe(3600);
+  });
+
+  it('未知大小 → 3600s', () => {
+    expect(presignExpiresForSize(null)).toBe(3600);
+    expect(presignExpiresForSize(undefined)).toBe(3600);
   });
 });

@@ -43,3 +43,8 @@ export function presignCodeForDriver(driverName: string): PresignCode {
     ? PRESIGN_CODES.PRESIGN_UNSUPPORTED
     : PRESIGN_CODES.VIDEO_DRIVER_UNSUPPORTED;
 }
+
+/** 预签名 URL 有效期（秒）：小文件 600s，≥50MB 或未知大小给 3600s（200MB 大文件上传时间更长） */
+export function presignExpiresForSize(size: number | null | undefined): number {
+  return size != null && size < 50 * 1024 * 1024 ? 600 : 3600;
+}

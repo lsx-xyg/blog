@@ -6,7 +6,11 @@ import { getStorageDriver } from '@/lib/storage/server';
 import { StorageChannel } from '@/lib/storage/shared/channels';
 import { getConfig } from '@/lib/settings/server';
 import { DEFAULT_MAX_VIDEO_SIZE } from '@/lib/types/video';
-import { validateVideoUpload, presignCodeForDriver } from '@/lib/videos/server/validate';
+import {
+  validateVideoUpload,
+  presignCodeForDriver,
+  presignExpiresForSize,
+} from '@/lib/videos/server/validate';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,7 +62,10 @@ export async function POST(request: Request) {
       });
     }
 
-    const result = await driver.getPresignedUploadUrl({ contentType: mime, expiresIn: 600 });
+    const result = await driver.getPresignedUploadUrl({
+      contentType: mime,
+      expiresIn: presignExpiresForSize(size),
+    });
 
     return NextResponse.json({
       presignedUrl: result.presignedUrl,
