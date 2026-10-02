@@ -18,12 +18,13 @@ export type AspectFallback = 'portrait' | 'landscape';
  * 生成 CSS aspect-ratio 值（瀑布流卡片用）
  *
  * - 宽高齐全 → "width/height"（原始比例，形成错落）
- * - 缺失 → fallback：portrait → "9/16"，landscape → "16/9"
+ * - 缺失 → 统一回退 9:16（竖屏为主，用户确认）：portrait → "9/16"，landscape → "16/9"
+ * - 只缺一边也忽略该边回退，不留悬空分支
  */
 export function getAspectRatio(
   width: number | null | undefined,
   height: number | null | undefined,
-  fallback: AspectFallback = 'landscape',
+  fallback: AspectFallback = 'portrait',
 ): string {
   if (width && height && width > 0 && height > 0) {
     return `${width}/${height}`;

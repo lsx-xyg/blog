@@ -2,10 +2,11 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Image, User, Link2 } from 'lucide-react';
+import { Home, Video, Image, User, Link2 } from 'lucide-react';
 
 const NAV_ITEMS = [
   { href: '/', label: '首页', icon: Home },
+  { href: '/videos', label: '视频', icon: Video },
   { href: '/gallery', label: '相册', icon: Image },
   { href: '/about', label: '关于', icon: User },
   { href: '/links', label: '友链', icon: Link2 },

@@ -14,19 +14,20 @@ describe('getAspectRatio（瀑布流卡片比例）', () => {
     expect(getAspectRatio(1080, 1920)).toBe('1080/1920');
   });
 
-  it('宽高缺失时按 fallback 回退（默认横屏 16/9）', () => {
-    expect(getAspectRatio(null, null)).toBe('16/9');
-    expect(getAspectRatio(undefined, undefined)).toBe('16/9');
+  it('宽高缺失时统一回退 9/16（竖屏为主，默认 portrait）', () => {
+    expect(getAspectRatio(null, null)).toBe('9/16');
+    expect(getAspectRatio(undefined, undefined)).toBe('9/16');
+    expect(getAspectRatio(0, 0)).toBe('9/16');
   });
 
-  it('portrait 回退 9/16', () => {
-    expect(getAspectRatio(null, null, 'portrait')).toBe('9/16');
-    expect(getAspectRatio(0, 0, 'portrait')).toBe('9/16');
+  it('landscape 回退 16/9（显式指定）', () => {
+    expect(getAspectRatio(null, null, 'landscape')).toBe('16/9');
   });
 
-  it('只缺一边也回退', () => {
-    expect(getAspectRatio(1920, null)).toBe('16/9');
-    expect(getAspectRatio(null, 1920, 'portrait')).toBe('9/16');
+  it('只缺一边也忽略该边，回退 9/16', () => {
+    expect(getAspectRatio(1920, null)).toBe('9/16');
+    expect(getAspectRatio(null, 1920)).toBe('9/16');
+    expect(getAspectRatio(1920, null, 'landscape')).toBe('16/9');
   });
 });
 
