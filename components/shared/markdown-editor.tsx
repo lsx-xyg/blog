@@ -5,10 +5,11 @@ import { Editor } from '@bytemd/react';
 import gfm from '@bytemd/plugin-gfm';
 import type { BytemdPlugin } from 'bytemd';
 import type { HighlighterCore } from '@shikijs/core';
-import { ImageIcon, Columns2, Pencil } from 'lucide-react';
+import { Columns2, Pencil } from 'lucide-react';
 import { MediaPicker } from '@/components/media/media-picker';
 import 'bytemd/dist/index.css';
 import { MediaType } from '@/lib/types/media';
+import { uploadMediaFileXhr, runConcurrent } from '@/lib/media/client';
 import { getStoredTheme } from '@/lib/theme/client';
 import {
   createShikiHighlighter,
@@ -16,6 +17,32 @@ import {
   getEffectiveTheme,
 } from '@/lib/mdx/client';
 import { ZH_LOCALE } from '@/lib/mdx/client';
+
+/** lucide「图片」图标 16x16 inline SVG（ByteMD action 用） */
+const IMAGE_ICON_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>';
+
+/**
+ * 把「从媒体库选择图片」挂进 ByteMD 原生工具栏（plugin actions）。
+ *
+ * 背景：ByteMD 内置全屏只全屏 .bytemd 本身，wrapper 里自定义工具栏在全屏层之外、
+ * 被全屏层盖住不可见，导致全屏时无法打开图片上传。把按钮注册为工具栏 action 后，
+ * 按钮跟随 ByteMD 工具栏进入全屏层，全屏/非全屏均可用。
+ */
+function mediaPickerPlugin(onOpen: () => void): BytemdPlugin {
+  return {
+    actions: [
+      {
+        title: '从媒体库选择图片',
+        icon: IMAGE_ICON_SVG,
+        handler: {
+          type: 'action',
+          click: onOpen,
+        },
+      },
+    ],
+  };
+}
 
 /**
  * Markdown 编辑器组件（基于 ByteMD + Shiki）——C10 精简后只做装配
@@ -123,33 +150,20 @@ export function MarkdownEditor({
     };
   }, []);
 
-  // 上传图片到存储驱动 + 保存到媒体库
+  // 上传图片到存储驱动 + 保存到媒体库（多文件并发，限制 3；失败降级旧 API，顺序按原数组）
   const uploadImages = async (files: File[]) => {
-    const results: { url: string; alt?: string; title?: string }[] = [];
+    const results: ({ url: string; alt?: string; title?: string } | null)[] = new Array(
+      files.length,
+    ).fill(null);
 
-    for (const file of files) {
+    await runConcurrent(files, 3, async (file, index) => {
       try {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('type', uploadType); // 由调用方指定媒体类型（默认文章图片）
-
-        // 使用新的媒体库上传 API（自动保存到 media 表）
-        const response = await fetch('/api/admin/media', {
-          method: 'POST',
-          body: formData,
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || '上传失败');
+        const r = await uploadMediaFileXhr(file, uploadType);
+        if (r.ok) {
+          results[index] = { url: r.url, alt: file.name, title: file.name };
+          return;
         }
-
-        const result = await response.json();
-        results.push({
-          url: result.url,
-          alt: file.name,
-          title: file.name,
-        });
+        throw new Error(r.error || '上传失败');
       } catch (error) {
         console.error('图片上传失败：', error);
         // 上传失败时尝试旧的上传 API（兼容）
@@ -162,24 +176,23 @@ export function MarkdownEditor({
           });
           if (response.ok) {
             const result = await response.json();
-            results.push({
+            results[index] = {
               url: result.url,
               alt: file.name,
               title: file.name,
-            });
+            };
           }
         } catch (e) {
           console.error('旧上传 API 也失败：', e);
         }
       }
-    }
+    });
 
-    return results;
+    return results.filter((r): r is { url: string; alt?: string; title?: string } => r !== null);
   };
 
   // 从媒体库选择图片：优先在光标位置插入，编辑器实例不可用时兜底追加到末尾
-  const handleMediaSelect = (url: string, alt?: string) => {
-    const markdown = `![${alt || '图片'}](${url})`;
+  const insertMarkdown = (markdown: string) => {
     // ByteMD 底层是 CodeMirror 5，实例挂在 .CodeMirror 元素上（bytemd 内部同款遍历方式）
     const cmEl = wrapperRef.current?.querySelector<HTMLElement>('.CodeMirror') as
       | (HTMLElement & {
@@ -199,9 +212,23 @@ export function MarkdownEditor({
     onChange(value ? `${value}${sep}${markdown}\n` : markdown);
   };
 
+  const handleMediaSelect = (url: string, alt?: string) => {
+    insertMarkdown(`![${alt || '图片'}](${url})`);
+  };
+
+  // 批量插入（多文件上传成功后）
+  const handleMediaSelectMany = (items: { url: string; alt?: string }[]) => {
+    const markdown = items.map((i) => `![${i.alt || '图片'}](${i.url})`).join('\n\n');
+    insertMarkdown(markdown);
+  };
+
   // 构建插件列表（highlighter 就绪后才添加 Shiki 插件）
   // 注意：preview 代码块使用固定的 github-dark 主题，与前台文章详情页保持一致
-  const plugins: BytemdPlugin[] = [gfm()];
+  const plugins: BytemdPlugin[] = [
+    gfm(),
+    // 图片库按钮挂进 ByteMD 原生工具栏——跟随全屏层，全屏时也可用
+    mediaPickerPlugin(() => setShowMediaPicker(true)),
+  ];
   if (highlighter) {
     plugins.push(createShikiRehypePlugin(highlighter, 'github-dark'));
   }
@@ -220,17 +247,8 @@ export function MarkdownEditor({
       className="bytemd-editor-wrapper overflow-hidden rounded-lg border border-border bg-background"
       ref={wrapperRef}
     >
-      {/* 自定义工具栏：图片库按钮 + 模式切换 */}
+      {/* 自定义工具栏：模式切换（图片库入口已挂进 ByteMD 工具栏，全屏时可用） */}
       <div className="flex items-center gap-1 border-b border-border bg-muted/30 px-2 py-1">
-        <button
-          type="button"
-          onClick={() => setShowMediaPicker(true)}
-          className="flex items-center gap-1.5 rounded-md px-2 py-1 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-          title="从媒体库选择图片"
-        >
-          <ImageIcon className="h-4 w-4" />
-          <span className="hidden sm:inline">图片库</span>
-        </button>
         <div className="ml-auto flex items-center gap-1">
           {/* 模式切换按钮组 */}
           <div className="flex items-center rounded-md border border-border overflow-hidden">
@@ -283,6 +301,7 @@ export function MarkdownEditor({
         open={showMediaPicker}
         onClose={() => setShowMediaPicker(false)}
         onSelect={handleMediaSelect}
+        onSelectMany={handleMediaSelectMany}
       />
     </div>
   );

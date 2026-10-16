@@ -38,12 +38,18 @@ export function TagInput({
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // 过滤匹配的标签（不区分大小写，支持部分匹配）
-  const filteredTags = allTags.filter(
-    (tag) =>
-      !value.includes(tag.name) &&
-      (inputValue === '' || tag.name.toLowerCase().includes(inputValue.toLowerCase())),
-  );
+  // 过滤匹配的标签（不区分大小写，支持部分匹配；精确匹配排最前，回车时优先选中同名标签）
+  const filteredTags = allTags
+    .filter(
+      (tag) =>
+        !value.includes(tag.name) &&
+        (inputValue === '' || tag.name.toLowerCase().includes(inputValue.toLowerCase())),
+    )
+    .sort((a, b) => {
+      const aExact = a.name.toLowerCase() === inputValue.toLowerCase() ? 0 : 1;
+      const bExact = b.name.toLowerCase() === inputValue.toLowerCase() ? 0 : 1;
+      return aExact - bExact;
+    });
 
   // 点击外部关闭下拉
   useEffect(() => {

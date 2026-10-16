@@ -2,9 +2,17 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { X, Upload, Search, Image as ImageIcon, Loader2 } from 'lucide-react';
+import {
+  X,
+  Upload,
+  Search,
+  Image as ImageIcon,
+  Loader2,
+  CheckCircle2,
+  XCircle,
+} from 'lucide-react';
 import { MediaType, MEDIA_TYPE_LABELS } from '@/lib/types/media';
-import { uploadMediaFile } from '@/lib/media/client';
+import { uploadMediaFileXhr, runConcurrent } from '@/lib/media/client';
 
 type MediaItem = {
   id: string;
@@ -25,80 +33,159 @@ type MediaPickerProps = {
   open: boolean;
   onClose: () => void;
   onSelect: (url: string, alt?: string) => void;
+  /** 批量选择（多文件上传成功后一次性插入）——编辑器可实现批量插入，未提供时退化为单选 */
+  onSelectMany?: (items: { url: string; alt?: string }[]) => void;
   defaultType?: MediaType | 'ALL';
 };
+
+type UploadTask = {
+  id: number;
+  file: File;
+  status: 'pending' | 'uploading' | 'success' | 'error';
+  progress: number;
+  error?: string;
+};
+
+/** 并发上传任务数（避免一次性打爆服务端/连接数） */
+const UPLOAD_CONCURRENCY = 3;
 
 /**
  * 媒体库选择器组件
  *
- * 用于在文章编辑器中选择已有图片
  * - Tab 切换：上传新图片 / 从图库选择
- * - 从图库选择时支持按类型筛选（全部/文章图片/相册图片）
- * - 网格布局展示缩略图，点击选择
- * - 支持搜索和分页
+ * - 上传：多文件并发（任务列表显示每个文件进度/状态），成功后批量回调 onSelectMany
+ * - 图库：无限滚动分页（IntersectionObserver 触底加载），支持类型筛选与搜索
  */
-export function MediaPicker({ open, onClose, onSelect, defaultType = 'ALL' }: MediaPickerProps) {
+export function MediaPicker({
+  open,
+  onClose,
+  onSelect,
+  onSelectMany,
+  defaultType = 'ALL',
+}: MediaPickerProps) {
   const [activeTab, setActiveTab] = useState<'upload' | 'library'>('library');
   const [items, setItems] = useState<MediaItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(false);
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState<MediaType | 'ALL'>(defaultType);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [pageSize] = useState(24);
+  const [tasks, setTasks] = useState<UploadTask[]>([]);
+  const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  // 加载媒体库
-  const loadItems = useCallback(async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams();
-      params.set('page', String(page));
-      params.set('pageSize', String(pageSize));
-      if (typeFilter !== 'ALL') params.set('type', typeFilter);
-      if (search) params.set('search', search);
+  // 加载媒体库（append=true 追加下一页；否则重置为第一页）
+  const loadItems = useCallback(
+    async (append = false) => {
+      if (append) setLoadingMore(true);
+      else setLoading(true);
+      try {
+        const params = new URLSearchParams();
+        params.set('page', String(append ? page : 1));
+        params.set('pageSize', String(pageSize));
+        if (typeFilter !== 'ALL') params.set('type', typeFilter);
+        if (search) params.set('search', search);
 
-      const res = await fetch(`/api/admin/media?${params.toString()}`);
-      if (res.ok) {
-        const data = await res.json();
-        setItems(data.items || []);
-        setTotal(data.total || 0);
+        const res = await fetch(`/api/admin/media?${params.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          const newItems = (data.items || []) as MediaItem[];
+          setItems((prev) => {
+            const merged = append ? [...prev, ...newItems] : newItems;
+            setHasMore(merged.length < (data.total || 0));
+            return merged;
+          });
+          setTotal(data.total || 0);
+        } else {
+          if (!append) setHasMore(false);
+        }
+      } catch (e) {
+        console.error('加载媒体库失败：', e);
+      } finally {
+        if (append) setLoadingMore(false);
+        else setLoading(false);
       }
-    } catch (e) {
-      console.error('加载媒体库失败：', e);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, pageSize, typeFilter, search]);
+    },
+    [page, pageSize, typeFilter, search],
+  );
 
+  // 打开 / 切换 Tab / 筛选 / 搜索变化 → 重置到第一页加载
   useEffect(() => {
     if (open && activeTab === 'library') {
-      loadItems();
+      setPage(1);
+      loadItems(false);
     }
-  }, [open, activeTab, loadItems]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, activeTab, typeFilter, search]);
 
-  // 处理文件上传（复用 lib/media/client/upload.ts 的 uploadMediaFile 共享执行）
+  // 触底翻页（page > 1）→ 追加加载
+  useEffect(() => {
+    if (open && activeTab === 'library' && page > 1) {
+      loadItems(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
+
+  // 触底自动加载下一页
+  useEffect(() => {
+    if (!open || activeTab !== 'library') return;
+    const sentinel = sentinelRef.current;
+    const root = scrollRef.current;
+    if (!sentinel || !root) return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && !loading && !loadingMore && hasMore) {
+          setPage((p) => p + 1);
+        }
+      },
+      { root, rootMargin: '200px' },
+    );
+    io.observe(sentinel);
+    return () => io.disconnect();
+  }, [open, activeTab, loading, loadingMore, hasMore]);
+
+  // 处理文件上传（并发任务列表；全部完成后批量回调）
   const handleFileUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
 
+    const base = Date.now();
+    const newTasks: UploadTask[] = Array.from(files).map((file, i) => ({
+      id: base + i,
+      file,
+      status: 'pending',
+      progress: 0,
+    }));
+    setTasks(newTasks);
     setUploading(true);
-    try {
-      for (const file of Array.from(files)) {
-        const r = await uploadMediaFile(file, MediaType.ARTICLE); // 从编辑器上传默认是文章图片
-        if (r.ok) {
-          // 上传成功后自动选择
-          onSelect(r.url, file.name);
-          onClose();
-          return;
-        }
-        alert(`上传失败：${r.error}`);
+
+    const updateTask = (id: number, patch: Partial<UploadTask>) => {
+      setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...patch } : t)));
+    };
+
+    const succeeded: { url: string; alt?: string }[] = [];
+    await runConcurrent(newTasks, UPLOAD_CONCURRENCY, async (task) => {
+      updateTask(task.id, { status: 'uploading' });
+      const r = await uploadMediaFileXhr(task.file, MediaType.ARTICLE, (p) =>
+        updateTask(task.id, { progress: p }),
+      );
+      if (r.ok) {
+        updateTask(task.id, { status: 'success', progress: 100 });
+        succeeded.push({ url: r.url, alt: task.file.name });
+      } else {
+        updateTask(task.id, { status: 'error', error: r.error });
       }
-    } catch (e) {
-      console.error('上传失败：', e);
-      alert('上传失败，请重试');
-    } finally {
-      setUploading(false);
+    });
+
+    setUploading(false);
+    if (succeeded.length > 0) {
+      if (onSelectMany) onSelectMany(succeeded);
+      else onSelect(succeeded[0].url, succeeded[0].alt);
+      onClose();
     }
   };
 
@@ -109,8 +196,6 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = 'ALL' }: Me
   };
 
   if (!open) return null;
-
-  const totalPages = Math.ceil(total / pageSize);
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
@@ -149,18 +234,21 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = 'ALL' }: Me
           </button>
         </div>
 
-        {/* 内容区 */}
-        <div className="flex-1 overflow-y-auto p-4">
+        {/* 内容区（滚动容器） */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto p-4">
           {activeTab === 'upload' ? (
             /* 上传新图片 */
-            <div className="flex flex-col items-center justify-center py-12">
+            <div className="flex flex-col items-center justify-center py-6">
               <input
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
                 multiple
                 className="hidden"
-                onChange={(e) => handleFileUpload(e.target.files)}
+                onChange={(e) => {
+                  void handleFileUpload(e.target.files);
+                  e.target.value = '';
+                }}
               />
               <button
                 type="button"
@@ -177,12 +265,65 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = 'ALL' }: Me
                   {uploading ? '上传中…' : '点击选择图片或拖拽到此处'}
                 </span>
                 <span className="text-xs text-muted-foreground">
-                  支持 JPG / PNG / WebP / GIF，最大 10MB
+                  支持多选，自动并发上传（最多 {UPLOAD_CONCURRENCY} 个同时）
                 </span>
               </button>
-              <p className="mt-4 text-xs text-muted-foreground">
+              <p className="mt-3 text-xs text-muted-foreground">
                 从文章编辑器上传的图片会自动标记为「{MEDIA_TYPE_LABELS[MediaType.ARTICLE]}」
               </p>
+
+              {/* 上传任务列表 */}
+              {tasks.length > 0 && (
+                <div className="mt-5 w-full max-w-lg space-y-2">
+                  {tasks.map((t) => (
+                    <div
+                      key={t.id}
+                      className="flex items-center gap-3 rounded-lg border border-border px-3 py-2"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="truncate text-sm">{t.file.name}</span>
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            {t.status === 'uploading'
+                              ? `${t.progress}%`
+                              : t.status === 'success'
+                                ? '成功'
+                                : t.status === 'error'
+                                  ? '失败'
+                                  : '等待中'}
+                          </span>
+                        </div>
+                        <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className={`h-full rounded-full transition-all duration-200 ${
+                              t.status === 'error'
+                                ? 'bg-destructive'
+                                : t.status === 'success'
+                                  ? 'bg-emerald-500'
+                                  : 'bg-primary'
+                            }`}
+                            style={{ width: `${t.progress}%` }}
+                          />
+                        </div>
+                        {t.error && (
+                          <p className="mt-1 truncate text-xs text-destructive">{t.error}</p>
+                        )}
+                      </div>
+                      {t.status === 'success' ? (
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                      ) : t.status === 'error' ? (
+                        <XCircle className="h-4 w-4 shrink-0 text-destructive" />
+                      ) : (
+                        <Loader2
+                          className={`h-4 w-4 shrink-0 animate-spin text-muted-foreground ${
+                            t.status === 'pending' ? 'opacity-40' : ''
+                          }`}
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : (
             /* 从图库选择 */
@@ -190,7 +331,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = 'ALL' }: Me
               {/* 筛选和搜索 */}
               <div className="flex flex-wrap items-center gap-3">
                 {/* 类型筛选 */}
-                <div className="flex rounded-lg border border-border overflow-hidden">
+                <div className="flex overflow-hidden rounded-lg border border-border">
                   <button
                     type="button"
                     onClick={() => {
@@ -236,7 +377,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = 'ALL' }: Me
                 </div>
 
                 {/* 搜索 */}
-                <div className="relative flex-1 min-w-[150px]">
+                <div className="relative min-w-[150px] flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <input
                     type="text"
@@ -269,7 +410,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = 'ALL' }: Me
                         type="button"
                         key={item.id}
                         onClick={() => handleSelect(item)}
-                        className="group relative aspect-square overflow-hidden rounded-lg border border-border hover:border-primary transition-colors"
+                        className="group relative aspect-square overflow-hidden rounded-lg border border-border transition-colors hover:border-primary"
                       >
                         <Image
                           src={item.url}
@@ -279,7 +420,7 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = 'ALL' }: Me
                           className="object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                         {/* 类型标签 */}
-                        <div className="absolute top-1 left-1">
+                        <div className="absolute left-1 top-1">
                           <span
                             className={`rounded-full px-1.5 py-0.5 text-[10px] ${
                               item.type === MediaType.ARTICLE
@@ -291,37 +432,25 @@ export function MediaPicker({ open, onClose, onSelect, defaultType = 'ALL' }: Me
                           </span>
                         </div>
                         {/* 悬浮遮罩 */}
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="text-white text-sm font-medium">点击选择</span>
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                          <span className="text-sm font-medium text-white">点击选择</span>
                         </div>
                       </button>
                     ))}
                   </div>
 
-                  {/* 分页 */}
-                  {totalPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 pt-4">
-                      <button
-                        type="button"
-                        onClick={() => setPage((p) => Math.max(1, p - 1))}
-                        disabled={page === 1}
-                        className="rounded-md border border-input px-3 py-1 text-sm disabled:opacity-50 hover:bg-accent"
-                      >
-                        上一页
-                      </button>
-                      <span className="text-sm text-muted-foreground">
-                        {page} / {totalPages}
+                  {/* 触底加载 sentinel */}
+                  <div ref={sentinelRef} className="flex items-center justify-center py-4">
+                    {loadingMore ? (
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    ) : hasMore ? (
+                      <span className="text-xs text-muted-foreground">下拉加载更多…</span>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">
+                        已加载全部 {total} 张图片
                       </span>
-                      <button
-                        type="button"
-                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                        disabled={page === totalPages}
-                        className="rounded-md border border-input px-3 py-1 text-sm disabled:opacity-50 hover:bg-accent"
-                      >
-                        下一页
-                      </button>
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </>
               )}
             </div>

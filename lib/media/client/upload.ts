@@ -52,6 +52,83 @@ export async function uploadMediaFile(file: File, type: UploadTarget): Promise<U
   }
 }
 
+export type UploadProgress = (percent: number) => void;
+
+/**
+ * 带进度的单文件上传（XHR + FormData）。
+ *
+ * 任务列表并发上传用：`onProgress(0-100)` 报告上传进度（不含服务端处理阶段）；
+ * 失败路径与 uploadMediaFile 一致（错误归一化，不抛异常）。
+ */
+export function uploadMediaFileXhr(
+  file: File,
+  type: UploadTarget,
+  onProgress?: UploadProgress,
+): Promise<UploadMediaResult> {
+  return new Promise((resolve) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', type);
+
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/admin/media');
+    xhr.timeout = 120_000;
+
+    if (onProgress) {
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          onProgress(Math.round((e.loaded / e.total) * 100));
+        }
+      };
+    }
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText) as { url?: string };
+          if (data.url) {
+            onProgress?.(100);
+            resolve({ ok: true, url: data.url });
+            return;
+          }
+          resolve({ ok: false, error: '响应缺少图片地址' });
+        } catch {
+          resolve({ ok: false, error: '响应解析失败' });
+        }
+      } else {
+        let err = `上传失败（${xhr.status}）`;
+        try {
+          const d = JSON.parse(xhr.responseText) as { error?: string };
+          if (d?.error) err = d.error;
+        } catch {
+          /* 保持默认错误文案 */
+        }
+        resolve({ ok: false, error: err });
+      }
+    };
+    xhr.onerror = () => resolve({ ok: false, error: '网络异常，上传失败' });
+    xhr.ontimeout = () => resolve({ ok: false, error: '上传超时，请重试' });
+    xhr.send(formData);
+  });
+}
+
+/** 并发执行器：限制并发数，worker 逐项执行（异常由 worker 内部消化，不中断批次） */
+export async function runConcurrent<T>(
+  items: readonly T[],
+  limit: number,
+  worker: (item: T, index: number) => Promise<void>,
+): Promise<void> {
+  if (items.length === 0) return;
+  let index = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (index < items.length) {
+      const current = index++;
+      await worker(items[current], current);
+    }
+  });
+  await Promise.all(workers);
+}
+
 /** 批量上传：逐个执行，汇总成功/失败（供 toast 文案与错误提示） */
 export async function uploadMediaFiles(
   files: File[],
