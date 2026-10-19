@@ -123,3 +123,67 @@ curl -I "https://r2.dbthree.dpdns.org/2026/10/<uuid>.mp4"
 | 提示「当前存储驱动不适合视频」                                   | 视频通道绑定成了 GITHUB / WEBDAV / LOCAL                                 | 后台存储设置把「视频相册」绑定到 S3/R2 档案                                                                                |
 | 视频已传完但提示「保存记录失败」                                 | 回调 POST 失败（网络/DB）                                                | 重试；S3 孤儿文件靠生命周期清理                                                                                            |
 | CORS 预检返回 403 `CORS not configured`                          | R2 规则未保存 / AllowedOrigins 不含当前 Origin                           | 检查规则 JSON 与站点域名是否一致，保存后等几秒再试                                                                         |
+
+## 7. Docker 服务器部署（可选，自用）
+
+在保留 Vercel 对外部署的同时，可在自己的服务器上用 Docker 再跑一份（如国内访问加速 / 个人专用域名）。Docker 与 Vercel 共用同一个 Neon 数据库与 R2/GitHub 存储档案，仅「跑 Next.js 进程」的宿主不同。
+
+### 7.1 前置
+
+- 一台 Linux 服务器（装了 Docker 与 Docker Compose）
+- 已按 §1 准备好全部环境变量；`BETTER_AUTH_URL` 与 `NEXT_PUBLIC_SITE_URL` 填 Docker 服务器的公网域名
+- `DEPLOY_PLATFORM=SERVER`（Docker 下定时任务走进程内 node-cron，不依赖外部 cron-job.org）
+
+### 7.2 环境变量分组
+
+| 分组           | 变量                                                                                                                                                                                                           | 注入时机                                              |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| 构建时         | `NEXT_PUBLIC_SITE_URL`、`NEXT_PUBLIC_SITE_NAME`、`NEXT_PUBLIC_SITE_DESCRIPTION`、`NEXT_PUBLIC_GISCUS_*`                                                                                                        | `docker compose build` build args（内联进客户端代码） |
+| 运行时         | `DATABASE_URL`、`DATABASE_URL_UNPOOLED`、`BETTER_AUTH_SECRET`、`BETTER_AUTH_URL`、`ENCRYPTION_KEY`、`GITHUB_CLIENT_ID/SECRET`、`GITHUB_STORAGE_*`、`CRON_SECRET`、`CRON_JOB_API_KEY`、`DEPLOY_PLATFORM=SERVER` | 容器 `env_file: .env`                                 |
+| 构建时迁移开关 | `RUN_DB_MIGRATE`（默认 `false`）                                                                                                                                                                               | build arg                                             |
+
+### 7.3 部署步骤
+
+```bash
+# 1) 服务器上拉取代码
+git clone https://github.com/lsx-xyg/blog.git && cd blog
+
+# 2) 准备环境变量（按 §1 + 上方分组；BETTER_AUTH_URL / NEXT_PUBLIC_SITE_URL 用 Docker 域名）
+cp .env.example .env
+# 编辑 .env：填 DATABASE_URL、BETTER_AUTH_SECRET、ENCRYPTION_KEY、GITHUB_CLIENT_*、
+#           BETTER_AUTH_URL=https://你的域名、NEXT_PUBLIC_SITE_URL=https://你的域名、
+#           DEPLOY_PLATFORM=SERVER，以及全部 NEXT_PUBLIC_* 与 GITHUB_STORAGE_*
+
+# 3) 首次部署（RUN_DB_MIGRATE=true 让构建阶段执行数据库迁移，建表/补列）
+RUN_DB_MIGRATE=true docker compose up -d --build
+
+# 4) 日常更新（schema 无变化时不需要迁移）
+git pull && docker compose up -d --build
+```
+
+### 7.4 数据库迁移时机
+
+- Docker 构建**默认跳过迁移**（`decideMigrate` 规则：非 Vercel 构建跳过），所以日常更新不需要数据库连接
+- **首次部署**或**本次代码含 schema 变更**（`db/drizzle/` 新增迁移文件）时，用 `RUN_DB_MIGRATE=true docker compose up -d --build`——构建阶段执行 `db:migrate:deploy`（带 PG 咨询锁，多构建并发安全）
+- 也可以手动迁移：`docker compose exec blog sh -c "MIGRATE_ON_DEPLOY=1 npx tsx scripts/db/migrate.ts --deploy"`（需镜像内有 tsx，若失败请用构建阶段迁移方式）
+
+### 7.5 域名与反向代理
+
+- 直接暴露：`docker compose` 已映射 `${PORT:-3000}:3000`，用 Nginx / Caddy 反代到公网域名并配 HTTPS
+- Nginx 反代要点：`proxy_pass http://127.0.0.1:3000;` + WebSocket 头（Better Auth 会话用）
+
+### 7.6 存储与卷
+
+- 生产通道绑定在数据库 `storage.binding.*`（后台「存储设置」），Docker 部署**不需要**改任何存储配置，图片/视频继续走 R2/GitHub
+- 仅当临时切 `LOCAL` 驱动时，取消 `docker-compose.yml` 中 `volumes` 注释并挂载 `./data/uploads:/app/public/uploads`（容器内 `public` 目录来自镜像构建产物，不挂载则上传不落盘）
+- 备份档案（`backup` 通道）走 GitHub/WebDAV，同样无需本地卷
+
+### 7.7 常见问题
+
+| 现象                                  | 原因                            | 处理                                               |
+| ------------------------------------- | ------------------------------- | -------------------------------------------------- |
+| 首页能开但后台/接口 500               | 迁移未执行，schema 落后         | `RUN_DB_MIGRATE=true docker compose up -d --build` |
+| 登录/授权跳回 `http://localhost:3000` | `BETTER_AUTH_URL` 没改          | .env 改成 Docker 域名后 `docker compose up -d`     |
+| 定时任务不跑                          | `DEPLOY_PLATFORM` 缺省为 VERCEL | .env 设 `DEPLOY_PLATFORM=SERVER` 后重建容器        |
+| 上传图片成功但前台不显示              | 用了 LOCAL 驱动但没挂卷         | 参考 §7.6 挂载 uploads 卷                          |
+| 中文标签/内容乱码                     | 容器时区/编码                   | 镜像已设 `TZ=Asia/Shanghai`，确认部署用的最新镜像  |

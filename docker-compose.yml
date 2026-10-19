@@ -1,0 +1,40 @@
+# 博客 Docker Compose（自用服务器部署；Vercel 部署不受影响）
+#
+# 用法：
+#   1. cp .env.example .env，按 docs/deploy.md「Docker 服务器部署」填好全部变量
+#   2. 首次部署（需要建表）：RUN_DB_MIGRATE=true docker compose up -d --build
+#      日常更新：                    docker compose up -d --build
+#   3. 日志：docker compose logs -f
+#
+# 说明：
+#   - NEXT_PUBLIC_* 为构建时变量，从 .env 经 build args 传入镜像
+#   - 数据库迁移默认跳过（Docker 构建非 Vercel）；schema 变更时用 RUN_DB_MIGRATE=true 重新构建
+#   - 若把存储通道临时切到 LOCAL，需取消 volumes 注释挂载上传目录
+
+services:
+  blog:
+    build:
+      context: .
+      args:
+        NEXT_PUBLIC_SITE_URL: ${NEXT_PUBLIC_SITE_URL}
+        NEXT_PUBLIC_SITE_NAME: ${NEXT_PUBLIC_SITE_NAME}
+        NEXT_PUBLIC_SITE_DESCRIPTION: ${NEXT_PUBLIC_SITE_DESCRIPTION}
+        NEXT_PUBLIC_GISCUS_REPO: ${NEXT_PUBLIC_GISCUS_REPO}
+        NEXT_PUBLIC_GISCUS_REPO_ID: ${NEXT_PUBLIC_GISCUS_REPO_ID}
+        NEXT_PUBLIC_GISCUS_CATEGORY: ${NEXT_PUBLIC_GISCUS_CATEGORY}
+        NEXT_PUBLIC_GISCUS_CATEGORY_ID: ${NEXT_PUBLIC_GISCUS_CATEGORY_ID}
+        # 构建时迁移开关：schema 变更 / 首次部署时置 true
+        RUN_DB_MIGRATE: ${RUN_DB_MIGRATE:-false}
+        DATABASE_URL: ${DATABASE_URL}
+        DATABASE_URL_UNPOOLED: ${DATABASE_URL_UNPOOLED}
+    image: blog:latest
+    container_name: blog
+    restart: unless-stopped
+    ports:
+      - '${PORT:-3000}:3000'
+    env_file:
+      - .env
+    # 仅当存储通道使用 LOCAL 驱动时挂载（默认通道为 R2 / GitHub，无需挂载）
+    # volumes:
+    #   - ./data/uploads:/app/public/uploads
+    #   - ./data/private:/app/private

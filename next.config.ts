@@ -40,6 +40,10 @@ const deploymentId = process.env.VERCEL_DEPLOYMENT_ID || process.env.VERCEL_GIT_
 const nextConfig: NextConfig = {
   reactStrictMode: true,
 
+  // Docker 部署需要 standalone 输出（自包含 server.js，无需 node_modules，大幅减小镜像）
+  // Vercel 部署不受此配置影响（Vercel 有自己的运行时流程）
+  output: 'standalone',
+
   // 启用版本偏移保护（Skew Protection）
   // 解决在线用户在版本更新时，旧 JS 请求新服务器导致客户端崩溃的问题
   deploymentId,
